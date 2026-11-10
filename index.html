@@ -1531,15 +1531,18 @@
                 <!-- MỤC SẮC MÀU THANH ÂM (NHẠC NỀN) -->
                 <div class="bg-black/35 p-3.5 rounded-2xl border border-pink-300/30 space-y-3">
                     <div class="flex items-center justify-between">
-                        <div>
+                        <div class="min-w-0 pr-2 flex-1">
                             <div class="font-extrabold text-pink-200 flex items-center gap-1.5 text-xs">
                                 <span class="text-sm">🎵</span>
                                 <span class="pastel-fast-wave font-black text-sm">Sắc Màu Thanh Âm</span>
                             </div>
-                            <div class="text-[10px] text-sky-200/70 mt-0.5">Giai điệu âm nhạc khi ghé thăm Palette</div>
+                            <div class="text-[10.5px] text-sky-200/80 mt-0.5 flex items-center gap-1 truncate">
+                                <span class="text-sky-200/60 shrink-0">Đang phát:</span>
+                                <span id="currentMusicTrackStatus" class="text-amber-300 font-extrabold truncate">Nhẹ Buông</span>
+                            </div>
                         </div>
                         <!-- Nút Bật / Tắt -->
-                        <button type="button" id="userMusicToggleBtn" onclick="toggleUserMusic()" class="bg-white/10 border border-white/20 text-sky-200 px-3 py-1.5 rounded-xl font-bold active:scale-95 transition flex items-center gap-1 text-xs">
+                        <button type="button" id="userMusicToggleBtn" onclick="toggleUserMusic()" class="bg-white/10 border border-white/20 text-sky-200 px-3 py-1.5 rounded-xl font-bold active:scale-95 transition flex items-center gap-1 text-xs shrink-0">
                             <span id="userMusicToggleIcon">▶</span>
                             <span id="userMusicToggleText">Bật Nhạc</span>
                         </button>
@@ -1553,19 +1556,26 @@
                     </div>
 
                     <!-- KHU VỰC CÀI ĐẶT LINK (CHỈ CHỦ WEB BIBI 0304 MỚI THẤY) -->
-                    <div id="ownerMusicAdminBox" class="hidden border-t border-white/10 pt-2.5 space-y-2">
+                    <div id="ownerMusicAdminBox" class="hidden border-t border-white/10 pt-2.5 space-y-2.5">
                         <div class="flex items-center justify-between">
                             <span class="text-[11px] font-bold text-amber-300 flex items-center gap-1">
                                 <span>⚙️ Quản Trị Nhạc Nền:</span>
                                 <span class="text-[9px] bg-amber-400/25 text-amber-200 px-1.5 py-0.2 rounded-full border border-amber-300/40 font-bold">Chủ web</span>
                             </span>
-                            <span id="currentMusicTrackStatus" class="text-[9.5px] text-emerald-300 italic font-mono truncate max-w-[130px]">Chưa cài nhạc</span>
                         </div>
                         <div class="space-y-1.5">
-                            <input id="ownerYoutubeLinkInput" type="text" placeholder="Dán link YouTube (VD: https://youtu.be/...)" class="w-full bg-black/60 border border-white/20 rounded-xl px-2.5 py-2 text-white text-[11px] focus:outline-none focus:border-pink-400">
-                            <button type="button" onclick="saveAndPlayOwnerYoutubeMusic()" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 rounded-xl text-xs active:scale-95 transition shadow flex items-center justify-center gap-1.5">
-                                <span>✓ Xác Nhận & Phát Nhạc Ngay</span>
+                            <input id="ownerYoutubeLinkInput" type="text" placeholder="Dán link nhạc MP3 (Catbox) hoặc link YouTube..." class="w-full bg-black/60 border border-white/20 rounded-xl px-2.5 py-2 text-white text-[11px] focus:outline-none focus:border-pink-400">
+                            <input id="ownerSongTitleInput" type="text" placeholder="Điền tên bài hát (VD: Nhẹ Buông)..." class="w-full bg-black/60 border border-white/20 rounded-xl px-2.5 py-2 text-white text-[11px] focus:outline-none focus:border-pink-400">
+                            <button type="button" onclick="addSongToPlaylist()" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 rounded-xl text-xs active:scale-95 transition shadow flex items-center justify-center gap-1.5">
+                                <span>✓ Thêm Bài Hát Vào Danh Sách</span>
                             </button>
+                        </div>
+                        <div class="border-t border-white/10 pt-2 space-y-1.5">
+                            <div class="flex items-center justify-between text-[11px] font-bold text-pink-300">
+                                <span>Danh sách phát lần lượt:</span>
+                                <span id="ownerPlaylistCount" class="text-[10px] text-amber-300 font-mono">0 bài</span>
+                            </div>
+                            <div id="ownerPlaylistContainer" class="space-y-1 max-h-36 overflow-y-auto custom-scroll pr-1"></div>
                         </div>
                     </div>
                 </div>
@@ -2358,10 +2368,14 @@
             return container;
         }
 
-       // ================= HỆ THỐNG SẮC MÀU THANH ÂM (HỖ TRỢ CẢ MP3 VÀ YOUTUBE) =================
+       // ================= HỆ THỐNG SẮC MÀU THANH ÂM (PLAYLIST PHÁT LẦN LƯỢT) =================
         const DEFAULT_MUSIC_NAME = "Nhẹ Buông";
         const DEFAULT_MUSIC_URL = "https://files.catbox.moe/m530yh.mp3";
 
+        let currentPlaylist = [
+            { title: DEFAULT_MUSIC_NAME, url: DEFAULT_MUSIC_URL }
+        ];
+        let currentTrackIndex = 0;
         let ytPlayer = null;
         let isYtApiReady = false;
         let currentMusicType = "audio"; // 'audio' | 'youtube'
@@ -2408,10 +2422,13 @@
             if (!el) {
                 el = document.createElement('audio');
                 el.id = 'nativeBgAudio';
-                el.loop = true;
                 el.setAttribute('playsinline', '');
                 document.body.appendChild(el);
             }
+            el.loop = false;
+            el.onended = function() {
+                playNextTrack();
+            };
             if (!el.src || el.src === window.location.href) {
                 el.src = currentMusicSource || DEFAULT_MUSIC_URL;
             }
@@ -2448,8 +2465,6 @@
                     videoId: videoId,
                     playerVars: {
                         autoplay: (isUserMusicEnabled || forcePlay) ? 1 : 0,
-                        loop: 1,
-                        playlist: videoId,
                         controls: 0,
                         playsinline: 1
                     },
@@ -2464,7 +2479,7 @@
                         },
                         onStateChange: function(event) {
                             if (event.data === YT.PlayerState.ENDED) {
-                                event.target.playVideo();
+                                playNextTrack();
                             }
                             updateMusicUI();
                         },
@@ -2489,38 +2504,71 @@
             }
         }
 
-        function loadSavedBackgroundMusic(bgData) {
-            if (!bgData) return;
-            const url = bgData.musicUrl || bgData.youtubeUrl || DEFAULT_MUSIC_URL;
-            currentMusicSource = url;
-            currentMusicTitle = (url === DEFAULT_MUSIC_URL) ? DEFAULT_MUSIC_NAME : (bgData.title || "Bài hát tùy chọn");
+        function playTrackAtIndex(index, forcePlay = false) {
+            if (!currentPlaylist || currentPlaylist.length === 0) return;
+            if (index < 0) index = currentPlaylist.length - 1;
+            if (index >= currentPlaylist.length) index = 0;
+            currentTrackIndex = index;
 
-            const input = document.getElementById('ownerYoutubeLinkInput');
-            if (input) input.value = url;
+            const track = currentPlaylist[currentTrackIndex];
+            currentMusicSource = track.url;
+            currentMusicTitle = track.title || `Bài hát ${currentTrackIndex + 1}`;
 
-            const ytId = extractYouTubeVideoId(url);
-            if (ytId && !isAudioDirectUrl(url)) {
+            const ytId = extractYouTubeVideoId(track.url);
+            const nativeAudio = getNativeAudioElement();
+
+            if (ytId && !isAudioDirectUrl(track.url)) {
                 currentMusicType = "youtube";
                 currentYoutubeVideoId = ytId;
-                if (isUserMusicEnabled) initOrLoadYtPlayer(ytId, true);
+                if (nativeAudio) nativeAudio.pause();
+                initOrLoadYtPlayer(ytId, forcePlay || isUserMusicEnabled);
             } else {
                 currentMusicType = "audio";
-                const nativeAudio = getNativeAudioElement();
-                if (nativeAudio && nativeAudio.src !== url) {
-                    nativeAudio.src = url;
+                if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+                if (nativeAudio) {
+                    if (nativeAudio.src !== track.url) {
+                        nativeAudio.src = track.url;
+                    }
                     nativeAudio.volume = currentMusicVolume / 100;
-                    if (isUserMusicEnabled) {
-                        nativeAudio.play().catch(() => {});
+                    if (isUserMusicEnabled || forcePlay) {
+                        nativeAudio.play().catch(e => console.log(e));
+                    } else {
+                        nativeAudio.pause();
                     }
                 }
             }
             updateMusicUI();
+            renderOwnerPlaylist();
+        }
+
+        function playNextTrack() {
+            if (!currentPlaylist || currentPlaylist.length === 0) return;
+            const nextIdx = (currentTrackIndex + 1) % currentPlaylist.length;
+            playTrackAtIndex(nextIdx, true);
+        }
+
+        function loadSavedBackgroundMusic(bgData) {
+            if (!bgData) return;
+            if (Array.isArray(bgData.playlist) && bgData.playlist.length > 0) {
+                currentPlaylist = bgData.playlist;
+            } else if (bgData.musicUrl || bgData.youtubeUrl) {
+                const url = bgData.musicUrl || bgData.youtubeUrl;
+                const title = bgData.title || DEFAULT_MUSIC_NAME;
+                currentPlaylist = [{ title: title, url: url }];
+            } else {
+                currentPlaylist = [{ title: DEFAULT_MUSIC_NAME, url: DEFAULT_MUSIC_URL }];
+            }
+
+            if (currentTrackIndex >= currentPlaylist.length) currentTrackIndex = 0;
+            playTrackAtIndex(currentTrackIndex, isUserMusicEnabled);
+            renderOwnerPlaylist();
+            updateMusicUI();
         }
 
         function toggleUserMusic() {
-            if (!currentMusicSource) {
-                currentMusicSource = DEFAULT_MUSIC_URL;
-                currentMusicTitle = DEFAULT_MUSIC_NAME;
+            if (!currentPlaylist || currentPlaylist.length === 0) {
+                alert("Chưa có bài hát nào trong danh sách!");
+                return;
             }
 
             isUserMusicEnabled = !isUserMusicEnabled;
@@ -2556,66 +2604,140 @@
                 }
             }
             updateMusicUI();
+            renderOwnerPlaylist();
         }
 
-        function saveAndPlayOwnerYoutubeMusic() {
+        function addSongToPlaylist() {
             if (!checkIsOwnerAccount()) {
-                alert("Chỉ tài khoản Chủ Web (Bibi 0304) mới có quyền đổi link nhạc!");
+                alert("Chỉ tài khoản Chủ Web (Bibi 0304) mới có quyền thêm nhạc!");
                 return;
             }
 
-            const input = document.getElementById('ownerYoutubeLinkInput');
-            let url = input ? input.value.trim() : "";
+            const linkInput = document.getElementById('ownerYoutubeLinkInput');
+            const titleInput = document.getElementById('ownerSongTitleInput');
+
+            const url = linkInput ? linkInput.value.trim() : "";
+            let title = titleInput ? titleInput.value.trim() : "";
+
             if (!url) {
-                url = DEFAULT_MUSIC_URL;
-                if (input) input.value = DEFAULT_MUSIC_URL;
+                alert("Vui lòng dán link file nhạc MP3 hoặc link YouTube!");
+                return;
+            }
+            if (!title) {
+                title = `Bài hát ${currentPlaylist.length + 1}`;
             }
 
-            currentMusicSource = url;
-            currentMusicTitle = (url === DEFAULT_MUSIC_URL) ? DEFAULT_MUSIC_NAME : "Bài hát tùy chọn";
+            currentPlaylist.push({ title: title, url: url });
+            if (linkInput) linkInput.value = "";
+            if (titleInput) titleInput.value = "";
+
             isUserMusicEnabled = true;
             localStorage.setItem('palette_music_enabled', 'true');
 
-            const ytId = extractYouTubeVideoId(url);
-            const nativeAudio = getNativeAudioElement();
+            syncPlaylistToFirebase();
+            playTrackAtIndex(currentPlaylist.length - 1, true);
+            alert("Đã thêm bài '" + title + "' vào danh sách phát thành công!");
+        }
 
-            if (ytId && !isAudioDirectUrl(url)) {
-                currentMusicType = "youtube";
-                currentYoutubeVideoId = ytId;
-                if (nativeAudio) nativeAudio.pause();
-                initOrLoadYtPlayer(ytId, true);
-                if (ytPlayer && ytPlayer.playVideo) {
-                    ytPlayer.unMute();
-                    ytPlayer.setVolume(currentMusicVolume);
-                    ytPlayer.playVideo();
-                }
-            } else {
-                currentMusicType = "audio";
-                if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
-                if (nativeAudio) {
-                    nativeAudio.src = url;
-                    nativeAudio.volume = currentMusicVolume / 100;
-                    nativeAudio.play().catch(err => {
-                        console.error("Lỗi phát audio:", err);
-                    });
-                }
+        function movePlaylistItemUp(index) {
+            if (!checkIsOwnerAccount()) return;
+            if (index <= 0 || index >= currentPlaylist.length) return;
+            const temp = currentPlaylist[index];
+            currentPlaylist[index] = currentPlaylist[index - 1];
+            currentPlaylist[index - 1] = temp;
+
+            if (currentTrackIndex === index) {
+                currentTrackIndex = index - 1;
+            } else if (currentTrackIndex === index - 1) {
+                currentTrackIndex = index;
             }
-
+            syncPlaylistToFirebase();
+            renderOwnerPlaylist();
             updateMusicUI();
+        }
 
+        function movePlaylistItemDown(index) {
+            if (!checkIsOwnerAccount()) return;
+            if (index < 0 || index >= currentPlaylist.length - 1) return;
+            const temp = currentPlaylist[index];
+            currentPlaylist[index] = currentPlaylist[index + 1];
+            currentPlaylist[index + 1] = temp;
+
+            if (currentTrackIndex === index) {
+                currentTrackIndex = index + 1;
+            } else if (currentTrackIndex === index + 1) {
+                currentTrackIndex = index;
+            }
+            syncPlaylistToFirebase();
+            renderOwnerPlaylist();
+            updateMusicUI();
+        }
+
+        function deletePlaylistItem(index) {
+            if (!checkIsOwnerAccount()) return;
+            if (currentPlaylist.length <= 1) {
+                alert("Danh sách phải giữ ít nhất 1 bài hát!");
+                return;
+            }
+            const songName = currentPlaylist[index]?.title || "bài hát này";
+            if (!confirm(`Bạn có chắc muốn xóa "${songName}" khỏi danh sách phát?`)) return;
+
+            currentPlaylist.splice(index, 1);
+            if (currentTrackIndex >= currentPlaylist.length) {
+                currentTrackIndex = 0;
+            }
+            syncPlaylistToFirebase();
+            playTrackAtIndex(currentTrackIndex, isUserMusicEnabled);
+            renderOwnerPlaylist();
+            updateMusicUI();
+        }
+
+        function syncPlaylistToFirebase() {
             db.collection("settings").doc("main").set({
                 bgMusic: {
-                    musicUrl: url,
-                    youtubeUrl: url,
+                    playlist: currentPlaylist,
+                    musicUrl: currentMusicSource,
                     title: currentMusicTitle,
-                    videoId: ytId || "",
-                    type: currentMusicType,
                     updatedAt: Date.now()
                 }
-            }, { merge: true }).then(() => {
-                alert("Đã lưu và phát bài '" + currentMusicTitle + "' làm giai điệu mặc định thành công!");
-            }).catch(err => {
-                console.error("Lỗi lưu nhạc:", err);
+            }, { merge: true }).catch(err => {
+                console.error("Lỗi đồng bộ danh sách nhạc:", err);
+            });
+        }
+
+        function renderOwnerPlaylist() {
+            const container = document.getElementById('ownerPlaylistContainer');
+            const countEl = document.getElementById('ownerPlaylistCount');
+            if (!container) return;
+
+            if (countEl) countEl.innerText = `${currentPlaylist.length} bài`;
+            container.innerHTML = "";
+
+            if (currentPlaylist.length === 0) {
+                container.innerHTML = `<div class="text-[10px] text-sky-200/50 italic py-1 text-center">Chưa có bài hát nào trong danh sách.</div>`;
+                return;
+            }
+
+            currentPlaylist.forEach((item, index) => {
+                const isCurrent = (index === currentTrackIndex);
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-1.5 rounded-xl text-xs border transition ${
+                    isCurrent ? 'bg-pink-500/25 border-pink-300 text-pink-200 shadow' : 'bg-white/5 border-white/10 text-sky-100 hover:bg-white/10'
+                }`;
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-1.5 truncate cursor-pointer flex-1 mr-1" onclick="playTrackAtIndex(${index}, true)" title="Chạm để phát ngay bài này">
+                        <span class="text-[10px] font-mono font-bold text-amber-300 w-4 text-center shrink-0">${index + 1}</span>
+                        <span class="font-bold truncate ${isCurrent ? 'text-pink-100 font-black' : 'text-sky-100'}">${item.title}</span>
+                        ${isCurrent ? '<span class="text-[8.5px] bg-pink-400/40 text-pink-100 px-1.5 py-0.2 rounded-full font-bold animate-pulse shrink-0">Đang phát</span>' : ''}
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button type="button" onclick="movePlaylistItemUp(${index})" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-sky-200 text-[10px] font-bold" title="Lên trên">▲</button>
+                        <button type="button" onclick="movePlaylistItemDown(${index})" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-sky-200 text-[10px] font-bold" title="Xuống dưới">▼</button>
+                        <button type="button" onclick="deletePlaylistItem(${index})" class="px-1.5 py-0.5 rounded bg-red-500/20 hover:bg-red-500/40 text-red-300 text-[10px] font-bold" title="Xóa">✕</button>
+                    </div>
+                `;
+                container.appendChild(div);
             });
         }
 
@@ -2655,18 +2777,18 @@
 
             if (statusEl) {
                 const trackName = currentMusicTitle || DEFAULT_MUSIC_NAME;
-                statusEl.innerText = isPlaying ? ("Đang phát: " + trackName) : ("Đã chọn: " + trackName);
+                statusEl.innerText = isPlaying ? trackName : (trackName + " (Tạm dừng)");
             }
 
             if (btn && btnText && btnIcon) {
                 if (isPlaying) {
                     btnText.innerText = "Tắt Nhạc";
                     btnIcon.innerText = "⏸";
-                    btn.className = "bg-emerald-500/25 border border-emerald-300/50 text-emerald-200 px-3 py-1.5 rounded-xl font-black active:scale-95 transition flex items-center gap-1 text-xs shadow-[0_0_12px_rgba(52,211,153,0.3)]";
+                    btn.className = "bg-emerald-500/25 border border-emerald-300/50 text-emerald-200 px-3 py-1.5 rounded-xl font-black active:scale-95 transition flex items-center gap-1 text-xs shadow-[0_0_12px_rgba(52,211,153,0.3)] shrink-0";
                 } else {
                     btnText.innerText = "Bật Nhạc";
                     btnIcon.innerText = "▶";
-                    btn.className = "bg-white/10 border border-white/20 text-sky-200 px-3 py-1.5 rounded-xl font-bold active:scale-95 transition flex items-center gap-1 text-xs";
+                    btn.className = "bg-white/10 border border-white/20 text-sky-200 px-3 py-1.5 rounded-xl font-bold active:scale-95 transition flex items-center gap-1 text-xs shrink-0";
                 }
             }
         }
@@ -2674,12 +2796,9 @@
         function openEffectsModal() {
             const saved = getUserVisualEffects();
             document.querySelectorAll('.userFxCheckbox').forEach(cb => { cb.checked = saved.includes(cb.value); });
-            const input = document.getElementById('ownerYoutubeLinkInput');
-            if (input && !input.value) {
-                input.value = currentMusicSource || DEFAULT_MUSIC_URL;
-            }
             updateNotificationUI();
             updateMusicUI();
+            renderOwnerPlaylist();
             document.getElementById('effectsModal').classList.remove('hidden');
         }
 
@@ -6917,7 +7036,7 @@
         }
     </script>
     <!-- BỘ PHÁT NHẠC ĐA NĂNG (HỖ TRỢ CẢ AUDIO MP3 LẪN YOUTUBE) -->
-    <audio id="nativeBgAudio" src="https://files.catbox.moe/m530yh.mp3" loop playsinline preload="auto"></audio>
+    <audio id="nativeBgAudio" src="https://files.catbox.moe/m530yh.mp3" playsinline preload="auto"></audio>
     <div style="position:fixed; bottom:0; right:0; width:64px; height:64px; opacity:0.01; pointer-events:none; z-index:-10;">
         <div id="ytAudioPlayer"></div>
     </div>
