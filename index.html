@@ -463,6 +463,22 @@
     <!-- LỚP HIỆU ỨNG NỀN MỸ THUẬT -->
     <div id="visualEffectsLayer"></div>
 
+    <!-- KHUNG THÔNG BÁO TỰ ĐỘNG TẠM NGƯNG NHẬN KHÁCH KHI ĐẠT GIỚI HẠN TRONG NGÀY -->
+    <div id="quotaLimitOverlay" class="fixed inset-0 bg-[#0a1128]/95 backdrop-blur-lg z-[9999] hidden flex flex-col items-center justify-center p-5 text-center">
+        <div class="bg-[#121c38] border-2 border-pink-300/60 p-6 rounded-3xl max-w-sm w-full shadow-2xl space-y-3">
+            <div class="text-pink-300 font-bold text-xs uppercase tracking-wider">Thông Báo Hệ Thống</div>
+            <h3 class="text-xl font-black pastel-fast-wave">Phòng Nghỉ Sắc Màu</h3>
+            <p class="text-xs text-sky-100/90 leading-relaxed">
+                Hôm nay Thế Giới Chì Màu đã đón đủ lượng khách tối đa trong ngày theo hạn mức an toàn của hệ thống.
+            </p>
+            <div class="bg-black/40 border border-white/10 p-3.5 rounded-2xl text-xs space-y-1">
+                <div class="text-amber-300 font-bold">Trạng thái: Tạm ngưng nhận thêm lượt truy cập mới</div>
+                <div class="text-[11px] text-sky-200/70">Hệ thống sẽ tự động mở cửa đón khách trở lại vào ngày mai nhé!</div>
+            </div>
+            <p class="text-[10.5px] text-sky-200/50 italic pt-1">Cảm ơn bạn đã luôn yêu thương và ghé thăm các phác thảo của Palette.</p>
+        </div>
+    </div>
+
     <!-- THANH HEADER -->
     <div class="fixed top-3 left-3 right-3 z-40 flex items-center justify-between pointer-events-none">
         <!-- GÓC TRÁI TRÊN: NÚT CHÌ MÀU CỦA USER -->
@@ -1961,6 +1977,11 @@
         let selectedAuthAvatar = "";
         let userManuallyChangedAvatar = false;
         let knownPencilRequestIds = null;
+        let userDocUnsub = null;
+        let pencilsUnsub = null;
+        let unlockedUnsub = null;
+        let notificationsUnsub = null;
+        let isOwnerListenersActive = false;
         const DEFAULT_VISUAL_EFFECTS = ["fx-dust", "fx-aurora", "fx-stars", "fx-paper", "fx-sakura"];
 
         function isValidAvatarSrc(src) {
@@ -3985,102 +4006,56 @@
             }
         }
 
-        // ================= FIRESTORE LISTENERS =================
+        function handleQuotaExceededError() {
+            if (checkIsOwnerAccount()) return;
+            const overlay = document.getElementById('quotaLimitOverlay');
+            if (overlay) overlay.classList.remove('hidden');
+        }
+
+        // ================= FIRESTORE LISTENERS (CÓ CHỐNG TRẮNG WEB & TỰ ĐỘNG KHÓA KHI ĐẦY) =================
         function initFirebaseListeners() {
+            // 1. Tải nhân vật kèm bộ đệm lưu trữ dự phòng
             db.collection("characters").onSnapshot((snapshot) => {
                 characters = [];
                 snapshot.forEach(doc => { characters.push(doc.data()); });
+                if (characters.length > 0) {
+                    try { localStorage.setItem('palette_cached_characters', JSON.stringify(characters)); } catch (_) {}
+                }
                 renderCharacters();
                 renderFastColorCenter();
                 renderAdminExistingChars();
                 updateFastColorSubtitle();
                 updateGuide24hText();
-            });
-
-            db.collection("users").onSnapshot((snapshot) => {
-                snapshot.forEach(doc => { registeredUsers[doc.id] = doc.data(); });
-                if (currentUser) {
-                    const cloudAvatar = registeredUsers[currentUser.username.toLowerCase()]?.avatar;
-                    if (isValidAvatarSrc(cloudAvatar) && cloudAvatar !== currentUser.avatar) {
-                        currentUser.avatar = cloudAvatar;
-                        selectedAuthAvatar = cloudAvatar;
-                        updateAccountAvatarUI(cloudAvatar);
-                    }
+            }, (error) => {
+                // Nếu vượt quá hạn mức đọc của gói Free
+                if (error && (error.code === 'resource-exhausted' || String(error).includes('Quota exceeded'))) {
+                    handleQuotaExceededError();
                 }
-                updateRegisteredUsersCountUI();
-                renderComments();
-                if (currentUser?.isOwner) renderUsersModalContent();
-            });
-
-            // Lắng nghe hoạt động mới của thành viên theo thời gian thực (chỉ cho chủ web)
-            db.collection("activities").onSnapshot((snapshot) => {
-                memberActivities = [];
-                snapshot.forEach(doc => { memberActivities.push({ id: doc.id, ...doc.data() }); });
-                memberActivities.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
-                updateActivitiesBadgeUI();
-                if (currentUser?.isOwner) renderUsersModalContent();
-            });
-
-            db.collection("avatar_gallery").onSnapshot((snapshot) => {
-                avatarGallery = [];
-                snapshot.forEach(doc => avatarGallery.push({ id: doc.id, ...doc.data() }));
-                avatarGallery.sort((a, b) => (Number(a.uploadedAt) || 0) - (Number(b.uploadedAt) || 0));
-                renderAvatarPickers();
+                // Tự động lôi bản sao đã lưu ra hiển thị, tuyệt đối không bị trắng web
+                const cached = localStorage.getItem('palette_cached_characters');
+                if (cached) {
+                    try {
+                        characters = JSON.parse(cached);
+                        renderCharacters();
+                        renderFastColorCenter();
+                    } catch (_) {}
+                }
             });
 
             db.collection("likes").onSnapshot((snapshot) => {
                 charLikesData = {};
                 snapshot.forEach(doc => { charLikesData[doc.id] = doc.data().users || []; });
                 updateHeartUI();
-                updateRegisteredUsersCountUI();
+            }, (error) => {
+                if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
 
             db.collection("comments").onSnapshot((snapshot) => {
                 charComments = {};
                 snapshot.forEach(doc => { charComments[doc.id] = doc.data().list || []; });
                 renderComments();
-            });
-
-            db.collection("unlocked").onSnapshot((snapshot) => {
-                userUnlockedState = {};
-                snapshot.forEach(doc => { userUnlockedState[doc.id] = doc.data().chars || {}; });
-                updateAIStudioButton();
-            });
-
-            db.collection("pencils").onSnapshot((snapshot) => {
-                userPencilsData = {};
-                snapshot.forEach(doc => { userPencilsData[doc.id] = doc.data(); });
-                updatePencilUI();
-            });
-
-            db.collection("pencil_requests").onSnapshot((snapshot) => {
-                const previousIds = knownPencilRequestIds;
-                pendingPencilRequests = [];
-                snapshot.forEach(doc => { pendingPencilRequests.push({ id: doc.id, ...doc.data() }); });
-                const currentIds = new Set(pendingPencilRequests.map(req => req.id));
-                const isOwner = Boolean(currentUser?.isOwner || currentUser?.username?.toLowerCase() === OWNER_USER.toLowerCase());
-
-                if (isOwner && previousIds) {
-                    const newPings = pendingPencilRequests.filter(req => !previousIds.has(req.id));
-                    newPings.forEach(req => {
-                        playPaletteTingSound();
-                        triggerNotification("Có Ping Feedback mới!", `${req.author || "Một thành viên"} vừa Ping cho ${req.charName || "một nhân vật"}. Mở Cửa Hàng Bút Chì để xét tặng 3 Bút Chì nhé.`);
-                        if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
-                            try {
-                                new Notification("Có Ping Feedback mới", {
-                                    body: `${req.author || "Một thành viên"} vừa Ping cho ${req.charName || "nhân vật"}.`,
-                                    icon: req.avatar || "https://files.catbox.moe/1foc7r.gif"
-                                });
-                            } catch (_) {}
-                        }
-                    });
-                }
-                knownPencilRequestIds = currentIds;
-                updateAdminPencilNotificationBadge();
-                const requestsModal = document.getElementById('adminPencilRequestsModal');
-                if (isOwner && requestsModal && !requestsModal.classList.contains('hidden')) {
-                    renderAdminPendingPings();
-                }
+            }, (error) => {
+                if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
 
             db.collection("settings").doc("main").onSnapshot((doc) => {
@@ -4094,12 +4069,88 @@
                     applyCustomMenuIcons();
                     renderCategoryTags();
                 }
+            }, (error) => {
+                if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
+            });
+        }
+
+        // Tải duy nhất dữ liệu của chính người đang đăng nhập (Tiết kiệm 80% lượt đọc)
+        function initUserSpecificListeners(username) {
+            if (!username) return;
+            const uKey = username.toLowerCase();
+
+            if (userDocUnsub) userDocUnsub();
+            if (pencilsUnsub) pencilsUnsub();
+            if (unlockedUnsub) unlockedUnsub();
+            if (notificationsUnsub) notificationsUnsub();
+
+            userDocUnsub = db.collection("users").doc(uKey).onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    registeredUsers[uKey] = data;
+                    if (isValidAvatarSrc(data.avatar) && data.avatar !== currentUser?.avatar) {
+                        if (currentUser) currentUser.avatar = data.avatar;
+                        selectedAuthAvatar = data.avatar;
+                        updateAccountAvatarUI(data.avatar);
+                    }
+                }
             });
 
-            db.collection("notifications").onSnapshot((snapshot) => {
-                userNotificationLogs = {};
-                snapshot.forEach(doc => { userNotificationLogs[doc.id] = doc.data().logs || []; });
-                if (currentUser) renderUserNotifications();
+            pencilsUnsub = db.collection("pencils").doc(uKey).onSnapshot(doc => {
+                userPencilsData[uKey] = doc.exists ? doc.data() : { count: 0 };
+                updatePencilUI();
+            });
+
+            unlockedUnsub = db.collection("unlocked").doc(username).onSnapshot(doc => {
+                userUnlockedState[username] = doc.exists ? (doc.data().chars || {}) : {};
+                updateAIStudioButton();
+                renderUnlockedCharListInModal();
+            });
+
+            notificationsUnsub = db.collection("notifications").doc(uKey).onSnapshot(doc => {
+                userNotificationLogs[uKey] = doc.exists ? (doc.data().logs || []) : [];
+                renderUserNotifications();
+            });
+        }
+
+        // Chỉ Chủ Web (Bibi 0304) mới tải danh sách duyệt Ping và nhật ký hoạt động
+        function initOwnerSpecificListeners() {
+            if (!checkIsOwnerAccount() || isOwnerListenersActive) return;
+            isOwnerListenersActive = true;
+
+            db.collection("pencil_requests").onSnapshot((snapshot) => {
+                const previousIds = knownPencilRequestIds;
+                pendingPencilRequests = [];
+                snapshot.forEach(doc => { pendingPencilRequests.push({ id: doc.id, ...doc.data() }); });
+                const currentIds = new Set(pendingPencilRequests.map(req => req.id));
+
+                if (previousIds) {
+                    const newPings = pendingPencilRequests.filter(req => !previousIds.has(req.id));
+                    newPings.forEach(req => {
+                        playPaletteTingSound();
+                        triggerNotification("Có Ping Feedback mới!", `${req.author || "Một thành viên"} vừa Ping cho ${req.charName || "một nhân vật"}. Mở Cửa Hàng Bút Chì để xét tặng 3 Bút Chì nhé.`);
+                    });
+                }
+                knownPencilRequestIds = currentIds;
+                updateAdminPencilNotificationBadge();
+                const requestsModal = document.getElementById('adminPencilRequestsModal');
+                if (requestsModal && !requestsModal.classList.contains('hidden')) {
+                    renderAdminPendingPings();
+                }
+            });
+
+            db.collection("activities").onSnapshot((snapshot) => {
+                memberActivities = [];
+                snapshot.forEach(doc => { memberActivities.push({ id: doc.id, ...doc.data() }); });
+                memberActivities.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+                updateActivitiesBadgeUI();
+                renderUsersModalContent();
+            });
+
+            db.collection("users").onSnapshot((snapshot) => {
+                snapshot.forEach(doc => { registeredUsers[doc.id] = doc.data(); });
+                updateRegisteredUsersCountUI();
+                renderUsersModalContent();
             });
         }
 
@@ -4233,14 +4284,15 @@
         }
 
         function logNotificationForUser(title, body) {
+            if (!currentUser) return;
+            const uKey = currentUser.username.toLowerCase();
             const timestampStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN');
             const newLog = { title, body, time: timestampStr };
 
-            for (let uKey in registeredUsers) {
-                if (!userNotificationLogs[uKey]) userNotificationLogs[uKey] = [];
-                userNotificationLogs[uKey].unshift(newLog);
-                db.collection("notifications").doc(uKey).set({ logs: userNotificationLogs[uKey] });
-            }
+            if (!userNotificationLogs[uKey]) userNotificationLogs[uKey] = [];
+            userNotificationLogs[uKey].unshift(newLog);
+            userNotificationLogs[uKey] = userNotificationLogs[uKey].slice(0, 50);
+            db.collection("notifications").doc(uKey).set({ logs: userNotificationLogs[uKey] }, { merge: true });
         }
 
         function updateRegisteredUsersCountUI() {
@@ -4794,7 +4846,15 @@
 
             if (!isRegisterMode) {
                 const isOwnerLoggingIn = (userKey === OWNER_USER.toLowerCase() && pass === OWNER_PASS);
-                const existAcc = registeredUsers[userKey];
+                
+                let existAcc = registeredUsers[userKey];
+                if (!existAcc && !isOwnerLoggingIn) {
+                    const docSnap = await db.collection("users").doc(userKey).get();
+                    if (docSnap.exists) {
+                        existAcc = docSnap.data();
+                        registeredUsers[userKey] = existAcc;
+                    }
+                }
 
                 if (!isOwnerLoggingIn && (!existAcc || existAcc.pass !== pass)) {
                     errEl.innerText = "Tên sử dụng hoặc mật khẩu không chính xác, hoặc tài khoản chưa từng tồn tại!";
@@ -4847,7 +4907,8 @@
                     return;
                 }
 
-                if (registeredUsers[userKey]) {
+                const checkExistSnap = await db.collection("users").doc(userKey).get();
+                if (checkExistSnap.exists || registeredUsers[userKey]) {
                     errEl.innerText = "Tên tài khoản này đã có người đăng ký rồi! Vui lòng chọn tên khác.";
                     errEl.classList.remove('hidden');
                     return;
@@ -4905,11 +4966,19 @@
             const currentCommentUserEl = document.getElementById('currentCommentUser');
             if (currentCommentUserEl) currentCommentUserEl.innerText = acc.username;
 
+            // Kích hoạt kết nối riêng biệt cho tài khoản hiện tại
+            initUserSpecificListeners(acc.username);
+            if (isOwner) initOwnerSpecificListeners();
+
             renderComments();
             updateFaqButtonVisibility();
         }
 
         function handleLogout() {
+            if (userDocUnsub) userDocUnsub();
+            if (pencilsUnsub) pencilsUnsub();
+            if (unlockedUnsub) unlockedUnsub();
+            if (notificationsUnsub) notificationsUnsub();
             localStorage.removeItem('palette_persistent_user');
             currentUser = null;
             selectedAuthAvatar = "";
