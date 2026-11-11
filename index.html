@@ -458,28 +458,7 @@
 </head>
 <body class="text-white flex flex-col items-center justify-between p-4 relative selection:bg-pink-500">
 
-    <!-- KHUNG THÔNG BÁO PHÒNG CHỜ CÓ NÚT NHẬN THÔNG BÁO KHI CÓ CHỖ -->
-    <div id="trafficLimitOverlay" class="fixed inset-0 bg-[#0a1128] z-[9999] hidden flex flex-col items-center justify-center p-5 text-center">
-        <div class="bg-[#121c38] border-2 border-pink-300/60 p-6 rounded-3xl max-w-sm w-full shadow-2xl space-y-3">
-            <h3 class="text-base font-extrabold text-pink-200">Phòng Chờ Sắc Màu</h3>
-            <p class="text-xs text-sky-100/90 leading-relaxed">
-                Số lượng người truy cập cùng lúc hiện đã đạt giới hạn an toàn để đảm bảo hệ thống không bị quá tải.
-            </p>
-            <div class="bg-black/40 border border-white/10 p-3 rounded-2xl text-xs space-y-1">
-                <div class="text-amber-300 font-bold" id="trafficSlotStatusText">Trạng thái: Đã kín chỗ (0/0)</div>
-                <div class="text-[11px] text-sky-200/70">Chỉ cần 1 người rời web là bạn sẽ vào được ngay.</div>
-            </div>
-            <div class="pt-2 space-y-2">
-                <button type="button" id="trafficNotifyBtn" onclick="requestSlotNotification()" class="w-full bg-pink-500/25 hover:bg-pink-500/40 border border-pink-300/50 text-pink-200 font-bold py-2 rounded-xl text-xs active:scale-95 transition">
-                    Nhận thông báo khi có chỗ trống
-                </button>
-                <button type="button" onclick="checkTrafficSlotAndEnter(true)" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-extrabold py-2.5 rounded-xl text-xs shadow active:scale-95 transition">
-                    Kiểm tra lại xem có chỗ trống chưa
-                </button>
-                <p id="trafficRetryTimerText" class="text-[10.5px] text-sky-200/60">Tự động kiểm tra lại sau: 15s</p>
-            </div>
-        </div>
-    </div>
+     
 
     <!-- LỚP HIỆU ỨNG NỀN MỸ THUẬT -->
     <div id="visualEffectsLayer"></div>
@@ -1350,7 +1329,7 @@
                             <div>• Tên char muốn chơi: [Char muốn lấy link]</div>
                         </div>
                     </div>
-                    <p class="text-[10px] text-pink-200/80 italic">Bài đăng feedback chỉ được tính trong vòng một tiếng, ít nhất phải điền theo đúng ba mục trên nhé.</p>
+                    <p class="text-[10px] text-pink-200/80 italic">Bài đăng feedback chỉ được tính trong vòng 10 phút, ít nhất phải điền theo đúng ba mục trên nhé.</p>
 
                     <button onclick="handleProofFromGuide('Sắc màu gạo cội')" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 font-bold py-2 rounded-xl text-white mt-1 shadow-md active:scale-95">
                         Vẽ Đường Cho Tình Yêu Chạy ➔
@@ -1381,7 +1360,7 @@
                             <div>• Hướng nội hay hướng ngoại: [Hướng nội / Hướng ngoại]</div>
                         </div>
                     </div>
-                    <p class="text-[10px] text-sky-200/80 italic">Bài đăng hồ sơ tân thủ chỉ được tính trong vòng 5 phút, ít nhất phải điền theo đúng ba mục trên nhé.</p>
+                    <p class="text-[10px] text-sky-200/80 italic">Bài đăng hồ sơ tân thủ chỉ được tính trong vòng 10 phút, ít nhất phải điền theo đúng ba mục trên nhé.</p>
 
                     <button onclick="handleProofFromGuide('Tân thủ')" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 font-bold py-2 rounded-xl text-white mt-1 shadow-md active:scale-95">
                         Vẽ Đường Cho Tình Yêu Chạy ➔
@@ -1618,7 +1597,7 @@
                             </div>
                             <div class="text-[10.5px] text-sky-200/80 mt-0.5 flex items-center gap-1 truncate">
                                 <span class="text-sky-200/60 shrink-0">Đang phát:</span>
-                                <span id="currentMusicTrackStatus" class="text-amber-300 font-extrabold truncate">Nhẹ Buông</span>
+                                <span id="currentMusicTrackStatus" class="text-amber-300 font-extrabold truncate">Chưa có bài hát</span>
                             </div>
                         </div>
                         <!-- Điều Khiển Nhạc: Lùi, Bật/Tắt, Tiến -->
@@ -1869,7 +1848,7 @@
                     </button>
                     <div id="faqAnswer-3" class="hidden px-2.5 pb-2.5 pt-1 text-[11px] text-sky-100/90 leading-relaxed border-t border-white/5 space-y-1">
                         <div>• <b>Ảnh Facebook:</b> Bắt buộc phải nhìn thấy rõ tên Page <i>Palette Số Hóa</i>, nút đã thả tim và đúng tag của nhân vật.</div>
-                        <div>• <b>Ảnh Discord:</b> Bắt buộc chụp trong đúng kênh theo mẫu và tin nhắn phải gửi trong vòng 1 tiếng gần nhất.</div>
+                        <div>• <b>Ảnh Discord:</b> Bắt buộc chụp trong đúng kênh theo mẫu và tin nhắn phải gửi trong vòng 10 phút gần nhất.</div>
                     </div>
                 </div>
 
@@ -2261,6 +2240,8 @@
         ];
 
         function renderAvatarPickers() {}
+        function renderOwnerGalleryGrid() {}
+        function renderOwnerGalleryGrid() {}
 
         function playAvatarRandomSound() {
             return new Promise(resolve => {
@@ -2394,18 +2375,16 @@
         }
 
        // ================= HỆ THỐNG SẮC MÀU THANH ÂM (PLAYLIST PHÁT LẦN LƯỢT) =================
-        const DEFAULT_MUSIC_NAME = "Nhẹ Buông";
-        const DEFAULT_MUSIC_URL = "https://files.catbox.moe/m530yh.mp3";
+        const DEFAULT_MUSIC_NAME = "";
+        const DEFAULT_MUSIC_URL = "";
 
-        let currentPlaylist = [
-            { title: DEFAULT_MUSIC_NAME, url: DEFAULT_MUSIC_URL }
-        ];
+        let currentPlaylist = [];
         let currentTrackIndex = 0;
         let ytPlayer = null;
         let isYtApiReady = false;
         let currentMusicType = "audio"; // 'audio' | 'youtube'
-        let currentMusicSource = DEFAULT_MUSIC_URL;
-        let currentMusicTitle = DEFAULT_MUSIC_NAME;
+        let currentMusicSource = "";
+        let currentMusicTitle = "";
         let currentYoutubeVideoId = "";
 
         // Tự động phát khi user mới vào, nhưng nếu đã bấm tắt thì sẽ luôn tắt cho tới khi bật lại
@@ -2595,10 +2574,20 @@
                 currentPlaylist = bgData.playlist;
             } else if (bgData.musicUrl || bgData.youtubeUrl) {
                 const url = bgData.musicUrl || bgData.youtubeUrl;
-                const title = bgData.title || DEFAULT_MUSIC_NAME;
-                currentPlaylist = [{ title: title, url: url }];
+                const title = bgData.title || "";
+                if (url) currentPlaylist = [{ title: title || "Bài hát 1", url: url }];
+                else currentPlaylist = [];
             } else {
-                currentPlaylist = [{ title: DEFAULT_MUSIC_NAME, url: DEFAULT_MUSIC_URL }];
+                currentPlaylist = [];
+            }
+
+            if (currentPlaylist.length === 0) {
+                currentTrackIndex = 0;
+                currentMusicSource = "";
+                currentMusicTitle = "";
+                renderOwnerPlaylist();
+                updateMusicUI();
+                return;
             }
 
             if (currentTrackIndex >= currentPlaylist.length) currentTrackIndex = 0;
@@ -2773,19 +2762,24 @@
 
         function deletePlaylistItem(index) {
             if (!checkIsOwnerAccount()) return;
-            if (currentPlaylist.length <= 1) {
-                alert("Danh sách phải giữ ít nhất 1 bài hát!");
-                return;
-            }
             const songName = currentPlaylist[index]?.title || "bài hát này";
             if (!confirm(`Bạn có chắc muốn xóa "${songName}" khỏi danh sách phát?`)) return;
 
             currentPlaylist.splice(index, 1);
-            if (currentTrackIndex >= currentPlaylist.length) {
+            if (currentPlaylist.length === 0) {
+                currentTrackIndex = 0;
+                currentMusicSource = "";
+                currentMusicTitle = "";
+                const na = getNativeAudioElement();
+                if (na) { na.pause(); na.src = ""; }
+                if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+            } else if (currentTrackIndex >= currentPlaylist.length) {
                 currentTrackIndex = 0;
             }
             syncPlaylistToFirebase();
-            playTrackAtIndex(currentTrackIndex, isUserMusicEnabled);
+            if (currentPlaylist.length > 0) {
+                playTrackAtIndex(currentTrackIndex, isUserMusicEnabled);
+            }
             renderOwnerPlaylist();
             updateMusicUI();
         }
@@ -2900,7 +2894,7 @@
 
         // Kích hoạt âm thanh mượt mà trên các trình duyệt chặn tự phát khi vừa mở web
         document.addEventListener('pointerdown', function tryAutoplayOnce() {
-            if (isUserMusicEnabled) {
+            if (isUserMusicEnabled && currentPlaylist.length > 0 && currentMusicSource) {
                 const na = document.getElementById('nativeBgAudio');
                 if (currentMusicType === "audio" && na && na.paused) {
                     na.play().catch(() => {});
@@ -3353,8 +3347,6 @@
                 updatePencilUI();
                 playPaletteTingSound(); // Phát âm thanh cute
                 createPencilSparkles();
-                logMemberActivity("Điểm danh hàng ngày", `Hoàn thành ngày ${result.day}/7 (+${result.reward} Chì)`);
-                logMemberActivity("Điểm danh hàng ngày", `Hoàn thành ngày ${result.day}/7 (+${result.reward} Chì)`);
                 logMemberActivity("Điểm danh hàng ngày", `Hoàn thành ngày ${result.day}/7 (+${result.reward} Chì)`);
                 alert(`✨ Điểm danh thành công! Bạn đã hoàn thành ngày ${result.day}/7 và nhận được +${result.reward} Bút Chì Màu! ✏️💖`);
             } catch (error) {
@@ -3855,19 +3847,24 @@
         }
 
         function updateAdminPencilNotificationBadge() {
+            const isOwner = Boolean(currentUser?.isOwner || currentUser?.username?.toLowerCase() === OWNER_USER.toLowerCase());
             const btn = document.getElementById('adminPendingPencilBtn');
             const countSpan = document.getElementById('adminPendingPencilCount');
             const shopSection = document.getElementById('ownerPencilShopSection');
             const shopCount = document.getElementById('pencilShopPendingCount');
             if (shopCount) shopCount.innerText = pendingPencilRequests.length;
-            if (shopSection) shopSection.classList.toggle('hidden', !currentUser?.isOwner);
-            if (currentUser?.isOwner && pendingPencilRequests.length > 0) {
-                btn.classList.remove('hidden');
-                btn.classList.add('flex');
-                countSpan.innerText = pendingPencilRequests.length;
+            if (shopSection) shopSection.classList.toggle('hidden', !isOwner);
+            if (isOwner && pendingPencilRequests.length > 0) {
+                if (btn) {
+                    btn.classList.remove('hidden');
+                    btn.classList.add('flex');
+                }
+                if (countSpan) countSpan.innerText = pendingPencilRequests.length;
             } else {
-                btn.classList.add('hidden');
-                btn.classList.remove('flex');
+                if (btn) {
+                    btn.classList.add('hidden');
+                    btn.classList.remove('flex');
+                }
             }
         }
 
@@ -3944,12 +3941,17 @@
                 pendingPencilRequests = [];
                 snapshot.forEach(doc => { pendingPencilRequests.push({ id: doc.id, ...doc.data() }); });
                 const currentIds = new Set(pendingPencilRequests.map(req => req.id));
-                if (currentUser?.isOwner && previousIds) {
-                    pendingPencilRequests.filter(req => !previousIds.has(req.id)).forEach(req => {
+                const isOwner = Boolean(currentUser?.isOwner || currentUser?.username?.toLowerCase() === OWNER_USER.toLowerCase());
+
+                if (isOwner && previousIds) {
+                    const newPings = pendingPencilRequests.filter(req => !previousIds.has(req.id));
+                    newPings.forEach(req => {
+                        playPaletteTingSound();
+                        triggerNotification("Có Ping Feedback mới!", `${req.author || "Một thành viên"} vừa Ping cho ${req.charName || "một nhân vật"}. Mở Cửa Hàng Bút Chì để xét tặng 3 Bút Chì nhé.`);
                         if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
                             try {
                                 new Notification("Có Ping Feedback mới", {
-                                    body: `${req.author || "Một thành viên"} vừa Ping cho ${req.charName || "một nhân vật"} · mở Cửa Hàng Bút Chì để xem.`,
+                                    body: `${req.author || "Một thành viên"} vừa Ping cho ${req.charName || "nhân vật"}.`,
                                     icon: req.avatar || "https://files.catbox.moe/1foc7r.gif"
                                 });
                             } catch (_) {}
@@ -3959,8 +3961,8 @@
                 knownPencilRequestIds = currentIds;
                 updateAdminPencilNotificationBadge();
                 const requestsModal = document.getElementById('adminPencilRequestsModal');
-                if (currentUser?.isOwner && requestsModal && !requestsModal.classList.contains('hidden')) {
-                    openPencilShopModal();
+                if (isOwner && requestsModal && !requestsModal.classList.contains('hidden')) {
+                    renderAdminPendingPings();
                 }
             });
 
@@ -4030,7 +4032,6 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            checkTrafficSlotAndEnter(false);
             applyVisualEffects(DEFAULT_VISUAL_EFFECTS);
             initFirebaseListeners();
 
@@ -4170,172 +4171,7 @@
             return `${hh}:${mm} · ${dd}/${MM}/${yy}`;
         }
 
-        // HỆ THỐNG GIỚI HẠN SLOT TRUY CẬP VÀ GỬI THÔNG BÁO KHI CÓ CHỖ TRỐNG
-        function isUserOnline(username) { return false; }
-
-        const MAX_CONCURRENT_SLOTS = 35; // Đặt sẵn bằng 0 để bạn thử nghiệm (test xong đổi thành 30 hoặc 35 nhé)
-        const SLOT_TIMEOUT_MS = 2.5 * 60 * 1000; // 2.5 phút không hoạt động sẽ tự giải phóng slot
-
-        let visitorSessionId = sessionStorage.getItem('palette_visitor_slot_id');
-        if (!visitorSessionId) {
-            visitorSessionId = 'slot_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-            sessionStorage.setItem('palette_visitor_slot_id', visitorSessionId);
-        }
-
-        let trafficAutoRetryTimer = null;
-        let trafficSlotHeartbeat = null;
-        let isWaitingForSlotNotice = (localStorage.getItem('palette_waiting_slot_notice') === 'true');
-
-        function updateSlotNotifyButtonUI() {
-            const btn = document.getElementById('trafficNotifyBtn');
-            if (!btn) return;
-            if (isWaitingForSlotNotice) {
-                btn.innerText = "Đã bật: Sẽ gửi thông báo đến máy khi có chỗ";
-                btn.className = "w-full bg-emerald-500/20 border border-emerald-300/40 text-emerald-200 font-bold py-2 rounded-xl text-xs";
-            } else {
-                btn.innerText = "Nhận thông báo khi có chỗ trống";
-                btn.className = "w-full bg-pink-500/25 hover:bg-pink-500/40 border border-pink-300/50 text-pink-200 font-bold py-2 rounded-xl text-xs active:scale-95 transition";
-            }
-        }
-
-        function requestSlotNotification() {
-            if ("Notification" in window) {
-                Notification.requestPermission().then(perm => {
-                    if (perm === "granted") {
-                        isWaitingForSlotNotice = true;
-                        localStorage.setItem('palette_waiting_slot_notice', 'true');
-                        updateSlotNotifyButtonUI();
-                        playPaletteTingSound();
-                        alert("Đã bật thông báo thành công! Khi có người rời web và có chỗ trống cho bạn, thiết bị sẽ tự động rung chuông và thông báo.");
-                    } else {
-                        alert("Bạn đã chặn thông báo trên trình duyệt. Vui lòng cấp quyền thông báo trong cài đặt trình duyệt để nhận tin khi có chỗ trống nhé.");
-                    }
-                });
-            } else {
-                isWaitingForSlotNotice = true;
-                localStorage.setItem('palette_waiting_slot_notice', 'true');
-                updateSlotNotifyButtonUI();
-                alert("Đã ghi nhận yêu cầu thông báo khi có chỗ trống.");
-            }
-        }
-
-        function triggerSlotAvailableNotification() {
-            if (isWaitingForSlotNotice) {
-                isWaitingForSlotNotice = false;
-                localStorage.removeItem('palette_waiting_slot_notice');
-
-                playPaletteTingSound();
-
-                if ("Notification" in window && Notification.permission === "granted") {
-                    try {
-                        new Notification("Đã có chỗ trống vào web!", {
-                            body: "Phòng chờ đã mở slot, bạn có thể vào khám phá Thế Giới Chì Màu ngay bây giờ!",
-                            icon: "https://files.catbox.moe/1foc7r.gif",
-                            vibrate: [200, 100, 200]
-                        });
-                    } catch (_) {}
-                }
-            }
-        }
-
-        function showTrafficOverlay(currentCount) {
-            const overlay = document.getElementById('trafficLimitOverlay');
-            const statusText = document.getElementById('trafficSlotStatusText');
-            if (statusText) statusText.innerText = `Trạng thái: Đã kín chỗ (${currentCount || MAX_CONCURRENT_SLOTS}/${MAX_CONCURRENT_SLOTS})`;
-            if (overlay) overlay.classList.remove('hidden');
-
-            updateSlotNotifyButtonUI();
-
-            let countdown = 15;
-            const timerEl = document.getElementById('trafficRetryTimerText');
-            if (trafficAutoRetryTimer) clearInterval(trafficAutoRetryTimer);
-            trafficAutoRetryTimer = setInterval(() => {
-                countdown--;
-                if (timerEl) timerEl.innerText = `Tự động kiểm tra lại sau: ${countdown}s`;
-                if (countdown <= 0) {
-                    clearInterval(trafficAutoRetryTimer);
-                    checkTrafficSlotAndEnter(false);
-                }
-            }, 1000);
-        }
-
-        function hideTrafficOverlay() {
-            const overlay = document.getElementById('trafficLimitOverlay');
-            if (overlay) overlay.classList.add('hidden');
-            if (trafficAutoRetryTimer) {
-                clearInterval(trafficAutoRetryTimer);
-                trafficAutoRetryTimer = null;
-            }
-        }
-
-        async function checkTrafficSlotAndEnter(isManual = false) {
-            // Khi MAX_CONCURRENT_SLOTS > 0, Chủ Web sẽ được ưu tiên vào thẳng
-            if (MAX_CONCURRENT_SLOTS > 0) {
-                const saved = JSON.parse(localStorage.getItem('palette_persistent_user') || '{}');
-                if (saved?.username?.toLowerCase() === "bibi 0304" || saved?.isOwner || currentUser?.isOwner) {
-                    hideTrafficOverlay();
-                    return true;
-                }
-            }
-
-            try {
-                const docRef = db.collection("settings").doc("traffic_slots");
-                const now = Date.now();
-                const snap = await docRef.get();
-                let slots = snap.exists ? (snap.data().active || {}) : {};
-
-                let validCount = 0;
-                const activeMap = {};
-                for (const sid in slots) {
-                    if (now - slots[sid] < SLOT_TIMEOUT_MS) {
-                        activeMap[sid] = slots[sid];
-                        validCount++;
-                    }
-                }
-
-                const alreadyHasSlot = Boolean(activeMap[visitorSessionId]);
-
-                // Nếu số lượng người >= mức tối đa và mình chưa có chỗ
-                if (validCount >= MAX_CONCURRENT_SLOTS && !alreadyHasSlot) {
-                    showTrafficOverlay(validCount);
-                    if (isManual) alert(`Phòng hiện tại vẫn đang kín chỗ (${validCount}/${MAX_CONCURRENT_SLOTS}). Vui lòng đợi người khác rời web nhé!`);
-                    return false;
-                }
-
-                // Nếu còn chỗ trống hoặc được vào:
-                activeMap[visitorSessionId] = now;
-                await docRef.set({ active: activeMap }, { merge: true });
-
-                triggerSlotAvailableNotification();
-                hideTrafficOverlay();
-                startKeepSlotAlive();
-                return true;
-            } catch (err) {
-                hideTrafficOverlay();
-                return true;
-            }
-        }
-
-        function startKeepSlotAlive() {
-            if (trafficSlotHeartbeat) clearInterval(trafficSlotHeartbeat);
-            trafficSlotHeartbeat = setInterval(async () => {
-                try {
-                    const docRef = db.collection("settings").doc("traffic_slots");
-                    const updateObj = {};
-                    updateObj[`active.${visitorSessionId}`] = Date.now();
-                    await docRef.update(updateObj);
-                } catch (_) {}
-            }, 90000);
-        }
-
-        window.addEventListener('pagehide', () => {
-            try {
-                const docRef = db.collection("settings").doc("traffic_slots");
-                const removeObj = {};
-                removeObj[`active.${visitorSessionId}`] = firebase.firestore.FieldValue.delete();
-                docRef.update(removeObj);
-            } catch (_) {}
-        });
+         function isUserOnline(username) { return false; }
 
         // Ghi lại bất kỳ hoạt động nào của thành viên và lưu vào Firebase
         async function logMemberActivity(actionTitle, detailText = "") {
@@ -4915,7 +4751,7 @@
         }
 
         function applyLogin(acc) {
-            const isOwner = (acc.username.toLowerCase() === OWNER_USER.toLowerCase() && acc.pass === OWNER_PASS);
+            const isOwner = Boolean(acc.isOwner === true || acc.username?.toLowerCase() === OWNER_USER.toLowerCase());
             
             let userAvatar = acc.avatar;
             if (!isValidAvatarSrc(userAvatar)) {
@@ -5055,7 +4891,7 @@
                     </div>
 
                     <p class="text-[10px] text-amber-200/90 text-center mb-3 italic leading-relaxed bg-amber-500/10 p-2.5 rounded-2xl border border-amber-300/25 max-w-[280px]">
-                        Lưu ý: Hãy out ra web sau khi đã duyệt ảnh xong và trở vào sau 2 tiếng vì lượng người truy cập tối đa có giới hạn để người khác có thể vào lấy link nhé.
+                        Lưu ý: Sau khi duyệt ảnh thành công, hệ thống sẽ đếm ngược 2 tiếng để mở link. Bạn có thể out ra và quay trở lại sau 2 tiếng để lấy link nhé.
                     </p>
 
                     <button onclick="${isUnlocked ? `window.open('${c.aiStudioUrl}', '_blank')` : `openFastProofModal('${c.id}')`}" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
@@ -5679,19 +5515,16 @@
                         throw new Error("Mốc thời gian gửi tin nhắn đã sang ngày khác hoặc ghi rõ ngày tháng cũ, từ chối duyệt!");
                     }
 
-                    const isNewbie = (activeProofType === 'Tân thủ');
-                    const maxAllowedMinutes = isNewbie ? 5 : 65;
+                    const maxAllowedMinutes = 10; // Quy định cả Feedback và Tân thủ đều trong 10 phút
 
-                    const hasOver1h = /\b([1-9][0-9]*)\s*(giờ trước|hours ago|h trước)\b/.test(combinedDcText);
-                    if (hasOver1h) {
-                        throw new Error(isNewbie ? "Tin nhắn Tân thủ đã gửi quá hạn 5 phút!" : "Tin nhắn trong ảnh hiển thị đã gửi từ 2 tiếng trước trở lên (quá hạn 1 tiếng)!");
+                    const hasOverHours = /\b([1-9][0-9]*)\s*(giờ trước|hours ago|h trước)\b/.test(combinedDcText);
+                    if (hasOverHours) {
+                        throw new Error("Tin nhắn trong ảnh đã gửi từ hàng giờ trước (quá hạn 10 phút)!");
                     }
 
-                    if (isNewbie) {
-                        const hasOver5m = /\b([6-9]|[1-9][0-9]+)\s*(phút trước|m ago|mins? ago)\b/.test(combinedDcText);
-                        if (hasOver5m) {
-                            throw new Error("Tin nhắn Hồ Sơ Tân Thủ đã gửi quá hạn 5 phút!");
-                        }
+                    const minMatch = combinedDcText.match(/\b([1-9][0-9]*)\s*(phút trước|m ago|mins? ago)\b/);
+                    if (minMatch && parseInt(minMatch[1]) > 10) {
+                        throw new Error(`Tin nhắn hiển thị gửi từ ${minMatch[1]} phút trước đã quá hạn 10 phút!`);
                     }
 
                     const timeRegex = /\b([01]?[0-9]|2[0-3])[:h]([0-5][0-9])\b/g;
@@ -5706,10 +5539,9 @@
                         
                         let diffMinutes = (curHour * 60 + curMin) - (msgHour * 60 + msgMin);
                         if (diffMinutes < 0) diffMinutes += 24 * 60;
+                        if (diffMinutes >= 720) diffMinutes -= 720; // Tự động bù trừ khi Discord hiển thị giờ 12h chiều
                         if (diffMinutes > maxAllowedMinutes) {
-                            throw new Error(isNewbie 
-                                ? `Tin nhắn Tân thủ gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã quá hạn 5 phút!` 
-                                : `Tin nhắn gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã cách nhau hơn 1 tiếng!`);
+                            throw new Error(`Tin nhắn gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã quá hạn 10 phút!`);
                         }
                     }
                 }
@@ -6423,40 +6255,6 @@
             if (box) box.classList.toggle('hidden');
         }
 
-        async function submitReply(parentId) {
-            const input = document.getElementById(`replyInput-${parentId}`);
-            const text = input.value.trim();
-            const imageFiles = Array.from(document.getElementById(`replyImgFile-${parentId}`)?.files || []);
-
-            if (!text && imageFiles.length === 0) return;
-
-            const parent = (charComments[activeChar.id] || []).find(c => c.id === parentId);
-            if (parent) {
-                try {
-                    const images = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 850, 0.62)));
-                    const repCreatedAt = Date.now();
-                    parent.replies.push({
-                        id: 'rep-' + repCreatedAt,
-                        author: currentUser.username,
-                        text,
-                        images,
-                        createdAt: repCreatedAt,
-                        timestamp: formatCommentTime({ createdAt: repCreatedAt }),
-                        likes: []
-                    });
-                    // Ghi nhận hoạt động trả lời bình luận
-                    logMemberActivity("Trả lời bình luận của " + parent.author, `Tại ${activeChar.name}: "${text.slice(0, 60)}"`);
-                    await db.collection("comments").doc(activeChar.id).set({
-                        list: charComments[activeChar.id]
-                    });
-                    renderComments();
-                } catch (error) {
-                    console.error("Không thể gửi ảnh trả lời:", error);
-                    alert("Chưa thể tải ảnh lên hoặc gửi câu trả lời. Vui lòng thử lại.");
-                }
-            }
-        }
-
         async function deleteCommentByBibi(cmtId, isReply = false, parentId = null) {
             const comments = charComments[activeChar.id] || [];
             const targetComment = isReply
@@ -6493,29 +6291,7 @@
             if (modal && img) {
                 img.src = src;
                 modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // Ngăn cuộn trang phía sau khi xem ảnh
-            }
-        }
-
-        function closeLightboxImage() {
-            const modal = document.getElementById('imageLightboxModal');
-            const img = document.getElementById('lightboxImageTag');
-            if (modal) {
-                modal.classList.add('hidden');
-                document.body.style.overflow = '';
-            }
-            if (img) img.src = '';
-        }
-
-        // ================= XEM ẢNH BÌNH LUẬN PHÓNG TO =================
-        function openLightboxImage(src) {
-            if (!src) return;
-            const modal = document.getElementById('imageLightboxModal');
-            const img = document.getElementById('lightboxImageTag');
-            if (modal && img) {
-                img.src = src;
-                modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // Ngăn cuộn trang phía sau khi xem ảnh
+                document.body.style.overflow = 'hidden';
             }
         }
 
@@ -6579,6 +6355,56 @@
             return PALETTE_DEFAULT_AVATARS[0];
         }
 
+        async function submitReply(parentId) {
+            const input = document.getElementById(`replyInput-${parentId}`);
+            const text = input.value.trim();
+            const imageFiles = Array.from(document.getElementById(`replyImgFile-${parentId}`)?.files || []);
+
+            if (!text && imageFiles.length === 0) return;
+
+            const parent = (charComments[activeChar.id] || []).find(c => c.id === parentId);
+            if (parent) {
+                try {
+                    const images = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 850, 0.62)));
+                    const repCreatedAt = Date.now();
+                    parent.replies.push({
+                        id: 'rep-' + repCreatedAt,
+                        author: currentUser.username,
+                        text,
+                        images,
+                        createdAt: repCreatedAt,
+                        timestamp: formatCommentTime({ createdAt: repCreatedAt }),
+                        likes: []
+                    });
+                    logMemberActivity("Trả lời bình luận của " + parent.author, `Tại ${activeChar.name}: "${text.slice(0, 60)}"`);
+                    await db.collection("comments").doc(activeChar.id).set({
+                        list: charComments[activeChar.id]
+                    });
+                    input.value = '';
+                    removeCommentPreview(`replyImgFile-${parentId}`, `replyImgPreview-${parentId}`);
+                    visibleRepliesCount[parentId] = Math.max(visibleRepliesCount[parentId] || 0, parent.replies.length);
+                    renderComments();
+                } catch (error) {
+                    console.error("Không thể gửi ảnh trả lời:", error);
+                    alert("Chưa thể tải ảnh lên hoặc gửi câu trả lời. Vui lòng thử lại.");
+                }
+            }
+        }
+
+        let visibleRepliesCount = {};
+
+        function loadMoreReplies(cmtId) {
+            visibleRepliesCount[cmtId] = (visibleRepliesCount[cmtId] || 0) + 4;
+            playCheerfulClickSound();
+            renderComments();
+        }
+
+        function collapseReplies(cmtId) {
+            delete visibleRepliesCount[cmtId];
+            playCheerfulClickSound();
+            renderComments();
+        }
+
         function renderComments() {
             if (!activeChar) return;
             const list = document.getElementById('commentList');
@@ -6608,32 +6434,57 @@
 
                 let repliesHtml = '';
                 if (c.replies && c.replies.length > 0) {
-                    repliesHtml = `<div class="pl-3 sm:pl-4 mt-2.5 space-y-2 border-l-2 border-pink-300/30">`;
-                    c.replies.forEach(r => {
-                        const isRepLiked = r.likes && r.likes.includes(currentUser.username);
-                        const canDeleteReply = isOwner || r.author?.toLowerCase() === currentUser?.username?.toLowerCase();
-                        const repAvatar = getUserAvatarOrDefault(r.author);
-                        const repGlow = getUserPastelGlowClass(r.author);
-
-                        repliesHtml += `
-                            <div class="bg-white/5 p-2.5 rounded-xl border border-white/5 space-y-1 relative">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2 min-w-0">
-                                        <img src="${repAvatar}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-6 h-6 rounded-full object-cover shrink-0 ${repGlow}">
-                                        <span class="font-extrabold text-pink-300 truncate">${r.author}</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <span class="text-[10px] text-sky-200/50 font-mono">${formatCommentTime(r)}</span>
-                                        ${canDeleteReply ? `<button onclick="deleteCommentByBibi('${r.id}', true, '${c.id}')" class="text-red-400 hover:text-red-300 font-bold text-[10px]" title="Xóa">Xóa</button>` : ''}
-                                    </div>
-                                </div>
-                                ${r.text ? `<p class="text-sky-100/90 leading-relaxed pl-8">${r.text}</p>` : ''}
-                                ${renderCommentImages(r, "w-24 h-24 object-cover rounded-xl mt-1 border border-white/10 inline-block mr-1")}
-                                ${renderReactionButtons(r, true, c.id)}
+                    const shownCount = visibleRepliesCount[c.id] || 0;
+                    if (shownCount === 0) {
+                        repliesHtml = `
+                            <div class="pl-8 pt-1">
+                                <button type="button" onclick="loadMoreReplies('${c.id}')" class="text-[11px] font-extrabold text-sky-300 hover:text-pink-300 flex items-center gap-1 active:scale-95 transition">
+                                    <span>↪ Xem ${c.replies.length} câu trả lời</span>
+                                </button>
                             </div>
                         `;
-                    });
-                    repliesHtml += `</div>`;
+                    } else {
+                        const displayedReplies = c.replies.slice(0, shownCount);
+                        const remaining = c.replies.length - shownCount;
+
+                        repliesHtml = `<div class="ml-6 sm:ml-8 pl-3 border-l-2 border-pink-300/40 mt-2 space-y-2">`;
+                        displayedReplies.forEach(r => {
+                            const canDeleteReply = isOwner || r.author?.toLowerCase() === currentUser?.username?.toLowerCase();
+                            const repAvatar = getUserAvatarOrDefault(r.author);
+                            const repGlow = getUserPastelGlowClass(r.author);
+
+                            repliesHtml += `
+                                <div class="bg-white/5 p-2.5 rounded-xl border border-white/5 space-y-1 relative">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <img src="${repAvatar}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-6 h-6 rounded-full object-cover shrink-0 ${repGlow}">
+                                            <span class="font-extrabold text-pink-300 truncate">${r.author}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="text-[10px] text-sky-200/50 font-mono">${formatCommentTime(r)}</span>
+                                            ${canDeleteReply ? `<button onclick="deleteCommentByBibi('${r.id}', true, '${c.id}')" class="text-red-400 hover:text-red-300 font-bold text-[10px]" title="Xóa">Xóa</button>` : ''}
+                                        </div>
+                                    </div>
+                                    ${r.text ? `<p class="text-sky-100/90 leading-relaxed pl-8">${r.text}</p>` : ''}
+                                    ${renderCommentImages(r, "w-24 h-24 object-cover rounded-xl mt-1 border border-white/10 inline-block mr-1")}
+                                    ${renderReactionButtons(r, true, c.id)}
+                                </div>
+                            `;
+                        });
+
+                        repliesHtml += `
+                            <div class="flex items-center gap-3 pt-1 text-[11px]">
+                                ${remaining > 0 ? `
+                                    <button type="button" onclick="loadMoreReplies('${c.id}')" class="font-bold text-sky-300 hover:text-pink-300 active:scale-95 transition">
+                                        Xem thêm câu trả lời (còn ${remaining}) ▾
+                                    </button>
+                                ` : ''}
+                                <button type="button" onclick="collapseReplies('${c.id}')" class="text-sky-200/60 hover:text-white">
+                                    Thu gọn ▴
+                                </button>
+                            </div>
+                        </div>`;
+                    }
                 }
 
                 const mainAvatar = getUserAvatarOrDefault(c.author);
@@ -7253,7 +7104,7 @@
         }
     </script>
     <!-- BỘ PHÁT NHẠC ĐA NĂNG (HỖ TRỢ CẢ AUDIO MP3 LẪN YOUTUBE) -->
-    <audio id="nativeBgAudio" src="https://files.catbox.moe/m530yh.mp3" playsinline preload="auto"></audio>
+    <audio id="nativeBgAudio" src="" playsinline preload="auto"></audio>
     <div style="position:fixed; bottom:0; right:0; width:64px; height:64px; opacity:0.01; pointer-events:none; z-index:-10;">
         <div id="ytAudioPlayer"></div>
     </div>
