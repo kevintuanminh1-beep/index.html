@@ -952,6 +952,14 @@
             <p class="text-xs text-sky-200/70 mt-1">Chọn một hoặc nhiều thể loại kết hợp để lọc nhân vật</p>
         </div>
 
+        <!-- THANH TÌM KIẾM TÊN NHÂN VẬT -->
+        <div class="w-full px-2 mb-3">
+            <div class="relative flex items-center">
+                <input id="searchStoryCharInput" type="text" oninput="handleSearchStoryChar(this.value)" placeholder="Tìm kiếm tên nhân vật..." class="w-full bg-black/40 border border-white/20 focus:border-pink-300 rounded-2xl px-3.5 py-2 text-xs text-white placeholder-sky-200/50 outline-none transition">
+                <span class="absolute right-3.5 text-sky-200/50 text-xs pointer-events-none">🔍</span>
+            </div>
+        </div>
+
         <div class="w-full px-2 mb-5">
             <div class="flex items-center justify-between mb-2 px-1">
                 <span class="text-[11px] font-bold text-pink-300 uppercase">Lọc theo thể loại:</span>
@@ -967,6 +975,9 @@
         </div>
 
         <div id="characterList" class="w-full px-2 space-y-4"></div>
+
+        <!-- PHÂN TRANG (TỐI ĐA 10 NHÂN VẬT / TRANG) -->
+        <div id="storyPagination" class="w-full px-2 mt-6 flex items-center justify-center gap-1.5 flex-wrap"></div>
     </div>
 
     <!-- MÀN HÌNH 3: SẮC MÀU NHANH NHẸN -->
@@ -1246,6 +1257,10 @@
                 </p>
             </div>
 
+            <div class="bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-300/40 p-3 rounded-2xl mb-3 text-xs leading-relaxed text-pink-100 font-medium">
+                Dành cho những bạn muốn làm thủ tục để lấy link ngay mà không cần phải sưu tầm Bút Chì Màu.
+            </div>
+
             <div class="bg-white/5 border border-white/15 rounded-2xl p-3.5 mb-4 text-xs space-y-2">
                 <h4 class="font-extrabold text-amber-300 uppercase">BƯỚC CHUNG</h4>
                 <p>1. <b>Vào Web</b> ➔ Bấm <b>Đăng nhập bằng Discord</b> (server: <a href="https://discord.gg/N9UyumkewK" target="_blank" class="server-highlight-link font-extrabold underline">Bảng Màu Nhỏ Của Palette</a>).</p>
@@ -1308,7 +1323,7 @@
                             <div>• Hướng nội hay hướng ngoại: [Hướng nội / Hướng ngoại]</div>
                         </div>
                     </div>
-                    <p class="text-[10px] text-sky-200/80 italic">Bài đăng hồ sơ tân thủ chỉ được tính trong vòng một tiếng, ít nhất phải điền theo đúng ba mục trên nhé.</p>
+                    <p class="text-[10px] text-sky-200/80 italic">Bài đăng hồ sơ tân thủ chỉ được tính trong vòng 5 phút, ít nhất phải điền theo đúng ba mục trên nhé.</p>
 
                     <button onclick="handleProofFromGuide('Tân thủ')" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 font-bold py-2 rounded-xl text-white mt-1 shadow-md active:scale-95">
                         Vẽ Đường Cho Tình Yêu Chạy ➔
@@ -1541,11 +1556,19 @@
                                 <span id="currentMusicTrackStatus" class="text-amber-300 font-extrabold truncate">Nhẹ Buông</span>
                             </div>
                         </div>
-                        <!-- Nút Bật / Tắt -->
-                        <button type="button" id="userMusicToggleBtn" onclick="toggleUserMusic()" class="bg-white/10 border border-white/20 text-sky-200 px-3 py-1.5 rounded-xl font-bold active:scale-95 transition flex items-center gap-1 text-xs shrink-0">
-                            <span id="userMusicToggleIcon">▶</span>
-                            <span id="userMusicToggleText">Bật Nhạc</span>
-                        </button>
+                        <!-- Điều Khiển Nhạc: Lùi, Bật/Tắt, Tiến -->
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button type="button" onclick="playPrevTrack()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-sky-200 w-7 h-7 rounded-lg font-bold active:scale-95 transition flex items-center justify-center text-xs" title="Bài trước">
+                                <span>⏮</span>
+                            </button>
+                            <button type="button" id="userMusicToggleBtn" onclick="toggleUserMusic()" class="bg-white/10 border border-white/20 text-sky-200 px-2.5 py-1.5 rounded-xl font-bold active:scale-95 transition flex items-center gap-1 text-xs" title="Bật / Tắt">
+                                <span id="userMusicToggleIcon">▶</span>
+                                <span id="userMusicToggleText">Bật Nhạc</span>
+                            </button>
+                            <button type="button" onclick="playNextTrack()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-sky-200 w-7 h-7 rounded-lg font-bold active:scale-95 transition flex items-center justify-center text-xs" title="Bài tiếp">
+                                <span>⏭</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- THANH CHỈNH ÂM LƯỢNG CHO TẤT CẢ MỌI NGƯỜI -->
@@ -2382,8 +2405,15 @@
         let currentMusicSource = DEFAULT_MUSIC_URL;
         let currentMusicTitle = DEFAULT_MUSIC_NAME;
         let currentYoutubeVideoId = "";
-        let isUserMusicEnabled = (localStorage.getItem('palette_music_enabled') === 'true');
+
+        // Tự động phát khi user mới vào, nhưng nếu đã bấm tắt thì sẽ luôn tắt cho tới khi bật lại
+        const savedMusicPref = localStorage.getItem('palette_music_enabled');
+        let isUserMusicEnabled = (savedMusicPref === null ? true : savedMusicPref === 'true');
         let currentMusicVolume = parseInt(localStorage.getItem('palette_music_volume') || "80");
+
+        // Biến phục vụ tính năng nhấn giữ lâu để đổi vị trí bài hát
+        let trackLongPressTimer = null;
+        let isTrackLongPressTriggered = false;
 
         function checkIsOwnerAccount() {
             if (currentUser?.isOwner) return true;
@@ -2541,9 +2571,19 @@
             renderOwnerPlaylist();
         }
 
+        function playPrevTrack() {
+            if (!currentPlaylist || currentPlaylist.length === 0) return;
+            const prevIdx = (currentTrackIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
+            isUserMusicEnabled = true;
+            localStorage.setItem('palette_music_enabled', 'true');
+            playTrackAtIndex(prevIdx, true);
+        }
+
         function playNextTrack() {
             if (!currentPlaylist || currentPlaylist.length === 0) return;
             const nextIdx = (currentTrackIndex + 1) % currentPlaylist.length;
+            isUserMusicEnabled = true;
+            localStorage.setItem('palette_music_enabled', 'true');
             playTrackAtIndex(nextIdx, true);
         }
 
@@ -2639,6 +2679,62 @@
             alert("Đã thêm bài '" + title + "' vào danh sách phát thành công!");
         }
 
+        // Nhấn giữ lâu bài hát để đảo thứ tự
+        function startTrackLongPress(index) {
+            if (!checkIsOwnerAccount()) return;
+            isTrackLongPressTriggered = false;
+            clearTimeout(trackLongPressTimer);
+            trackLongPressTimer = setTimeout(() => {
+                isTrackLongPressTriggered = true;
+                promptReorderTrack(index);
+            }, 550);
+        }
+
+        function cancelTrackLongPress() {
+            clearTimeout(trackLongPressTimer);
+        }
+
+        function handleTrackItemClick(index) {
+            if (isTrackLongPressTriggered) {
+                isTrackLongPressTriggered = false;
+                return;
+            }
+            playTrackAtIndex(index, true);
+        }
+
+        function promptReorderTrack(index) {
+            if (!checkIsOwnerAccount()) return;
+            const track = currentPlaylist[index];
+            if (!track) return;
+            const inputPos = prompt(
+                `Đổi thứ tự bài: "${track.title}"\nNhập vị trí mới từ 1 đến ${currentPlaylist.length}:`,
+                (index + 1).toString()
+            );
+            if (!inputPos) return;
+            const target = parseInt(inputPos);
+            if (isNaN(target) || target < 1 || target > currentPlaylist.length) {
+                alert(`Vị trí không hợp lệ! Vui lòng nhập số từ 1 đến ${currentPlaylist.length}.`);
+                return;
+            }
+            const newIndex = target - 1;
+            if (newIndex === index) return;
+
+            const [moved] = currentPlaylist.splice(index, 1);
+            currentPlaylist.splice(newIndex, 0, moved);
+
+            if (currentTrackIndex === index) {
+                currentTrackIndex = newIndex;
+            } else if (index < currentTrackIndex && newIndex >= currentTrackIndex) {
+                currentTrackIndex--;
+            } else if (index > currentTrackIndex && newIndex <= currentTrackIndex) {
+                currentTrackIndex++;
+            }
+
+            syncPlaylistToFirebase();
+            renderOwnerPlaylist();
+            updateMusicUI();
+        }
+
         function movePlaylistItemUp(index) {
             if (!checkIsOwnerAccount()) return;
             if (index <= 0 || index >= currentPlaylist.length) return;
@@ -2721,12 +2817,19 @@
             currentPlaylist.forEach((item, index) => {
                 const isCurrent = (index === currentTrackIndex);
                 const div = document.createElement('div');
-                div.className = `flex items-center justify-between p-1.5 rounded-xl text-xs border transition ${
+                div.className = `flex items-center justify-between p-1.5 rounded-xl text-xs border transition select-none ${
                     isCurrent ? 'bg-pink-500/25 border-pink-300 text-pink-200 shadow' : 'bg-white/5 border-white/10 text-sky-100 hover:bg-white/10'
                 }`;
 
+                div.onmousedown = () => startTrackLongPress(index);
+                div.onmouseup = cancelTrackLongPress;
+                div.onmouseleave = cancelTrackLongPress;
+                div.ontouchstart = () => startTrackLongPress(index);
+                div.ontouchend = cancelTrackLongPress;
+                div.ontouchcancel = cancelTrackLongPress;
+
                 div.innerHTML = `
-                    <div class="flex items-center gap-1.5 truncate cursor-pointer flex-1 mr-1" onclick="playTrackAtIndex(${index}, true)" title="Chạm để phát ngay bài này">
+                    <div class="flex items-center gap-1.5 truncate cursor-pointer flex-1 mr-1" onclick="handleTrackItemClick(${index})" title="Chạm để phát - Nhấn giữ để đổi vị trí">
                         <span class="text-[10px] font-mono font-bold text-amber-300 w-4 text-center shrink-0">${index + 1}</span>
                         <span class="font-bold truncate ${isCurrent ? 'text-pink-100 font-black' : 'text-sky-100'}">${item.title}</span>
                         ${isCurrent ? '<span class="text-[8.5px] bg-pink-400/40 text-pink-100 px-1.5 py-0.2 rounded-full font-bold animate-pulse shrink-0">Đang phát</span>' : ''}
@@ -2784,14 +2887,26 @@
                 if (isPlaying) {
                     btnText.innerText = "Tắt Nhạc";
                     btnIcon.innerText = "⏸";
-                    btn.className = "bg-emerald-500/25 border border-emerald-300/50 text-emerald-200 px-3 py-1.5 rounded-xl font-black active:scale-95 transition flex items-center gap-1 text-xs shadow-[0_0_12px_rgba(52,211,153,0.3)] shrink-0";
+                    btn.className = "bg-emerald-500/25 border border-emerald-300/50 text-emerald-200 px-2.5 py-1.5 rounded-xl font-black active:scale-95 transition flex items-center gap-1 text-xs shadow-[0_0_12px_rgba(52,211,153,0.3)] shrink-0";
                 } else {
                     btnText.innerText = "Bật Nhạc";
                     btnIcon.innerText = "▶";
-                    btn.className = "bg-white/10 border border-white/20 text-sky-200 px-3 py-1.5 rounded-xl font-bold active:scale-95 transition flex items-center gap-1 text-xs shrink-0";
+                    btn.className = "bg-white/10 border border-white/20 text-sky-200 px-2.5 py-1.5 rounded-xl font-bold active:scale-95 transition flex items-center gap-1 text-xs shrink-0";
                 }
             }
         }
+
+        // Kích hoạt âm thanh mượt mà trên các trình duyệt chặn tự phát khi vừa mở web
+        document.addEventListener('pointerdown', function tryAutoplayOnce() {
+            if (isUserMusicEnabled) {
+                const na = document.getElementById('nativeBgAudio');
+                if (currentMusicType === "audio" && na && na.paused) {
+                    na.play().catch(() => {});
+                } else if (currentMusicType === "youtube" && ytPlayer && ytPlayer.playVideo) {
+                    ytPlayer.playVideo();
+                }
+            }
+        }, { once: true });
 
         function openEffectsModal() {
             const saved = getUserVisualEffects();
@@ -3405,6 +3520,7 @@
                 renderCharacters();
                 renderFastColorCenter();
                 createPencilSparkles();
+                triggerNotification("Mở Khóa Link Thành Công!", "Bạn đã dùng 10 Bút Chì Màu mở khóa thành công link của '" + targetChar.name + "'! Nhớ bấm thả tim để lưu giữ vĩnh viễn nhé.", currentUser.username);
                 alert(`🎉 Chúc mừng! Bạn đã đổi 10 Bút Chì Màu và mở khóa link của "${targetChar.name}"! Nhớ bấm thả tim để lưu giữ vĩnh viễn nhé.`);
             } catch (error) {
                 if (error.message === "NOT_ENOUGH_PENCILS") {
@@ -4702,6 +4818,16 @@
         }
         function pad(n) { return n < 10 ? '0' + n : n; }
 
+        let storySearchKeyword = "";
+        let storyCurrentPage = 1;
+        const STORY_CHARS_PER_PAGE = 10;
+
+        function handleSearchStoryChar(val) {
+            storySearchKeyword = (val || "").trim().toLowerCase();
+            storyCurrentPage = 1;
+            renderCharacters();
+        }
+
         function renderCategoryTags() {
             const container = document.getElementById('tagContainer');
             container.innerHTML = '';
@@ -4724,12 +4850,17 @@
             const idx = selectedCategories.indexOf(tag);
             if (idx > -1) selectedCategories.splice(idx, 1);
             else selectedCategories.push(tag);
+            storyCurrentPage = 1;
             renderCategoryTags();
             renderCharacters();
         }
 
         function resetCategoryFilter() {
             selectedCategories = [];
+            storyCurrentPage = 1;
+            storySearchKeyword = "";
+            const searchInput = document.getElementById('searchStoryCharInput');
+            if (searchInput) searchInput.value = "";
             renderCategoryTags();
             renderCharacters();
         }
@@ -4742,23 +4873,33 @@
             const list = document.getElementById('characterList');
             list.innerHTML = '';
 
-            const filtered = (selectedCategories.length === 0)
-                ? characters
-                : characters.filter(c => c.tags && selectedCategories.every(sel => c.tags.includes(sel)));
+            const filtered = characters.filter(c => {
+                const matchesCategory = (selectedCategories.length === 0) || (c.tags && selectedCategories.every(sel => c.tags.includes(sel)));
+                const matchesSearch = (!storySearchKeyword) || (c.name && c.name.toLowerCase().includes(storySearchKeyword));
+                return matchesCategory && matchesSearch;
+            });
 
             if (filtered.length === 0) {
                 list.innerHTML = `
                     <div class="text-center py-10 bg-white/5 border border-white/10 rounded-3xl p-5">
                         <svg class="w-8 h-8 mx-auto text-pink-300 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 15h8"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-                        <p class="text-xs text-sky-200/80 font-bold">Chưa có nhân vật nào trong danh sách!</p>
-                        <p class="text-[11px] text-sky-200/50 mt-1">Chính chủ hãy vào mục Bổ Sung Sắc Màu để tải lên các bức họa người thương nhé.</p>
+                        <p class="text-xs text-sky-200/80 font-bold">Không tìm thấy nhân vật nào phù hợp!</p>
+                        <p class="text-[11px] text-sky-200/50 mt-1">Hãy thử tìm theo tên khác hoặc đặt lại bộ lọc thể loại nhé.</p>
                     </div>
                 `;
+                renderStoryPagination(0);
                 return;
             }
 
-            const fast24hChars = filtered.filter(c => c.status === 'unlocked_24h');
-            const normalChars = filtered.filter(c => c.status !== 'unlocked_24h');
+            const totalPages = Math.max(1, Math.ceil(filtered.length / STORY_CHARS_PER_PAGE));
+            if (storyCurrentPage > totalPages) storyCurrentPage = totalPages;
+            if (storyCurrentPage < 1) storyCurrentPage = 1;
+
+            const startIndex = (storyCurrentPage - 1) * STORY_CHARS_PER_PAGE;
+            const paginatedChars = filtered.slice(startIndex, startIndex + STORY_CHARS_PER_PAGE);
+
+            const fast24hChars = paginatedChars.filter(c => c.status === 'unlocked_24h');
+            const normalChars = paginatedChars.filter(c => c.status !== 'unlocked_24h');
 
             fast24hChars.forEach((c) => {
                 const card = document.createElement('div');
@@ -4773,6 +4914,7 @@
                             MỞ KHÓA CÓ HẠN GIỜ
                         </span>
                         <h3 class="text-2xl font-black char-pastel-0 mt-2">${c.name}</h3>
+                        <div class="text-[9.5px] text-sky-200/50 italic tracking-wide mt-0.5">Non-commercial use only. All image copyrights belong to their respective owners.</div>
                         <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
                     </div>
 
@@ -4816,6 +4958,7 @@
                                 <h3 class="text-base font-extrabold ${getPastelColorClass(index)}">${c.name}</h3>
                                 ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-200 border border-red-300/40 px-1.5 py-0.5 rounded-full font-bold">Đã đóng</span>' : ''}
                             </div>
+                            <div class="text-[9px] text-sky-200/50 italic tracking-wide mt-0.5">Non-commercial use only. All image copyrights belong to their respective owners.</div>
                             <p class="text-xs text-sky-100/80 truncate mt-0.5">${c.subtitle}</p>
                             <div class="flex flex-wrap gap-1 mt-1.5">${tagsHtml}</div>
                         </div>
@@ -4825,7 +4968,38 @@
                 list.appendChild(card);
             });
 
+            renderStoryPagination(totalPages);
             updateCountdownDisplayOnly();
+        }
+
+        function renderStoryPagination(totalPages) {
+            const container = document.getElementById('storyPagination');
+            if (!container) return;
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            const prevDisabled = (storyCurrentPage <= 1);
+            html += `<button type="button" onclick="changeStoryPage(${storyCurrentPage - 1})" ${prevDisabled ? 'disabled' : ''} class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition ${prevDisabled ? 'opacity-30 cursor-not-allowed bg-white/5 text-white/40' : 'bg-white/10 hover:bg-pink-500/30 text-pink-200 active:scale-95 border border-white/10'}" title="Trang trước">◀</button>`;
+
+            for (let p = 1; p <= totalPages; p++) {
+                const isCurrent = (p === storyCurrentPage);
+                html += `<button type="button" onclick="changeStoryPage(${p})" class="w-8 h-8 rounded-xl font-extrabold text-xs transition active:scale-95 ${isCurrent ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md border border-pink-300' : 'bg-white/10 hover:bg-white/20 text-sky-200 border border-white/10'}">${p}</button>`;
+            }
+
+            const nextDisabled = (storyCurrentPage >= totalPages);
+            html += `<button type="button" onclick="changeStoryPage(${storyCurrentPage + 1})" ${nextDisabled ? 'disabled' : ''} class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition ${nextDisabled ? 'opacity-30 cursor-not-allowed bg-white/5 text-white/40' : 'bg-white/10 hover:bg-pink-500/30 text-pink-200 active:scale-95 border border-white/10'}" title="Trang sau">▶</button>`;
+
+            container.innerHTML = html;
+        }
+
+        function changeStoryPage(page) {
+            storyCurrentPage = page;
+            renderCharacters();
+            const topEl = document.getElementById('storyScreen');
+            if (topEl) topEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function openCharDetail(char) {
@@ -5138,15 +5312,25 @@
                 const isDrafting = combinedDcText.includes("gửi tin nhắn tới") || combinedDcText.includes("nhập tin nhắn") || combinedDcText.includes("send a message");
                 if (isDrafting) throw new Error("Ảnh Discord đang ở khung soạn thảo, chưa bấm gửi chính thức!");
 
-                // SIẾT CHẶT THỜI GIAN: BẮT BUỘC TRONG VÒNG 1 TIẾNG
+                // KIỂM TRA THỜI GIAN GỬI: TÂN THỦ CHỈ ĐƯỢC 5 PHÚT, GẠO CỘI 1 TIẾNG
                 const hasSpecificDate = /\b\d{1,2}[\/\-]\d{1,2}\b/.test(combinedDcText) || /\b(ngày|tháng|hôm qua|yesterday|days? ago)\b/.test(combinedDcText);
                 if (hasSpecificDate) {
                     throw new Error("Mốc thời gian gửi tin nhắn đã sang ngày khác hoặc ghi rõ ngày tháng cũ, từ chối duyệt!");
                 }
 
-                const hasOver1h = /\b([2-9]|[1-9][0-9])\s*(giờ trước|hours ago|h trước)\b/.test(combinedDcText);
+                const isNewbie = (activeProofType === 'Tân thủ');
+                const maxAllowedMinutes = isNewbie ? 5 : 65;
+
+                const hasOver1h = /\b([1-9][0-9]*)\s*(giờ trước|hours ago|h trước)\b/.test(combinedDcText);
                 if (hasOver1h) {
-                    throw new Error("Tin nhắn trong ảnh hiển thị đã gửi từ 2 tiếng trước trở lên (quá hạn 1 tiếng)!");
+                    throw new Error(isNewbie ? "Tin nhắn Tân thủ đã gửi quá hạn 5 phút!" : "Tin nhắn trong ảnh hiển thị đã gửi từ 2 tiếng trước trở lên (quá hạn 1 tiếng)!");
+                }
+
+                if (isNewbie) {
+                    const hasOver5m = /\b([6-9]|[1-9][0-9]+)\s*(phút trước|m ago|mins? ago)\b/.test(combinedDcText);
+                    if (hasOver5m) {
+                        throw new Error("Tin nhắn Hồ Sơ Tân Thủ đã gửi quá hạn 5 phút!");
+                    }
                 }
 
                 const timeRegex = /\b([01]?[0-9]|2[0-3])[:h]([0-5][0-9])\b/g;
@@ -5161,8 +5345,10 @@
                     
                     let diffMinutes = (curHour * 60 + curMin) - (msgHour * 60 + msgMin);
                     if (diffMinutes < 0) diffMinutes += 24 * 60;
-                    if (diffMinutes > 65) {
-                        throw new Error(`Tin nhắn gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã cách nhau hơn 1 tiếng!`);
+                    if (diffMinutes > maxAllowedMinutes) {
+                        throw new Error(isNewbie 
+                            ? `Tin nhắn Tân thủ gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã quá hạn 5 phút!` 
+                            : `Tin nhắn gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã cách nhau hơn 1 tiếng!`);
                     }
                 }
 
