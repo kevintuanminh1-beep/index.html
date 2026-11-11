@@ -559,9 +559,12 @@
                     <span class="text-[11px] text-amber-300 font-bold">Cần: 10 Chì</span>
                 </div>
                 <p class="text-[11px] text-sky-100/80 mb-2.5">Khi tích đủ 10 Chì Màu, bạn có thể chọn mở khóa ngay bất kỳ một nhân vật nào mà không cần làm thủ tục!</p>
-                <div class="flex items-center gap-2">
-                    <select id="redeemCharSelect" onchange="openSelectedRedeemCharacter()" class="flex-1 bg-black/60 border border-white/20 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-400"></select>
-                    <button onclick="redeemTenPencilsForChar()" class="bg-gradient-to-r from-pink-500 to-purple-600 font-bold text-xs px-3.5 py-2 rounded-xl text-white shadow active:scale-95 transition whitespace-nowrap">
+                <div class="relative flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <input id="redeemCharInput" type="text" onkeydown="if(event.key==='Enter') submitRedeemSearch()" oninput="handleRedeemInput(this.value)" onfocus="handleRedeemInput(this.value)" placeholder="Gõ tên nhân vật muốn đổi..." class="w-full bg-black/60 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400 placeholder:text-sky-200/50">
+                        <div id="redeemSuggestionsBox" class="absolute left-0 right-0 top-full mt-1 bg-[#101830] border border-pink-300/40 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-30 custom-scroll space-y-1 p-1.5"></div>
+                    </div>
+                    <button type="button" onclick="submitRedeemSearch()" class="bg-gradient-to-r from-pink-500 to-purple-600 font-bold text-xs px-3.5 py-2 rounded-xl text-white shadow active:scale-95 transition whitespace-nowrap">
                         Mở Khóa Ngay
                     </button>
                 </div>
@@ -605,6 +608,28 @@
                         <span>Vào mục <b>Vòng xoay may mắn</b> để quay thưởng thử vận may trúng hoặc nhân đôi Bút Chì Màu.</span>
                     </li>
                 </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHUNG ĐÈ MINI: ĐỔI CHÌ LẤY LINK NHÂN VẬT -->
+    <div id="miniRedeemCharModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[70] hidden flex items-center justify-center p-4">
+        <div class="bg-[#121c38] border-2 border-pink-300/60 p-5 rounded-3xl max-w-xs w-full text-center shadow-[0_0_35px_rgba(244,114,182,0.4)] relative space-y-3">
+            <button type="button" onclick="closeMiniRedeemModal()" class="text-sky-200 hover:text-white text-lg p-1 absolute top-3 right-3 font-bold" title="Đóng">✕</button>
+
+            <div>
+                <span class="text-[10px] bg-pink-500/20 text-pink-300 border border-pink-300/30 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Đổi Bút Chì Màu</span>
+                <h3 id="miniRedeemCharName" class="text-2xl font-black char-pastel-0 mt-1 truncate">Tên nhân vật</h3>
+            </div>
+
+            <div class="w-48 h-60 mx-auto rounded-2xl overflow-hidden border-2 border-pink-300/40 shadow-lg relative bg-black/40">
+                <img id="miniRedeemCharImg" src="" alt="Char" class="w-full h-full object-cover">
+            </div>
+
+            <div id="miniRedeemStatusBox" class="text-xs pt-1">
+                <button type="button" id="miniRedeemActionBtn" onclick="confirmMiniRedeem()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg active:scale-95 transition">
+                    Đổi 10 Chì Màu Lấy Link
+                </button>
             </div>
         </div>
     </div>
@@ -2875,8 +2900,12 @@
             }
 
             if (statusEl) {
-                const trackName = currentMusicTitle || DEFAULT_MUSIC_NAME;
-                statusEl.innerText = isPlaying ? trackName : (trackName + " (Tạm dừng)");
+                if (!currentPlaylist || currentPlaylist.length === 0) {
+                    statusEl.innerText = "Chưa có bài hát";
+                } else {
+                    const trackName = currentMusicTitle || DEFAULT_MUSIC_NAME;
+                    statusEl.innerText = isPlaying ? trackName : (trackName ? trackName + " (Tạm dừng)" : "Tạm dừng");
+                }
             }
 
             if (btn && btnText && btnIcon) {
@@ -3493,35 +3522,114 @@
             document.getElementById('pencilModal').classList.add('hidden');
         }
 
-        function renderRedeemSelectOptions() {
-            const select = document.getElementById('redeemCharSelect');
-            select.innerHTML = '';
+        let selectedMiniRedeemChar = null;
 
-            const lockedChars = characters.filter(c => {
-                const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
-                return !isUnlocked && c.status !== 'closed';
+        function renderRedeemSelectOptions() {}
+
+        function handleRedeemInput(val) {
+            const box = document.getElementById('redeemSuggestionsBox');
+            if (!box) return;
+            const query = (val || "").trim().toLowerCase();
+            const matches = characters.filter(c => {
+                if (c.status === 'closed') return false;
+                return (!query || c.name.toLowerCase().includes(query));
             });
 
-            if (lockedChars.length === 0) {
-                select.innerHTML = `<option value="">(Không còn nhân vật nào để đổi)</option>`;
+            if (matches.length === 0) {
+                box.innerHTML = `<div class="text-[11px] text-sky-200/50 italic py-2 text-center">Không tìm thấy nhân vật nào.</div>`;
+                box.classList.remove('hidden');
                 return;
             }
 
-            lockedChars.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.innerText = c.name + (c.status === 'unlocked_24h' ? ' (Có hạn giờ)' : '');
-                select.appendChild(opt);
-            });
+            box.innerHTML = matches.map(c => {
+                const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
+                return `
+                    <div onclick="selectRedeemSuggestion('${c.id}')" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition select-none">
+                        <img src="${c.image}" class="w-7 h-7 rounded-lg object-cover shrink-0 border border-white/10">
+                        <span class="text-xs font-bold text-pink-200 truncate flex-1 text-left">${c.name}</span>
+                        ${isUnlocked ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-300/30 px-1.5 py-0.5 rounded-full font-bold">Đã mở</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+            box.classList.remove('hidden');
         }
 
-        function openSelectedRedeemCharacter() {
-            const charId = document.getElementById('redeemCharSelect').value;
-            const targetChar = characters.find(character => character.id === charId);
+        function selectRedeemSuggestion(charId) {
+            const targetChar = characters.find(c => c.id === charId);
             if (!targetChar) return;
-            closePencilModal();
-            openCharDetail(targetChar);
+            const input = document.getElementById('redeemCharInput');
+            if (input) input.value = targetChar.name;
+            const box = document.getElementById('redeemSuggestionsBox');
+            if (box) box.classList.add('hidden');
+            openMiniRedeemModal(targetChar);
         }
+
+        function submitRedeemSearch() {
+            const input = document.getElementById('redeemCharInput');
+            const val = input ? input.value.trim() : "";
+            if (!val) {
+                alert("Vui lòng gõ tên nhân vật bạn muốn đổi chì nhé!");
+                return;
+            }
+            const targetChar = characters.find(c => c.name.toLowerCase() === val.toLowerCase()) 
+                            || characters.find(c => c.name.toLowerCase().includes(val.toLowerCase()));
+            if (!targetChar) {
+                alert("Không tìm thấy nhân vật với tên này. Vui lòng kiểm tra lại tên nhé!");
+                return;
+            }
+            openMiniRedeemModal(targetChar);
+        }
+
+        function openMiniRedeemModal(char) {
+            if (!char) return;
+            selectedMiniRedeemChar = char;
+            const modal = document.getElementById('miniRedeemCharModal');
+            const nameEl = document.getElementById('miniRedeemCharName');
+            const imgEl = document.getElementById('miniRedeemCharImg');
+            const btn = document.getElementById('miniRedeemActionBtn');
+
+            if (nameEl) nameEl.innerText = char.name;
+            if (imgEl) imgEl.src = char.image;
+
+            const isUnlocked = userUnlockedState[currentUser?.username]?.[char.id] === true;
+            if (btn) {
+                if (isUnlocked) {
+                    btn.className = "jelly-btn w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg";
+                    btn.innerText = "🔓 ĐÃ MỞ KHÓA - Mở Link Ngay ➔";
+                    btn.onclick = () => window.open(char.aiStudioUrl, '_blank');
+                } else if (char.status === 'closed') {
+                    btn.className = "w-full bg-red-500/20 text-red-200 border border-red-400/40 font-bold text-xs py-2.5 px-3 rounded-xl cursor-not-allowed";
+                    btn.innerText = "Link nhân vật hiện đã đóng";
+                    btn.onclick = null;
+                } else {
+                    btn.className = "jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg active:scale-95 transition";
+                    btn.innerText = "Đổi 10 Chì Màu Lấy Link";
+                    btn.onclick = confirmMiniRedeem;
+                }
+            }
+
+            if (modal) modal.classList.remove('hidden');
+            playPaletteTingSound();
+        }
+
+        function closeMiniRedeemModal() {
+            const modal = document.getElementById('miniRedeemCharModal');
+            if (modal) modal.classList.add('hidden');
+            selectedMiniRedeemChar = null;
+        }
+
+        function confirmMiniRedeem() {
+            if (!selectedMiniRedeemChar) return;
+            redeemTenPencilsForChar(selectedMiniRedeemChar.id);
+        }
+
+        document.addEventListener('click', (e) => {
+            const box = document.getElementById('redeemSuggestionsBox');
+            const input = document.getElementById('redeemCharInput');
+            if (box && input && !box.contains(e.target) && e.target !== input) {
+                box.classList.add('hidden');
+            }
+        });
 
         function renderUnlockedCharListInModal() {
             const box = document.getElementById('unlockedCharListInModal');
@@ -3543,7 +3651,7 @@
             });
         }
 
-        async function redeemTenPencilsForChar() {
+        async function redeemTenPencilsForChar(directCharId = null) {
             if (!currentUser) return;
             const currentPencils = getUserPencilCount(currentUser.username);
             if (currentPencils < 10) {
@@ -3551,10 +3659,16 @@
                 return;
             }
 
-            const select = document.getElementById('redeemCharSelect');
-            const targetCharId = select.value;
+            let targetCharId = directCharId;
             if (!targetCharId) {
-                alert("Vui lòng chọn nhân vật muốn mở khóa!");
+                const input = document.getElementById('redeemCharInput');
+                const val = input ? input.value.trim() : "";
+                const found = characters.find(c => c.name.toLowerCase() === val.toLowerCase());
+                if (found) targetCharId = found.id;
+            }
+
+            if (!targetCharId) {
+                alert("Vui lòng gõ tên nhân vật muốn mở khóa!");
                 return;
             }
 
@@ -3592,6 +3706,9 @@
                 renderCharacters();
                 renderFastColorCenter();
                 createPencilSparkles();
+                if (selectedMiniRedeemChar && selectedMiniRedeemChar.id === targetChar.id) {
+                    openMiniRedeemModal(targetChar);
+                }
                 triggerNotification("Mở Khóa Link Thành Công!", "Bạn đã dùng 10 Bút Chì Màu mở khóa thành công link của '" + targetChar.name + "'! Nhớ bấm thả tim để lưu giữ vĩnh viễn nhé.", currentUser.username);
                 alert(`🎉 Chúc mừng! Bạn đã đổi 10 Bút Chì Màu và mở khóa link của "${targetChar.name}"! Nhớ bấm thả tim để lưu giữ vĩnh viễn nhé.`);
             } catch (error) {
@@ -5231,7 +5348,10 @@
         }
 
         function togglePouringHeart() {
-            if (!currentUser) return;
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập để bấm lưu giữ người thương nhé!");
+                return;
+            }
 
             playPaletteTingSound();
 
@@ -5689,7 +5809,7 @@
                 if (!hasPage) throw new Error("Ảnh chưa nhìn thấy rõ tên Page 'Palette Số Hóa'!");
 
                 // 2. Kiểm tra đúng Tag nhân vật
-                const targetTag = fastTargetChar.firstTagKeyword.toLowerCase();
+                const targetTag = (fastTargetChar.firstTagKeyword || fastTargetChar.firstTagSubtitle || "").toLowerCase();
                 const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 const hasTag = clean.includes(targetTag) || clean.includes(unaccentedTag);
                 if (!hasTag) throw new Error("Ảnh đang gửi sai bài viết của nhân vật khác!");
@@ -7007,6 +7127,22 @@
             }
 
             const username = currentUser.username;
+            const todayKey = getLocalDateKey();
+            const storageKey = `palette_wheel_spins_${username.toLowerCase()}`;
+            let spinRecord = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+            if (spinRecord.date !== todayKey) {
+                spinRecord = { date: todayKey, count: 0 };
+            }
+
+            if (spinRecord.count >= 3 && !currentUser.isOwner) {
+                alert("Hôm nay bạn đã dùng hết 3 lượt quay rồi! Hãy quay lại thử vận may vào ngày mai nhé.");
+                return;
+            }
+
+            spinRecord.count++;
+            localStorage.setItem(storageKey, JSON.stringify(spinRecord));
+
             isWheelSpinning = true;
             const spinBtn = document.getElementById('spinWheelBtn');
             const resultMsg = document.getElementById('wheelResultMsg');
