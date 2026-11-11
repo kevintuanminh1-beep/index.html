@@ -5563,6 +5563,11 @@
 
         // ================= DUYỆT BẰNG CHỨNG (OCR AI) =================
         async function processNormalProofVerification() {
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập tài khoản trước khi gửi ảnh xét duyệt mở link nhé!");
+                return;
+            }
+
             const submitBtn = document.getElementById('submitProofBtn');
             const submitText = document.getElementById('submitProofBtnText');
             const feedbackBox = document.getElementById('aiFeedbackBox');
