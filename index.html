@@ -232,6 +232,24 @@
             background-clip: text;
             animation: fastWave 4s linear infinite;
         }
+
+        .pastel-rules-title {
+            background: linear-gradient(90deg, #fbcfe8, #fed7aa, #fef08a, #bbf7d0, #bae6fd, #e9d5ff, #fbcfe8);
+            background-size: 300% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: fastWave 6s linear infinite;
+        }
+
+        .pastel-rules-title {
+            background: linear-gradient(90deg, #fbcfe8, #fed7aa, #fef08a, #bbf7d0, #bae6fd, #e9d5ff, #fbcfe8);
+            background-size: 300% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: fastWave 6s linear infinite;
+        }
         @keyframes fastWave { to { background-position: 300% center; } }
 
         .pastel-notify-wave {
@@ -440,6 +458,29 @@
 </head>
 <body class="text-white flex flex-col items-center justify-between p-4 relative selection:bg-pink-500">
 
+    <!-- KHUNG THÔNG BÁO PHÒNG CHỜ CÓ NÚT NHẬN THÔNG BÁO KHI CÓ CHỖ -->
+    <div id="trafficLimitOverlay" class="fixed inset-0 bg-[#0a1128] z-[9999] hidden flex flex-col items-center justify-center p-5 text-center">
+        <div class="bg-[#121c38] border-2 border-pink-300/60 p-6 rounded-3xl max-w-sm w-full shadow-2xl space-y-3">
+            <h3 class="text-base font-extrabold text-pink-200">Phòng Chờ Sắc Màu</h3>
+            <p class="text-xs text-sky-100/90 leading-relaxed">
+                Số lượng người truy cập cùng lúc hiện đã đạt giới hạn an toàn để đảm bảo hệ thống không bị quá tải.
+            </p>
+            <div class="bg-black/40 border border-white/10 p-3 rounded-2xl text-xs space-y-1">
+                <div class="text-amber-300 font-bold" id="trafficSlotStatusText">Trạng thái: Đã kín chỗ (0/0)</div>
+                <div class="text-[11px] text-sky-200/70">Chỉ cần 1 người rời web là bạn sẽ vào được ngay.</div>
+            </div>
+            <div class="pt-2 space-y-2">
+                <button type="button" id="trafficNotifyBtn" onclick="requestSlotNotification()" class="w-full bg-pink-500/25 hover:bg-pink-500/40 border border-pink-300/50 text-pink-200 font-bold py-2 rounded-xl text-xs active:scale-95 transition">
+                    Nhận thông báo khi có chỗ trống
+                </button>
+                <button type="button" onclick="checkTrafficSlotAndEnter(true)" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-extrabold py-2.5 rounded-xl text-xs shadow active:scale-95 transition">
+                    Kiểm tra lại xem có chỗ trống chưa
+                </button>
+                <p id="trafficRetryTimerText" class="text-[10.5px] text-sky-200/60">Tự động kiểm tra lại sau: 15s</p>
+            </div>
+        </div>
+    </div>
+
     <!-- LỚP HIỆU ỨNG NỀN MỸ THUẬT -->
     <div id="visualEffectsLayer"></div>
 
@@ -582,7 +623,7 @@
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-rose-300 font-bold">✏️</span>
-                        <span>Vào mục <b>Em có hiểu anh không?</b> trả lời đúng cả 3 câu hỏi trắc nghiệm (Dễ - TB - Khó) về người thương: nhận <b class="text-rose-300">+1 bút chì màu</b> (chỉ được hồi lượt sau 1 ngày).</span>
+                        <span>Vào mục <b>Vòng xoay may mắn</b> để quay thưởng thử vận may trúng hoặc nhân đôi Bút Chì Màu.</span>
                     </li>
                 </ul>
             </div>
@@ -596,48 +637,18 @@
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-pink-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                     <div>
-                        <h3 class="text-sm font-extrabold text-pink-200">Cửa Hàng Bút Chì · Nạp Thông Tin AI</h3>
+                        <h3 class="text-sm font-extrabold text-pink-200">Cửa Hàng Bút Chì</h3>
                         <p class="text-[10px] text-sky-200/60">Dành riêng cho Chủ Web (Bibi 0304)</p>
                     </div>
                 </div>
                 <button onclick="closeAdminPencilRequestsModal()" class="text-sky-200 text-lg p-1 hover:text-white">✕</button>
             </div>
-
-            <!-- FORM NẠP TOÀN BỘ THÔNG TIN CHUNG VỀ CHARACTER -->
-            <form onsubmit="handleSaveQuizCharacter(event)" class="space-y-3 text-xs mb-5">
-                <div class="bg-black/30 p-3 rounded-2xl border border-pink-300/30">
-                    <label class="block font-bold text-pink-300 mb-1">1. Tên Character:</label>
-                    <input id="quizAdminCharName" type="text" required placeholder="Nhập tên nhân vật (VD: Kỷ Đình Châu)" class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-pink-400">
+            <div class="space-y-3 text-xs mb-3">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-pink-300">Danh sách Ping đang chờ duyệt:</span>
+                    <span id="adminPendingPencilCountInModal" class="text-[10px] text-amber-300 font-bold">0 yêu cầu</span>
                 </div>
-
-                <div class="bg-black/30 p-3 rounded-2xl border border-pink-300/30 space-y-1.5">
-                    <div class="flex items-center justify-between">
-                        <label class="block font-bold text-pink-300">2. Toàn bộ thông tin chung về Character:</label>
-                        <span class="text-[10px] text-amber-300 font-bold">Mỗi dòng 1 thông tin</span>
-                    </div>
-                    <p class="text-[10.5px] text-sky-200/70 leading-relaxed italic">
-                        Điền bao nhiêu thông tin thì AI sẽ tạo bấy nhiêu câu hỏi. Hãy ghi rõ theo dạng: <i>Thuộc tính: Nội dung</i> hoặc các câu trần thuật.
-                    </p>
-                    <textarea id="quizAdminCharInfo" rows="8" required placeholder="Ví dụ:&#10;Sinh nhật: 15/08&#10;Chiều cao: 1m85&#10;Món ăn yêu thích: Bánh ngọt dâu tây&#10;Màu sắc ghét nhất: Màu đen&#10;Thói quen: Hay xoa đầu em mỗi khi cười&#10;Điều sợ nhất: Sợ bóng tối và mất em&#10;Thú cưng: Mèo mướp tên Bông&#10;Nghề nghiệp: Họa sĩ phác thảo&#10;Bí mật: Thích ngắm em ngủ say..." class="w-full bg-black/60 border border-white/20 rounded-xl p-3 text-white focus:outline-none focus:border-pink-400 font-mono text-[11px] leading-relaxed"></textarea>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <button type="submit" id="quizAdminSubmitBtn" class="flex-1 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 font-black py-2.5 rounded-xl text-white shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5">
-                        <span id="quizAdminSubmitBtnText">✨ AI Phân Tích & Tải Qua Mục "Em Có Hiểu Anh Không?"</span>
-                    </button>
-                    <button type="button" id="cancelEditQuizBtn" onclick="cancelEditQuizChar()" class="hidden bg-white/10 hover:bg-white/20 border border-white/20 font-bold py-2.5 px-3 rounded-xl text-white text-xs">
-                        Hủy
-                    </button>
-                </div>
-            </form>
-
-            <!-- DANH SÁCH CÁC CHARACTER ĐÃ TẢI QUA -->
-            <div class="border-t border-white/10 pt-3">
-                <div class="flex items-center justify-between mb-2">
-                    <h4 class="text-xs font-bold text-pink-300">Character đã có kho câu hỏi AI:</h4>
-                    <span class="text-[10px] text-sky-200/60" id="adminQuizCountBadge">0 nhân vật</span>
-                </div>
-                <div id="adminQuizCharsList" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
+                <div id="adminPendingPingList" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
             </div>
         </div>
     </div>
@@ -656,9 +667,58 @@
         </div>
     </div>
 
-    <!-- MODAL ĐĂNG KÝ / ĐĂNG NHẬP -->
-    <div id="authModal" class="fixed inset-0 bg-black/85 backdrop-blur-lg z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#121c38] border-2 border-pink-300/50 p-6 rounded-3xl max-w-xs w-full text-center shadow-[0_0_40px_rgba(244,114,182,0.4)]">
+    <!-- MODAL ĐĂNG KÝ / ĐĂNG NHẬP (CÓ BẢNG QUY ĐỊNH TRƯỚC KHI PHA MÀU) -->
+    <div id="authModal" class="fixed inset-0 bg-black/85 backdrop-blur-lg z-50 hidden flex items-center justify-center p-3.5 sm:p-4 overflow-y-auto">
+        <!-- BẢNG 1: QUY ĐỊNH TRƯỚC KHI PHA MÀU (BẮT BUỘC BẤM ĐỦ 3 NÚT) -->
+        <div id="authTermsSection" class="bg-[#121c38] border-2 border-pink-300/60 p-5 sm:p-6 rounded-3xl max-w-sm w-full text-center shadow-[0_0_40px_rgba(244,114,182,0.35)] space-y-3.5 my-auto custom-scroll max-h-[90vh]">
+            <div class="text-center">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-pink-300/80 border border-pink-300/30 bg-pink-500/10 px-2.5 py-0.5 rounded-full">Cam kết thành viên</span>
+                <h3 class="pastel-rules-title text-xl sm:text-2xl font-black mt-2">Quy định trước khi pha màu</h3>
+                <p class="text-xs text-sky-200/70 mt-1 font-medium">Vui lòng đọc và bấm xác nhận đủ cả 3 điều bên dưới để vào tạo tài khoản nhé.</p>
+            </div>
+
+            <div class="space-y-2.5 text-xs text-left">
+                <!-- ĐIỀU 1 -->
+                <div class="bg-black/35 border border-pink-300/25 rounded-2xl p-3 space-y-2">
+                    <p class="text-sky-100/95 leading-relaxed font-medium">
+                        1. Hãy chắc chắn bạn đầy đủ nhận thức để không bị ảnh hưởng bởi những nhân vật mang tính nhạy cảm.
+                    </p>
+                    <button type="button" id="ruleBtn1" onclick="toggleRuleConfirm(1)" class="w-full bg-white/5 hover:bg-white/10 border border-pink-300/30 text-pink-200 py-1.5 px-3 rounded-xl text-xs font-bold transition active:scale-95 text-center">
+                        Chắc chắn rồi!
+                    </button>
+                </div>
+
+                <!-- ĐIỀU 2 -->
+                <div class="bg-black/35 border border-pink-300/25 rounded-2xl p-3 space-y-2">
+                    <p class="text-sky-100/95 leading-relaxed font-medium">
+                        2. Những nhân vật mà Palette tạo nên đều là công sức cá nhân, xin hãy tôn trọng và không lấy cắp, sao chép dưới mọi hình thức.
+                    </p>
+                    <button type="button" id="ruleBtn2" onclick="toggleRuleConfirm(2)" class="w-full bg-white/5 hover:bg-white/10 border border-pink-300/30 text-pink-200 py-1.5 px-3 rounded-xl text-xs font-bold transition active:scale-95 text-center">
+                        Đã hiểu!
+                    </button>
+                </div>
+
+                <!-- ĐIỀU 3 -->
+                <div class="bg-black/35 border border-pink-300/25 rounded-2xl p-3 space-y-2">
+                    <p class="text-sky-100/95 leading-relaxed font-medium">
+                        3. Xác nhận không share link cho nhau dưới mọi hình thức, hình thức lấy link rất dễ, vui lòng không leak ra cho người khác hoặc bên ngoài.
+                    </p>
+                    <button type="button" id="ruleBtn3" onclick="toggleRuleConfirm(3)" class="w-full bg-white/5 hover:bg-white/10 border border-pink-300/30 text-pink-200 py-1.5 px-3 rounded-xl text-xs font-bold transition active:scale-95 text-center">
+                        Xác nhận!
+                    </button>
+                </div>
+            </div>
+
+            <!-- NÚT TIẾP TỤC (CHỈ MỞ KHI BẤM ĐỦ 3 NÚT TRÊN) -->
+            <div class="pt-1">
+                <button type="button" id="continueToAuthBtn" onclick="proceedToAuthForm()" disabled class="w-full py-2.5 rounded-xl text-xs font-extrabold opacity-40 cursor-not-allowed bg-white/10 text-white/50 border border-white/20 transition text-center">
+                    Bấm đủ 3 nút xác nhận để tiếp tục
+                </button>
+            </div>
+        </div>
+
+        <!-- BẢNG 2: FORM ĐĂNG NHẬP / ĐĂNG KÝ HIỆN TẠI -->
+        <div id="authFormSection" class="hidden bg-[#121c38] border-2 border-pink-300/50 p-6 rounded-3xl max-w-xs w-full text-center shadow-[0_0_40px_rgba(244,114,182,0.4)] my-auto">
             <h3 id="authTitle" class="shimmer-text text-xl font-extrabold mb-1">Đăng Nhập Tài Khoản</h3>
             <p id="authSubtitle" class="text-xs text-sky-200/80 mb-3 leading-relaxed font-medium">Tuyệt đối không share link cho nhau dưới mọi hình thức.</p>
 
@@ -808,8 +868,8 @@
 
             <!-- Mục 1: Vẽ nên câu chuyện -->
             <button onclick="goToStory()" class="jelly-btn w-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-2 border-pink-300/40 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_8px_20px_rgba(244,114,182,0.15)] relative">
-                <div id="iconBox-story" onclick="handleMenuIconClick(event, 'story')" class="w-12 h-12 rounded-2xl bg-pink-400/20 border border-pink-300/40 p-1 flex items-center justify-center shrink-0 overflow-hidden" title="Chính chủ nhấn để đổi ảnh/gif">
-                    <img id="menuImg-story" src="https://d.uguu.se/fuzeRZTP.gif" alt="Story" class="w-full h-full object-contain">
+                <div id="iconBox-story" onclick="handleMenuIconClick(event, 'story')" class="w-12 h-12 rounded-2xl bg-pink-400/20 border border-pink-300/40 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
+                    <img id="menuImg-story" src="https://files.catbox.moe/1foc7r.gif" alt="Story" class="w-full h-full object-contain">
                 </div>
                 <div class="text-left flex-1">
                     <h3 class="text-base font-bold text-pink-200">Vẽ nên câu chuyện</h3>
@@ -820,9 +880,9 @@
 
             <!-- Mục 2: Tô màu -->
             <button onclick="openColorGuide(true)" class="jelly-btn w-full bg-gradient-to-r from-amber-500/20 to-sky-500/20 border-2 border-amber-300/40 hover:border-amber-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_8px_20px_rgba(251,191,36,0.15)] relative">
-                <div id="iconBox-color" onclick="handleMenuIconClick(event, 'color')" class="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/40 p-1 flex items-center justify-center shrink-0 overflow-hidden" title="Chính chủ nhấn để đổi ảnh/gif">
+                <div id="iconBox-color" onclick="handleMenuIconClick(event, 'color')" class="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/40 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                     <div id="menuContent-color" class="w-full h-full flex items-center justify-center">
-                        <svg class="w-7 h-7 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>
+                        <img src="https://files.catbox.moe/awuax3.gif" class="w-full h-full object-contain">
                     </div>
                 </div>
                 <div class="text-left flex-1">
@@ -834,8 +894,8 @@
 
             <!-- Mục 3: Bức tranh hoàn chỉnh -->
             <button onclick="openFavoritesModal()" class="jelly-btn w-full bg-gradient-to-r from-teal-500/20 to-indigo-500/20 border-2 border-teal-300/40 hover:border-teal-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_8px_20px_rgba(45,212,191,0.15)] relative">
-                <div id="iconBox-fav" onclick="handleMenuIconClick(event, 'fav')" class="w-12 h-12 rounded-2xl bg-teal-400/20 border border-teal-300/40 p-1 flex items-center justify-center shrink-0 overflow-hidden" title="Chính chủ nhấn để đổi ảnh/gif">
-                    <img id="menuImg-fav" src="https://d.uguu.se/OZwQmCbF.gif" alt="Favorites" class="w-full h-full object-contain">
+                <div id="iconBox-fav" onclick="handleMenuIconClick(event, 'fav')" class="w-12 h-12 rounded-2xl bg-teal-400/20 border border-teal-300/40 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
+                    <img id="menuImg-fav" src="https://files.catbox.moe/c3ruwi.gif" alt="Favorites" class="w-full h-full object-contain">
                 </div>
                 <div class="text-left flex-1">
                     <h3 class="text-base font-bold text-teal-200">Bức tranh hoàn chỉnh</h3>
@@ -849,9 +909,9 @@
 
             <!-- Mục 4: Sắc Màu Nhanh Nhẹn -->
             <button onclick="openFastColorScreen()" class="jelly-btn w-full bg-gradient-to-r from-rose-500/20 via-purple-500/20 to-sky-500/20 border-2 border-fuchsia-300/50 hover:border-fuchsia-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_20px_rgba(232,121,249,0.2)] relative">
-                <div id="iconBox-fast" onclick="handleMenuIconClick(event, 'fast')" class="w-12 h-12 rounded-2xl bg-fuchsia-400/20 border border-fuchsia-300/50 flex items-center justify-center text-2xl shrink-0 overflow-hidden" title="Chính chủ nhấn để đổi ảnh/gif">
+                <div id="iconBox-fast" onclick="handleMenuIconClick(event, 'fast')" class="w-12 h-12 rounded-2xl bg-fuchsia-400/20 border border-fuchsia-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                     <div id="menuContent-fast" class="w-full h-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-fuchsia-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        <img src="https://files.catbox.moe/qo5869.gif" class="w-full h-full object-contain">
                     </div>
                 </div>
                 <div class="text-left flex-1">
@@ -861,23 +921,21 @@
                 <svg class="w-5 h-5 text-fuchsia-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </button>
 
-            <!-- MỤC MỚI: EM CÓ HIỂU ANH KHÔNG? -->
+            <!-- MỤC: VÒNG XOAY MAY MẮN (SẮC MÀU VẬN MAY) -->
             <div class="w-full relative">
-                <button onclick="openQuizCharSelectModal()" class="jelly-btn w-full bg-gradient-to-r from-rose-500/25 via-pink-500/20 to-amber-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_25px_rgba(244,114,182,0.25)] text-left">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-400/30 to-rose-400/20 border border-pink-300/50 flex items-center justify-center shrink-0 text-xl shadow-inner">
-                        <svg class="w-6 h-6 text-pink-300 filter drop-shadow-[0_0_5px_rgba(244,114,182,0.8)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
-                            <path d="M12 9v2"></path>
-                            <circle cx="12" cy="15" r="0.5" fill="currentColor"></circle>
-                        </svg>
+                <button onclick="openLuckyWheelModal()" class="jelly-btn w-full bg-gradient-to-r from-rose-500/25 via-pink-500/20 to-amber-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_25px_rgba(244,114,182,0.25)] text-left">
+                    <div id="iconBox-wheel" onclick="handleMenuIconClick(event, 'wheel')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-400/30 to-rose-400/20 border border-pink-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
+                        <div id="menuContent-wheel" class="w-full h-full flex items-center justify-center">
+                            <img src="https://files.catbox.moe/51fpvw.gif" class="w-full h-full object-contain">
+                        </div>
                     </div>
                     <div class="text-left flex-1 pr-1">
                         <div class="flex items-center gap-2">
-                            <h3 class="text-base font-extrabold pastel-fast-wave">Em có hiểu anh không?</h3>
-                            <span class="text-[9px] bg-pink-500/30 text-pink-200 border border-pink-300/40 px-1.5 py-0.5 rounded-full font-bold">+1 Chì</span>
+                            <h3 class="text-base font-extrabold pastel-fast-wave">Vòng xoay may mắn</h3>
+                            <span class="text-[9px] bg-pink-500/30 text-pink-200 border border-pink-300/40 px-1.5 py-0.5 rounded-full font-bold">Vận May</span>
                         </div>
                         <p class="text-xs text-pink-100/75 leading-normal mt-0.5 font-normal">
-                            Test độ hiểu nhau giữa bạn và người thương.
+                            Thử vận may cùng vòng xoay sắc màu pastel.
                         </p>
                     </div>
                     <svg class="w-5 h-5 text-pink-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -886,10 +944,10 @@
 
             <!-- Mục 5: Thông Báo Chì Màu -->
             <div class="w-full relative">
-                    <button onclick="openEffectsModal()" class="jelly-btn w-full bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-indigo-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_20px_rgba(244,114,182,0.2)] text-left">
-                    <div id="iconBox-notify" onclick="handleMenuIconClick(event, 'notify')" class="w-12 h-12 rounded-2xl bg-pink-400/20 border border-pink-300/50 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
+                <button onclick="openEffectsModal()" class="jelly-btn w-full bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-indigo-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_20px_rgba(244,114,182,0.2)] text-left">
+                    <div id="iconBox-notify" onclick="handleMenuIconClick(event, 'notify')" class="w-12 h-12 rounded-2xl bg-pink-400/20 border border-pink-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-notify" class="w-full h-full flex items-center justify-center">
-                            <svg id="homeBellSvg" class="custom-bell-icon w-6 h-6 text-pink-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2"></path><path d="M6.7 8.2a5.5 5.5 0 0 1 10.6 0c.8 3.4.2 5.6 2.2 7.8H4.5c2-2.2 1.4-4.4 2.2-7.8Z"></path><path d="M9.6 19a2.6 2.6 0 0 0 4.8 0"></path><path d="M4 4l2 2"></path><path d="m20 4-2 2"></path></svg>
+                            <img src="https://files.catbox.moe/5p55na.gif" class="w-full h-full object-contain">
                         </div>
                     </div>
                     
@@ -912,7 +970,11 @@
             <!-- MỤC PAGE VÀ DISCORD -->
             <div class="w-full">
                 <button onclick="openPaletteLinksModal()" class="jelly-btn w-full bg-gradient-to-r from-sky-500/20 via-pink-500/20 to-purple-500/20 border-2 border-sky-300/40 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_8px_20px_rgba(56,189,248,0.12)] text-left">
-                    <div class="w-12 h-12 rounded-2xl bg-sky-400/15 border border-sky-300/30 flex items-center justify-center shrink-0 text-xl">🔗</div>
+                    <div id="iconBox-page" onclick="handleMenuIconClick(event, 'page')" class="w-12 h-12 rounded-2xl bg-sky-400/15 border border-sky-300/30 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
+                        <div id="menuContent-page" class="w-full h-full flex items-center justify-center">
+                            <img src="https://files.catbox.moe/3j8l9q.gif" class="w-full h-full object-contain">
+                        </div>
+                    </div>
                     <div class="text-left flex-1">
                         <h3 class="text-base font-extrabold pastel-notify-wave">Page và Discord</h3>
                         <p class="text-xs text-sky-100/70">Link để tìm Palette.</p>
@@ -1189,16 +1251,11 @@
                 <button onclick="closeUsersListModal()" class="text-sky-200 text-lg p-1 hover:text-white">✕</button>
             </div>
 
-            <!-- THANH 3 TAB CHỌN MỤC -->
-            <div class="grid grid-cols-3 gap-1.5 p-1 bg-black/40 rounded-2xl border border-white/10 mb-3 shrink-0">
+            <!-- THANH 2 TAB CHỌN MỤC (ĐÃ BỎ TAB ONLINE ĐỂ TIẾT KIỆM BỘ NHỚ) -->
+            <div class="grid grid-cols-2 gap-1.5 p-1 bg-black/40 rounded-2xl border border-white/10 mb-3 shrink-0">
                 <button id="tabBtnRegistered" onclick="switchUsersModalTab('registered')" class="py-1.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 bg-pink-500/30 text-pink-200 border border-pink-300/40">
                     <span>👥 Đã Đăng Ký</span>
                     <span id="tabBadgeRegistered" class="text-[10px] bg-pink-400/30 px-1.5 rounded-full font-black">0</span>
-                </button>
-                <button id="tabBtnOnline" onclick="switchUsersModalTab('online')" class="py-1.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 text-sky-200/70 hover:text-white">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Online</span>
-                    <span id="tabBadgeOnline" class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 rounded-full font-black">0</span>
                 </button>
                 <button id="tabBtnActivities" onclick="switchUsersModalTab('activities')" class="py-1.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 text-sky-200/70 hover:text-white relative">
                     <span>⚡ Hoạt Động</span>
@@ -1232,7 +1289,7 @@
             </div>
 
             <!-- MỤC 1: HƯỚNG DẪN SẮC MÀU NHANH NHẸN -->
-            <div onclick="jumpToFastColorScreen()" class="cursor-pointer bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-sky-500/20 border-2 border-fuchsia-300/50 hover:border-fuchsia-300 p-3.5 rounded-2xl mb-3 transition shadow-md active:scale-98">
+            <div id="guideFastSection" onclick="jumpToFastColorScreen()" class="cursor-pointer bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-sky-500/20 border-2 border-fuchsia-300/50 hover:border-fuchsia-300 p-3.5 rounded-2xl mb-3 transition shadow-md active:scale-98">
                 <div class="flex items-center justify-between mb-1.5">
                     <h4 class="text-xs font-extrabold pastel-fast-wave flex items-center gap-1.5">
                         <svg class="w-3.5 h-3.5 text-fuchsia-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
@@ -1244,7 +1301,7 @@
             </div>
 
             <!-- MỤC 2: HƯỚNG DẪN SƯU TẦM BÚT CHÌ MÀU -->
-            <div onclick="closeColorGuide(); openPencilModal();" class="cursor-pointer bg-gradient-to-r from-amber-500/20 via-pink-500/20 to-purple-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-3.5 rounded-2xl mb-4 transition shadow-md active:scale-98">
+            <div id="guidePencilSection" onclick="closeColorGuide(); openPencilModal();" class="cursor-pointer bg-gradient-to-r from-amber-500/20 via-pink-500/20 to-purple-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-3.5 rounded-2xl mb-4 transition shadow-md active:scale-98">
                 <div class="flex items-center justify-between mb-1.5">
                     <h4 class="text-xs font-extrabold pastel-fast-wave flex items-center gap-1.5">
                         <svg class="w-3.5 h-3.5 text-pink-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="m15 5 4 4"></path></svg>
@@ -1254,7 +1311,7 @@
                 </div>
                 <p class="text-xs text-sky-100/90 leading-relaxed">
                     • <b>Đặc điểm:</b> Dành cho bạn muốn mở khóa link trực tiếp mà không cần làm thủ tục hay join Discord.<br>
-                    • <b>Cách lấy:</b> Điểm danh hàng ngày (+1 chì), trả lời đúng 3 câu test tại "Em có hiểu anh không?" (+1 chì/ngày), mở khóa link (+1 đến +2 chì), hoặc viết Feedback từ 1000 ký tự (+3 chì). Tích đủ 10 chì đổi ngay 1 nhân vật bất kỳ!
+                    • <b>Cách lấy:</b> Điểm danh hàng ngày (+1 chì), quay thưởng tại "Vòng xoay may mắn", mở khóa link (+1 đến +2 chì), hoặc viết Feedback từ 1000 ký tự (+3 chì). Tích đủ 10 chì đổi ngay 1 nhân vật bất kỳ!
                 </p>
             </div>
 
@@ -1356,7 +1413,7 @@
                     <div class="flex items-center gap-2">
                         <label class="bg-pink-500/30 hover:bg-pink-500/50 border border-pink-300/50 text-pink-200 font-bold px-3 py-1.5 rounded-xl text-xs active:scale-95 transition cursor-pointer shrink-0 inline-flex items-center gap-1">
                             📁 Chọn ảnh Facebook
-                            <input id="proofFbImg" type="file" accept="image/*" class="hidden" onchange="handleFileSelected(this, 'proofFbImgName')">
+                            <input id="proofFbImg" type="file" accept="image/*" class="hidden" onchange="handleFbFileSelected(this)">
                         </label>
                         <span id="proofFbImgName" class="text-[11px] text-sky-200/70 truncate flex-1">Chưa chọn ảnh</span>
                     </div>
@@ -1367,9 +1424,10 @@
                     <div class="flex items-center gap-2">
                         <label class="bg-sky-500/30 hover:bg-sky-500/50 border border-sky-300/50 text-sky-200 font-bold px-3 py-1.5 rounded-xl text-xs active:scale-95 transition cursor-pointer shrink-0 inline-flex items-center gap-1">
                             📁 Chọn ảnh Discord
-                            <input id="proofDcImg" type="file" accept="image/*" class="hidden" onchange="handleFileSelected(this, 'proofDcImgName')">
+                            <input id="proofDcImg" type="file" accept="image/*" class="hidden" onchange="handleDcFileChange(this)">
                         </label>
                         <span id="proofDcImgName" class="text-[11px] text-sky-200/70 truncate flex-1">Chưa chọn ảnh</span>
+                        <button type="button" id="clearDcBtn" onclick="clearDcProofSelection()" class="hidden text-[10px] text-red-300 hover:text-white underline shrink-0">Xóa</button>
                     </div>
                 </div>
             </div>
@@ -1377,6 +1435,9 @@
             <button id="submitProofBtn" onclick="processNormalProofVerification()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 font-extrabold text-sm py-2.5 rounded-xl shadow-lg flex items-center justify-center gap-2">
                 <span id="submitProofBtnText">Vẽ Đường Cho Tình Yêu Chạy</span>
             </button>
+            <p class="text-[10.5px] text-pink-200/70 text-center mt-2 italic leading-tight">
+                * Sắc Màu có thể đi dạo loanh quanh trong lúc đợi duyệt nếu có hơi lâu nhé.
+            </p>
         </div>
     </div>
 
@@ -1409,6 +1470,9 @@
             <button id="fastSubmitBtn" onclick="processFastProofVerification()" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 to-pink-600 font-extrabold text-sm py-2.5 rounded-xl shadow-lg flex items-center justify-center gap-2">
                 <span id="fastSubmitBtnText">Vẽ Đường Cho Tình Yêu Chạy</span>
             </button>
+            <p class="text-[10.5px] text-fuchsia-200/70 text-center mt-2 italic leading-tight">
+                * Sắc Màu có thể đi dạo loanh quanh trong lúc đợi duyệt nếu có hơi lâu nhé.
+            </p>
         </div>
     </div>
 
@@ -1720,97 +1784,34 @@
         </div>
     </div>
 
-    <!-- MODAL 1: DANH SÁCH CHARACTER TEST "EM CÓ HIỂU ANH KHÔNG?" -->
-    <div id="quizCharSelectModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-        <div class="bg-[#121c38] border-2 border-pink-300/60 p-5 rounded-3xl max-w-sm w-full text-left shadow-[0_0_40px_rgba(244,114,182,0.35)] max-h-[85vh] custom-scroll flex flex-col">
-            <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-2.5">
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5 text-pink-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
-                    <div>
-                        <h3 class="text-sm font-extrabold text-pink-200">Em Có Hiểu Anh Không?</h3>
-                        <p class="text-[10px] text-sky-200/60">Chọn người thương để bắt đầu test</p>
-                    </div>
+    <!-- MODAL VÒNG XOAY MAY MẮN (SẮC MÀU VẬN MAY) -->
+    <div id="luckyWheelModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-[#121c38] border-2 border-pink-300/60 p-5 rounded-3xl max-w-sm w-full text-center shadow-[0_0_40px_rgba(244,114,182,0.35)] relative">
+            <button type="button" onclick="closeLuckyWheelModal()" class="text-sky-200 hover:text-white text-xl p-1 font-bold absolute top-3.5 right-4" title="Thoát">✕</button>
+
+            <div class="mb-2">
+                <h3 class="text-xl font-black pastel-fast-wave">Sắc Màu Vận May</h3>
+                <p class="text-xs text-pink-200/80 mt-0.5 font-medium">Mỗi ngày chỉ giới hạn ba lần, chúc bạn may mắn nhé!</p>
+            </div>
+
+            <!-- KHUNG VÒNG XOAY 8 MIẾNG PIZZA PASTEL -->
+            <div class="relative w-[280px] h-[280px] mx-auto my-3 flex items-center justify-center select-none">
+                <!-- Kim chỉ vòng xoay ở đỉnh 12 giờ -->
+                <div class="absolute -top-2 left-1/2 -translate-x-1/2 z-20 w-0 h-0 border-l-[11px] border-l-transparent border-r-[11px] border-r-transparent border-t-[22px] border-t-amber-300 filter drop-shadow-[0_2px_8px_rgba(251,191,36,0.95)] pointer-events-none"></div>
+
+                <!-- Canvas Vòng Xoay (5 giây mượt mà không giật lag) -->
+                <canvas id="luckyWheelCanvas" width="280" height="280" class="rounded-full shadow-[0_0_30px_rgba(244,114,182,0.45)] border-4 border-pink-300/60" style="transition: transform 5s cubic-bezier(0.15, 0.85, 0.2, 1); will-change: transform;"></canvas>
+
+                <!-- Tâm giữa vòng xoay -->
+                <div class="absolute w-12 h-12 rounded-full bg-[#121c38] border-2 border-pink-300 flex items-center justify-center shadow-lg pointer-events-none z-10">
+                    <span class="text-xs font-black pastel-fast-wave">SPIN</span>
                 </div>
-                <button onclick="closeQuizCharSelectModal()" class="text-sky-200 text-lg p-1 hover:text-white">✕</button>
             </div>
 
-            <!-- Thanh tìm kiếm tên nhanh -->
-            <div class="mb-3">
-                <input id="quizSearchCharInput" type="text" oninput="filterQuizCharList(this.value)" placeholder="🔍 Tìm nhanh tên người thương..." class="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-sky-200/50 focus:outline-none focus:border-pink-400">
-            </div>
+            <p id="wheelResultMsg" class="text-xs text-pink-200 font-bold mt-1 min-h-[22px] px-2 leading-relaxed"></p>
 
-            <!-- Danh sách nhân vật chỉ hiện tên -->
-            <div id="quizCharNamesContainer" class="space-y-2 overflow-y-auto custom-scroll pr-1 flex-1 max-h-72"></div>
-
-            <p class="text-[10px] text-pink-200/60 text-center mt-3 italic">
-                * Đúng 3 câu (Dễ - TB - Khó) nhận 1 Bút Chì Màu (hồi lượt sau 1 ngày).
-            </p>
-        </div>
-    </div>
-
-    <!-- MODAL 2: KHUNG CHAT TEST ĐỘ HIỂU NHAU (HỌA SĨ NHỎ ĐỐ VUI) -->
-    <div id="quizChatScreenModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[60] hidden flex items-center justify-center p-3 sm:p-4">
-        <div class="bg-[#101830] border-2 border-pink-300/60 rounded-3xl max-w-sm w-full h-[88vh] flex flex-col shadow-[0_0_45px_rgba(244,114,182,0.4)] overflow-hidden">
-            <!-- Header khung chat Họa Sĩ Nhỏ -->
-            <div class="p-3.5 bg-black/40 border-b border-white/10 flex items-center justify-between shrink-0">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <img src="https://images.weserv.nl/?url=https://files.catbox.moe/u0k3kh.jpg&w=100&output=jpg" onerror="this.src='https://files.catbox.moe/u0k3kh.jpg'" alt="Họa Sĩ Nhỏ" class="w-10 h-10 rounded-full object-cover border-2 border-pink-300/70 shadow-[0_0_10px_rgba(244,114,182,0.6)] shrink-0">
-                    <div class="truncate">
-                        <div class="flex items-center gap-1.5 truncate">
-                            <span class="font-extrabold text-sm text-pink-200 truncate">Họa Sĩ Nhỏ</span>
-                            <span class="text-[9.5px] bg-pink-500/30 text-pink-200 border border-pink-300/40 px-1.5 py-0.2 rounded-full font-bold">Giám khảo 🎨</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 text-[10px] text-sky-200/70 mt-0.5">
-                            <span id="quizChatTargetCharName" class="text-amber-300 font-bold truncate">Đang đố về người thương</span>
-                            <span>•</span>
-                            <span id="quizChatProgress">Câu 1/3</span>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="closeQuizChatModal()" class="text-sky-200 hover:text-white text-xs px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 font-bold">✕ Thoát</button>
-            </div>
-
-            <!-- Ghi chú nhỏ cảnh báo luật: Sai từ 2 câu trở lên không được nhận chì -->
-            <div class="px-3 py-1.5 bg-amber-500/15 border-b border-amber-300/30 flex items-center gap-1.5 text-[10.5px] text-amber-200 shrink-0">
-                <span>⚠️</span>
-                <span class="font-medium">Ghi chú: Nếu trả lời sai từ 2 câu trở lên sẽ không được nhận chì màu đâu nha!</span>
-            </div>
-
-            <!-- Vùng hiển thị tin nhắn đối thoại -->
-            <div id="quizChatMessages" class="flex-1 p-3.5 space-y-3 overflow-y-auto custom-scroll text-xs"></div>
-
-            <!-- Vùng chọn 4 đáp án A, B, C, D -->
-            <div id="quizChatOptionsArea" class="p-3 bg-black/50 border-t border-white/10 grid grid-cols-1 gap-2 shrink-0"></div>
-        </div>
-    </div>
-
-    <!-- MODAL ĐẶC BIỆT: KẾT HÔN VỚI NGƯỜI THƯƠNG (+3 CHÌ MÀU) -->
-    <div id="quizMarriageModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[70] hidden flex items-center justify-center p-4">
-        <div class="bg-gradient-to-b from-[#25102e] via-[#1a1436] to-[#0c142b] border-2 border-pink-300 p-6 rounded-3xl max-w-sm w-full text-center shadow-[0_0_55px_rgba(244,114,182,0.65)] relative animate-bounce-once">
-            <div class="w-16 h-16 mx-auto rounded-full bg-pink-500/25 border-2 border-pink-300/80 flex items-center justify-center text-3xl mb-3 shadow-[0_0_25px_rgba(244,114,182,0.6)]">
-                💍
-            </div>
-            
-            <div class="text-[11px] font-bold text-pink-300 uppercase tracking-widest mb-1">
-                Hoàn Thành 100% Thông Tin
-            </div>
-
-            <h3 id="quizMarriageTitle" class="text-base sm:text-lg font-black shimmer-text mb-3 leading-snug">
-                "Cậu đã quá hiểu chồng iu rổi, chúc mừng bạn đã đăng ký kết hôn thành công và sẽ được nhận thêm 3 chì màu nhé."
-            </h3>
-
-            <div class="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-400/25 to-pink-500/25 border border-amber-300/60 px-3.5 py-1.5 rounded-full text-amber-200 font-extrabold text-xs mb-3 shadow">
-                <span>🎁 Phần thưởng đặc biệt:</span>
-                <span class="text-sm font-black text-amber-300">+3 Bút Chì Màu</span>
-                <span>✏️</span>
-            </div>
-
-            <p id="quizMarriageSubtitle" class="text-xs text-pink-100/90 leading-relaxed italic bg-black/45 p-3 rounded-2xl border border-pink-300/35 mb-4">
-                "Bí mật riêng của hai ta, em đừng nói cho ai nhé, cùng đi đăng ký kết hôn nào."
-            </p>
-
-            <button onclick="closeQuizMarriageModal()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white font-black text-xs py-3 rounded-xl shadow-lg active:scale-95 transition">
-                💖 Em Đồng Ý! (Nhận 3 Chì Màu & Hoàn Tất)
+            <button type="button" id="spinWheelBtn" onclick="spinLuckyWheel()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition mt-2">
+                Quay Ngay
             </button>
         </div>
     </div>
@@ -3074,11 +3075,13 @@
         };
 
         let customMenuIcons = {
-            story: 'https://d.uguu.se/fuzeRZTP.gif',
-            color: null,
-            fav: 'https://d.uguu.se/OZwQmCbF.gif',
-            fast: null,
-            notify: null
+            story: 'https://files.catbox.moe/1foc7r.gif',
+            color: 'https://files.catbox.moe/awuax3.gif',
+            fav: 'https://files.catbox.moe/c3ruwi.gif',
+            fast: 'https://files.catbox.moe/qo5869.gif',
+            wheel: 'https://files.catbox.moe/51fpvw.gif',
+            notify: 'https://files.catbox.moe/5p55na.gif',
+            page: 'https://files.catbox.moe/3j8l9q.gif'
         };
 
         let userNotificationLogs = {};
@@ -3094,31 +3097,107 @@
 
         let userUnlockTimers = JSON.parse(localStorage.getItem('palette_user_unlock_timers') || '{}');
 
-        // BỘ NÉN ẢNH ĐỂ AI PHÂN TÍCH NHANH VƯỢT TRỘI
+        // QUẢN LÝ BỘ NHỚ ĐỆM ẢNH BẰNG CHỨNG (CHỐNG LỖI KHI NỘP LẠI NHIỀU LẦN)
+        let cachedFbDataUrl = "";
+        let cachedFbOcrText = "";
+        let cachedDcDataUrls = [];
+
+        async function handleFbFileSelected(input) {
+            const span = document.getElementById('proofFbImgName');
+            const file = input.files && input.files[0];
+            if (!file) {
+                cachedFbDataUrl = "";
+                cachedFbOcrText = "";
+                if (span) {
+                    span.innerText = "Chưa chọn ảnh";
+                    span.className = "text-[11px] text-sky-200/70 truncate flex-1";
+                }
+                return;
+            }
+            if (span) {
+                span.innerText = "✓ " + (file.name || "1 ảnh đã chọn");
+                span.className = "text-[11px] text-emerald-300 font-extrabold truncate flex-1";
+            }
+            cachedFbDataUrl = await processImageForFastOCR(file);
+            cachedFbOcrText = "";
+        }
+
+        async function handleDcFileChange(input) {
+            const span = document.getElementById('proofDcImgName');
+            const clearBtn = document.getElementById('clearDcBtn');
+            const file = input.files && input.files[0];
+
+            if (!file) {
+                cachedDcDataUrls = [];
+                if (span) {
+                    span.innerText = "Chưa chọn ảnh";
+                    span.className = "text-[11px] text-sky-200/70 truncate flex-1";
+                }
+                if (clearBtn) clearBtn.classList.add('hidden');
+                return;
+            }
+
+            if (span) {
+                span.innerText = "✓ " + (file.name || "1 ảnh đã chọn");
+                span.className = "text-[11px] text-emerald-300 font-extrabold truncate flex-1";
+            }
+            if (clearBtn) clearBtn.classList.remove('hidden');
+
+            const base64 = await processImageForFastOCR(file);
+            cachedDcDataUrls = [base64];
+        }
+
+        function clearDcProofSelection() {
+            cachedDcDataUrls = [];
+            const span = document.getElementById('proofDcImgName');
+            const clearBtn = document.getElementById('clearDcBtn');
+            const input = document.getElementById('proofDcImg');
+            if (input) input.value = '';
+            if (span) {
+                span.innerText = "Chưa chọn ảnh";
+                span.className = "text-[11px] text-sky-200/70 truncate flex-1";
+            }
+            if (clearBtn) clearBtn.classList.add('hidden');
+        }
+
+        // BỘ NÉN ẢNH VÀ TĂNG TỐC ĐỘ NHẬN DIỆN CHO AI (TƯƠNG THÍCH MỌI ĐIỆN THOẠI)
         async function processImageForFastOCR(file) {
             return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const maxDim = 1000;
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height = Math.round((height * maxDim) / width);
-                            width = maxDim;
-                        } else {
-                            width = Math.round((width * maxDim) / height);
-                            height = maxDim;
+                if (!file) return resolve("");
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const rawData = e.target.result;
+                    if (!rawData) return resolve("");
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width || 800;
+                            let height = img.height || 1000;
+                            const maxDim = 1200;
+                            if (width > maxDim || height > maxDim) {
+                                if (width > height) {
+                                    height = Math.round((height * maxDim) / width);
+                                    width = maxDim;
+                                } else {
+                                    width = Math.round((width * maxDim) / height);
+                                    height = maxDim;
+                                }
+                            }
+                            canvas.width = Math.max(1, width);
+                            canvas.height = Math.max(1, height);
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.85));
+                        } catch (err) {
+                            resolve(rawData);
                         }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    };
+                    img.onerror = () => resolve(rawData);
+                    img.src = rawData;
                 };
-                img.src = URL.createObjectURL(file);
+                reader.onerror = () => resolve("");
+                reader.readAsDataURL(file);
             });
         }
 
@@ -3164,7 +3243,7 @@
             return Math.max(0, Number(userPencilsData[username.toLowerCase()]?.count) || 0);
         }
 
-        async function addPencilToUser(username, amount, reason = "") {
+        async function addPencilToUser(username, amount, reason = "", showSparkles = true) {
             if (!username || !Number.isFinite(amount) || amount <= 0) return;
             const uKey = username.toLowerCase();
             const pencilRef = db.collection("pencils").doc(uKey);
@@ -3178,7 +3257,7 @@
                 });
                 userPencilsData[uKey] = updated;
                 updatePencilUI();
-                if (currentUser?.username.toLowerCase() === uKey) createPencilSparkles();
+                if (showSparkles && currentUser?.username.toLowerCase() === uKey) createPencilSparkles();
                 if (reason) {
                     triggerNotification("Nhận Bút Chì Màu Mới!", `Bạn vừa nhận được +${amount} Bút Chì Màu (${reason})! Hiện có: ${updated.count} chì.`);
                 }
@@ -3591,9 +3670,64 @@
             updateCommentPingAvailability();
         }
 
-        // CỬA HÀNG BÚT CHÌ: MỞ BẢNG QUẢN TRỊ SOẠN CÂU HỎI
+        // CỬA HÀNG BÚT CHÌ: QUẢN LÝ VÀ DUYỆT PING FEEDBACK
         function openAdminPencilRequestsModal() {
             openPencilShopModal();
+        }
+
+        function renderAdminQuizCharsList() {}
+
+        function renderAdminPendingPings() {
+            const container = document.getElementById('adminPendingPingList');
+            const countEl = document.getElementById('adminPendingPencilCountInModal');
+            if (countEl) countEl.innerText = `${pendingPencilRequests.length} yêu cầu`;
+            if (!container) return;
+
+            container.innerHTML = '';
+            if (pendingPencilRequests.length === 0) {
+                container.innerHTML = `<div class="text-[11px] text-sky-200/50 italic py-6 text-center">Hiện chưa có Ping Feedback nào đang chờ duyệt.</div>`;
+                return;
+            }
+
+            pendingPencilRequests.forEach(req => {
+                const item = document.createElement('div');
+                item.className = "bg-white/5 border border-pink-300/30 hover:border-pink-300/60 rounded-2xl p-3 space-y-2 transition";
+                
+                const textSnippet = req.text ? (req.text.length > 80 ? req.text.slice(0, 80) + '...' : req.text) : 'Bài feedback không có chữ';
+                const avt = req.avatar || PALETTE_DEFAULT_AVATARS[0];
+
+                item.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <img src="${avt}" alt="" class="w-7 h-7 rounded-full object-cover border border-pink-300/40 shrink-0">
+                            <div class="truncate">
+                                <div class="font-extrabold text-pink-200 truncate">${req.author}</div>
+                                <div class="text-[10px] text-sky-200/60">${req.charName || 'Nhân vật'} · ${req.timestamp || ''}</div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] bg-purple-500/30 text-purple-200 border border-purple-300/40 px-2 py-0.5 rounded-full font-bold shrink-0">
+                            ${(req.text || '').length} ký tự
+                        </span>
+                    </div>
+
+                    <p class="text-[11px] text-sky-100/80 line-clamp-2 italic bg-black/30 p-2 rounded-xl border border-white/5">
+                        "${textSnippet}"
+                    </p>
+
+                    <div class="flex items-center gap-2 pt-1">
+                        <button type="button" onclick="jumpToPingComment('${req.charId}', '${req.commentId}')" class="flex-1 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-300/40 text-sky-200 font-bold py-1.5 rounded-xl text-xs active:scale-95 transition">
+                            Xem Feedback
+                        </button>
+                        <button type="button" onclick="approvePencilRequest('${req.id}', '${req.author}')" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
+                            Tặng 3 Chì
+                        </button>
+                        <button type="button" onclick="rejectPencilRequest('${req.id}')" class="px-2.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 font-bold text-xs active:scale-95 transition" title="Bỏ qua">
+                            ✕
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
         }
 
         function openPencilShopModal() {
@@ -3606,7 +3740,7 @@
                 return;
             }
 
-            renderAdminQuizCharsList();
+            renderAdminPendingPings();
             const modal = document.getElementById('adminPencilRequestsModal');
             if (modal) modal.classList.remove('hidden');
             playPaletteTingSound();
@@ -3813,10 +3947,12 @@
                 if (currentUser?.isOwner && previousIds) {
                     pendingPencilRequests.filter(req => !previousIds.has(req.id)).forEach(req => {
                         if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
-                            new Notification("Có Ping Feedback mới", {
-                                body: `${req.author || "Một thành viên"} vừa Ping cho ${req.charName || "một nhân vật"} · mở Cửa Hàng Bút Chì để xem.`,
-                                icon: req.avatar || "https://d.uguu.se/fuzeRZTP.gif"
-                            });
+                            try {
+                                new Notification("Có Ping Feedback mới", {
+                                    body: `${req.author || "Một thành viên"} vừa Ping cho ${req.charName || "một nhân vật"} · mở Cửa Hàng Bút Chì để xem.`,
+                                    icon: req.avatar || "https://files.catbox.moe/1foc7r.gif"
+                                });
+                            } catch (_) {}
                         }
                     });
                 }
@@ -3894,6 +4030,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            checkTrafficSlotAndEnter(false);
             applyVisualEffects(DEFAULT_VISUAL_EFFECTS);
             initFirebaseListeners();
 
@@ -3903,6 +4040,7 @@
                 document.getElementById('authModal').classList.add('hidden');
             } else {
                 document.getElementById('authModal').classList.remove('hidden');
+                initAuthRulesView();
                 updateAuthFormUI();
             }
             updateFaqButtonVisibility();
@@ -4032,24 +4170,172 @@
             return `${hh}:${mm} · ${dd}/${MM}/${yy}`;
         }
 
-        // Cập nhật trạng thái Online của tài khoản hiện tại lên Firebase
-        function sendOnlineHeartbeat() {
-            if (!currentUser) return;
-            const uKey = currentUser.username.toLowerCase();
-            db.collection("users").doc(uKey).set({
-                lastActive: Date.now()
-            }, { merge: true });
-        }
-        setInterval(sendOnlineHeartbeat, 45000); // 45 giây gửi tín hiệu 1 lần
+        // HỆ THỐNG GIỚI HẠN SLOT TRUY CẬP VÀ GỬI THÔNG BÁO KHI CÓ CHỖ TRỐNG
+        function isUserOnline(username) { return false; }
 
-        // Kiểm tra tài khoản có đang Online không (hoạt động trong 2.5 phút trở lại)
-        function isUserOnline(username) {
-            if (!username) return false;
-            if (currentUser && currentUser.username.toLowerCase() === username.toLowerCase()) return true;
-            const u = registeredUsers[username.toLowerCase()];
-            if (!u || !u.lastActive) return false;
-            return (Date.now() - u.lastActive) < (150 * 1000);
+        const MAX_CONCURRENT_SLOTS = 35; // Đặt sẵn bằng 0 để bạn thử nghiệm (test xong đổi thành 30 hoặc 35 nhé)
+        const SLOT_TIMEOUT_MS = 2.5 * 60 * 1000; // 2.5 phút không hoạt động sẽ tự giải phóng slot
+
+        let visitorSessionId = sessionStorage.getItem('palette_visitor_slot_id');
+        if (!visitorSessionId) {
+            visitorSessionId = 'slot_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+            sessionStorage.setItem('palette_visitor_slot_id', visitorSessionId);
         }
+
+        let trafficAutoRetryTimer = null;
+        let trafficSlotHeartbeat = null;
+        let isWaitingForSlotNotice = (localStorage.getItem('palette_waiting_slot_notice') === 'true');
+
+        function updateSlotNotifyButtonUI() {
+            const btn = document.getElementById('trafficNotifyBtn');
+            if (!btn) return;
+            if (isWaitingForSlotNotice) {
+                btn.innerText = "Đã bật: Sẽ gửi thông báo đến máy khi có chỗ";
+                btn.className = "w-full bg-emerald-500/20 border border-emerald-300/40 text-emerald-200 font-bold py-2 rounded-xl text-xs";
+            } else {
+                btn.innerText = "Nhận thông báo khi có chỗ trống";
+                btn.className = "w-full bg-pink-500/25 hover:bg-pink-500/40 border border-pink-300/50 text-pink-200 font-bold py-2 rounded-xl text-xs active:scale-95 transition";
+            }
+        }
+
+        function requestSlotNotification() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(perm => {
+                    if (perm === "granted") {
+                        isWaitingForSlotNotice = true;
+                        localStorage.setItem('palette_waiting_slot_notice', 'true');
+                        updateSlotNotifyButtonUI();
+                        playPaletteTingSound();
+                        alert("Đã bật thông báo thành công! Khi có người rời web và có chỗ trống cho bạn, thiết bị sẽ tự động rung chuông và thông báo.");
+                    } else {
+                        alert("Bạn đã chặn thông báo trên trình duyệt. Vui lòng cấp quyền thông báo trong cài đặt trình duyệt để nhận tin khi có chỗ trống nhé.");
+                    }
+                });
+            } else {
+                isWaitingForSlotNotice = true;
+                localStorage.setItem('palette_waiting_slot_notice', 'true');
+                updateSlotNotifyButtonUI();
+                alert("Đã ghi nhận yêu cầu thông báo khi có chỗ trống.");
+            }
+        }
+
+        function triggerSlotAvailableNotification() {
+            if (isWaitingForSlotNotice) {
+                isWaitingForSlotNotice = false;
+                localStorage.removeItem('palette_waiting_slot_notice');
+
+                playPaletteTingSound();
+
+                if ("Notification" in window && Notification.permission === "granted") {
+                    try {
+                        new Notification("Đã có chỗ trống vào web!", {
+                            body: "Phòng chờ đã mở slot, bạn có thể vào khám phá Thế Giới Chì Màu ngay bây giờ!",
+                            icon: "https://files.catbox.moe/1foc7r.gif",
+                            vibrate: [200, 100, 200]
+                        });
+                    } catch (_) {}
+                }
+            }
+        }
+
+        function showTrafficOverlay(currentCount) {
+            const overlay = document.getElementById('trafficLimitOverlay');
+            const statusText = document.getElementById('trafficSlotStatusText');
+            if (statusText) statusText.innerText = `Trạng thái: Đã kín chỗ (${currentCount || MAX_CONCURRENT_SLOTS}/${MAX_CONCURRENT_SLOTS})`;
+            if (overlay) overlay.classList.remove('hidden');
+
+            updateSlotNotifyButtonUI();
+
+            let countdown = 15;
+            const timerEl = document.getElementById('trafficRetryTimerText');
+            if (trafficAutoRetryTimer) clearInterval(trafficAutoRetryTimer);
+            trafficAutoRetryTimer = setInterval(() => {
+                countdown--;
+                if (timerEl) timerEl.innerText = `Tự động kiểm tra lại sau: ${countdown}s`;
+                if (countdown <= 0) {
+                    clearInterval(trafficAutoRetryTimer);
+                    checkTrafficSlotAndEnter(false);
+                }
+            }, 1000);
+        }
+
+        function hideTrafficOverlay() {
+            const overlay = document.getElementById('trafficLimitOverlay');
+            if (overlay) overlay.classList.add('hidden');
+            if (trafficAutoRetryTimer) {
+                clearInterval(trafficAutoRetryTimer);
+                trafficAutoRetryTimer = null;
+            }
+        }
+
+        async function checkTrafficSlotAndEnter(isManual = false) {
+            // Khi MAX_CONCURRENT_SLOTS > 0, Chủ Web sẽ được ưu tiên vào thẳng
+            if (MAX_CONCURRENT_SLOTS > 0) {
+                const saved = JSON.parse(localStorage.getItem('palette_persistent_user') || '{}');
+                if (saved?.username?.toLowerCase() === "bibi 0304" || saved?.isOwner || currentUser?.isOwner) {
+                    hideTrafficOverlay();
+                    return true;
+                }
+            }
+
+            try {
+                const docRef = db.collection("settings").doc("traffic_slots");
+                const now = Date.now();
+                const snap = await docRef.get();
+                let slots = snap.exists ? (snap.data().active || {}) : {};
+
+                let validCount = 0;
+                const activeMap = {};
+                for (const sid in slots) {
+                    if (now - slots[sid] < SLOT_TIMEOUT_MS) {
+                        activeMap[sid] = slots[sid];
+                        validCount++;
+                    }
+                }
+
+                const alreadyHasSlot = Boolean(activeMap[visitorSessionId]);
+
+                // Nếu số lượng người >= mức tối đa và mình chưa có chỗ
+                if (validCount >= MAX_CONCURRENT_SLOTS && !alreadyHasSlot) {
+                    showTrafficOverlay(validCount);
+                    if (isManual) alert(`Phòng hiện tại vẫn đang kín chỗ (${validCount}/${MAX_CONCURRENT_SLOTS}). Vui lòng đợi người khác rời web nhé!`);
+                    return false;
+                }
+
+                // Nếu còn chỗ trống hoặc được vào:
+                activeMap[visitorSessionId] = now;
+                await docRef.set({ active: activeMap }, { merge: true });
+
+                triggerSlotAvailableNotification();
+                hideTrafficOverlay();
+                startKeepSlotAlive();
+                return true;
+            } catch (err) {
+                hideTrafficOverlay();
+                return true;
+            }
+        }
+
+        function startKeepSlotAlive() {
+            if (trafficSlotHeartbeat) clearInterval(trafficSlotHeartbeat);
+            trafficSlotHeartbeat = setInterval(async () => {
+                try {
+                    const docRef = db.collection("settings").doc("traffic_slots");
+                    const updateObj = {};
+                    updateObj[`active.${visitorSessionId}`] = Date.now();
+                    await docRef.update(updateObj);
+                } catch (_) {}
+            }, 90000);
+        }
+
+        window.addEventListener('pagehide', () => {
+            try {
+                const docRef = db.collection("settings").doc("traffic_slots");
+                const removeObj = {};
+                removeObj[`active.${visitorSessionId}`] = firebase.firestore.FieldValue.delete();
+                docRef.update(removeObj);
+            } catch (_) {}
+        });
 
         // Ghi lại bất kỳ hoạt động nào của thành viên và lưu vào Firebase
         async function logMemberActivity(actionTitle, detailText = "") {
@@ -4092,7 +4378,6 @@
         function switchUsersModalTab(tabName) {
             activeUsersModalTab = tabName;
             const btnReg = document.getElementById('tabBtnRegistered');
-            const btnOnl = document.getElementById('tabBtnOnline');
             const btnAct = document.getElementById('tabBtnActivities');
             const clearBtn = document.getElementById('clearActivitiesBtn');
 
@@ -4100,7 +4385,6 @@
             const inactiveClass = "py-1.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 text-sky-200/70 hover:text-white";
 
             if (btnReg) btnReg.className = tabName === 'registered' ? activeClass : inactiveClass;
-            if (btnOnl) btnOnl.className = tabName === 'online' ? activeClass : inactiveClass;
             if (btnAct) btnAct.className = tabName === 'activities' ? activeClass : inactiveClass;
 
             if (clearBtn) {
@@ -4122,14 +4406,11 @@
 
             const userKeys = Object.keys(registeredUsers);
             const totalUsers = userKeys.length;
-            const onlineUsers = userKeys.filter(k => isUserOnline(registeredUsers[k]?.username));
 
-            // Cập nhật số đếm trên các nút tab
+            // Cập nhật số đếm trên 2 nút tab
             const regBadge = document.getElementById('tabBadgeRegistered');
-            const onlBadge = document.getElementById('tabBadgeOnline');
             const actBadge = document.getElementById('tabBadgeActivities');
             if (regBadge) regBadge.innerText = totalUsers;
-            if (onlBadge) onlBadge.innerText = onlineUsers.length;
             if (actBadge) actBadge.innerText = memberActivities.length;
 
             // ================= MỤC 1: DANH SÁCH ĐÃ ĐĂNG KÝ =================
@@ -4142,7 +4423,6 @@
                 userKeys.forEach(key => {
                     const u = registeredUsers[key];
                     const isOwnerAcc = (u.username.toLowerCase() === OWNER_USER.toLowerCase());
-                    const online = isUserOnline(u.username);
                     const avt = getUserAvatarOrDefault(u.username);
                     const pencils = getUserPencilCount(u.username);
                     const favChars = getUserFavoritedChars(u.username);
@@ -4166,10 +4446,7 @@
                     card.innerHTML = `
                         <div onclick="toggleMemberCardExpansion('${u.username}')" class="flex items-center justify-between cursor-pointer select-none">
                             <div class="flex items-center gap-2.5 truncate">
-                                <div class="relative shrink-0">
-                                    <img src="${avt}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-8 h-8 rounded-full object-cover border border-pink-300/40">
-                                    <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${online ? 'bg-emerald-400 ring-2 ring-[#121c38]' : 'bg-gray-500'}"></span>
-                                </div>
+                                <img src="${avt}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-8 h-8 rounded-full object-cover border border-pink-300/40 shrink-0">
                                 <div class="truncate">
                                     <div class="font-extrabold text-white text-xs truncate flex items-center gap-1.5">
                                         <span>${u.username}</span>
@@ -4206,45 +4483,7 @@
                 });
             }
 
-            // ================= MỤC 2: THÀNH VIÊN ĐANG ONLINE =================
-            else if (activeUsersModalTab === 'online') {
-                if (onlineUsers.length === 0) {
-                    container.innerHTML = `<div class="text-xs text-sky-200/60 italic text-center py-6">Hiện không có thành viên nào đang online!</div>`;
-                    return;
-                }
-
-                onlineUsers.forEach(key => {
-                    const u = registeredUsers[key];
-                    const avt = getUserAvatarOrDefault(u.username);
-                    const pencils = getUserPencilCount(u.username);
-                    const favCount = getUserFavoritedCount(u.username);
-                    const isOwnerAcc = (u.username.toLowerCase() === OWNER_USER.toLowerCase());
-
-                    const card = document.createElement('div');
-                    card.className = "flex items-center justify-between bg-emerald-500/10 border border-emerald-400/30 rounded-2xl p-2.5 text-xs";
-                    card.innerHTML = `
-                        <div class="flex items-center gap-2.5 truncate">
-                            <div class="relative shrink-0">
-                                <img src="${avt}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-8 h-8 rounded-full object-cover border border-emerald-400/50">
-                                <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse ring-2 ring-[#121c38]"></span>
-                            </div>
-                            <div class="truncate">
-                                <div class="font-extrabold text-white truncate flex items-center gap-1">
-                                    <span>${u.username}</span>
-                                    ${isOwnerAcc ? '<span class="text-[9px] bg-amber-400/30 text-amber-300 px-1 rounded font-bold">Chủ Web</span>' : ''}
-                                </div>
-                                <div class="text-[10.5px] text-emerald-300 font-bold mt-0.5">
-                                    Đang trực tuyến · ✏️ ${pencils} chì · ❤️ ${favCount} char
-                                </div>
-                            </div>
-                        </div>
-                        <span class="text-[10px] bg-emerald-500/20 text-emerald-200 border border-emerald-300/40 px-2 py-0.5 rounded-full font-bold">Online</span>
-                    `;
-                    container.appendChild(card);
-                });
-            }
-
-            // ================= MỤC 3: HOẠT ĐỘNG THỜI GIAN THỰC =================
+            // ================= MỤC 2: HOẠT ĐỘNG THỜI GIAN THỰC =================
             else if (activeUsersModalTab === 'activities') {
                 if (memberActivities.length === 0) {
                     container.innerHTML = `<div class="text-xs text-sky-200/60 italic text-center py-6">Chưa có hoạt động nào được ghi nhận.</div>`;
@@ -4290,9 +4529,11 @@
             }
         }
 
+        function sendOnlineHeartbeat() {}
+
         function openUsersListModal() {
             if (!currentUser?.isOwner) return;
-            sendOnlineHeartbeat();
+            if (activeUsersModalTab !== 'activities') activeUsersModalTab = 'registered';
             renderUsersModalContent();
             document.getElementById('registeredUsersModal').classList.remove('hidden');
         }
@@ -4334,7 +4575,9 @@
                 color: "Tô Màu",
                 fav: "Bức Tranh Hoàn Chỉnh",
                 fast: "Sắc Màu Nhanh Nhẹn",
-                notify: "Thông Báo và Hiệu Ứng"
+                wheel: "Vòng Xoay May Mắn",
+                notify: "Thông Báo và Hiệu Ứng",
+                page: "Page và Discord"
             };
 
             if (titleEl) titleEl.innerText = `Đổi Ảnh / GIF: ${menuTitles[menuKey] || menuKey}`;
@@ -4479,6 +4722,73 @@
             }
         }
 
+        // LOGIC KIỂM TRA ĐỦ 3 CÂU HỎI TRƯỚC KHI VÀO ĐĂNG KÝ
+        let ruleConfirmStates = { 1: false, 2: false, 3: false };
+
+        function toggleRuleConfirm(num) {
+            ruleConfirmStates[num] = !ruleConfirmStates[num];
+            playPaletteTingSound();
+
+            const btn = document.getElementById(`ruleBtn${num}`);
+            const defaultTexts = {
+                1: "Chắc chắn rồi!",
+                2: "Đã hiểu!",
+                3: "Xác nhận!"
+            };
+
+            if (btn) {
+                if (ruleConfirmStates[num]) {
+                    btn.innerText = `Đã đồng ý: ${defaultTexts[num]}`;
+                    btn.className = "w-full bg-gradient-to-r from-pink-500/30 to-purple-500/30 border border-pink-300 text-white font-black py-1.5 px-3 rounded-xl text-xs shadow-[0_0_12px_rgba(244,114,182,0.4)] transition text-center";
+                } else {
+                    btn.innerText = defaultTexts[num];
+                    btn.className = "w-full bg-white/5 hover:bg-white/10 border border-pink-300/30 text-pink-200 py-1.5 px-3 rounded-xl text-xs font-bold transition active:scale-95 text-center";
+                }
+            }
+
+            checkAllRulesConfirmed();
+        }
+
+        function checkAllRulesConfirmed() {
+            const allPassed = ruleConfirmStates[1] && ruleConfirmStates[2] && ruleConfirmStates[3];
+            const continueBtn = document.getElementById('continueToAuthBtn');
+            if (!continueBtn) return;
+
+            if (allPassed) {
+                continueBtn.disabled = false;
+                continueBtn.innerText = "Tiến Vào Đăng Ký / Đăng Nhập";
+                continueBtn.className = "w-full py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-pink-400 via-rose-300 to-purple-400 text-[#121c38] shadow-[0_0_20px_rgba(244,114,182,0.6)] active:scale-95 transition text-center animate-pulse cursor-pointer";
+            } else {
+                continueBtn.disabled = true;
+                continueBtn.innerText = "Bấm đủ 3 nút xác nhận để tiếp tục";
+                continueBtn.className = "w-full py-2.5 rounded-xl text-xs font-extrabold opacity-40 cursor-not-allowed bg-white/10 text-white/50 border border-white/20 transition text-center";
+            }
+        }
+
+        function proceedToAuthForm() {
+            if (!(ruleConfirmStates[1] && ruleConfirmStates[2] && ruleConfirmStates[3])) return;
+            sessionStorage.setItem('palette_rules_confirmed', 'true');
+            playPaletteTingSound();
+
+            const termsSec = document.getElementById('authTermsSection');
+            const formSec = document.getElementById('authFormSection');
+            if (termsSec) termsSec.classList.add('hidden');
+            if (formSec) formSec.classList.remove('hidden');
+        }
+
+        function initAuthRulesView() {
+            const hasConfirmed = (sessionStorage.getItem('palette_rules_confirmed') === 'true');
+            const termsSec = document.getElementById('authTermsSection');
+            const formSec = document.getElementById('authFormSection');
+            if (hasConfirmed) {
+                if (termsSec) termsSec.classList.add('hidden');
+                if (formSec) formSec.classList.remove('hidden');
+            } else {
+                if (termsSec) termsSec.classList.remove('hidden');
+                if (formSec) formSec.classList.add('hidden');
+            }
+        }
+
         function toggleAuthMode() {
             isRegisterMode = !isRegisterMode;
             updateAuthFormUI();
@@ -4493,25 +4803,25 @@
             const switchBtn = document.getElementById('switchAuthBtn');
             const errEl = document.getElementById('authErrorMsg');
             const avatarPicker = document.getElementById('authAvatarPicker');
-            errEl.classList.add('hidden');
+            if (errEl) errEl.classList.add('hidden');
 
             if (isRegisterMode) {
-                titleEl.innerText = "Đăng Ký Tài Khoản";
-                subEl.innerText = "Tuyệt đối không share link cho nhau dưới mọi hình thức.";
-                randomBtn.classList.remove('hidden');
-                submitBtnText.innerText = "Đăng Ký Tài Khoản";
-                switchPrompt.innerText = "Đã có tài khoản rồi?";
-                switchBtn.innerText = "Đăng nhập ngay";
-                avatarPicker.classList.remove('hidden');
+                if (titleEl) titleEl.innerText = "Đăng Ký Tài Khoản";
+                if (subEl) subEl.innerText = "Tuyệt đối không share link cho nhau dưới mọi hình thức.";
+                if (randomBtn) randomBtn.classList.remove('hidden');
+                if (submitBtnText) submitBtnText.innerText = "Đăng Ký Tài Khoản";
+                if (switchPrompt) switchPrompt.innerText = "Đã có tài khoản rồi?";
+                if (switchBtn) switchBtn.innerText = "Đăng nhập ngay";
+                if (avatarPicker) avatarPicker.classList.remove('hidden');
                 renderAvatarPickers();
             } else {
-                titleEl.innerText = "Đăng Nhập Tài Khoản";
-                subEl.innerText = "Tuyệt đối không share link cho nhau dưới mọi hình thức.";
-                randomBtn.classList.add('hidden');
-                submitBtnText.innerText = "Đăng Nhập Ngay";
-                switchPrompt.innerText = "Chưa có tài khoản?";
-                switchBtn.innerText = "Đăng ký mới";
-                avatarPicker.classList.add('hidden');
+                if (titleEl) titleEl.innerText = "Đăng Nhập Tài Khoản";
+                if (subEl) subEl.innerText = "Tuyệt đối không share link cho nhau dưới mọi hình thức.";
+                if (randomBtn) randomBtn.classList.add('hidden');
+                if (submitBtnText) submitBtnText.innerText = "Đăng Nhập Ngay";
+                if (switchPrompt) switchPrompt.innerText = "Chưa có tài khoản?";
+                if (switchBtn) switchBtn.innerText = "Đăng ký mới";
+                if (avatarPicker) avatarPicker.classList.add('hidden');
             }
         }
 
@@ -4731,7 +5041,7 @@
                         <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
                     </div>
 
-                    <div class="relative mb-5 flex justify-center">
+                    <div class="relative mb-3 flex justify-center">
                         <div class="glowing-pastel-border">
                             <div class="w-60 h-72 rounded-[1.3rem] overflow-hidden relative">
                                 <img src="${c.image}" class="w-full h-full object-cover">
@@ -4744,6 +5054,10 @@
                         </div>
                     </div>
 
+                    <p class="text-[10px] text-amber-200/90 text-center mb-3 italic leading-relaxed bg-amber-500/10 p-2.5 rounded-2xl border border-amber-300/25 max-w-[280px]">
+                        Lưu ý: Hãy out ra web sau khi đã duyệt ảnh xong và trở vào sau 2 tiếng vì lượng người truy cập tối đa có giới hạn để người khác có thể vào lấy link nhé.
+                    </p>
+
                     <button onclick="${isUnlocked ? `window.open('${c.aiStudioUrl}', '_blank')` : `openFastProofModal('${c.id}')`}" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
                         ${isUnlocked ? `🔓 ĐÃ MỞ KHÓA - Mở Link ${c.name} Ngay!` : `Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web (sẽ mở lại sau ba ngày).`}
                     </button>
@@ -4752,6 +5066,8 @@
             });
             updateCountdownDisplayOnly();
         }
+
+        let userUnlockTimestamps = JSON.parse(localStorage.getItem('palette_user_unlock_timestamps') || '{}');
 
         let countdownTimerInterval = null;
         function startFastColorTimers() {
@@ -4770,16 +5086,18 @@
                         }
                     }
 
-                    if (currentUser && userUnlockedState[currentUser.username]?.[c.id]) {
+                    // Chỉ tự động khóa lại sau tròn 24 tiếng nếu người dùng không bấm thả tim
+                    if (currentUser && userUnlockedState[currentUser.username]?.[c.id] === true) {
                         const likes = charLikesData[c.id] || [];
                         const isLiked = likes.includes(currentUser.username);
-                        const duration = c.customDurationMs || (24 * 60 * 60 * 1000);
-                        const unlockTime = c.fastStartTime || (now - duration - 1000);
-                        if (!isLiked && (now - unlockTime >= duration)) {
-                            userUnlockedState[currentUser.username][c.id] = false;
-                            db.collection("unlocked").doc(currentUser.username).set({
-                                chars: userUnlockedState[currentUser.username]
-                            });
+                        if (!isLiked) {
+                            const unlockTime = userUnlockTimestamps[currentUser.username]?.[c.id];
+                            if (unlockTime && (now - unlockTime >= 24 * 60 * 60 * 1000)) {
+                                userUnlockedState[currentUser.username][c.id] = false;
+                                db.collection("unlocked").doc(currentUser.username).set({
+                                    chars: userUnlockedState[currentUser.username]
+                                });
+                            }
                         }
                     }
 
@@ -5220,13 +5538,28 @@
 
         // ================= DUYỆT BẰNG CHỨNG (OCR AI) =================
         async function processNormalProofVerification() {
-            const fbFiles = Array.from(document.getElementById('proofFbImg').files || []);
-            const dcFiles = Array.from(document.getElementById('proofDcImg').files || []);
             const submitBtn = document.getElementById('submitProofBtn');
             const submitText = document.getElementById('submitProofBtnText');
             const feedbackBox = document.getElementById('aiFeedbackBox');
 
-            if (fbFiles.length === 0 || dcFiles.length === 0) {
+            // Kiểm tra ảnh Facebook trong bộ nhớ đệm
+            if (!cachedFbDataUrl) {
+                const fbInput = document.getElementById('proofFbImg');
+                if (fbInput?.files?.[0]) {
+                    cachedFbDataUrl = await processImageForFastOCR(fbInput.files[0]);
+                }
+            }
+
+            // Kiểm tra ảnh Discord trong bộ nhớ đệm
+            if (cachedDcDataUrls.length === 0) {
+                const dcInput = document.getElementById('proofDcImg');
+                if (dcInput?.files?.[0]) {
+                    const b64 = await processImageForFastOCR(dcInput.files[0]);
+                    cachedDcDataUrls = [b64];
+                }
+            }
+
+            if (!cachedFbDataUrl || cachedDcDataUrls.length === 0) {
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
                 feedbackBox.innerHTML = "❌ <b>Lỗi thiếu ảnh:</b> Bạn chưa chọn đủ cả ảnh Facebook và ảnh Discord!";
                 feedbackBox.classList.remove('hidden');
@@ -5254,140 +5587,183 @@
                 submitText.innerText = `Đang duyệt... ${percent}%`;
             };
 
-            setProgressUI(10, "Đang tối ưu ảnh chụp...");
+            setProgressUI(15, "Đang chuẩn bị quét...");
 
             try {
-                // 1. Quét Facebook
-                let fbRaw = "";
-                for (let i = 0; i < fbFiles.length; i++) {
-                    const fastFbData = await processImageForFastOCR(fbFiles[i]);
-                    const baseP = 10 + Math.round((i / fbFiles.length) * 40);
-                    const { data: { text: pageText } } = await Tesseract.recognize(fastFbData, 'vie+eng', {
+                // 1. Quét Facebook (nếu đã quét thành công ở lượt trước thì tự động dùng lại cache, không tốn RAM và không bao giờ bị lỗi)
+                let fbRaw = cachedFbOcrText;
+                if (!fbRaw) {
+                    setProgressUI(25, "Đang đọc ảnh Facebook...");
+                    const { data: { text: pageText } } = await Tesseract.recognize(cachedFbDataUrl, 'vie', {
                         logger: m => {
                             if (m.status === 'recognizing text') {
-                                const p = Math.round(baseP + m.progress * (40 / fbFiles.length));
-                                setProgressUI(p, `Đang đọc ảnh Facebook (${i + 1}/${fbFiles.length})...`);
+                                const p = Math.round(20 + (m.progress || 0) * 25);
+                                setProgressUI(p, "Đang đọc ảnh Facebook...");
                             }
                         }
                     });
-                    fbRaw += " " + pageText;
+                    fbRaw = pageText;
+                    cachedFbOcrText = fbRaw;
                 }
+
                 const cleanFb = fbRaw.toLowerCase();
-                
                 const hasPage = cleanFb.includes("palette số hóa") || cleanFb.includes("palette so hoa") || cleanFb.includes("palette");
                 if (!hasPage) throw new Error("Ảnh Facebook chưa nhìn thấy rõ tên Page 'Palette Số Hóa'!");
 
-                const targetTag = activeChar.firstTagKeyword.toLowerCase();
-                const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                const hasTag = cleanFb.includes(targetTag) || cleanFb.includes(unaccentedTag);
-                if (!hasTag) throw new Error("Ảnh Facebook gửi sai bài viết của nhân vật khác!");
+                const isOwnerTesting = (currentUser?.isOwner || currentUser?.username?.toLowerCase() === "bibi 0304");
 
-                const hasReact = cleanFb.includes("thích") || cleanFb.includes("đã thích") || cleanFb.includes("tim") || cleanFb.includes("like") || cleanFb.includes("bạn và");
-                if (!hasReact) throw new Error("Bài viết Facebook chưa hiển thị nút đã thả react/tim!");
+                if (!isOwnerTesting) {
+                    const targetTag = (activeChar.firstTagKeyword || "").toLowerCase();
+                    const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const hasTag = cleanFb.includes(targetTag) || cleanFb.includes(unaccentedTag);
+                    if (!hasTag) throw new Error("Ảnh Facebook gửi sai bài viết của nhân vật khác!");
+
+                    const hasReact = cleanFb.includes("thích") || cleanFb.includes("đã thích") || cleanFb.includes("tim") || cleanFb.includes("like") || cleanFb.includes("bạn và");
+                    if (!hasReact) throw new Error("Bài viết Facebook chưa hiển thị nút đã thả react/tim!");
+                }
 
                 // 2. Quét Discord
+                setProgressUI(55, "Đang đọc ảnh Discord...");
                 let combinedDcText = "";
-                const totalDc = dcFiles.length;
-                for (let i = 0; i < totalDc; i++) {
-                    const fastDcData = await processImageForFastOCR(dcFiles[i]);
-                    const baseP = 50 + Math.round((i / totalDc) * 45);
-                    const { data: { text: dcRaw } } = await Tesseract.recognize(fastDcData, 'vie+eng', {
+                for (let i = 0; i < cachedDcDataUrls.length; i++) {
+                    const { data: { text: dcRaw } } = await Tesseract.recognize(cachedDcDataUrls[i], 'vie', {
                         logger: m => {
                             if (m.status === 'recognizing text') {
-                                const currentP = Math.min(96, Math.round(baseP + (m.progress * (45 / totalDc))));
-                                setProgressUI(currentP, `Đang đọc ảnh Discord (${i+1}/${totalDc})...`);
+                                const p = Math.min(94, Math.round(55 + (m.progress || 0) * 38));
+                                setProgressUI(p, `Đang đọc ảnh Discord (${i + 1}/${cachedDcDataUrls.length})...`);
                             }
                         }
                     });
                     combinedDcText += " " + dcRaw.toLowerCase();
                 }
 
-                // KIỂM TRA TÊN KÊNH: CẢM⭑NHẬN⭑SẮC⭑MÀU
-                const normalizedDc = combinedDcText.replace(/[\s\*\⭑\_\-\.\,\:\|\/]+/g, '');
-                const hasChannelName = normalizedDc.includes("camnhansacmau") || normalizedDc.includes("cảmnhậnsắcmàu") || combinedDcText.includes("cảm nhận sắc màu") || combinedDcText.includes("cảm⭑nhận⭑sắc⭑màu");
-                if (!hasChannelName) throw new Error("Ảnh bắt buộc phải có nhìn thấy tên kênh 'cảm⭑nhận⭑sắc⭑màu'!");
+                // KIỂM TRA BẮT BUỘC PHẢI THẤY RÕ TÊN KÊNH DISCORD
+                const cleanDc = combinedDcText.toLowerCase();
+                const unaccentedDc = cleanDc.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const noPunctDc = unaccentedDc.replace(/[^a-z0-9]/g, ' ');
+
+                let hasChannelName = false;
+                if (activeProofType === 'Sắc màu gạo cội') {
+                    const hasSacMau = (noPunctDc.includes('sac') && noPunctDc.includes('mau')) || cleanDc.includes('sắc màu') || unaccentedDc.includes('sac mau');
+                    const hasCamNhan = (noPunctDc.includes('cam') && noPunctDc.includes('nhan')) || cleanDc.includes('cảm nhận') || unaccentedDc.includes('cam nhan');
+                    hasChannelName = hasSacMau && hasCamNhan;
+                    if (!hasChannelName) throw new Error("Bạn chụp thiếu tên chủ đề kênh 'cảm * nhận * sắc * màu'! Vui lòng không cắt ảnh để thấy rõ tên kênh nhé.");
+                } else {
+                    const hasHoSo = (noPunctDc.includes('ho') && noPunctDc.includes('so')) || cleanDc.includes('hồ sơ') || unaccentedDc.includes('ho so');
+                    const hasTanThu = (noPunctDc.includes('tan') && noPunctDc.includes('thu')) || cleanDc.includes('tân thủ') || unaccentedDc.includes('tan thu');
+                    hasChannelName = hasTanThu || hasHoSo;
+                    if (!hasChannelName) throw new Error("Bạn chụp thiếu tên chủ đề kênh 'hồ * sơ * tân * thủ'! Vui lòng không cắt ảnh để thấy rõ tên kênh nhé.");
+                }
 
                 // KIỂM TRA ĐÃ GỬI CHÍNH THỨC
-                const isDrafting = combinedDcText.includes("gửi tin nhắn tới") || combinedDcText.includes("nhập tin nhắn") || combinedDcText.includes("send a message");
+                const isDrafting = combinedDcText.includes("gửi tin nhắn tới") || combinedDcText.includes("nhập tin nhắn");
                 if (isDrafting) throw new Error("Ảnh Discord đang ở khung soạn thảo, chưa bấm gửi chính thức!");
 
                 // KIỂM TRA THỜI GIAN GỬI: TÂN THỦ CHỈ ĐƯỢC 5 PHÚT, GẠO CỘI 1 TIẾNG
-                const hasSpecificDate = /\b\d{1,2}[\/\-]\d{1,2}\b/.test(combinedDcText) || /\b(ngày|tháng|hôm qua|yesterday|days? ago)\b/.test(combinedDcText);
-                if (hasSpecificDate) {
-                    throw new Error("Mốc thời gian gửi tin nhắn đã sang ngày khác hoặc ghi rõ ngày tháng cũ, từ chối duyệt!");
-                }
+                if (!isOwnerTesting) {
+                    const curDateObj = new Date();
+                    const curDayStr = String(curDateObj.getDate()).padStart(2, '0');
+                    const curMonthStr = String(curDateObj.getMonth() + 1).padStart(2, '0');
 
-                const isNewbie = (activeProofType === 'Tân thủ');
-                const maxAllowedMinutes = isNewbie ? 5 : 65;
+                    const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-]\d{2,4})?\b/g)];
+                    let hasOldDate = cleanDc.includes("hôm qua") || cleanDc.includes("yesterday") || cleanDc.includes("days ago");
+                    for (const dm of dateRegexMatches) {
+                        const d = String(parseInt(dm[1])).padStart(2, '0');
+                        const m = String(parseInt(dm[2])).padStart(2, '0');
+                        if (d !== curDayStr || m !== curMonthStr) {
+                            hasOldDate = true;
+                            break;
+                        }
+                    }
+                    if (hasOldDate) {
+                        throw new Error("Mốc thời gian gửi tin nhắn đã sang ngày khác hoặc ghi rõ ngày tháng cũ, từ chối duyệt!");
+                    }
 
-                const hasOver1h = /\b([1-9][0-9]*)\s*(giờ trước|hours ago|h trước)\b/.test(combinedDcText);
-                if (hasOver1h) {
-                    throw new Error(isNewbie ? "Tin nhắn Tân thủ đã gửi quá hạn 5 phút!" : "Tin nhắn trong ảnh hiển thị đã gửi từ 2 tiếng trước trở lên (quá hạn 1 tiếng)!");
-                }
+                    const isNewbie = (activeProofType === 'Tân thủ');
+                    const maxAllowedMinutes = isNewbie ? 5 : 65;
 
-                if (isNewbie) {
-                    const hasOver5m = /\b([6-9]|[1-9][0-9]+)\s*(phút trước|m ago|mins? ago)\b/.test(combinedDcText);
-                    if (hasOver5m) {
-                        throw new Error("Tin nhắn Hồ Sơ Tân Thủ đã gửi quá hạn 5 phút!");
+                    const hasOver1h = /\b([1-9][0-9]*)\s*(giờ trước|hours ago|h trước)\b/.test(combinedDcText);
+                    if (hasOver1h) {
+                        throw new Error(isNewbie ? "Tin nhắn Tân thủ đã gửi quá hạn 5 phút!" : "Tin nhắn trong ảnh hiển thị đã gửi từ 2 tiếng trước trở lên (quá hạn 1 tiếng)!");
+                    }
+
+                    if (isNewbie) {
+                        const hasOver5m = /\b([6-9]|[1-9][0-9]+)\s*(phút trước|m ago|mins? ago)\b/.test(combinedDcText);
+                        if (hasOver5m) {
+                            throw new Error("Tin nhắn Hồ Sơ Tân Thủ đã gửi quá hạn 5 phút!");
+                        }
+                    }
+
+                    const timeRegex = /\b([01]?[0-9]|2[0-3])[:h]([0-5][0-9])\b/g;
+                    const matches = [...combinedDcText.matchAll(timeRegex)];
+                    if (matches.length > 0) {
+                        const lastMatch = matches[matches.length - 1];
+                        const msgHour = parseInt(lastMatch[1]);
+                        const msgMin = parseInt(lastMatch[2]);
+                        const curDate = new Date();
+                        const curHour = curDate.getHours();
+                        const curMin = curDate.getMinutes();
+                        
+                        let diffMinutes = (curHour * 60 + curMin) - (msgHour * 60 + msgMin);
+                        if (diffMinutes < 0) diffMinutes += 24 * 60;
+                        if (diffMinutes > maxAllowedMinutes) {
+                            throw new Error(isNewbie 
+                                ? `Tin nhắn Tân thủ gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã quá hạn 5 phút!` 
+                                : `Tin nhắn gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã cách nhau hơn 1 tiếng!`);
+                        }
                     }
                 }
 
-                const timeRegex = /\b([01]?[0-9]|2[0-3])[:h]([0-5][0-9])\b/g;
-                const matches = [...combinedDcText.matchAll(timeRegex)];
-                if (matches.length > 0) {
-                    const lastMatch = matches[matches.length - 1];
-                    const msgHour = parseInt(lastMatch[1]);
-                    const msgMin = parseInt(lastMatch[2]);
-                    const curDate = new Date();
-                    const curHour = curDate.getHours();
-                    const curMin = curDate.getMinutes();
-                    
-                    let diffMinutes = (curHour * 60 + curMin) - (msgHour * 60 + msgMin);
-                    if (diffMinutes < 0) diffMinutes += 24 * 60;
-                    if (diffMinutes > maxAllowedMinutes) {
-                        throw new Error(isNewbie 
-                            ? `Tin nhắn Tân thủ gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã quá hạn 5 phút!` 
-                            : `Tin nhắn gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã cách nhau hơn 1 tiếng!`);
-                    }
-                }
-
-                // DÀN THEO 3 MỤC MẪU
+                // DÀN THEO 3 MỤC MẪU (CHỈ CẦN ĐỦ 3 ĐẦU MỤC THEO MẪU, KHÔNG ÉP BUỘC CHỮ PHÍA SAU)
                 let hasM1 = false, hasM2 = false, hasM3 = false;
                 if (activeProofType === 'Sắc màu gạo cội') {
-                    hasM1 = combinedDcText.includes("tên char") || combinedDcText.includes("ten char");
-                    hasM2 = combinedDcText.includes("feedback") || combinedDcText.includes("cảm nhận");
-                    hasM3 = (combinedDcText.includes("muốn chơi") || combinedDcText.includes("muon choi")) && combinedDcText.includes(activeChar.name.toLowerCase());
+                    hasM1 = unaccentedDc.includes("ten char") || cleanDc.includes("tên char");
+                    hasM2 = unaccentedDc.includes("feedback") || cleanDc.includes("feedback") || unaccentedDc.includes("cam nhan") || cleanDc.includes("cảm nhận") || unaccentedDc.includes("feed back");
+                    hasM3 = unaccentedDc.includes("muon choi") || cleanDc.includes("muốn chơi") || unaccentedDc.includes("choi thu") || cleanDc.includes("chơi thử");
                 } else {
-                    hasM1 = combinedDcText.includes("thể loại") || combinedDcText.includes("the loai");
-                    hasM2 = (combinedDcText.includes("chơi thử") || combinedDcText.includes("choi thu")) && combinedDcText.includes(activeChar.name.toLowerCase());
-                    hasM3 = combinedDcText.includes("hướng nội") || combinedDcText.includes("hướng ngoại") || combinedDcText.includes("huong noi") || combinedDcText.includes("huong ngoai");
+                    hasM1 = unaccentedDc.includes("the loai") || cleanDc.includes("thể loại") || unaccentedDc.includes("gu");
+                    hasM2 = unaccentedDc.includes("choi thu") || cleanDc.includes("chơi thử") || unaccentedDc.includes("muon choi") || cleanDc.includes("muốn chơi") || unaccentedDc.includes("palette");
+                    hasM3 = unaccentedDc.includes("huong noi") || unaccentedDc.includes("huong ngoai") || cleanDc.includes("hướng nội") || cleanDc.includes("hướng ngoại");
                 }
 
                 if (!hasM1 || !hasM2 || !hasM3) {
                     throw new Error("Bài viết chưa điền đầy đủ dàn 3 mục theo mẫu đã quy định!");
                 }
 
-                setProgressUI(97, "Đang tải ảnh bằng chứng lên...");
-                await storeProofImages([...fbFiles, ...dcFiles], {
-                    username: currentUser.username,
-                    charId: activeChar.id,
-                    proofType: activeProofType,
-                    mode: "normal"
-                });
+                setProgressUI(97, "Đang hoàn tất duyệt...");
+                if (currentUser) {
+                    try {
+                        const fbFiles = Array.from(document.getElementById('proofFbImg')?.files || []);
+                        const dcFiles = Array.from(document.getElementById('proofDcImg')?.files || []);
+                        if (fbFiles.length || dcFiles.length) {
+                            await storeProofImages([...fbFiles, ...dcFiles], {
+                                username: currentUser.username,
+                                charId: activeChar.id,
+                                proofType: activeProofType,
+                                mode: "normal"
+                            });
+                        }
+                    } catch(e) {}
+                }
 
                 // HOÀN THÀNH 100%
                 setProgressUI(100, "Hoàn tất kiểm duyệt!");
                 submitBtn.disabled = false;
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
 
-                if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
-                userUnlockedState[currentUser.username][activeChar.id] = true;
-                db.collection("unlocked").doc(currentUser.username).set({
-                    chars: userUnlockedState[currentUser.username]
-                });
+                if (currentUser) {
+                    if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
+                    userUnlockedState[currentUser.username][activeChar.id] = true;
 
-                // THƯỞNG 1 CHÌ MÀU CHO LINK THƯỜNG
-                addPencilToUser(currentUser.username, 1, "Mở khóa Link thường thành công");
+                    if (!userUnlockTimestamps[currentUser.username]) userUnlockTimestamps[currentUser.username] = {};
+                    userUnlockTimestamps[currentUser.username][activeChar.id] = Date.now();
+                    localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+
+                    db.collection("unlocked").doc(currentUser.username).set({
+                        chars: userUnlockedState[currentUser.username]
+                    });
+                    addPencilToUser(currentUser.username, 1, "Mở khóa Link thường thành công", false);
+                }
 
                 updateAIStudioButton();
                 triggerNotification("Link Đã Mở Khóa!", `Chúc mừng bạn! Link Google AI Studio của "${activeChar.name}" đã được mở khóa (+1 Chì Màu)! Hãy bấm tim vào nhân vật để lưu giữ vĩnh viễn nhé!`);
@@ -5396,21 +5772,22 @@
                 feedbackBox.innerHTML = `
                     <div class="font-extrabold text-sm mb-1 text-emerald-300">🎉 Chúc mừng bạn đã hoàn thành tuyệt vời!</div>
                     <div>Link Google AI Studio của "${activeChar.name}" đã được mở khóa thành công. Bạn nhận được +1 Bút Chì Màu! ✏️</div>
-                    <div class="mt-2 text-pink-200 font-bold bg-pink-500/20 p-2 rounded-xl border border-pink-300/30">
+                    <div class="my-2.5">
+                        <button type="button" onclick="window.open('${activeChar.aiStudioUrl}', '_blank')" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 text-white font-black py-2.5 px-3 rounded-xl shadow-lg flex items-center justify-center gap-2 text-xs active:scale-95 transition cursor-pointer">
+                            <span>🚀 Mở Link Google AI Studio Ngay</span> ➔
+                        </button>
+                    </div>
+                    <div class="text-pink-200 font-bold bg-pink-500/20 p-2 rounded-xl border border-pink-300/30">
                         💖 <b>Nhắc nhở quan trọng:</b> Hãy bấm thả tim vào nhân vật ngay để <b>lưu giữ link vĩnh viễn</b>, nếu quên tim thì link sẽ tự động đóng sau một ngày!
                     </div>
                 `;
-
-                setTimeout(() => {
-                    closeProofModal();
-                    closeColorGuide();
-                }, 3500);
 
             } catch (err) {
                 submitBtn.disabled = false;
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
-                feedbackBox.innerHTML = `❌ <b>Kiểm duyệt thất bại:</b> ${err.message || "Ảnh không hợp lệ, vui lòng kiểm tra lại!"}`;
+                const errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
+                feedbackBox.innerHTML = `❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}`;
             }
         }
 
@@ -5463,7 +5840,7 @@
                 for (let i = 0; i < fastFiles.length; i++) {
                     const fastFbData = await processImageForFastOCR(fastFiles[i]);
                     const baseP = 20 + Math.round((i / fastFiles.length) * 70);
-                    const { data: { text } } = await Tesseract.recognize(fastFbData, 'vie+eng', {
+                    const { data: { text } } = await Tesseract.recognize(fastFbData, 'vie', {
                         logger: m => {
                             if (m.status === 'recognizing text') {
                                 const p = Math.min(95, Math.round(baseP + m.progress * (70 / fastFiles.length)));
@@ -5518,13 +5895,14 @@
                 setTimeout(() => {
                     closeFastProofModal();
                     openCharDetail(fastTargetChar);
-                }, 2500);
+                }, 4000);
 
             } catch (err) {
                 submitBtn.disabled = false;
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
-                feedbackBox.innerHTML = `❌ <b>Kiểm duyệt thất bại:</b> ${err.message || "Ảnh không hợp lệ, vui lòng kiểm tra lại!"}`;
+                const errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
+                feedbackBox.innerHTML = `❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}`;
             }
         }
 
@@ -6309,6 +6687,10 @@
 
         function openColorGuide(fromHome) {
             isOpenedFromHome = fromHome;
+            const fastSec = document.getElementById('guideFastSection');
+            const pencilSec = document.getElementById('guidePencilSection');
+            if (fastSec) fastSec.classList.toggle('hidden', !fromHome);
+            if (pencilSec) pencilSec.classList.toggle('hidden', !fromHome);
             document.getElementById('guidePopup').classList.remove('hidden');
         }
 
@@ -6323,13 +6705,54 @@
                 goToStory();
                 return;
             }
+            closeProofModal();
             activeProofType = userType;
             document.getElementById('proofSubtitle').innerText = `Dành cho ${userType}: Đang duyệt mở khóa cho [${activeChar.name}]. Tải đủ ảnh bên dưới:`;
             document.getElementById('proofPopup').classList.remove('hidden');
         }
 
         function closeProofModal() {
+            // 1. Ẩn modal
             document.getElementById('proofPopup').classList.add('hidden');
+
+            // 2. Xóa sạch bộ nhớ tạm
+            cachedFbDataUrl = "";
+            cachedFbOcrText = "";
+            cachedDcDataUrls = [];
+            if (typeof dcFilesStore !== 'undefined') dcFilesStore = [];
+
+            // 3. Reset mục ảnh Facebook
+            const fbInput = document.getElementById('proofFbImg');
+            const fbSpan = document.getElementById('proofFbImgName');
+            if (fbInput) fbInput.value = '';
+            if (fbSpan) {
+                fbSpan.innerText = "Chưa chọn ảnh";
+                fbSpan.className = "text-[11px] text-sky-200/70 truncate flex-1";
+            }
+
+            // 4. Reset mục ảnh Discord
+            const dcInput = document.getElementById('proofDcImg');
+            const dcSpan = document.getElementById('proofDcImgName');
+            const clearDcBtn = document.getElementById('clearDcBtn');
+            if (dcInput) dcInput.value = '';
+            if (dcSpan) {
+                dcSpan.innerText = "Chưa chọn ảnh";
+                dcSpan.className = "text-[11px] text-sky-200/70 truncate flex-1";
+            }
+            if (clearDcBtn) clearDcBtn.classList.add('hidden');
+
+            // 5. Xóa hoàn toàn khung thông báo kết quả
+            const feedbackBox = document.getElementById('aiFeedbackBox');
+            if (feedbackBox) {
+                feedbackBox.innerHTML = '';
+                feedbackBox.className = "hidden text-xs p-3.5 rounded-2xl mb-3 border leading-relaxed";
+            }
+
+            // 6. Reset nút nộp về trạng thái ban đầu
+            const submitBtn = document.getElementById('submitProofBtn');
+            const submitText = document.getElementById('submitProofBtnText');
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitText) submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
         }
 
         // ================= XỬ LÝ MỞ & ĐÓNG POPUP SẮC MÀU NHANH NHẸN =================
@@ -6512,712 +6935,321 @@
             playPaletteTingSound();
 
             if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
-                new Notification(title, {
-                    body: body,
-                    icon: "https://d.uguu.se/fuzeRZTP.gif",
-                    vibrate: [200, 100, 200]
-                });
+                try {
+                    new Notification(title, {
+                        body: body,
+                        icon: "https://files.catbox.moe/1foc7r.gif",
+                        vibrate: [200, 100, 200]
+                    });
+                } catch (err) {
+                    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                        navigator.serviceWorker.ready.then(reg => {
+                            reg.showNotification(title, {
+                                body: body,
+                                icon: "https://files.catbox.moe/1foc7r.gif"
+                            });
+                        }).catch(() => {});
+                    }
+                }
             }
         }
 
-    // ================= HỆ THỐNG "EM CÓ HIỂU ANH KHÔNG?" (HỌA SĨ NHỎ ĐỐ VUI) =================
-        let quizCharactersData = [];
-        let currentQuizChar = null;
-        let activeQuizQuestionsQueue = [];
-        let currentQuestionIndex = 0;
-        let currentQuestionObj = null;
-        let sessionWrongCount = 0; // Đếm số câu sai trong lượt chơi
-        let editingQuizDocId = null; // Quản lý việc sửa character trong cửa hàng
+    // ================= HỆ THỐNG VÒNG XOAY MAY MẮN (SẮC MÀU VẬN MAY) =================
+        const WHEEL_SLICES = [
+            { label: "+2 Chì", color: "#fed7aa", textColor: "#704122", type: "add2" },
+            { label: "Xui xẻo -2", color: "#ffd6e0", textColor: "#6e3346", type: "sub2" },
+            { label: "Ô Trống", color: "#fef08a", textColor: "#614d18", type: "empty" },
+            { label: "Xui xẻo -2", color: "#d7baff", textColor: "#4b3269", type: "sub2" },
+            { label: "Nhân đôi x2", color: "#bae6fd", textColor: "#1f4463", type: "double" },
+            { label: "Xui xẻo -2", color: "#bbf7d0", textColor: "#1f4a30", type: "sub2" },
+            { label: "+2 Chì", color: "#e8dff5", textColor: "#52406e", type: "add2" },
+            { label: "Xui xẻo -2", color: "#fce1e4", textColor: "#6e3745", type: "sub2" }
+        ];
 
-        const HOA_SI_NHO_AVATAR = "https://images.weserv.nl/?url=https://files.catbox.moe/u0k3kh.jpg&w=100&output=jpg";
+        let currentWheelRotation = 0;
+        let isWheelSpinning = false;
+        let wheelTickTimer = null;
+        let cachedWheelAudioCtx = null;
 
-        // Lắng nghe dữ liệu character từ Firebase
-        db.collection("quiz_characters").onSnapshot(snapshot => {
-            quizCharactersData = [];
-            snapshot.forEach(doc => {
-                quizCharactersData.push({ id: doc.id, ...doc.data() });
-            });
-            renderQuizCharSelectNames();
-            renderAdminQuizCharsList();
-        });
-
-        // AI TẠO BỘ CÂU HỎI HỐC BÚA & TỰ ĐỘNG ĐỔI CÁCH HỎI KHI TRẢ LỜI SAI
-        function generateAIQuestionsFromInfo(charName, infoText) {
-            const lines = (infoText || "").split('\n')
-                .map(l => l.trim().replace(/^[\-\*\•\d\.\s]+/, ''))
-                .filter(l => l.length > 2);
-
-            const cleanRaw = infoText.toLowerCase();
-            const questions = [];
-
-            lines.forEach((line, idx) => {
-                let key = "", value = "";
-                if (line.includes(':')) {
-                    const parts = line.split(':');
-                    key = parts[0].trim();
-                    value = parts.slice(1).join(':').trim();
-                } else if (line.includes('-')) {
-                    const parts = line.split('-');
-                    key = parts[0].trim();
-                    value = parts.slice(1).join('-').trim();
-                } else {
-                    key = "Đặc điểm";
-                    value = line;
-                }
-
-                if (!value) return;
-
-                let questionVariants = [];
-                let wrongPool = [];
-                const kLower = key.toLowerCase();
-
-                // 1. SINH NHẬT / NGÀY THÁNG
-                const dateMatch = value.match(/(\d{1,2})[\/\-\.](\d{1,2})/);
-                if (dateMatch && (kLower.includes("sinh nhật") || kLower.includes("ngày sinh") || kLower.includes("sinh"))) {
-                    const d = parseInt(dateMatch[1]);
-                    const m = parseInt(dateMatch[2]);
-                    const pad = num => String(num).padStart(2, '0');
-                    
-                    // 3 cách hỏi khác nhau cho cùng 1 thông tin
-                    questionVariants = [
-                        `Sinh nhật của ${charName} là vào ngày nào vậy cậu? 🎂`,
-                        `Ngày nào dưới đây là ngày sinh nhật chính xác của ${charName} ta? ✨`,
-                        `Nếu muốn chuẩn bị quà mừng sinh nhật cho ${charName} đúng ngày, cậu sẽ chọn ngày nào? 🎁`
-                    ];
-                    wrongPool = [
-                        `${pad(d === 1 ? 2 : d - 1)}/${pad(m)}`,
-                        `${pad(d >= 28 ? d - 2 : d + 1)}/${pad(m)}`,
-                        `${pad(d)}/${pad(m === 12 ? 1 : m + 1)}`,
-                        `${pad(d === 1 ? 28 : d - 2)}/${pad(m)}`,
-                        `${pad(d)}/${pad(m === 1 ? 12 : m - 1)}`
-                    ];
-                }
-                // 2. CHIỀU CAO
-                else if (value.match(/1[m\.]\d{2}/i) || value.match(/\d{3}\s*cm/i) || kLower.includes("chiều cao")) {
-                    const hMatch = value.match(/(1)[m\.](\d{2})/i) || value.match(/(\d{3})/);
-                    let hNum = 185;
-                    let isMeter = true;
-                    if (hMatch && hMatch[2]) {
-                        hNum = parseInt("1" + hMatch[2]);
-                    } else if (hMatch && hMatch[1]) {
-                        hNum = parseInt(hMatch[1]);
-                        isMeter = false;
-                    }
-
-                    questionVariants = [
-                        `Chiều cao chuẩn của ${charName} là bao nhiêu vậy cậu? 📏`,
-                        `Cậu có nhớ chính xác ${charName} cao bao nhiêu không nè? ✨`,
-                        `Trong các con số sau, đâu là chiều cao của ${charName}? 🤭`
-                    ];
-                    if (isMeter) {
-                        wrongPool = [
-                            `1m${hNum - 2 - 100 < 10 ? '0' : ''}${hNum - 2 - 100}`,
-                            `1m${hNum + 1 - 100}`,
-                            `1m${hNum - 1 - 100}`,
-                            `1m${hNum + 2 - 100}`,
-                            `1m${hNum - 3 - 100 < 10 ? '0' : ''}${hNum - 3 - 100}`
-                        ];
-                    } else {
-                        wrongPool = [
-                            `${hNum - 2}cm`, `${hNum + 1}cm`, `${hNum - 1}cm`, `${hNum + 2}cm`, `${hNum - 3}cm`
-                        ];
-                    }
-                }
-                // 3. TUỔI
-                else if (kLower.includes("tuổi") || value.match(/^\d{1,2}\s*tuổi$/i)) {
-                    const ageNum = parseInt(value) || 24;
-                    questionVariants = [
-                        `${charName} năm nay bao nhiêu tuổi rồi cậu nhỉ? ⏳`,
-                        `Đố cậu biết số tuổi hiện tại của ${charName} là bao nhiêu? ✨`,
-                        `Tuổi của ${charName} tương ứng với con số nào dưới đây ta? 🎂`
-                    ];
-                    wrongPool = [
-                        `${ageNum - 1} tuổi`, `${ageNum + 1} tuổi`, `${ageNum + 2} tuổi`, `${ageNum - 2} tuổi`
-                    ];
-                }
-                // 4. MÓN ĂN / ĐỒ UỐNG
-                else if (kLower.includes("món") || kLower.includes("thức ăn") || kLower.includes("đồ ăn") || kLower.includes("ăn") || kLower.includes("uống")) {
-                    questionVariants = [
-                        `Món ăn hoặc thức uống yêu thích của ${charName} là gì nè? 🍰`,
-                        `Nếu đi ăn cùng nhau, món nào dưới đây chắc chắn ${charName} sẽ chọn? 😋`,
-                        `Sở thích ẩm thực của ${charName} gắn liền với món nào ta? 🍓`
-                    ];
-                    const words = value.split(' ');
-                    if (words.length >= 2) {
-                        wrongPool = [
-                            (words[0] === "Bánh" ? "Kẹo" : "Món") + " " + words.slice(1).join(' '),
-                            value + " ít đường",
-                            "Trà " + words.slice(1).join(' '),
-                            value + " phô mai",
-                            "Nước ép " + words.slice(1).join(' ')
-                        ];
-                    } else {
-                        wrongPool = [
-                            value + " phô mai", value + " lắc cay", "Nước ép " + value, value + " matcha"
-                        ];
-                    }
-                }
-                // 5. MÀU SẮC
-                else if (kLower.includes("màu")) {
-                    questionVariants = [
-                        `Màu sắc gắn liền hoặc yêu thích của ${charName} là màu gì nè? 🎨`,
-                        `Gam màu nào dưới đây là màu mà ${charName} thích nhất? ✨`,
-                        `Nếu chọn quà theo màu sắc cho ${charName}, cậu sẽ chọn màu nào? 🎀`
-                    ];
-                    wrongPool = [
-                        value.includes("nhạt") ? value.replace("nhạt", "đậm") : value + " ánh bạc",
-                        value + " pastel",
-                        "Màu " + (value.includes("xanh") ? "tím mộng mơ" : "xanh baby sky"),
-                        value + " khói",
-                        "Màu trắng sữa"
-                    ];
-                }
-                // 6. THÓI QUEN / TÍNH CÁCH / BÍ MẬT / KHÁC
-                else {
-                    questionVariants = [
-                        `Về ${charName}, "${key}" thực sự là gì vậy cậu? 🤔`,
-                        `Cậu có nhớ chi tiết này không: "${key}" của ${charName} là gì? ✨`,
-                        `Thông tin nào dưới đây nói đúng nhất về "${key}" của ${charName}? 💭`
-                    ];
-                    if (value.includes("thích")) {
-                        wrongPool = [
-                            value.replace("thích", "rất ghét"),
-                            value.replace("thích", "thỉnh thoảng mới"),
-                            value + " nhưng chỉ khi ở một mình",
-                            value + " vào cuối tuần"
-                        ];
-                    } else if (value.includes("sợ")) {
-                        wrongPool = [
-                            value.replace("sợ", "cực kỳ thích"),
-                            value + " vào ban đêm",
-                            "Không hề " + value,
-                            value + " khi có người lạ"
-                        ];
-                    } else {
-                        wrongPool = [
-                            value + " (nhưng luôn giấu kín)",
-                            value.slice(0, Math.max(3, Math.floor(value.length / 2))) + " vào những ngày mưa",
-                            "Thực ra là hoàn toàn ngược lại",
-                            value + " trước mặt mọi người"
-                        ];
-                    }
-                }
-
-                // Lọc những đáp án sai đảm bảo không trùng với văn bản gốc
-                const cleanWrongPool = wrongPool.filter(w => 
-                    w.toLowerCase() !== value.toLowerCase() && !cleanRaw.includes(w.toLowerCase())
-                );
-
-                questions.push({
-                    id: `q_${idx}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 5)}`,
-                    question: questionVariants[0],
-                    questionVariants: questionVariants, // Lưu nhiều cách hỏi
-                    correct: value,
-                    wrong1: cleanWrongPool[0] || (value + " nhẹ"),
-                    wrong2: cleanWrongPool[1] || (value + " đặc biệt"),
-                    wrong3: cleanWrongPool[2] || "Chưa từng nhắc tới",
-                    allWrongPool: cleanWrongPool, // Lưu kho đáp án để xáo trộn lần sau
-                    level: (idx % 3 === 0 ? "Dễ" : (idx % 3 === 1 ? "Trung Bình" : "Khó"))
-                });
-            });
-
-            return questions;
+        function getSharedAudioContext() {
+            if (!cachedWheelAudioCtx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) cachedWheelAudioCtx = new AudioCtx();
+            }
+            if (cachedWheelAudioCtx && cachedWheelAudioCtx.state === 'suspended') {
+                cachedWheelAudioCtx.resume().catch(() => {});
+            }
+            return cachedWheelAudioCtx;
         }
 
-        function getUserAnsweredQuestions(charName) {
-            if (!currentUser) return [];
-            const key = `palette_answered_${currentUser.username.toLowerCase()}_${charName.toLowerCase()}`;
+        function playWheelTickSound(pitch = 750) {
             try {
-                return JSON.parse(localStorage.getItem(key) || "[]");
-            } catch (_) {
-                return [];
+                const ctx = getSharedAudioContext();
+                if (!ctx) return;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const now = ctx.currentTime;
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(pitch, now);
+                osc.frequency.exponentialRampToValueAtTime(pitch * 0.72, now + 0.025);
+                gain.gain.setValueAtTime(0.04, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.028);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.03);
+            } catch (_) {}
+        }
+
+        function startWheelSpinningSound(durationMs = 5000) {
+            stopWheelSpinningSound();
+            const startTime = Date.now();
+            function scheduleTick() {
+                if (!isWheelSpinning) return;
+                const elapsed = Date.now() - startTime;
+                if (elapsed >= durationMs) return;
+                const progress = elapsed / durationMs;
+                const interval = 30 + Math.pow(progress, 3) * 360;
+                const pitch = 720 + (Math.random() * 60 - 30);
+                playWheelTickSound(pitch);
+                wheelTickTimer = setTimeout(scheduleTick, interval);
+            }
+            scheduleTick();
+        }
+
+        function stopWheelSpinningSound() {
+            if (wheelTickTimer) {
+                clearTimeout(wheelTickTimer);
+                wheelTickTimer = null;
             }
         }
 
-        function markQuestionAsAnswered(charName, qId) {
-            if (!currentUser) return;
-            const key = `palette_answered_${currentUser.username.toLowerCase()}_${charName.toLowerCase()}`;
-            const answered = getUserAnsweredQuestions(charName);
-            if (!answered.includes(qId)) {
-                answered.push(qId);
-                localStorage.setItem(key, JSON.stringify(answered));
+        function playJoyfulWinSound() {
+            try {
+                const ctx = getSharedAudioContext();
+                if (!ctx) return;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    const t = ctx.currentTime + idx * 0.09;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0, t);
+                    gain.gain.linearRampToValueAtTime(0.2, t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.48);
+                });
+            } catch (_) {}
+        }
+
+        function playSadDeflateSound() {
+            try {
+                const ctx = getSharedAudioContext();
+                if (!ctx) return;
+                const t0 = ctx.currentTime;
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'sawtooth';
+                osc1.frequency.setValueAtTime(320, t0);
+                osc1.frequency.exponentialRampToValueAtTime(250, t0 + 0.25);
+                gain1.gain.setValueAtTime(0.09, t0);
+                gain1.gain.exponentialRampToValueAtTime(0.001, t0 + 0.28);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start(t0);
+                osc1.stop(t0 + 0.29);
+
+                const t1 = t0 + 0.3;
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(250, t1);
+                osc2.frequency.exponentialRampToValueAtTime(105, t1 + 0.65);
+                gain2.gain.setValueAtTime(0.12, t1);
+                gain2.gain.exponentialRampToValueAtTime(0.0001, t1 + 0.7);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(t1);
+                osc2.stop(t1 + 0.72);
+            } catch (_) {}
+        }
+
+        function updateWheelUI() {
+            const spinBtn = document.getElementById('spinWheelBtn');
+            if (spinBtn && !isWheelSpinning) {
+                spinBtn.disabled = false;
+                spinBtn.innerText = "Quay Ngay";
+                spinBtn.className = "jelly-btn w-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition mt-2";
             }
         }
 
-        function isMarriedWithChar(charName) {
-            if (!currentUser) return false;
-            const key = `palette_married_${currentUser.username.toLowerCase()}_${charName.toLowerCase()}`;
-            return localStorage.getItem(key) === "true";
+        function drawLuckyWheel() {
+            const canvas = document.getElementById('luckyWheelCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const numSlices = WHEEL_SLICES.length;
+            const arc = (2 * Math.PI) / numSlices;
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const radius = cx - 6;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < numSlices; i++) {
+                const angle = i * arc;
+                const slice = WHEEL_SLICES[i];
+
+                ctx.beginPath();
+                ctx.fillStyle = slice.color;
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius, angle, angle + arc);
+                ctx.lineTo(cx, cy);
+                ctx.fill();
+
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+                ctx.lineWidth = 1.6;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = slice.textColor;
+                ctx.font = "bold 13px 'Baloo 2', sans-serif";
+                ctx.fillText(slice.label, radius - 22, 5);
+                ctx.restore();
+            }
         }
 
-        function setMarriedWithChar(charName) {
-            if (!currentUser) return;
-            const key = `palette_married_${currentUser.username.toLowerCase()}_${charName.toLowerCase()}`;
-            localStorage.setItem(key, "true");
-        }
-
-        function openQuizCharSelectModal() {
+        function openLuckyWheelModal() {
             if (!currentUser) {
-                alert("Vui lòng đăng nhập để bắt đầu test độ hiểu nhau nhé!");
+                alert("Vui lòng đăng nhập tài khoản để tham gia Sắc Màu Vận May nhé!");
                 return;
             }
-            document.getElementById('quizSearchCharInput').value = '';
-            renderQuizCharSelectNames();
-            document.getElementById('quizCharSelectModal').classList.remove('hidden');
+            const modal = document.getElementById('luckyWheelModal');
+            if (modal) modal.classList.remove('hidden');
+
+            const resultMsg = document.getElementById('wheelResultMsg');
+            if (resultMsg) resultMsg.innerText = "";
+
+            drawLuckyWheel();
+            updateWheelUI();
             playPaletteTingSound();
         }
 
-        function closeQuizCharSelectModal() {
-            document.getElementById('quizCharSelectModal').classList.add('hidden');
+        function closeLuckyWheelModal() {
+            if (isWheelSpinning) return;
+            stopWheelSpinningSound();
+            const modal = document.getElementById('luckyWheelModal');
+            if (modal) modal.classList.add('hidden');
         }
 
-        function filterQuizCharList(val) {
-            renderQuizCharSelectNames(val.trim().toLowerCase());
-        }
-
-        function isQuizPlayedToday(charName) {
-            if (!currentUser) return false;
-            const key = `palette_quiz_daily_${currentUser.username.toLowerCase()}_${charName.toLowerCase()}`;
-            return localStorage.getItem(key) === getLocalDateKey();
-        }
-
-        function renderQuizCharSelectNames(searchKeyword = "") {
-            const container = document.getElementById('quizCharNamesContainer');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const filtered = quizCharactersData.filter(c => 
-                !searchKeyword || c.charName.toLowerCase().includes(searchKeyword)
-            );
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-xs text-sky-200/50 italic text-center py-6">Chưa có character nào có dữ liệu câu hỏi.</div>`;
+        async function spinLuckyWheel() {
+            if (isWheelSpinning) return;
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập để quay thưởng!");
                 return;
             }
 
-            filtered.forEach(c => {
-                const totalQ = (c.questions || []).length;
-                const answeredQ = getUserAnsweredQuestions(c.charName).length;
-                const isMarried = isMarriedWithChar(c.charName);
-                const playedToday = isQuizPlayedToday(c.charName);
-
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = "w-full p-3 rounded-2xl bg-white/5 hover:bg-pink-500/20 border border-white/10 hover:border-pink-300/40 text-left flex items-center justify-between transition active:scale-98";
-                btn.onclick = () => startCharacterQuiz(c);
-
-                btn.innerHTML = `
-                    <div class="truncate pr-2">
-                        <div class="flex items-center gap-1.5 truncate">
-                            <span class="text-pink-300 font-extrabold text-sm truncate">${c.charName}</span>
-                            ${isMarried ? '<span class="text-[10px] bg-rose-500/30 text-rose-200 border border-rose-300/40 px-1.5 py-0.2 rounded-full font-bold">💍 Đã kết hôn</span>' : ''}
-                        </div>
-                        <div class="text-[10.5px] text-sky-200/60 mt-0.5">
-                            Tiến độ: ${Math.min(totalQ, answeredQ)}/${totalQ} thông tin
-                        </div>
-                    </div>
-                    <div class="shrink-0">
-                        ${isMarried 
-                            ? '<span class="text-[10px] bg-white/10 text-pink-200 px-2 py-0.5 rounded-full font-bold">Đã hiểu 100% ❤️</span>'
-                            : (playedToday 
-                                ? '<span class="text-[10px] bg-white/10 text-sky-200/60 px-2 py-0.5 rounded-full font-bold">Đã làm hôm nay</span>' 
-                                : '<span class="text-[10px] bg-gradient-to-r from-pink-500 to-rose-500 text-white px-2.5 py-0.5 rounded-full font-bold shadow">Test ngay ➔</span>')}
-                    </div>
-                `;
-                container.appendChild(btn);
-            });
-        }
-
-        // BẮT ĐẦU BUỔI ĐỐ VUI VỚI HỌA SĨ NHỎ (TỰ NHIÊN, KHÔNG LỘ HINT)
-        function startCharacterQuiz(charData) {
-            currentQuizChar = charData;
-            const allQuestions = charData.questions || [];
-            const answeredIds = getUserAnsweredQuestions(charData.charName);
-            const remainingQuestions = allQuestions.filter(q => !answeredIds.includes(q.id));
-
-            // ĐÃ HẾT CÂU HỎI VỀ CHARACTER -> KÍCH HOẠT CÂU KẾT HÔN BÍ MẬT
-            if (allQuestions.length > 0 && remainingQuestions.length === 0) {
-                if (!isMarriedWithChar(charData.charName)) {
-                    triggerMarriageProposal(charData.charName);
-                } else {
-                    alert(`Cậu đã quá hiểu chồng iu rồi, hai bạn đã đăng ký kết hôn thành công từ trước rồi nha! 💍💖`);
-                }
-                return;
+            const username = currentUser.username;
+            isWheelSpinning = true;
+            const spinBtn = document.getElementById('spinWheelBtn');
+            const resultMsg = document.getElementById('wheelResultMsg');
+            if (spinBtn) {
+                spinBtn.disabled = true;
+                spinBtn.innerText = "Đang quay...";
             }
+            if (resultMsg) resultMsg.innerText = "Vòng xoay đang lướt qua các sắc màu...";
 
-            if (allQuestions.length === 0) {
-                alert(`Chủ web chưa nạp thông tin câu hỏi cho ${charData.charName}!`);
-                return;
-            }
-
-            if (isQuizPlayedToday(charData.charName)) {
-                alert(`Hôm nay cậu đã test độ hiểu nhau với ${charData.charName} rồi! Mai quay lại gặp Họa Sĩ Nhỏ tiếp nha. ❤️`);
-                return;
-            }
-
-            // Chọn tối đa 3 câu hỏi ngẫu nhiên chưa làm đúng
-            activeQuizQuestionsQueue = remainingQuestions.sort(() => Math.random() - 0.5).slice(0, 3);
-            currentQuestionIndex = 0;
-            sessionWrongCount = 0;
-
-            closeQuizCharSelectModal();
-            document.getElementById('quizChatTargetCharName').innerText = `Đố về: ${charData.charName}`;
-            document.getElementById('quizChatScreenModal').classList.remove('hidden');
-
-            const msgBox = document.getElementById('quizChatMessages');
-            msgBox.innerHTML = '';
-
-            // Lời chào tự nhiên, vui vẻ, không nói chuyện gài bẫy
-            addQuizChatMessage(
-                "Họa Sĩ Nhỏ",
-                `Hehe chào cậu nha! Tớ là Họa Sĩ Nhỏ đây 🎨 Hôm nay tớ sẽ làm giám khảo đố cậu một vài câu hỏi để xem cậu hiểu <b>${charData.charName}</b> đến mức nào nhé! Nhớ là <b>sai từ 2 câu trở lên là không có chì đâu nghen</b>! Cậu đã sẵn sàng chưa nào? ✨💖`,
-                false
-            );
-
-            setTimeout(() => {
-                loadNextQuizQuestion();
-            }, 1000);
-        }
-
-        function closeQuizChatModal() {
-            document.getElementById('quizChatScreenModal').classList.add('hidden');
-        }
-
-        // BUBBLE CHAT VỚI AVATAR HỌA SĨ NHỎ MẶC ĐỊNH
-        function addQuizChatMessage(sender, text, isUser = false) {
-            const msgBox = document.getElementById('quizChatMessages');
-            const bubble = document.createElement('div');
-            bubble.className = `flex gap-2 ${isUser ? 'justify-end' : 'justify-start'} items-start`;
-
-            if (isUser) {
-                const userAvt = getUserAvatarOrDefault(currentUser?.username);
-                bubble.innerHTML = `
-                    <div class="flex flex-col items-end space-y-1 max-w-[82%]">
-                        <span class="text-[10px] text-sky-200/60 font-bold px-1">${sender}</span>
-                        <div class="p-3 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-tr-none shadow-md font-bold leading-relaxed">
-                            ${text}
-                        </div>
-                    </div>
-                    <img src="${userAvt}" class="w-7 h-7 rounded-full object-cover border border-pink-300/40 shrink-0 mt-4">
-                `;
-            } else {
-                bubble.innerHTML = `
-                    <img src="${HOA_SI_NHO_AVATAR}" onerror="this.src='https://files.catbox.moe/u0k3kh.jpg'" class="w-8 h-8 rounded-full object-cover border border-pink-300 shadow shrink-0 mt-4">
-                    <div class="flex flex-col items-start space-y-1 max-w-[82%]">
-                        <span class="text-[10px] text-pink-300 font-extrabold px-1 flex items-center gap-1">
-                            <span>${sender}</span>
-                            <span class="text-[9px] bg-pink-500/20 text-pink-200 px-1 rounded">🎨</span>
-                        </span>
-                        <div class="p-3 rounded-2xl bg-white/10 border border-white/10 text-pink-100 rounded-tl-none shadow-sm leading-relaxed">
-                            ${text}
-                        </div>
-                    </div>
-                `;
-            }
-            msgBox.appendChild(bubble);
-            msgBox.scrollTop = msgBox.scrollHeight;
-        }
-
-        // TỰ ĐỘNG CHỌN CÁCH HỎI KHÁC VÀ BỘ ĐÁP ÁN KHÁC NẾU TỪNG TRẢ LỜI SAI
-        function loadNextQuizQuestion() {
-            if (currentQuestionIndex >= activeQuizQuestionsQueue.length) {
-                handleFinishAllQuestions();
-                return;
-            }
-
-            const qData = activeQuizQuestionsQueue[currentQuestionIndex];
-            currentQuestionObj = qData;
-
-            const step = currentQuestionIndex + 1;
-            const totalSteps = activeQuizQuestionsQueue.length;
-
-            document.getElementById('quizChatProgress').innerText = `Câu ${step}/${totalSteps} • Sai: ${sessionWrongCount}/2`;
-
-            // Lấy ngẫu nhiên 1 cách hỏi khác nhau trong variants
-            let questionText = qData.question;
-            if (Array.isArray(qData.questionVariants) && qData.questionVariants.length > 0) {
-                questionText = qData.questionVariants[Math.floor(Math.random() * qData.questionVariants.length)];
-            }
-
-            addQuizChatMessage("Họa Sĩ Nhỏ", `<b>Câu ${step}:</b> ${questionText}`, false);
-
-            // Lấy ngẫu nhiên các đáp án sai từ kho distractor
-            let wrongOptions = [qData.wrong1, qData.wrong2, qData.wrong3];
-            if (Array.isArray(qData.allWrongPool) && qData.allWrongPool.length >= 3) {
-                wrongOptions = [...qData.allWrongPool].sort(() => Math.random() - 0.5).slice(0, 3);
-            }
-
-            const options = [
-                { text: qData.correct, isCorrect: true },
-                { text: wrongOptions[0], isCorrect: false },
-                { text: wrongOptions[1], isCorrect: false },
-                { text: wrongOptions[2], isCorrect: false }
-            ].sort(() => Math.random() - 0.5);
-
-            const optArea = document.getElementById('quizChatOptionsArea');
-            optArea.innerHTML = '';
-
-            const prefixes = ['A', 'B', 'C', 'D'];
-            options.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = "w-full p-2.5 rounded-xl bg-white/10 hover:bg-pink-500/30 border border-white/10 hover:border-pink-300 text-left text-xs font-bold transition active:scale-95 flex items-center gap-2";
-                btn.innerHTML = `<span class="w-5 h-5 rounded-full bg-pink-500/30 text-pink-200 border border-pink-300/40 flex items-center justify-center font-black text-[10px] shrink-0">${prefixes[idx]}</span> <span class="text-sky-100 flex-1">${opt.text}</span>`;
-                btn.onclick = () => handleUserAnswerQuiz(opt);
-                optArea.appendChild(btn);
-            });
-        }
-
-        function handleUserAnswerQuiz(chosenOpt) {
-            const optArea = document.getElementById('quizChatOptionsArea');
-            optArea.innerHTML = '';
-
-            addQuizChatMessage("Cậu", chosenOpt.text, true);
-
-            setTimeout(() => {
-                if (chosenOpt.isCorrect) {
-                    playPaletteTingSound();
-                    // Lưu câu này đã làm đúng
-                    markQuestionAsAnswered(currentQuizChar.charName, currentQuestionObj.id);
-
-                    const praises = [
-                        "Ui đỉnh nóc kịch trần luôn cậu ơiii! Trả lời chuẩn xác 100% luôn nè! 🎉",
-                        "Chính xác luôn! Cậu đúng là hiểu người thương ghê á nha~ 🌟",
-                        "Tuyệt vời ông mặt trời! Câu này cậu nhớ kỹ thật đó! ✨"
-                    ];
-                    const praiseMsg = praises[Math.floor(Math.random() * praises.length)];
-                    addQuizChatMessage("Họa Sĩ Nhỏ", praiseMsg, false);
-
-                    currentQuestionIndex++;
-                    setTimeout(() => {
-                        if (currentQuestionIndex < activeQuizQuestionsQueue.length) {
-                            loadNextQuizQuestion();
-                        } else {
-                            handleFinishAllQuestions();
-                        }
-                    }, 1000);
-
-                } else {
-                    // TRẢ LỜI SAI: TĂNG BIẾN ĐẾM (KHÔNG ĐÁNH DẤU LÀM ĐÚNG -> HÔM SAU HỎI LẠI KIỂU KHÁC)
-                    sessionWrongCount++;
-                    document.getElementById('quizChatProgress').innerText = `Câu ${currentQuestionIndex + 1}/${activeQuizQuestionsQueue.length} • Sai: ${sessionWrongCount}/2`;
-
-                    // ================= NẾU SAI TỪ 2 CÂU TRỞ LÊN: PHẠT KHÔNG CHO NHẬN CHÌ =================
-                    if (sessionWrongCount >= 2) {
-                        const dailyKey = `palette_quiz_daily_${currentUser.username.toLowerCase()}_${currentQuizChar.charName.toLowerCase()}`;
-                        localStorage.setItem(dailyKey, getLocalDateKey());
-
-                        addQuizChatMessage(
-                            "Họa Sĩ Nhỏ",
-                            `Huhu cậu trả lời sai ${sessionWrongCount} câu mất rồi 😭 Theo luật thì hôm nay cậu chưa thể nhận chì màu rồi! Đừng buồn nha, ngày mai quay lại gặp tớ để thử thách lại nghen! Họa Sĩ Nhỏ luôn chờ cậu đó! 💪💖`,
-                            false
-                        );
-
-                        optArea.innerHTML = `
-                            <button type="button" onclick="closeQuizChatModal()" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-2.5 rounded-xl text-xs active:scale-95 transition">
-                                Thoát ra (Hẹn gặp lại Họa Sĩ Nhỏ ngày mai nha!)
-                            </button>
-                        `;
-                        return;
-                    }
-
-                    // Mới sai 1 câu: Nhắc nhẹ nhàng tự nhiên
-                    addQuizChatMessage(
-                        "Họa Sĩ Nhỏ",
-                        `Tiếc quá đi mất, câu này chưa đúng rồi cậu ơi! 🥺 Cẩn thận nha, sai thêm câu nữa là không nhận được chì đâu đó! Cố lên ở câu tiếp theo nghen! 💪✨`,
-                        false
-                    );
-
-                    currentQuestionIndex++;
-                    setTimeout(() => {
-                        if (currentQuestionIndex < activeQuizQuestionsQueue.length) {
-                            loadNextQuizQuestion();
-                        } else {
-                            handleFinishAllQuestions();
-                        }
-                    }, 1200);
-                }
-            }, 600);
-        }
-
-        function handleFinishAllQuestions() {
-            const charName = currentQuizChar.charName;
-            const optArea = document.getElementById('quizChatOptionsArea');
-
-            const dailyKey = `palette_quiz_daily_${currentUser.username.toLowerCase()}_${charName.toLowerCase()}`;
-            localStorage.setItem(dailyKey, getLocalDateKey());
-
-            const totalQuestions = (currentQuizChar.questions || []).length;
-            const answeredCount = getUserAnsweredQuestions(charName).length;
-
-            // KIỂM TRA ĐÃ TRẢ LỜI ĐƯỢC HẾT TOÀN BỘ CÂU HỎI CHƯA
-            if (answeredCount >= totalQuestions && totalQuestions > 0 && !isMarriedWithChar(charName)) {
-                closeQuizChatModal();
-                triggerMarriageProposal(charName);
-            } else {
-                // Đủ điều kiện thưởng 1 chì (vì sai dưới 2 câu)
-                addPencilToUser(currentUser.username, 1, `Trả lời đúng câu hỏi với Họa Sĩ Nhỏ về ${charName}`);
-                addQuizChatMessage(
-                    "Họa Sĩ Nhỏ",
-                    `🎉 Chúc mừng cậu nha! Cậu đã hoàn thành xuất sắc các câu hỏi hôm nay rồi! Tớ tặng cậu +1 Bút Chì Màu nè ✏️💖 Mai nhớ quay lại chơi tiếp với tớ nha!`,
-                    false
-                );
-                logMemberActivity(`Đố vui cùng Họa Sĩ Nhỏ: ${charName}`, "Vượt qua thử thách câu hỏi (+1 Chì Màu)");
-
-                optArea.innerHTML = `
-                    <button type="button" onclick="closeQuizChatModal()" class="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-black font-black py-2.5 rounded-xl shadow active:scale-95">
-                        ✓ Nhận 1 Chì & Hoàn Tất Buổi Đố Vui
-                    </button>
-                `;
-            }
-        }
-
-        // ================= KÍCH HOẠT CÂU THÔNG BÁO BÍ MẬT KẾT HÔN =================
-        function triggerMarriageProposal(charName) {
-            setMarriedWithChar(charName);
-            addPencilToUser(currentUser.username, 3, `Đăng ký kết hôn thành công với ${charName}`);
-            createPencilSparkles();
-            playPaletteTingSound();
-
-            document.getElementById('quizMarriageTitle').innerText = `"Cậu đã quá hiểu chồng iu rổi, chúc mừng bạn đã đăng ký kết hôn thành công và sẽ được nhận thêm 3 chì màu nhé."`;
-            document.getElementById('quizMarriageSubtitle').innerText = `"Bí mật riêng của hai ta, em đừng nói cho ai nhé, cùng đi đăng ký kết hôn nào."`;
-            document.getElementById('quizMarriageModal').classList.remove('hidden');
-
-            logMemberActivity(`💍 Đã kết hôn cùng ${charName}`, "Đăng ký kết hôn thành công (+3 Bút Chì Màu)");
-        }
-
-        function closeQuizMarriageModal() {
-            document.getElementById('quizMarriageModal').classList.add('hidden');
-            renderQuizCharSelectNames();
-        }
-
-        // ================= ADMIN: NẠP & SỬA TOÀN BỘ THÔNG TIN CHUNG =================
-        async function handleSaveQuizCharacter(e) {
-            e.preventDefault();
-            const isOwner = currentUser?.isOwner || (currentUser?.username?.toLowerCase() === OWNER_USER.toLowerCase());
-            if (!isOwner) return;
-
-            const charName = document.getElementById('quizAdminCharName').value.trim();
-            const rawInfo = document.getElementById('quizAdminCharInfo').value.trim();
-
-            if (!charName || !rawInfo) {
-                alert("Vui lòng nhập tên character và thông tin chung!");
-                return;
-            }
-
-            const generatedQuestions = generateAIQuestionsFromInfo(charName, rawInfo);
-
-            if (generatedQuestions.length === 0) {
-                alert("Không thể trích xuất câu hỏi từ thông tin bạn nhập. Hãy nhập mỗi thông tin trên một dòng nhé!");
-                return;
-            }
-
-            const docId = editingQuizDocId || ('quiz-' + charName.toLowerCase().replace(/[^a-z0-9]/g, ''));
-
+            let isDoubleWin = false;
             try {
-                await db.collection("quiz_characters").doc(docId).set({
-                    charName,
-                    rawInfo,
-                    questions: generatedQuestions,
-                    totalQuestions: generatedQuestions.length,
-                    updatedAt: Date.now()
+                const wheelRef = db.collection("settings").doc("wheel_stats");
+                const statsSnap = await db.runTransaction(async (transaction) => {
+                    const snap = await transaction.get(wheelRef);
+                    const curTotal = snap.exists ? (Number(snap.data().totalSpins) || 0) : 0;
+                    const nextTotal = curTotal + 1;
+                    transaction.set(wheelRef, { totalSpins: nextTotal }, { merge: true });
+                    return nextTotal;
                 });
-
-                alert(editingQuizDocId 
-                    ? `✓ Đã cập nhật thành công câu hỏi và thông tin của "${charName}"!` 
-                    : `✓ AI đã trích xuất thành công ${generatedQuestions.length} câu hỏi cho "${charName}"!`
-                );
-
-                cancelEditQuizChar();
-            } catch (err) {
-                console.error("Lỗi lưu quiz:", err);
-                alert("Lỗi khi lưu lên máy chủ!");
-            }
-        }
-
-        // BẤM VÀO SỬA TRONG CỬA HÀNG BÚT CHÌ
-        function loadQuizCharToEdit(docId) {
-            const c = quizCharactersData.find(item => item.id === docId);
-            if (!c) return;
-
-            editingQuizDocId = docId;
-            document.getElementById('quizAdminCharName').value = c.charName || '';
-            document.getElementById('quizAdminCharInfo').value = c.rawInfo || '';
-
-            const submitText = document.getElementById('quizAdminSubmitBtnText');
-            if (submitText) submitText.innerText = `💾 Cập Nhật Câu Hỏi Cho "${c.charName}"`;
-
-            const cancelBtn = document.getElementById('cancelEditQuizBtn');
-            if (cancelBtn) cancelBtn.classList.remove('hidden');
-
-            document.getElementById('quizAdminCharName').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            alert(`Đã tải toàn bộ thông tin của "${c.charName}" lên bảng! Bạn có thể sửa tên, viết thêm thông tin và bấm Cập Nhật nhé.`);
-        }
-
-        function cancelEditQuizChar() {
-            editingQuizDocId = null;
-            document.getElementById('quizAdminCharName').value = '';
-            document.getElementById('quizAdminCharInfo').value = '';
-
-            const submitText = document.getElementById('quizAdminSubmitBtnText');
-            if (submitText) submitText.innerText = `✨ AI Phân Tích & Tải Qua Mục "Em Có Hiểu Anh Không?"`;
-
-            const cancelBtn = document.getElementById('cancelEditQuizBtn');
-            if (cancelBtn) cancelBtn.classList.add('hidden');
-        }
-
-        function renderAdminQuizCharsList() {
-            const list = document.getElementById('adminQuizCharsList');
-            const badge = document.getElementById('adminQuizCountBadge');
-            if (!list) return;
-            list.innerHTML = '';
-            if (badge) badge.innerText = `${quizCharactersData.length} nhân vật`;
-
-            if (quizCharactersData.length === 0) {
-                list.innerHTML = `<div class="text-[11px] text-sky-200/50 italic py-1">Chưa có character nào được nạp thông tin.</div>`;
-                return;
+                if (statsSnap % 100 === 0) {
+                    isDoubleWin = true;
+                }
+            } catch (_) {
+                isDoubleWin = false;
             }
 
-            quizCharactersData.forEach(c => {
-                const totalQ = (c.questions || []).length;
-                const item = document.createElement('div');
-                item.className = "flex items-center justify-between bg-black/40 p-2.5 rounded-xl border border-white/10 text-xs";
-                item.innerHTML = `
-                    <div class="truncate pr-2">
-                        <span class="font-bold text-pink-200">${c.charName}</span>
-                        <span class="text-[10px] text-emerald-300 block font-mono">Đã tạo ${totalQ} câu hỏi</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button type="button" onclick="loadQuizCharToEdit('${c.id}')" class="text-amber-300 hover:text-white font-bold px-2 py-1 rounded-lg bg-amber-500/20 text-[10px] transition">Sửa</button>
-                        <button type="button" onclick="deleteQuizCharacter('${c.id}')" class="text-red-400 hover:text-red-300 font-bold px-2 py-1 rounded-lg bg-red-500/20 text-[10px] transition">Xóa</button>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-        }
-
-        // XÓA Ở CỬA HÀNG -> BÊN "EM CÓ HIỂU ANH KHÔNG" BIẾN MẤT TỨC THÌ
-        async function deleteQuizCharacter(docId) {
-            const isOwner = currentUser?.isOwner || (currentUser?.username?.toLowerCase() === OWNER_USER.toLowerCase());
-            if (!isOwner) return;
-            if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ thông tin của character này?")) return;
-            try {
-                // Xóa trên Firestore
-                await db.collection("quiz_characters").doc(docId).delete();
-
-                // Lập tức loại bỏ khỏi bộ nhớ và cập nhật lại giao diện cả 2 bên
-                quizCharactersData = quizCharactersData.filter(c => c.id !== docId);
-                renderQuizCharSelectNames();
-                renderAdminQuizCharsList();
-
-                if (editingQuizDocId === docId) cancelEditQuizChar();
-                if (currentQuizChar && currentQuizChar.id === docId) closeQuizChatModal();
-
-                alert("✓ Đã xóa thành công! Character đã biến mất khỏi mục 'Em Có Hiểu Anh Không?'!");
-            } catch (err) {
-                console.error("Lỗi khi xóa:", err);
-                alert("Lỗi khi xóa!");
+            let targetIndex = 0;
+            if (isDoubleWin) {
+                targetIndex = 4;
+            } else {
+                const nonDoublePool = [0, 1, 2, 3, 5, 6, 7];
+                targetIndex = nonDoublePool[Math.floor(Math.random() * nonDoublePool.length)];
             }
+
+            const numSlices = WHEEL_SLICES.length;
+            const sliceDeg = 360 / numSlices;
+            const targetSliceCenter = (targetIndex + 0.5) * sliceDeg;
+            const targetDeg = (270 - targetSliceCenter + 360) % 360;
+
+            const extraFullSpins = 360 * 9;
+            const currentMod = currentWheelRotation % 360;
+            const dist = (targetDeg - currentMod + 360) % 360;
+
+            currentWheelRotation += extraFullSpins + dist;
+
+            const canvas = document.getElementById('luckyWheelCanvas');
+            if (canvas) {
+                canvas.style.transform = `rotate(${currentWheelRotation}deg)`;
+            }
+
+            startWheelSpinningSound(5000);
+
+            setTimeout(async () => {
+                isWheelSpinning = false;
+                stopWheelSpinningSound();
+
+                const winningSlice = WHEEL_SLICES[targetIndex];
+                const uKey = username.toLowerCase();
+                const curPencils = getUserPencilCount(username);
+
+                if (winningSlice.type === "add2") {
+                    await addPencilToUser(username, 2, "Vòng xoay may mắn");
+                    playJoyfulWinSound();
+                    createPencilSparkles();
+                    if (resultMsg) resultMsg.innerHTML = `<span class="text-emerald-300 font-black">Chúc mừng! Bạn quay trúng +2 Bút Chì Màu!</span>`;
+                    logMemberActivity("Vòng xoay may mắn", "Trúng +2 Bút Chì Màu");
+                } else if (winningSlice.type === "sub2") {
+                    const deductAmount = Math.min(2, curPencils);
+                    const remainingPencils = curPencils - deductAmount;
+                    if (deductAmount > 0) {
+                        const pencilRef = db.collection("pencils").doc(uKey);
+                        await pencilRef.set({ count: remainingPencils }, { merge: true });
+                        userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: remainingPencils };
+                        updatePencilUI();
+                    }
+                    playSadDeflateSound();
+                    if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ 2 Bút Chì Màu!</span>`;
+                    logMemberActivity("Vòng xoay may mắn", "Trúng ô Xui xẻo -2 Bút Chì Màu");
+                    triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo -2 Bút Chì Màu, nhưng túi chì hiện có 0 chì nên không bị trừ thêm.");
+                } else if (winningSlice.type === "double") {
+                    const bonus = curPencils > 0 ? curPencils : 2;
+                    await addPencilToUser(username, bonus, "Vòng xoay may mắn: Nhân đôi chì");
+                    playJoyfulWinSound();
+                    createPencilSparkles();
+                    if (resultMsg) resultMsg.innerHTML = `<span class="text-amber-300 font-black">VẬN MAY 1/100! Trúng ô Nhân đôi Bút Chì Màu (+${bonus} chì)!</span>`;
+                    logMemberActivity("Vòng xoay may mắn", `Vận may 1/100: Nhân đôi Bút Chì Màu (+${bonus} chì)`);
+                } else {
+                    playSadDeflateSound();
+                    if (resultMsg) resultMsg.innerHTML = `<span class="text-sky-200 font-bold">Ô Trống! Chúc bạn may mắn hơn ở lần quay tiếp theo nha.</span>`;
+                    logMemberActivity("Vòng xoay may mắn", "Quay trúng Ô Trống");
+                }
+
+                updateWheelUI();
+            }, 5100);
         }
     </script>
     <!-- BỘ PHÁT NHẠC ĐA NĂNG (HỖ TRỢ CẢ AUDIO MP3 LẪN YOUTUBE) -->
