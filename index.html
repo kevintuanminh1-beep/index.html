@@ -1017,7 +1017,8 @@
             </div>
         </div>
 
-        <h2 id="currentCharTitle" class="text-3xl sm:text-4xl font-extrabold mb-3"></h2>
+        <h2 id="currentCharTitle" class="text-3xl sm:text-4xl font-extrabold mb-1"></h2>
+        <p class="text-[9.5px] text-sky-200/50 italic text-center mb-3">Non-commercial use only. All image copyrights belong to their respective owners.</p>
 
         <div class="w-full max-w-[280px] mx-auto mb-4 flex flex-col items-center">
             <div class="rounded-3xl overflow-hidden border-2 border-pink-300/40 shadow-[0_10px_30px_rgba(244,114,182,0.35)] w-full relative">
@@ -1258,7 +1259,7 @@
             </div>
 
             <div class="bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-300/40 p-3 rounded-2xl mb-3 text-xs leading-relaxed text-pink-100 font-medium">
-                Dành cho những bạn muốn làm thủ tục để lấy link ngay mà không cần phải sưu tầm Bút Chì Màu.
+                <span class="pastel-fast-wave font-black">Tô Màu</span>: Dành cho những bạn muốn làm thủ tục để lấy link ngay mà không cần phải sưu tầm Bút Chì Màu.
             </div>
 
             <div class="bg-white/5 border border-white/15 rounded-2xl p-3.5 mb-4 text-xs space-y-2">
@@ -4914,7 +4915,6 @@
                             MỞ KHÓA CÓ HẠN GIỜ
                         </span>
                         <h3 class="text-2xl font-black char-pastel-0 mt-2">${c.name}</h3>
-                        <div class="text-[9.5px] text-sky-200/50 italic tracking-wide mt-0.5">Non-commercial use only. All image copyrights belong to their respective owners.</div>
                         <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
                     </div>
 
@@ -4958,7 +4958,6 @@
                                 <h3 class="text-base font-extrabold ${getPastelColorClass(index)}">${c.name}</h3>
                                 ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-200 border border-red-300/40 px-1.5 py-0.5 rounded-full font-bold">Đã đóng</span>' : ''}
                             </div>
-                            <div class="text-[9px] text-sky-200/50 italic tracking-wide mt-0.5">Non-commercial use only. All image copyrights belong to their respective owners.</div>
                             <p class="text-xs text-sky-100/80 truncate mt-0.5">${c.subtitle}</p>
                             <div class="flex flex-wrap gap-1 mt-1.5">${tagsHtml}</div>
                         </div>
@@ -5010,7 +5009,7 @@
             const charIndex = characters.findIndex(c => c.id === char.id);
             const titleEl = document.getElementById('currentCharTitle');
             titleEl.innerText = char.name;
-            titleEl.className = `text-3xl sm:text-4xl font-extrabold mb-3 ${getPastelColorClass(charIndex !== -1 ? charIndex : 0)}`;
+            titleEl.className = `text-3xl sm:text-4xl font-extrabold mb-1 ${getPastelColorClass(charIndex !== -1 ? charIndex : 0)}`;
 
             document.getElementById('currentCharImg').src = char.image;
             const charGallery = document.getElementById('currentCharGallery');
