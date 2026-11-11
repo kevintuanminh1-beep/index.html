@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="referrer" content="no-referrer">
     <title>Thế giới chì màu của Palette</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -889,7 +889,7 @@
             <!-- Mục 1: Vẽ nên câu chuyện -->
             <button onclick="goToStory()" class="jelly-btn w-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-2 border-pink-300/40 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_8px_20px_rgba(244,114,182,0.15)] relative">
                 <div id="iconBox-story" onclick="handleMenuIconClick(event, 'story')" class="w-12 h-12 rounded-2xl bg-pink-400/20 border border-pink-300/40 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
-                    <img id="menuImg-story" src="https://files.catbox.moe/1foc7r.gif" alt="Story" class="w-full h-full object-contain">
+                    <img id="menuImg-story" src="https://images.weserv.nl/?url=https://files.catbox.moe/1foc7r.gif&n=-1" referrerpolicy="no-referrer" alt="Story" class="w-full h-full object-contain">
                 </div>
                 <div class="text-left flex-1">
                     <h3 class="text-base font-bold text-pink-200">Vẽ nên câu chuyện</h3>
@@ -902,7 +902,7 @@
             <button onclick="openColorGuide(true)" class="jelly-btn w-full bg-gradient-to-r from-amber-500/20 to-sky-500/20 border-2 border-amber-300/40 hover:border-amber-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_8px_20px_rgba(251,191,36,0.15)] relative">
                 <div id="iconBox-color" onclick="handleMenuIconClick(event, 'color')" class="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/40 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                     <div id="menuContent-color" class="w-full h-full flex items-center justify-center">
-                        <img src="https://files.catbox.moe/awuax3.gif" class="w-full h-full object-contain">
+                        <img src="https://images.weserv.nl/?url=https://files.catbox.moe/awuax3.gif&n=-1" referrerpolicy="no-referrer" class="w-full h-full object-contain">
                     </div>
                 </div>
                 <div class="text-left flex-1">
@@ -915,7 +915,7 @@
             <!-- Mục 3: Bức tranh hoàn chỉnh -->
             <button onclick="openFavoritesModal()" class="jelly-btn w-full bg-gradient-to-r from-teal-500/20 to-indigo-500/20 border-2 border-teal-300/40 hover:border-teal-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_8px_20px_rgba(45,212,191,0.15)] relative">
                 <div id="iconBox-fav" onclick="handleMenuIconClick(event, 'fav')" class="w-12 h-12 rounded-2xl bg-teal-400/20 border border-teal-300/40 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
-                    <img id="menuImg-fav" src="https://files.catbox.moe/c3ruwi.gif" alt="Favorites" class="w-full h-full object-contain">
+                    <img id="menuImg-fav" src="https://images.weserv.nl/?url=https://files.catbox.moe/c3ruwi.gif&n=-1" referrerpolicy="no-referrer" alt="Favorites" class="w-full h-full object-contain">
                 </div>
                 <div class="text-left flex-1">
                     <h3 class="text-base font-bold text-teal-200">Bức tranh hoàn chỉnh</h3>
@@ -931,7 +931,7 @@
             <button onclick="openFastColorScreen()" class="jelly-btn w-full bg-gradient-to-r from-rose-500/20 via-purple-500/20 to-sky-500/20 border-2 border-fuchsia-300/50 hover:border-fuchsia-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_20px_rgba(232,121,249,0.2)] relative">
                 <div id="iconBox-fast" onclick="handleMenuIconClick(event, 'fast')" class="w-12 h-12 rounded-2xl bg-fuchsia-400/20 border border-fuchsia-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                     <div id="menuContent-fast" class="w-full h-full flex items-center justify-center">
-                        <img src="https://files.catbox.moe/qo5869.gif" class="w-full h-full object-contain">
+                        <img src="https://images.weserv.nl/?url=https://files.catbox.moe/qo5869.gif&n=-1" referrerpolicy="no-referrer" class="w-full h-full object-contain">
                     </div>
                 </div>
                 <div class="text-left flex-1">
@@ -946,7 +946,7 @@
                 <button onclick="openLuckyWheelModal()" class="jelly-btn w-full bg-gradient-to-r from-rose-500/25 via-pink-500/20 to-amber-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_25px_rgba(244,114,182,0.25)] text-left">
                     <div id="iconBox-wheel" onclick="handleMenuIconClick(event, 'wheel')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-400/30 to-rose-400/20 border border-pink-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-wheel" class="w-full h-full flex items-center justify-center">
-                            <img src="https://files.catbox.moe/51fpvw.gif" class="w-full h-full object-contain">
+                            <img src="https://images.weserv.nl/?url=https://files.catbox.moe/51fpvw.gif&n=-1" referrerpolicy="no-referrer" class="w-full h-full object-contain">
                         </div>
                     </div>
                     <div class="text-left flex-1 pr-1">
@@ -967,7 +967,7 @@
                 <button onclick="openEffectsModal()" class="jelly-btn w-full bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-indigo-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_20px_rgba(244,114,182,0.2)] text-left">
                     <div id="iconBox-notify" onclick="handleMenuIconClick(event, 'notify')" class="w-12 h-12 rounded-2xl bg-pink-400/20 border border-pink-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-notify" class="w-full h-full flex items-center justify-center">
-                            <img src="https://files.catbox.moe/5p55na.gif" class="w-full h-full object-contain">
+                            <img src="https://images.weserv.nl/?url=https://files.catbox.moe/5p55na.gif&n=-1" referrerpolicy="no-referrer" class="w-full h-full object-contain">
                         </div>
                     </div>
                     
@@ -992,7 +992,7 @@
                 <button onclick="openPaletteLinksModal()" class="jelly-btn w-full bg-gradient-to-r from-sky-500/20 via-pink-500/20 to-purple-500/20 border-2 border-sky-300/40 hover:border-pink-300 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_8px_20px_rgba(56,189,248,0.12)] text-left">
                     <div id="iconBox-page" onclick="handleMenuIconClick(event, 'page')" class="w-12 h-12 rounded-2xl bg-sky-400/15 border border-sky-300/30 p-1 flex items-center justify-center shrink-0 overflow-hidden cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-page" class="w-full h-full flex items-center justify-center">
-                            <img src="https://files.catbox.moe/3j8l9q.gif" class="w-full h-full object-contain">
+                            <img src="https://images.weserv.nl/?url=https://files.catbox.moe/3j8l9q.gif&n=-1" referrerpolicy="no-referrer" class="w-full h-full object-contain">
                         </div>
                     </div>
                     <div class="text-left flex-1">
@@ -4017,7 +4017,7 @@
             // 1. Tải nhân vật kèm bộ đệm lưu trữ dự phòng
             db.collection("characters").onSnapshot((snapshot) => {
                 characters = [];
-                snapshot.forEach(doc => { characters.push(doc.data()); });
+                snapshot.forEach(doc => { characters.push({ id: doc.id, ...doc.data() }); });
                 if (characters.length > 0) {
                     try { localStorage.setItem('palette_cached_characters', JSON.stringify(characters)); } catch (_) {}
                 }
@@ -4698,33 +4698,39 @@
             }
         }
 
-        // Áp dụng ảnh/GIF cho toàn bộ 5 mục lớn
+        function getSafeMenuIconUrl(url) {
+            if (!url) return '';
+            if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+            if (url.includes('images.weserv.nl') || url.includes('wsrv.nl')) return url;
+            if (url.includes('catbox.moe')) {
+                const isGif = url.toLowerCase().includes('.gif');
+                return `https://images.weserv.nl/?url=${url.trim()}${isGif ? '&n=-1' : ''}`;
+            }
+            return url;
+        }
+
+        // Áp dụng ảnh/GIF an toàn cho toàn bộ 7 mục lớn
         function applyCustomMenuIcons() {
-            // 1. Vẽ nên câu chuyện
-            if (customMenuIcons.story) {
-                const box = document.getElementById('iconBox-story');
-                if (box) box.innerHTML = `<img id="menuImg-story" src="${customMenuIcons.story}" alt="Story" class="w-full h-full object-contain">`;
-            }
-            // 2. Tô màu
-            if (customMenuIcons.color) {
-                const box = document.getElementById('menuContent-color');
-                if (box) box.innerHTML = `<img src="${customMenuIcons.color}" class="w-full h-full object-contain">`;
-            }
-            // 3. Bức tranh hoàn chỉnh
-            if (customMenuIcons.fav) {
-                const box = document.getElementById('iconBox-fav');
-                if (box) box.innerHTML = `<img id="menuImg-fav" src="${customMenuIcons.fav}" alt="Favorites" class="w-full h-full object-contain">`;
-            }
-            // 4. Sắc Màu Nhanh Nhẹn
-            if (customMenuIcons.fast) {
-                const box = document.getElementById('menuContent-fast');
-                if (box) box.innerHTML = `<img src="${customMenuIcons.fast}" class="w-full h-full object-contain">`;
-            }
-            // 5. Thông Báo và Hiệu Ứng
-            if (customMenuIcons.notify) {
-                const box = document.getElementById('menuContent-notify');
-                if (box) box.innerHTML = `<img src="${customMenuIcons.notify}" class="w-full h-full object-contain">`;
-            }
+            const list = [
+                { key: 'story', id: 'iconBox-story', imgId: 'menuImg-story' },
+                { key: 'color', id: 'menuContent-color' },
+                { key: 'fav', id: 'iconBox-fav', imgId: 'menuImg-fav' },
+                { key: 'fast', id: 'menuContent-fast' },
+                { key: 'wheel', id: 'menuContent-wheel' },
+                { key: 'notify', id: 'menuContent-notify' },
+                { key: 'page', id: 'menuContent-page' }
+            ];
+
+            list.forEach(item => {
+                const rawUrl = customMenuIcons[item.key];
+                if (!rawUrl) return;
+                const box = document.getElementById(item.id);
+                if (box) {
+                    const safeSrc = getSafeMenuIconUrl(rawUrl);
+                    const imgIdAttr = item.imgId ? `id="${item.imgId}"` : '';
+                    box.innerHTML = `<img ${imgIdAttr} src="${safeSrc}" referrerpolicy="no-referrer" class="w-full h-full object-contain">`;
+                }
+            });
         }
 
         // LOGIC KIỂM TRA ĐỦ 3 CÂU HỎI TRƯỚC KHI VÀO ĐĂNG KÝ
@@ -5979,7 +5985,7 @@
             }, { merge: true });
             
             characters.forEach(ch => {
-                if (ch.tags) {
+                if (ch.tags && ch.tags.includes(catName)) {
                     ch.tags = ch.tags.filter(t => t !== catName);
                     db.collection("characters").doc(ch.id).set(ch);
                 }
@@ -6066,7 +6072,7 @@
                 const exist = characters.find(c => c.id === editId);
                 if (exist && !urlInput) imageSrc = exist.image;
             }
-            if (!imageSrc) imageSrc = 'https://d.uguu.se/eWcRHpfU.jpg';
+            if (!imageSrc) imageSrc = 'https://images.weserv.nl/?url=https://files.catbox.moe/5t1nqp.jpg&w=400';
 
             let savedChar = null;
 
@@ -6269,6 +6275,7 @@
                 const newCmt = {
                     id: 'cmt-' + cmtCreatedAt,
                     author: username,
+                    avatar: currentUser.avatar || PALETTE_DEFAULT_AVATARS[0],
                     text,
                     images,
                     createdAt: cmtCreatedAt,
@@ -6564,6 +6571,7 @@
                     parent.replies.push({
                         id: 'rep-' + repCreatedAt,
                         author: currentUser.username,
+                        avatar: currentUser.avatar || PALETTE_DEFAULT_AVATARS[0],
                         text,
                         images,
                         createdAt: repCreatedAt,
@@ -6644,7 +6652,7 @@
                         repliesHtml = `<div class="ml-6 sm:ml-8 pl-3 border-l-2 border-pink-300/40 mt-2 space-y-2">`;
                         displayedReplies.forEach(r => {
                             const canDeleteReply = isOwner || r.author?.toLowerCase() === currentUser?.username?.toLowerCase();
-                            const repAvatar = getUserAvatarOrDefault(r.author);
+                            const repAvatar = r.avatar || getUserAvatarOrDefault(r.author);
                             const repGlow = getUserPastelGlowClass(r.author);
 
                             repliesHtml += `
@@ -6681,7 +6689,7 @@
                     }
                 }
 
-                const mainAvatar = getUserAvatarOrDefault(c.author);
+                const mainAvatar = c.avatar || getUserAvatarOrDefault(c.author);
                 const mainGlow = getUserPastelGlowClass(c.author);
 
                 item.innerHTML = `
