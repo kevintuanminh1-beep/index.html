@@ -3,7 +3,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="referrer" content="no-referrer">
     <title>Thế giới chì màu của Palette</title>
     <!-- Tailwind CSS -->
@@ -18,13 +18,29 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
+        html {
+            color-scheme: dark;
+            -webkit-text-size-adjust: 100%;
+        }
+
         body {
             font-family: 'Baloo 2', cursive, sans-serif;
             background: radial-gradient(circle at top, #14234b 0%, #0a1128 55%, #050814 100%);
             min-height: 100vh;
+            min-height: 100dvh;
             overflow-x: hidden;
             touch-action: pan-y;
             position: relative;
+        }
+
+        /* ĐẢM BẢO CHỮ HIỆU ỨNG GRADIENT TRÊN IOS SẮC NÉT Y HỆT ANDROID */
+        .shimmer-text, .rainbow-text, .blue-pastel-wave, .pastel-fast-wave, 
+        .pastel-rules-title, .pastel-notify-wave, .pencil-balance-glow, 
+        .reset-filter-text, .server-highlight-link,
+        .char-pastel-0, .char-pastel-1, .char-pastel-2, .char-pastel-3, .char-pastel-4 {
+            -webkit-text-fill-color: transparent !important;
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
         }
 
         /* ================= 4 HIỆU ỨNG NỀN MỸ THUẬT ================= */
@@ -454,6 +470,45 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
+        /* TỐI ƯU HÓA ĐẶC QUYỀN DÀNH CHO SAFARI TRÊN IOS (IPHONE / IPAD) */
+        @supports (-webkit-touch-callout: none) {
+            /* Ngăn Safari tự động zoom màn hình khi gõ chữ */
+            input, select, textarea {
+                font-size: 16px !important;
+                -webkit-appearance: none !important;
+                appearance: none !important;
+                border-radius: 0.75rem;
+            }
+            /* Tránh hiện bóng xám mặc định và kích hoạt độ nảy nút bấm tức thì */
+            * {
+                -webkit-tap-highlight-color: transparent;
+                -webkit-touch-callout: none;
+            }
+            input, textarea {
+                -webkit-touch-callout: default;
+            }
+        }
+
+        /* Đệm an toàn đáy iPhone tránh bị thanh Home Bar che nút */
+        .custom-scroll {
+            padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+        }
+
+        /* Tự động tụt Header xuống dưới tai thỏ / Dynamic Island của iPhone */
+        .ios-safe-header {
+            top: max(12px, env(safe-area-inset-top, 12px)) !important;
+            left: max(12px, env(safe-area-inset-left, 12px)) !important;
+            right: max(12px, env(safe-area-inset-right, 12px)) !important;
+        }
+
+        /* Khử rung và chống nhòe hình vòng xoay trên iOS Retina */
+        #luckyWheelCanvas {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
+        }
+
         </style>
 </head>
 <body class="text-white flex flex-col items-center justify-between p-4 relative selection:bg-pink-500">
@@ -480,7 +535,7 @@
     </div>
 
     <!-- THANH HEADER -->
-    <div class="fixed top-3 left-3 right-3 z-40 flex items-center justify-between pointer-events-none">
+    <div class="fixed ios-safe-header top-3 left-3 right-3 z-40 flex items-center justify-between pointer-events-none">
         <!-- GÓC TRÁI TRÊN: NÚT CHÌ MÀU CỦA USER -->
         <div class="pointer-events-auto flex items-center gap-1.5">
             <button id="pencilBadgeBtn" onclick="openPencilModal()" class="h-9 px-3.5 rounded-full border border-pink-300/50 bg-[#121c38]/90 backdrop-blur-md shadow-lg text-xs font-black flex items-center gap-1.5 active:scale-95 transition hover:border-pink-200" title="Chạm để xem Túi Bút Chì Màu">
@@ -1054,6 +1109,19 @@
                 </button>
             </div>
             <div id="tagContainer" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto no-scrollbar p-1.5 bg-black/20 rounded-2xl border border-white/10"></div>
+        </div>
+
+        <!-- THANH CHỌN THỨ TỰ: MỚI NHẤT / CŨ NHẤT -->
+        <div class="w-full px-2 mb-3 flex items-center justify-between">
+            <span id="storyCharTotalBadge" class="text-xs font-bold text-sky-200/70">Danh sách nhân vật</span>
+            <div class="flex items-center gap-1 bg-black/40 p-1 rounded-2xl border border-white/10">
+                <button type="button" id="sortNewestBtn" onclick="setStorySortOrder('newest')" class="px-3 py-1 rounded-xl text-xs font-black bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow border border-pink-300/40 transition">
+                    Mới nhất
+                </button>
+                <button type="button" id="sortOldestBtn" onclick="setStorySortOrder('oldest')" class="px-3 py-1 rounded-xl text-xs font-bold text-sky-200/70 hover:text-white transition">
+                    Cũ nhất
+                </button>
+            </div>
         </div>
 
         <div id="characterList" class="w-full px-2 space-y-4"></div>
@@ -2292,25 +2360,23 @@
         function playAvatarRandomSound() {
             return new Promise(resolve => {
                 try {
-                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                    if (!AudioContextClass) return resolve();
-                    const context = new AudioContextClass();
+                    const context = getSharedAudioContext();
+                    if (!context) return resolve();
                     const oscillator = context.createOscillator();
                     const gain = context.createGain();
                     oscillator.type = 'sawtooth';
                     oscillator.frequency.setValueAtTime(110, context.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(660, context.currentTime + 0.55);
+                    oscillator.frequency.exponentialRampToValueAtTime(660, context.currentTime + 0.5);
                     gain.gain.setValueAtTime(0.08, context.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.6);
+                    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.55);
                     oscillator.connect(gain);
                     gain.connect(context.destination);
-                    oscillator.start();
-                    oscillator.stop(context.currentTime + 0.6);
+                    oscillator.start(context.currentTime);
+                    oscillator.stop(context.currentTime + 0.55);
                     window.setTimeout(() => {
                         playPaletteTingSound();
                         resolve();
-                        window.setTimeout(() => context.close().catch(() => {}), 700);
-                    }, 650);
+                    }, 580);
                 } catch (_) {
                     resolve();
                 }
@@ -2942,17 +3008,23 @@
             }
         }
 
-        // Kích hoạt âm thanh mượt mà trên các trình duyệt chặn tự phát khi vừa mở web
-        document.addEventListener('pointerdown', function tryAutoplayOnce() {
+        // Kích hoạt âm thanh chuẩn cho cả iOS Safari và Android Chrome
+        const autoplayUnlockEvents = ['click', 'touchend', 'pointerdown'];
+        function tryAutoplayOnce() {
             if (isUserMusicEnabled && currentPlaylist.length > 0 && currentMusicSource) {
                 const na = document.getElementById('nativeBgAudio');
-                if (currentMusicType === "audio" && na && na.paused) {
-                    na.play().catch(() => {});
+                if (currentMusicType === "audio" && na) {
+                    if (!na.src || na.src === window.location.href) {
+                        na.src = currentMusicSource;
+                    }
+                    if (na.paused) na.play().catch(() => {});
                 } else if (currentMusicType === "youtube" && ytPlayer && ytPlayer.playVideo) {
                     ytPlayer.playVideo();
                 }
             }
-        }, { once: true });
+            autoplayUnlockEvents.forEach(evt => document.removeEventListener(evt, tryAutoplayOnce));
+        }
+        autoplayUnlockEvents.forEach(evt => document.addEventListener(evt, tryAutoplayOnce, { passive: true }));
 
         function openEffectsModal() {
             const saved = getUserVisualEffects();
@@ -3025,56 +3097,92 @@
         function openPaletteLinksModal() { document.getElementById('paletteLinksModal').classList.remove('hidden'); }
         function closePaletteLinksModal() { document.getElementById('paletteLinksModal').classList.add('hidden'); }
 
-        // ================= ÂM THANH PALETTE =================
+        // ================= HỆ THỐNG ÂM THANH DÙNG CHUNG (TỐI ƯU 100% CHO IOS) =================
+        let iosSharedAudioCtx = null;
+        function getSharedAudioContext() {
+            if (!iosSharedAudioCtx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) iosSharedAudioCtx = new AudioCtx();
+            }
+            if (iosSharedAudioCtx && iosSharedAudioCtx.state === 'suspended') {
+                iosSharedAudioCtx.resume().catch(() => {});
+            }
+            return iosSharedAudioCtx;
+        }
+
+        // Kích hoạt độ nảy của nút bấm trên iOS y chang Android
+        document.addEventListener('touchstart', () => {}, { passive: true });
+
+        // Mở khóa âm thanh trên iOS ngay từ lần chạm đầu tiên
+        const unlockIosAudioEvents = ['touchstart', 'touchend', 'pointerdown'];
+        function unlockIosAudio() {
+            const ctx = getSharedAudioContext();
+            if (ctx && ctx.state === 'suspended') {
+                ctx.resume().catch(() => {});
+            }
+            try {
+                // Tạo một xung âm thanh siêu ngắn để iOS mở khóa toàn bộ âm thanh
+                const buffer = ctx.createBuffer(1, 1, 22050);
+                const source = ctx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(ctx.destination);
+                source.start(0);
+            } catch (_) {}
+            unlockIosAudioEvents.forEach(evt => document.removeEventListener(evt, unlockIosAudio));
+        }
+        unlockIosAudioEvents.forEach(evt => document.addEventListener(evt, unlockIosAudio, { passive: true }));
+
         function playPaletteTingSound() {
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const ctx = getSharedAudioContext();
+                if (!ctx) return;
                 const now = ctx.currentTime;
                 const osc1 = ctx.createOscillator();
                 const gain1 = ctx.createGain();
                 osc1.type = 'sine';
                 osc1.frequency.setValueAtTime(880, now);
                 osc1.frequency.exponentialRampToValueAtTime(1760, now + 0.15);
-                gain1.gain.setValueAtTime(0.3, now);
-                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                gain1.gain.setValueAtTime(0.25, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
                 osc1.connect(gain1);
                 gain1.connect(ctx.destination);
                 osc1.start(now);
-                osc1.stop(now + 0.5);
+                osc1.stop(now + 0.46);
 
                 const osc2 = ctx.createOscillator();
                 const gain2 = ctx.createGain();
                 osc2.type = 'triangle';
                 osc2.frequency.setValueAtTime(1318.5, now + 0.08);
-                gain2.gain.setValueAtTime(0.2, now + 0.08);
-                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+                gain2.gain.setValueAtTime(0.18, now + 0.08);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
                 osc2.connect(gain2);
                 gain2.connect(ctx.destination);
                 osc2.start(now + 0.08);
-                osc2.stop(now + 0.7);
+                osc2.stop(now + 0.66);
             } catch(e) {}
         }
 
         function playCheerfulClickSound() {
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const ctx = getSharedAudioContext();
+                if (!ctx) return;
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 const pitches = [523.25, 587.33, 659.25, 783.99, 880.00];
                 const randomPitch = pitches[Math.floor(Math.random() * pitches.length)];
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(randomPitch, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(randomPitch * 1.5, ctx.currentTime + 0.08);
-                gain.gain.setValueAtTime(0.18, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+                osc.frequency.exponentialRampToValueAtTime(randomPitch * 1.4, ctx.currentTime + 0.07);
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.075);
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-                osc.start();
+                osc.start(ctx.currentTime);
                 osc.stop(ctx.currentTime + 0.08);
             } catch(e) {}
         }
         document.addEventListener('click', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.closest('label')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('label')) return;
             playCheerfulClickSound();
         });
 
@@ -5165,16 +5273,6 @@
         }
         function pad(n) { return n < 10 ? '0' + n : n; }
 
-        let storySearchKeyword = "";
-        let storyCurrentPage = 1;
-        const STORY_CHARS_PER_PAGE = 10;
-
-        function handleSearchStoryChar(val) {
-            storySearchKeyword = (val || "").trim().toLowerCase();
-            storyCurrentPage = 1;
-            renderCharacters();
-        }
-
         function renderCategoryTags() {
             const container = document.getElementById('tagContainer');
             container.innerHTML = '';
@@ -5216,8 +5314,53 @@
             return `char-pastel-${index % 5}`;
         }
 
+        let storySearchKeyword = "";
+        let storyCurrentPage = 1;
+        let storySortOrder = 'newest'; // 'newest' | 'oldest'
+        const STORY_CHARS_PER_PAGE = 10;
+
+        function getCharTimestamp(c) {
+            if (c.createdAt && typeof c.createdAt === 'number') return c.createdAt;
+            if (c.id && c.id.startsWith('char-')) {
+                const parsed = parseInt(c.id.replace('char-', ''));
+                if (!isNaN(parsed)) return parsed;
+            }
+            return 0;
+        }
+
+        function setStorySortOrder(order) {
+            storySortOrder = order;
+            storyCurrentPage = 1;
+            updateSortButtonsUI();
+            renderCharacters();
+        }
+
+        function updateSortButtonsUI() {
+            const btnNew = document.getElementById('sortNewestBtn');
+            const btnOld = document.getElementById('sortOldestBtn');
+            if (!btnNew || !btnOld) return;
+
+            const activeCls = "px-3 py-1 rounded-xl text-xs font-black bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow border border-pink-300/40 transition";
+            const inactiveCls = "px-3 py-1 rounded-xl text-xs font-bold text-sky-200/70 hover:text-white transition";
+
+            if (storySortOrder === 'newest') {
+                btnNew.className = activeCls;
+                btnOld.className = inactiveCls;
+            } else {
+                btnNew.className = inactiveCls;
+                btnOld.className = activeCls;
+            }
+        }
+
+        function handleSearchStoryChar(val) {
+            storySearchKeyword = (val || "").trim().toLowerCase();
+            storyCurrentPage = 1;
+            renderCharacters();
+        }
+
         function renderCharacters() {
             const list = document.getElementById('characterList');
+            const totalBadge = document.getElementById('storyCharTotalBadge');
             list.innerHTML = '';
 
             const filtered = characters.filter(c => {
@@ -5225,6 +5368,15 @@
                 const matchesSearch = (!storySearchKeyword) || (c.name && c.name.toLowerCase().includes(storySearchKeyword));
                 return matchesCategory && matchesSearch;
             });
+
+            // Sắp xếp thứ tự Mới nhất hoặc Cũ nhất theo thời gian tạo
+            filtered.sort((a, b) => {
+                const timeA = getCharTimestamp(a);
+                const timeB = getCharTimestamp(b);
+                return storySortOrder === 'newest' ? (timeB - timeA) : (timeA - timeB);
+            });
+
+            if (totalBadge) totalBadge.innerText = `Hiển thị ${filtered.length} nhân vật (${storySortOrder === 'newest' ? 'Mới nhất' : 'Cũ nhất'})`;
 
             if (filtered.length === 0) {
                 list.innerHTML = `
@@ -5245,48 +5397,52 @@
             const startIndex = (storyCurrentPage - 1) * STORY_CHARS_PER_PAGE;
             const paginatedChars = filtered.slice(startIndex, startIndex + STORY_CHARS_PER_PAGE);
 
-            const fast24hChars = paginatedChars.filter(c => c.status === 'unlocked_24h');
-            const normalChars = paginatedChars.filter(c => c.status !== 'unlocked_24h');
+            // Kiểm tra xem nhân vật MỚI NHẤT đứng đầu bảng có phải là Nhanh Nhẹn hay không
+            const newestChar = filtered[0];
+            const isFirstCharFast = (storySortOrder === 'newest' && storyCurrentPage === 1 && newestChar && newestChar.status === 'unlocked_24h');
 
-            fast24hChars.forEach((c) => {
-                const card = document.createElement('div');
-                card.className = "w-full fast-center-card p-5 rounded-3xl flex flex-col items-center mb-5 relative cursor-pointer active:scale-98 transition";
-                card.onclick = () => openCharDetail(c);
+            paginatedChars.forEach((c, index) => {
+                // CHỈ hiện thẻ to khi đây đúng là nhân vật MỚI NHẤT và đang ở chế độ Mới Nhất
+                if (isFirstCharFast && c.id === newestChar.id) {
+                    const card = document.createElement('div');
+                    card.className = "w-full fast-center-card p-5 rounded-3xl flex flex-col items-center mb-5 relative cursor-pointer active:scale-98 transition";
+                    card.onclick = () => openCharDetail(c);
 
-                const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
+                    const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
 
-                card.innerHTML = `
-                    <div class="w-full text-center mb-3">
-                        <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[9.5px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                            MỞ KHÓA CÓ HẠN GIỜ
-                        </span>
-                        <h3 class="text-2xl font-black char-pastel-0 mt-2">${c.name}</h3>
-                        <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
-                    </div>
+                    card.innerHTML = `
+                        <div class="w-full text-center mb-3">
+                            <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[9.5px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow">
+                                MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ
+                            </span>
+                            <h3 class="text-2xl font-black char-pastel-0 mt-2">${c.name}</h3>
+                            <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
+                        </div>
 
-                    <div class="relative mb-3 flex justify-center">
-                        <div class="glowing-pastel-border">
-                            <div class="w-52 h-64 rounded-[1.3rem] overflow-hidden relative">
-                                <img src="${c.image}" class="w-full h-full object-cover">
-                                
-                                <div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md border border-fuchsia-300/60 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    <span id="storyCountdown-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span>
+                        <div class="relative mb-3 flex justify-center">
+                            <div class="glowing-pastel-border">
+                                <div class="w-52 h-64 rounded-[1.3rem] overflow-hidden relative">
+                                    <img src="${c.image}" class="w-full h-full object-cover">
+                                    
+                                    <div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md border border-fuchsia-300/60 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        <span id="storyCountdown-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="w-full text-center">
-                        <span class="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-black py-2.5 px-4 rounded-xl shadow-md">
-                            ${isUnlocked ? `🔓 Link đã mở khóa (Bấm để xem) ➔` : `Nhanh tay lấy link trước khi kết thúc ➔`}
-                        </span>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
+                        <div class="w-full text-center">
+                            <span class="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-black py-2.5 px-4 rounded-xl shadow-md">
+                                ${isUnlocked ? `🔓 Link đã mở khóa (Bấm để xem) ➔` : `Nhanh tay lấy link trước khi kết thúc ➔`}
+                            </span>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                    return;
+                }
 
-            normalChars.forEach((c, index) => {
+                // Tất cả các nhân vật còn lại hiển thị dạng thẻ danh sách đều đặn theo đúng thứ tự
                 const card = document.createElement('div');
                 card.className = "w-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 backdrop-blur-md border-2 border-pink-300/40 p-4 rounded-3xl shadow-lg transition cursor-pointer active:scale-98";
                 card.onclick = () => openCharDetail(c);
@@ -5300,8 +5456,9 @@
                     <div class="flex items-center gap-3">
                         <img src="${c.image}" class="w-14 h-14 rounded-2xl object-cover border border-white/20 shrink-0">
                         <div class="flex-1 truncate">
-                            <div class="flex items-center gap-1.5">
+                            <div class="flex items-center gap-1.5 flex-wrap">
                                 <h3 class="text-base font-extrabold ${getPastelColorClass(index)}">${c.name}</h3>
+                                ${c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở có hạn</span>' : ''}
                                 ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-200 border border-red-300/40 px-1.5 py-0.5 rounded-full font-bold">Đã đóng</span>' : ''}
                             </div>
                             <p class="text-xs text-sky-100/80 truncate mt-0.5">${c.subtitle}</p>
@@ -5567,6 +5724,67 @@
             }
         }
 
+        // ================= BỘ QUÉT CẢM XÚC FACEBOOK (ICON TIM, LIKE, THƯƠNG THƯƠNG) =================
+        async function checkFacebookReact(dataUrl, text) {
+            const clean = (text || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+            // 1. Quét từ khóa văn bản (đầy đủ các loại react: Thích, Yêu thích, Thương thương, Like...)
+            const keywords = [
+                "thich", "da thich", "like", "liked",
+                "yeu thich", "tim", "love", "heart",
+                "thuong thuong", "care", "thuong",
+                "haha", "wow", "buon", "phan no",
+                "ban va", "ban da", "you and",
+                "binh luan", "chia se", "comment", "share"
+            ];
+            for (const kw of keywords) {
+                if (clean.includes(kw)) return true;
+            }
+
+            // 2. Quét điểm ảnh trực tiếp trên Canvas tìm màu icon Tim Đỏ, Like Xanh, Thương Thương
+            return new Promise(resolve => {
+                if (!dataUrl) return resolve(false);
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 160;
+                        canvas.height = 220;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, 160, 220);
+
+                        // Quét nửa dưới của ảnh chụp màn hình (nơi đặt các nút react)
+                        const imgData = ctx.getImageData(0, 80, 160, 140).data;
+                        let redHeartPixels = 0;   // Màu đỏ của icon Tim
+                        let blueLikePixels = 0;   // Màu xanh của icon Like
+                        let yellowCarePixels = 0; // Màu vàng cam của Thương Thương / Haha
+
+                        for (let i = 0; i < imgData.length; i += 4) {
+                            const r = imgData[i];
+                            const g = imgData[i + 1];
+                            const b = imgData[i + 2];
+
+                            // Nhận diện màu đỏ icon Tim Facebook (#f02849 / #e43b4f)
+                            if (r > 190 && g < 85 && b < 105) redHeartPixels++;
+                            // Nhận diện màu xanh icon Like Facebook (#1877f2)
+                            else if (r < 65 && g > 105 && g < 185 && b > 200) blueLikePixels++;
+                            // Nhận diện màu vàng cam icon Thương Thương / Haha
+                            else if (r > 215 && g > 150 && g < 225 && b < 85) yellowCarePixels++;
+
+                            if (redHeartPixels >= 5 || blueLikePixels >= 5 || yellowCarePixels >= 5) {
+                                return resolve(true);
+                            }
+                        }
+                        resolve(false);
+                    } catch (_) {
+                        resolve(false);
+                    }
+                };
+                img.onerror = () => resolve(false);
+                img.src = dataUrl;
+            });
+        }
+
         // ================= DUYỆT BẰNG CHỨNG (OCR AI) =================
         async function processNormalProofVerification() {
             if (!currentUser) {
@@ -5654,8 +5872,8 @@
                     const hasTag = cleanFb.includes(targetTag) || cleanFb.includes(unaccentedTag);
                     if (!hasTag) throw new Error("Ảnh Facebook gửi sai bài viết của nhân vật khác!");
 
-                    const hasReact = cleanFb.includes("thích") || cleanFb.includes("đã thích") || cleanFb.includes("tim") || cleanFb.includes("like") || cleanFb.includes("bạn và");
-                    if (!hasReact) throw new Error("Bài viết Facebook chưa hiển thị nút đã thả react/tim!");
+                    const hasReact = await checkFacebookReact(cachedFbDataUrl, cleanFb);
+                    if (!hasReact) throw new Error("Bài viết Facebook chưa hiển thị nút hoặc biểu tượng đã thả cảm xúc (Tim / Like / Thương thương)!");
                 }
 
                 // 2. Quét Discord
@@ -5869,10 +6087,14 @@
 
                 const fastFiles = Array.from(fileInput.files || []);
                 let combinedFastText = "";
+                let fastFbDataUrl = "";
+
                 for (let i = 0; i < fastFiles.length; i++) {
-                    const fastFbData = await processImageForFastOCR(fastFiles[i]);
+                    const processedData = await processImageForFastOCR(fastFiles[i]);
+                    if (!fastFbDataUrl) fastFbDataUrl = processedData;
+
                     const baseP = 20 + Math.round((i / fastFiles.length) * 70);
-                    const { data: { text } } = await Tesseract.recognize(fastFbData, 'vie', {
+                    const { data: { text } } = await Tesseract.recognize(processedData, 'vie', {
                         logger: m => {
                             if (m.status === 'recognizing text') {
                                 const p = Math.min(95, Math.round(baseP + m.progress * (70 / fastFiles.length)));
@@ -5894,9 +6116,9 @@
                 const hasTag = clean.includes(targetTag) || clean.includes(unaccentedTag);
                 if (!hasTag) throw new Error("Ảnh đang gửi sai bài viết của nhân vật khác!");
 
-                // 3. Kiểm tra nút đã thả tim / Like
-                const hasReact = clean.includes("thích") || clean.includes("đã thích") || clean.includes("tim") || clean.includes("like") || clean.includes("bạn và");
-                if (!hasReact) throw new Error("Bài viết chưa hiển thị nút đã thả react/tim!");
+                // 3. Kiểm tra nút hoặc icon đã thả tim / Like / Thương thương
+                const hasReact = await checkFacebookReact(fastFbDataUrl, clean);
+                if (!hasReact) throw new Error("Bài viết chưa hiển thị nút hoặc biểu tượng đã thả cảm xúc (Tim / Like / Thương thương)!");
 
                 setFastProgressUI(97, "Đang tải ảnh bằng chứng lên...");
                 await storeProofImages(fastFiles, {
@@ -7022,18 +7244,6 @@
         let currentWheelRotation = 0;
         let isWheelSpinning = false;
         let wheelTickTimer = null;
-        let cachedWheelAudioCtx = null;
-
-        function getSharedAudioContext() {
-            if (!cachedWheelAudioCtx) {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (AudioCtx) cachedWheelAudioCtx = new AudioCtx();
-            }
-            if (cachedWheelAudioCtx && cachedWheelAudioCtx.state === 'suspended') {
-                cachedWheelAudioCtx.resume().catch(() => {});
-            }
-            return cachedWheelAudioCtx;
-        }
 
         function playWheelTickSound(pitch = 750) {
             try {
@@ -7144,13 +7354,23 @@
             const canvas = document.getElementById('luckyWheelCanvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
+
+            // Nhân đôi độ phân giải để trên màn hình iPhone OLED hiển thị sắc nét từng milimet
+            const dpr = Math.max(window.devicePixelRatio || 1, 2);
+            canvas.width = 280 * dpr;
+            canvas.height = 280 * dpr;
+            canvas.style.width = "280px";
+            canvas.style.height = "280px";
+
+            ctx.scale(dpr, dpr);
+
             const numSlices = WHEEL_SLICES.length;
             const arc = (2 * Math.PI) / numSlices;
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const radius = cx - 6;
+            const cx = 140;
+            const cy = 140;
+            const radius = 134;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, 280, 280);
 
             for (let i = 0; i < numSlices; i++) {
                 const angle = i * arc;
