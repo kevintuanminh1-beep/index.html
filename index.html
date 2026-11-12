@@ -1731,11 +1731,26 @@
                         <span id="musicVolumePercent" class="text-[10px] font-mono font-bold text-pink-300 shrink-0 w-8 text-right">80%</span>
                     </div>
 
-                    <!-- KHU VỰC CÀI ĐẶT LINK (CHỈ CHỦ WEB BIBI 0304 MỚI THẤY) -->
+                    <!-- DANH SÁCH BÀI HÁT CHO TẤT CẢ USER CHỌN + NÚT PHÁT NGẪU NHIÊN -->
+                    <div class="border-t border-white/10 pt-2 space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px] font-bold text-pink-300">
+                            <div class="flex items-center gap-1.5">
+                                <span>Danh sách bài hát:</span>
+                                <span id="ownerPlaylistCount" class="text-[10px] text-amber-300 font-mono">0 bài</span>
+                            </div>
+                            <button type="button" id="shuffleToggleBtn" onclick="toggleShuffleMode()" class="px-2 py-0.5 rounded-lg border border-white/20 bg-white/5 text-[10px] font-bold text-sky-200 hover:text-white transition active:scale-95 flex items-center gap-1">
+                                <span>Đảo ngẫu nhiên:</span>
+                                <span id="shuffleStatusText" class="text-sky-300">Tắt</span>
+                            </button>
+                        </div>
+                        <div id="ownerPlaylistContainer" class="space-y-1 max-h-40 overflow-y-auto custom-scroll pr-1"></div>
+                    </div>
+
+                    <!-- KHU VỰC THÊM NHẠC MỚI (CHỈ CHỦ WEB BIBI 0304 MỚI THẤY) -->
                     <div id="ownerMusicAdminBox" class="hidden border-t border-white/10 pt-2.5 space-y-2.5">
                         <div class="flex items-center justify-between">
                             <span class="text-[11px] font-bold text-amber-300 flex items-center gap-1">
-                                <span>⚙️ Quản Trị Nhạc Nền:</span>
+                                <span>⚙️ Thêm Bài Hát Mới:</span>
                                 <span class="text-[9px] bg-amber-400/25 text-amber-200 px-1.5 py-0.2 rounded-full border border-amber-300/40 font-bold">Chủ web</span>
                             </span>
                         </div>
@@ -1745,13 +1760,6 @@
                             <button type="button" onclick="addSongToPlaylist()" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 rounded-xl text-xs active:scale-95 transition shadow flex items-center justify-center gap-1.5">
                                 <span>✓ Thêm Bài Hát Vào Danh Sách</span>
                             </button>
-                        </div>
-                        <div class="border-t border-white/10 pt-2 space-y-1.5">
-                            <div class="flex items-center justify-between text-[11px] font-bold text-pink-300">
-                                <span>Danh sách phát lần lượt:</span>
-                                <span id="ownerPlaylistCount" class="text-[10px] text-amber-300 font-mono">0 bài</span>
-                            </div>
-                            <div id="ownerPlaylistContainer" class="space-y-1 max-h-36 overflow-y-auto custom-scroll pr-1"></div>
                         </div>
                     </div>
                 </div>
@@ -2672,9 +2680,48 @@
             playTrackAtIndex(prevIdx, true);
         }
 
+        // Biến kiểm soát chế độ phát ngẫu nhiên (Lưu vào bộ nhớ trình duyệt)
+        let isShuffleEnabled = (localStorage.getItem('palette_music_shuffle') === 'true');
+
+        function toggleShuffleMode() {
+            isShuffleEnabled = !isShuffleEnabled;
+            localStorage.setItem('palette_music_shuffle', isShuffleEnabled ? 'true' : 'false');
+            updateShuffleUI();
+            playCheerfulClickSound();
+        }
+
+        function updateShuffleUI() {
+            const statusBtn = document.getElementById('shuffleToggleBtn');
+            const statusText = document.getElementById('shuffleStatusText');
+
+            if (isShuffleEnabled) {
+                if (statusBtn) statusBtn.className = "px-2 py-0.5 rounded-lg border border-pink-300 bg-pink-500/30 text-[10px] font-extrabold text-pink-100 shadow-[0_0_8px_rgba(244,114,182,0.5)] transition active:scale-95 flex items-center gap-1";
+                if (statusText) {
+                    statusText.innerText = "Bật";
+                    statusText.className = "text-amber-300 font-black";
+                }
+            } else {
+                if (statusBtn) statusBtn.className = "px-2 py-0.5 rounded-lg border border-white/20 bg-white/5 text-[10px] font-bold text-sky-200/70 hover:text-white transition active:scale-95 flex items-center gap-1";
+                if (statusText) {
+                    statusText.innerText = "Tắt";
+                    statusText.className = "text-sky-300";
+                }
+            }
+        }
+
         function playNextTrack() {
             if (!currentPlaylist || currentPlaylist.length === 0) return;
-            const nextIdx = (currentTrackIndex + 1) % currentPlaylist.length;
+            let nextIdx = 0;
+
+            // Nếu đang bật chế độ ngẫu nhiên và danh sách có từ 2 bài trở lên
+            if (isShuffleEnabled && currentPlaylist.length > 1) {
+                do {
+                    nextIdx = Math.floor(Math.random() * currentPlaylist.length);
+                } while (nextIdx === currentTrackIndex);
+            } else {
+                nextIdx = (currentTrackIndex + 1) % currentPlaylist.length;
+            }
+
             isUserMusicEnabled = true;
             localStorage.setItem('palette_music_enabled', 'true');
             playTrackAtIndex(nextIdx, true);
@@ -2782,7 +2829,6 @@
             alert("Đã thêm bài '" + title + "' vào danh sách phát thành công!");
         }
 
-        // Nhấn giữ lâu bài hát để đảo thứ tự
         function startTrackLongPress(index) {
             if (!checkIsOwnerAccount()) return;
             isTrackLongPressTriggered = false;
@@ -2909,6 +2955,7 @@
             });
         }
 
+        // HÀM RENDER DANH SÁCH BÀI HÁT CHO TẤT CẢ MỌI NGƯỜI
         function renderOwnerPlaylist() {
             const container = document.getElementById('ownerPlaylistContainer');
             const countEl = document.getElementById('ownerPlaylistCount');
@@ -2918,9 +2965,12 @@
             container.innerHTML = "";
 
             if (currentPlaylist.length === 0) {
-                container.innerHTML = `<div class="text-[10px] text-sky-200/50 italic py-1 text-center">Chưa có bài hát nào trong danh sách.</div>`;
+                container.innerHTML = `<div class="text-[10px] text-sky-200/50 italic py-2 text-center">Chưa có bài hát nào trong danh sách.</div>`;
+                updateShuffleUI();
                 return;
             }
+
+            const isOwner = checkIsOwnerAccount();
 
             currentPlaylist.forEach((item, index) => {
                 const isCurrent = (index === currentTrackIndex);
@@ -2929,27 +2979,39 @@
                     isCurrent ? 'bg-pink-500/25 border-pink-300 text-pink-200 shadow' : 'bg-white/5 border-white/10 text-sky-100 hover:bg-white/10'
                 }`;
 
-                div.onmousedown = () => startTrackLongPress(index);
-                div.onmouseup = cancelTrackLongPress;
-                div.onmouseleave = cancelTrackLongPress;
-                div.ontouchstart = () => startTrackLongPress(index);
-                div.ontouchend = cancelTrackLongPress;
-                div.ontouchcancel = cancelTrackLongPress;
+                if (isOwner) {
+                    div.onmousedown = () => startTrackLongPress(index);
+                    div.onmouseup = cancelTrackLongPress;
+                    div.onmouseleave = cancelTrackLongPress;
+                    div.ontouchstart = () => startTrackLongPress(index);
+                    div.ontouchend = cancelTrackLongPress;
+                    div.ontouchcancel = cancelTrackLongPress;
+                }
 
                 div.innerHTML = `
-                    <div class="flex items-center gap-1.5 truncate cursor-pointer flex-1 mr-1" onclick="handleTrackItemClick(${index})" title="Chạm để phát - Nhấn giữ để đổi vị trí">
+                    <div class="flex items-center gap-1.5 truncate cursor-pointer flex-1 mr-1" onclick="handleTrackItemClick(${index})" title="Chạm để phát bài này">
                         <span class="text-[10px] font-mono font-bold text-amber-300 w-4 text-center shrink-0">${index + 1}</span>
                         <span class="font-bold truncate ${isCurrent ? 'text-pink-100 font-black' : 'text-sky-100'}">${item.title}</span>
                         ${isCurrent ? '<span class="text-[8.5px] bg-pink-400/40 text-pink-100 px-1.5 py-0.2 rounded-full font-bold animate-pulse shrink-0">Đang phát</span>' : ''}
                     </div>
-                    <div class="flex items-center gap-1 shrink-0">
-                        <button type="button" onclick="movePlaylistItemUp(${index})" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-sky-200 text-[10px] font-bold" title="Lên trên">▲</button>
-                        <button type="button" onclick="movePlaylistItemDown(${index})" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-sky-200 text-[10px] font-bold" title="Xuống dưới">▼</button>
-                        <button type="button" onclick="deletePlaylistItem(${index})" class="px-1.5 py-0.5 rounded bg-red-500/20 hover:bg-red-500/40 text-red-300 text-[10px] font-bold" title="Xóa">✕</button>
-                    </div>
+                    ${isOwner ? `
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button type="button" onclick="movePlaylistItemUp(${index})" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-sky-200 text-[10px] font-bold" title="Lên trên">▲</button>
+                            <button type="button" onclick="movePlaylistItemDown(${index})" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-sky-200 text-[10px] font-bold" title="Xuống dưới">▼</button>
+                            <button type="button" onclick="deletePlaylistItem(${index})" class="px-1.5 py-0.5 rounded bg-red-500/20 hover:bg-red-500/40 text-red-300 text-[10px] font-bold" title="Xóa">✕</button>
+                        </div>
+                    ` : `
+                        <button type="button" onclick="playTrackAtIndex(${index}, true)" class="px-2 py-0.5 rounded-lg text-[10px] font-bold shrink-0 transition active:scale-95 ${
+                            isCurrent ? 'bg-pink-500 text-white font-black' : 'bg-white/10 hover:bg-pink-500/20 text-sky-200 border border-white/10'
+                        }">
+                            ${isCurrent ? 'Đang phát' : 'Chọn phát'}
+                        </button>
+                    `}
                 `;
                 container.appendChild(div);
             });
+
+            updateShuffleUI();
         }
 
         function updateMusicUI() {
