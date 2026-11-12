@@ -1738,10 +1738,15 @@
                                 <span>Danh sách bài hát:</span>
                                 <span id="ownerPlaylistCount" class="text-[10px] text-amber-300 font-mono">0 bài</span>
                             </div>
-                            <button type="button" id="shuffleToggleBtn" onclick="toggleShuffleMode()" class="px-2 py-0.5 rounded-lg border border-white/20 bg-white/5 text-[10px] font-bold text-sky-200 hover:text-white transition active:scale-95 flex items-center gap-1">
-                                <span>Đảo ngẫu nhiên:</span>
-                                <span id="shuffleStatusText" class="text-sky-300">Tắt</span>
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button type="button" id="reshuffleBtn" onclick="reshufflePlaylist()" class="hidden px-2 py-0.5 rounded-lg border border-pink-300/40 bg-pink-500/20 text-[10px] font-bold text-pink-200 hover:text-white transition active:scale-95" title="Xáo trộn lại một thứ tự ngẫu nhiên khác">
+                                    Trộn lại
+                                </button>
+                                <button type="button" id="shuffleToggleBtn" onclick="toggleShuffleMode()" class="px-2 py-0.5 rounded-lg border border-white/20 bg-white/5 text-[10px] font-bold text-sky-200/70 hover:text-white transition active:scale-95 flex items-center gap-1">
+                                    <span>Đảo thứ tự:</span>
+                                    <span id="shuffleStatusText" class="text-sky-300">Tắt</span>
+                                </button>
+                            </div>
                         </div>
                         <div id="ownerPlaylistContainer" class="space-y-1 max-h-40 overflow-y-auto custom-scroll pr-1"></div>
                     </div>
@@ -2615,8 +2620,17 @@
                             updateMusicUI();
                         },
                         onError: function(event) {
-                            if (event.data === 150 || event.data === 101) {
-                                alert("Video YouTube này bị chủ bản quyền chặn phát ngoài trang web.");
+                            console.warn("YouTube player error:", event.data);
+                            const statusEl = document.getElementById('currentMusicTrackStatus');
+                            if (statusEl) {
+                                statusEl.innerText = "Bài hát bị chặn nhúng, đang chuyển bài...";
+                            }
+                            if (activePlaylist && activePlaylist.length > 1) {
+                                setTimeout(() => {
+                                    playNextTrack();
+                                }, 1000);
+                            } else if (statusEl) {
+                                statusEl.innerText = "Video YouTube này bị chặn nhúng. Hãy đổi sang link MP3 nhé!";
                             }
                         }
                     }
@@ -2635,13 +2649,80 @@
             }
         }
 
+        // Danh sách bài hát đang phát thực tế (gồm cả chế độ ngẫu nhiên riêng cho từng máy)
+        let activePlaylist = [];
+        let isShuffleEnabled = (localStorage.getItem('palette_music_shuffle') === 'true');
+
+        // Hàm xáo trộn vị trí ngẫu nhiên
+        function getRandomPermutation(list) {
+            const arr = [...list];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function refreshActivePlaylist(keepCurrentTrack = true) {
+            if (isShuffleEnabled && currentPlaylist.length > 1) {
+                activePlaylist = getRandomPermutation(currentPlaylist);
+            } else {
+                activePlaylist = [...currentPlaylist];
+            }
+
+            if (keepCurrentTrack && currentMusicSource) {
+                const foundIndex = activePlaylist.findIndex(t => t.url === currentMusicSource);
+                if (foundIndex !== -1) {
+                    currentTrackIndex = foundIndex;
+                }
+            }
+        }
+
+        function toggleShuffleMode() {
+            isShuffleEnabled = !isShuffleEnabled;
+            localStorage.setItem('palette_music_shuffle', isShuffleEnabled ? 'true' : 'false');
+            refreshActivePlaylist(true);
+            renderOwnerPlaylist();
+            updateShuffleUI();
+            playCheerfulClickSound();
+        }
+
+        function reshufflePlaylist() {
+            if (!isShuffleEnabled) return;
+            refreshActivePlaylist(true);
+            renderOwnerPlaylist();
+            playCheerfulClickSound();
+        }
+
+        function updateShuffleUI() {
+            const statusBtn = document.getElementById('shuffleToggleBtn');
+            const statusText = document.getElementById('shuffleStatusText');
+            const reshuffleBtn = document.getElementById('reshuffleBtn');
+
+            if (isShuffleEnabled) {
+                if (statusBtn) statusBtn.className = "px-2 py-0.5 rounded-lg border border-pink-300 bg-pink-500/30 text-[10px] font-extrabold text-pink-100 shadow-[0_0_8px_rgba(244,114,182,0.5)] transition active:scale-95 flex items-center gap-1";
+                if (statusText) {
+                    statusText.innerText = "Bật";
+                    statusText.className = "text-amber-300 font-black";
+                }
+                if (reshuffleBtn) reshuffleBtn.classList.remove('hidden');
+            } else {
+                if (statusBtn) statusBtn.className = "px-2 py-0.5 rounded-lg border border-white/20 bg-white/5 text-[10px] font-bold text-sky-200/70 hover:text-white transition active:scale-95 flex items-center gap-1";
+                if (statusText) {
+                    statusText.innerText = "Tắt";
+                    statusText.className = "text-sky-300";
+                }
+                if (reshuffleBtn) reshuffleBtn.classList.add('hidden');
+            }
+        }
+
         function playTrackAtIndex(index, forcePlay = false) {
-            if (!currentPlaylist || currentPlaylist.length === 0) return;
-            if (index < 0) index = currentPlaylist.length - 1;
-            if (index >= currentPlaylist.length) index = 0;
+            if (!activePlaylist || activePlaylist.length === 0) return;
+            if (index < 0) index = activePlaylist.length - 1;
+            if (index >= activePlaylist.length) index = 0;
             currentTrackIndex = index;
 
-            const track = currentPlaylist[currentTrackIndex];
+            const track = activePlaylist[currentTrackIndex];
             currentMusicSource = track.url;
             currentMusicTitle = track.title || `Bài hát ${currentTrackIndex + 1}`;
 
@@ -2673,55 +2754,16 @@
         }
 
         function playPrevTrack() {
-            if (!currentPlaylist || currentPlaylist.length === 0) return;
-            const prevIdx = (currentTrackIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
+            if (!activePlaylist || activePlaylist.length === 0) return;
+            const prevIdx = (currentTrackIndex - 1 + activePlaylist.length) % activePlaylist.length;
             isUserMusicEnabled = true;
             localStorage.setItem('palette_music_enabled', 'true');
             playTrackAtIndex(prevIdx, true);
         }
 
-        // Biến kiểm soát chế độ phát ngẫu nhiên (Lưu vào bộ nhớ trình duyệt)
-        let isShuffleEnabled = (localStorage.getItem('palette_music_shuffle') === 'true');
-
-        function toggleShuffleMode() {
-            isShuffleEnabled = !isShuffleEnabled;
-            localStorage.setItem('palette_music_shuffle', isShuffleEnabled ? 'true' : 'false');
-            updateShuffleUI();
-            playCheerfulClickSound();
-        }
-
-        function updateShuffleUI() {
-            const statusBtn = document.getElementById('shuffleToggleBtn');
-            const statusText = document.getElementById('shuffleStatusText');
-
-            if (isShuffleEnabled) {
-                if (statusBtn) statusBtn.className = "px-2 py-0.5 rounded-lg border border-pink-300 bg-pink-500/30 text-[10px] font-extrabold text-pink-100 shadow-[0_0_8px_rgba(244,114,182,0.5)] transition active:scale-95 flex items-center gap-1";
-                if (statusText) {
-                    statusText.innerText = "Bật";
-                    statusText.className = "text-amber-300 font-black";
-                }
-            } else {
-                if (statusBtn) statusBtn.className = "px-2 py-0.5 rounded-lg border border-white/20 bg-white/5 text-[10px] font-bold text-sky-200/70 hover:text-white transition active:scale-95 flex items-center gap-1";
-                if (statusText) {
-                    statusText.innerText = "Tắt";
-                    statusText.className = "text-sky-300";
-                }
-            }
-        }
-
         function playNextTrack() {
-            if (!currentPlaylist || currentPlaylist.length === 0) return;
-            let nextIdx = 0;
-
-            // Nếu đang bật chế độ ngẫu nhiên và danh sách có từ 2 bài trở lên
-            if (isShuffleEnabled && currentPlaylist.length > 1) {
-                do {
-                    nextIdx = Math.floor(Math.random() * currentPlaylist.length);
-                } while (nextIdx === currentTrackIndex);
-            } else {
-                nextIdx = (currentTrackIndex + 1) % currentPlaylist.length;
-            }
-
+            if (!activePlaylist || activePlaylist.length === 0) return;
+            const nextIdx = (currentTrackIndex + 1) % activePlaylist.length;
             isUserMusicEnabled = true;
             localStorage.setItem('palette_music_enabled', 'true');
             playTrackAtIndex(nextIdx, true);
@@ -2740,7 +2782,9 @@
                 currentPlaylist = [];
             }
 
-            if (currentPlaylist.length === 0) {
+            refreshActivePlaylist(false);
+
+            if (activePlaylist.length === 0) {
                 currentTrackIndex = 0;
                 currentMusicSource = "";
                 currentMusicTitle = "";
@@ -2749,14 +2793,14 @@
                 return;
             }
 
-            if (currentTrackIndex >= currentPlaylist.length) currentTrackIndex = 0;
+            if (currentTrackIndex >= activePlaylist.length) currentTrackIndex = 0;
             playTrackAtIndex(currentTrackIndex, isUserMusicEnabled);
             renderOwnerPlaylist();
             updateMusicUI();
         }
 
         function toggleUserMusic() {
-            if (!currentPlaylist || currentPlaylist.length === 0) {
+            if (!activePlaylist || activePlaylist.length === 0) {
                 alert("Chưa có bài hát nào trong danh sách!");
                 return;
             }
@@ -2825,12 +2869,17 @@
             localStorage.setItem('palette_music_enabled', 'true');
 
             syncPlaylistToFirebase();
-            playTrackAtIndex(currentPlaylist.length - 1, true);
+            refreshActivePlaylist(false);
+            playTrackAtIndex(activePlaylist.length - 1, true);
             alert("Đã thêm bài '" + title + "' vào danh sách phát thành công!");
         }
 
         function startTrackLongPress(index) {
             if (!checkIsOwnerAccount()) return;
+            if (isShuffleEnabled) {
+                alert("Bạn đang bật Đảo thứ tự. Vui lòng tắt Đảo thứ tự để chỉnh sửa vị trí gốc nhé!");
+                return;
+            }
             isTrackLongPressTriggered = false;
             clearTimeout(trackLongPressTimer);
             trackLongPressTimer = setTimeout(() => {
@@ -2853,6 +2902,10 @@
 
         function promptReorderTrack(index) {
             if (!checkIsOwnerAccount()) return;
+            if (isShuffleEnabled) {
+                alert("Vui lòng tắt Đảo thứ tự để sắp xếp danh sách gốc của web!");
+                return;
+            }
             const track = currentPlaylist[index];
             if (!track) return;
             const inputPos = prompt(
@@ -2880,12 +2933,17 @@
             }
 
             syncPlaylistToFirebase();
+            refreshActivePlaylist(true);
             renderOwnerPlaylist();
             updateMusicUI();
         }
 
         function movePlaylistItemUp(index) {
             if (!checkIsOwnerAccount()) return;
+            if (isShuffleEnabled) {
+                alert("Vui lòng tắt Đảo thứ tự để sắp xếp danh sách gốc của web!");
+                return;
+            }
             if (index <= 0 || index >= currentPlaylist.length) return;
             const temp = currentPlaylist[index];
             currentPlaylist[index] = currentPlaylist[index - 1];
@@ -2897,12 +2955,17 @@
                 currentTrackIndex = index;
             }
             syncPlaylistToFirebase();
+            refreshActivePlaylist(true);
             renderOwnerPlaylist();
             updateMusicUI();
         }
 
         function movePlaylistItemDown(index) {
             if (!checkIsOwnerAccount()) return;
+            if (isShuffleEnabled) {
+                alert("Vui lòng tắt Đảo thứ tự để sắp xếp danh sách gốc của web!");
+                return;
+            }
             if (index < 0 || index >= currentPlaylist.length - 1) return;
             const temp = currentPlaylist[index];
             currentPlaylist[index] = currentPlaylist[index + 1];
@@ -2914,16 +2977,23 @@
                 currentTrackIndex = index;
             }
             syncPlaylistToFirebase();
+            refreshActivePlaylist(true);
             renderOwnerPlaylist();
             updateMusicUI();
         }
 
         function deletePlaylistItem(index) {
             if (!checkIsOwnerAccount()) return;
-            const songName = currentPlaylist[index]?.title || "bài hát này";
+            const targetTrack = activePlaylist[index];
+            if (!targetTrack) return;
+            const songName = targetTrack.title || "bài hát này";
             if (!confirm(`Bạn có chắc muốn xóa "${songName}" khỏi danh sách phát?`)) return;
 
-            currentPlaylist.splice(index, 1);
+            const masterIndex = currentPlaylist.findIndex(t => t.url === targetTrack.url);
+            if (masterIndex !== -1) {
+                currentPlaylist.splice(masterIndex, 1);
+            }
+
             if (currentPlaylist.length === 0) {
                 currentTrackIndex = 0;
                 currentMusicSource = "";
@@ -2931,11 +3001,12 @@
                 const na = getNativeAudioElement();
                 if (na) { na.pause(); na.src = ""; }
                 if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
-            } else if (currentTrackIndex >= currentPlaylist.length) {
-                currentTrackIndex = 0;
             }
+
             syncPlaylistToFirebase();
-            if (currentPlaylist.length > 0) {
+            refreshActivePlaylist(false);
+            if (activePlaylist.length > 0) {
+                if (currentTrackIndex >= activePlaylist.length) currentTrackIndex = 0;
                 playTrackAtIndex(currentTrackIndex, isUserMusicEnabled);
             }
             renderOwnerPlaylist();
@@ -2961,10 +3032,10 @@
             const countEl = document.getElementById('ownerPlaylistCount');
             if (!container) return;
 
-            if (countEl) countEl.innerText = `${currentPlaylist.length} bài`;
+            if (countEl) countEl.innerText = `${activePlaylist.length} bài`;
             container.innerHTML = "";
 
-            if (currentPlaylist.length === 0) {
+            if (activePlaylist.length === 0) {
                 container.innerHTML = `<div class="text-[10px] text-sky-200/50 italic py-2 text-center">Chưa có bài hát nào trong danh sách.</div>`;
                 updateShuffleUI();
                 return;
@@ -2972,14 +3043,14 @@
 
             const isOwner = checkIsOwnerAccount();
 
-            currentPlaylist.forEach((item, index) => {
+            activePlaylist.forEach((item, index) => {
                 const isCurrent = (index === currentTrackIndex);
                 const div = document.createElement('div');
                 div.className = `flex items-center justify-between p-1.5 rounded-xl text-xs border transition select-none ${
                     isCurrent ? 'bg-pink-500/25 border-pink-300 text-pink-200 shadow' : 'bg-white/5 border-white/10 text-sky-100 hover:bg-white/10'
                 }`;
 
-                if (isOwner) {
+                if (isOwner && !isShuffleEnabled) {
                     div.onmousedown = () => startTrackLongPress(index);
                     div.onmouseup = cancelTrackLongPress;
                     div.onmouseleave = cancelTrackLongPress;
@@ -2994,10 +3065,14 @@
                         <span class="font-bold truncate ${isCurrent ? 'text-pink-100 font-black' : 'text-sky-100'}">${item.title}</span>
                         ${isCurrent ? '<span class="text-[8.5px] bg-pink-400/40 text-pink-100 px-1.5 py-0.2 rounded-full font-bold animate-pulse shrink-0">Đang phát</span>' : ''}
                     </div>
-                    ${isOwner ? `
+                    ${(isOwner && !isShuffleEnabled) ? `
                         <div class="flex items-center gap-1 shrink-0">
                             <button type="button" onclick="movePlaylistItemUp(${index})" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-sky-200 text-[10px] font-bold" title="Lên trên">▲</button>
                             <button type="button" onclick="movePlaylistItemDown(${index})" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-sky-200 text-[10px] font-bold" title="Xuống dưới">▼</button>
+                            <button type="button" onclick="deletePlaylistItem(${index})" class="px-1.5 py-0.5 rounded bg-red-500/20 hover:bg-red-500/40 text-red-300 text-[10px] font-bold" title="Xóa">✕</button>
+                        </div>
+                    ` : (isOwner && isShuffleEnabled) ? `
+                        <div class="flex items-center gap-1 shrink-0">
                             <button type="button" onclick="deletePlaylistItem(${index})" class="px-1.5 py-0.5 rounded bg-red-500/20 hover:bg-red-500/40 text-red-300 text-[10px] font-bold" title="Xóa">✕</button>
                         </div>
                     ` : `
