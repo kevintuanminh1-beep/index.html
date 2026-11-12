@@ -472,12 +472,18 @@
 
         /* TỐI ƯU HÓA ĐẶC QUYỀN DÀNH CHO SAFARI TRÊN IOS (IPHONE / IPAD) */
         @supports (-webkit-touch-callout: none) {
-            /* Ngăn Safari tự động zoom màn hình khi gõ chữ */
-            input, select, textarea {
+            /* Ngăn Safari tự động zoom màn hình khi gõ chữ nhưng không làm mất dấu tích của checkbox */
+            input:not([type="checkbox"]):not([type="radio"]), select, textarea {
                 font-size: 16px !important;
                 -webkit-appearance: none !important;
                 appearance: none !important;
                 border-radius: 0.75rem;
+            }
+            input[type="checkbox"] {
+                -webkit-appearance: checkbox !important;
+                appearance: checkbox !important;
+                accent-color: #f472b6 !important;
+                cursor: pointer;
             }
             /* Tránh hiện bóng xám mặc định và kích hoạt độ nảy nút bấm tức thì */
             * {
