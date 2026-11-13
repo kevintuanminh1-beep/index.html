@@ -903,6 +903,24 @@
                 <button onclick="closeUserAccountModal()" class="text-sky-200 text-lg p-1">✕</button>
             </div>
 
+            <!-- CÀI ĐẶT ĐẨY THÔNG BÁO RA THANH THÔNG BÁO ĐIỆN THOẠI (ĐƯA LÊN TRÊN CÙNG CHO DỄ THẤY) -->
+            <div id="ownerPhonePushBox" class="hidden bg-gradient-to-br from-emerald-500/15 via-teal-500/15 to-sky-500/15 border border-emerald-300/40 rounded-2xl p-3 mb-4 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-extrabold text-emerald-300">📲 Thông Báo Ra Điện Thoại (ntfy)</span>
+                    <span class="text-[9px] bg-emerald-400/20 text-emerald-200 px-1.5 py-0.5 rounded-full font-bold">Chủ web</span>
+                </div>
+                <p class="text-[10.5px] text-sky-100/80 leading-relaxed">
+                    Tải app <b>ntfy</b> miễn phí trên App Store / CH Play ➔ Bấm dấu <b>+</b> đăng ký đúng tên kênh bí mật bên dưới. Tắt web vẫn báo <b>Cmt / Lỗi / Help</b> thẳng ra màn hình khóa!
+                </p>
+                <div class="flex items-center gap-1.5">
+                    <input id="ownerNtfyTopicInput" type="text" placeholder="VD: palette-red-9988" class="flex-1 bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-emerald-300">
+                    <button type="button" onclick="saveOwnerNtfyTopic()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-2.5 py-1.5 rounded-xl text-[11px] active:scale-95 transition shrink-0">Lưu</button>
+                </div>
+                <button type="button" onclick="testOwnerPhonePush()" class="w-full bg-white/10 hover:bg-white/20 border border-emerald-300/30 text-emerald-200 font-bold py-1.5 rounded-xl text-[11px] active:scale-95 transition">
+                    🔔 Gửi thử ra thanh thông báo điện thoại
+                </button>
+            </div>
+
             <!-- ĐỔI AVATAR NGAY TRONG TÀI KHOẢN -->
             <div class="bg-black/30 border border-pink-300/30 rounded-2xl p-3 mb-4">
                 <label class="block text-[11px] font-bold text-pink-200 mb-2">Đổi ảnh đại diện:</label>
@@ -932,24 +950,6 @@
                 </div>
                 <div id="ownerNotifyFilterBar" class="hidden flex items-center gap-1.5 mb-2"></div>
                 <div id="userNotificationsList" class="space-y-2 max-h-52 overflow-y-auto custom-scroll pr-1"></div>
-            </div>
-
-            <!-- CÀI ĐẶT ĐẨY THÔNG BÁO RA THANH THÔNG BÁO ĐIỆN THOẠI (CHỦ WEB) -->
-            <div id="ownerPhonePushBox" class="hidden bg-gradient-to-br from-emerald-500/15 via-teal-500/15 to-sky-500/15 border border-emerald-300/40 rounded-2xl p-3 mb-4 space-y-2">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-extrabold text-emerald-300">📲 Thông Báo Ra Điện Thoại (ntfy)</span>
-                    <span class="text-[9px] bg-emerald-400/20 text-emerald-200 px-1.5 py-0.5 rounded-full font-bold">Chủ web</span>
-                </div>
-                <p class="text-[10.5px] text-sky-100/80 leading-relaxed">
-                    Tải app <b>ntfy</b> miễn phí trên App Store / CH Play ➔ Bấm dấu <b>+</b> đăng ký đúng tên kênh bí mật bên dưới. Tắt web vẫn báo <b>Cmt / Lỗi / Help</b> thẳng ra màn hình khóa!
-                </p>
-                <div class="flex items-center gap-1.5">
-                    <input id="ownerNtfyTopicInput" type="text" placeholder="VD: palette-bibi-0304-secret" class="flex-1 bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-emerald-300">
-                    <button type="button" onclick="saveOwnerNtfyTopic()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-2.5 py-1.5 rounded-xl text-[11px] active:scale-95 transition shrink-0">Lưu</button>
-                </div>
-                <button type="button" onclick="testOwnerPhonePush()" class="w-full bg-white/10 hover:bg-white/20 border border-emerald-300/30 text-emerald-200 font-bold py-1.5 rounded-xl text-[11px] active:scale-95 transition">
-                    🔔 Gửi thử ra thanh thông báo điện thoại
-                </button>
             </div>
 
             <button onclick="handleLogout()" class="jelly-btn w-full bg-red-500/25 hover:bg-red-500/40 border border-red-400/50 text-red-200 font-extrabold py-2.5 rounded-xl text-xs active:scale-95 transition flex items-center justify-center gap-2">
@@ -1800,6 +1800,10 @@
                     </div>
                     <button id="modalNotifyToggleBtn" onclick="toggleNotificationPermission()" class="bg-pink-500/20 border border-pink-300/30 px-3 py-1.5 rounded-lg font-bold text-pink-100">Bật</button>
                 </div>
+
+                <button type="button" id="effectsOpenPhonePushBtn" onclick="closeEffectsModal(); openUserAccountModal();" class="hidden w-full bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-300/50 text-emerald-200 font-extrabold py-2.5 px-3 rounded-xl text-xs active:scale-95 transition flex items-center justify-center gap-1.5">
+                    <span>📲 Cài Đặt Thông Báo Ra Điện Thoại (ntfy)</span>
+                </button>
 
                 <!-- MỤC SẮC MÀU THANH ÂM (NHẠC NỀN) -->
                 <div class="bg-black/35 p-3.5 rounded-2xl border border-pink-300/30 space-y-3">
@@ -3367,6 +3371,8 @@
         function openEffectsModal() {
             const saved = getUserVisualEffects();
             document.querySelectorAll('.userFxCheckbox').forEach(cb => { cb.checked = saved.includes(cb.value); });
+            const phoneBtn = document.getElementById('effectsOpenPhonePushBtn');
+            if (phoneBtn) phoneBtn.classList.toggle('hidden', !checkIsOwnerAccount());
             updateNotificationUI();
             updateMusicUI();
             renderOwnerPlaylist();
