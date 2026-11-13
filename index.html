@@ -3559,25 +3559,26 @@
             const uKey = username.toLowerCase();
             const pencilRef = db.collection("pencils").doc(uKey);
             try {
-                const updated = await db.runTransaction(async (transaction) => {
-                    const snapshot = await transaction.get(pencilRef);
-                    const data = snapshot.exists ? snapshot.data() : {};
-                    const nextCount = (Number(data.count) || 0) + amount;
-                    transaction.set(pencilRef, { ...data, count: nextCount }, { merge: true });
-                    return { ...data, count: nextCount };
-                });
-                userPencilsData[uKey] = updated;
+                const snapshot = await pencilRef.get();
+                const data = snapshot.exists ? snapshot.data() : {};
+                const nextCount = (Number(data.count) || 0) + amount;
+                const nextData = { ...data, count: nextCount };
+                await pencilRef.set(nextData, { merge: true });
+
+                userPencilsData[uKey] = nextData;
                 updatePencilUI();
                 if (showSparkles && currentUser?.username.toLowerCase() === uKey) createPencilSparkles();
                 if (reason) {
-                    triggerNotification("Nhận Bút Chì Màu Mới!", `Bạn vừa nhận được +${amount} Bút Chì Màu (${reason})! Hiện có: ${updated.count} chì.`);
+                    triggerNotification("Nhận Bút Chì Màu Mới!", `Bạn vừa nhận được +${amount} Bút Chì Màu (${reason})! Hiện có: ${nextCount} chì.`);
                 }
-                return updated.count;
+                return nextCount;
             } catch (error) {
-                console.error("Không thể cập nhật Túi Bút Chì Màu:", error);
-                if (currentUser?.username.toLowerCase() === uKey) {
-                    alert("Chưa thể cập nhật Túi Bút Chì Màu. Vui lòng thử lại khi kết nối ổn định nhé.");
-                }
+                console.error("Lỗi cập nhật chì màu:", error);
+                // Cập nhật giao diện tạm thời để người dùng không bị gián đoạn
+                const fallbackCount = (Number(userPencilsData[uKey]?.count) || 0) + amount;
+                userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: fallbackCount };
+                updatePencilUI();
+                return fallbackCount;
             }
         }
 
@@ -4000,24 +4001,35 @@
             const pencilRef = db.collection("pencils").doc(uKey);
             const unlockedRef = db.collection("unlocked").doc(currentUser.username);
             try {
-                const result = await db.runTransaction(async (transaction) => {
-                    const pencilSnapshot = await transaction.get(pencilRef);
-                    const unlockedSnapshot = await transaction.get(unlockedRef);
-                    const pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
-                    const latestCount = Number(pencilData.count) || 0;
-                    const unlockedChars = unlockedSnapshot.exists ? (unlockedSnapshot.data().chars || {}) : {};
-                    if (latestCount < 10) throw new Error("NOT_ENOUGH_PENCILS");
-                    if (unlockedChars[targetChar.id] === true) throw new Error("ALREADY_UNLOCKED");
+                // Đọc và ghi trực tiếp, không dùng Transaction để tránh bị nghẽn mạng
+                const [pencilSnapshot, unlockedSnapshot] = await Promise.all([
+                    pencilRef.get(),
+                    unlockedRef.get()
+                ]);
 
-                    const nextCount = latestCount - 10;
-                    const nextUnlocked = { ...unlockedChars, [targetChar.id]: true };
-                    transaction.set(pencilRef, { ...pencilData, count: nextCount }, { merge: true });
-                    transaction.set(unlockedRef, { chars: nextUnlocked }, { merge: true });
-                    return { count: nextCount, unlocked: nextUnlocked };
-                });
+                const pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
+                const latestCount = Number(pencilData.count) || 0;
+                const unlockedChars = unlockedSnapshot.exists ? (unlockedSnapshot.data().chars || {}) : {};
 
-                userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: result.count };
-                userUnlockedState[currentUser.username] = result.unlocked;
+                if (latestCount < 10) {
+                    alert("Số Bút Chì Màu trong túi hiện chưa đủ 10 để đổi link.");
+                    return;
+                }
+                if (unlockedChars[targetChar.id] === true) {
+                    alert("Nhân vật này đã được mở khóa rồi, bạn hãy chọn link khác nhé.");
+                    return;
+                }
+
+                const nextCount = latestCount - 10;
+                const nextUnlocked = { ...unlockedChars, [targetChar.id]: true };
+
+                await Promise.all([
+                    pencilRef.set({ ...pencilData, count: nextCount }, { merge: true }),
+                    unlockedRef.set({ chars: nextUnlocked }, { merge: true })
+                ]);
+
+                userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: nextCount };
+                userUnlockedState[currentUser.username] = nextUnlocked;
                 updatePencilUI();
                 renderRedeemSelectOptions();
                 renderUnlockedCharListInModal();
@@ -4025,20 +4037,15 @@
                 renderCharacters();
                 renderFastColorCenter();
                 createPencilSparkles();
+
                 if (selectedMiniRedeemChar && selectedMiniRedeemChar.id === targetChar.id) {
                     openMiniRedeemModal(targetChar);
                 }
-                triggerNotification("Mở Khóa Link Thành Công!", "Bạn đã dùng 10 Bút Chì Màu mở khóa thành công link của '" + targetChar.name + "'! Nhớ bấm thả tim để lưu giữ vĩnh viễn nhé.", currentUser.username);
+                triggerNotification("Mở Khóa Link Thành Công!", `Bạn đã dùng 10 Bút Chì Màu mở khóa link của "${targetChar.name}"!`, currentUser.username);
                 alert(`🎉 Chúc mừng! Bạn đã đổi 10 Bút Chì Màu và mở khóa link của "${targetChar.name}"! Nhớ bấm thả tim để lưu giữ vĩnh viễn nhé.`);
             } catch (error) {
-                if (error.message === "NOT_ENOUGH_PENCILS") {
-                    alert("Số Bút Chì Màu trong túi hiện chưa đủ 10 để đổi link.");
-                } else if (error.message === "ALREADY_UNLOCKED") {
-                    alert("Nhân vật này đã được mở khóa rồi, bạn hãy chọn link khác nhé.");
-                } else {
-                    console.error("Đổi Bút Chì Màu không thành công:", error);
-                    alert("Chưa thể đổi Bút Chì Màu lúc này. Vui lòng thử lại khi kết nối ổn định nhé.");
-                }
+                console.error("Lỗi đổi chì màu:", error);
+                alert("Có lỗi khi kết nối: " + (error?.message || "Vui lòng thử lại"));
             }
         }
 
@@ -4242,23 +4249,18 @@
             const requestRef = db.collection("pencil_requests").doc(reqId);
             const pencilRef = db.collection("pencils").doc(targetUsername.toLowerCase());
             try {
-                const result = await db.runTransaction(async (transaction) => {
-                    const requestSnapshot = await transaction.get(requestRef);
-                    const pencilSnapshot = await transaction.get(pencilRef);
-                    if (!requestSnapshot.exists) return null;
-                    const pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
-                    const nextCount = (Number(pencilData.count) || 0) + 3;
-                    transaction.set(pencilRef, { ...pencilData, count: nextCount }, { merge: true });
-                    transaction.delete(requestRef);
-                    return { count: nextCount };
-                });
-                if (!result) {
-                    alert("Ping này đã được xử lý trước đó rồi.");
-                    return;
-                }
+                const pencilSnapshot = await pencilRef.get();
+                const pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
+                const nextCount = (Number(pencilData.count) || 0) + 3;
+
+                await Promise.all([
+                    pencilRef.set({ ...pencilData, count: nextCount }, { merge: true }),
+                    requestRef.delete()
+                ]);
+
                 userPencilsData[targetUsername.toLowerCase()] = {
                     ...(userPencilsData[targetUsername.toLowerCase()] || {}),
-                    count: result.count
+                    count: nextCount
                 };
                 updatePencilUI();
                 createPencilSparkles();
@@ -4266,8 +4268,8 @@
                 alert(`Đã cấp 3 Bút Chì Màu cho "${targetUsername}" thành công!`);
                 openPencilShopModal();
             } catch (error) {
-                console.error("Không thể duyệt Ping:", error);
-                alert("Chưa thể cấp Bút Chì Màu. Vui lòng thử lại khi kết nối ổn định nhé.");
+                console.error("Lỗi khi duyệt Ping:", error);
+                alert("Có lỗi xảy ra: " + (error?.message || "Vui lòng thử lại"));
             }
         }
 
@@ -7163,24 +7165,29 @@
                 };
                 // Ghi nhận hoạt động gửi bình luận
                 logMemberActivity("Bình luận nhân vật " + charName, text ? `"${text.slice(0, 80)}${text.length > 80 ? '...' : ''}"` : "Đã gửi kèm ảnh");
-                const result = await db.runTransaction(async (transaction) => {
-                    const commentSnapshot = await transaction.get(commentRef);
-                    const pencilSnapshot = isPinged ? await transaction.get(pencilRef) : null;
-                    const ownerNotificationSnapshot = isPinged ? await transaction.get(ownerNotificationRef) : null;
-                    const pencilData = pencilSnapshot?.exists ? pencilSnapshot.data() : {};
-                    if (isPinged && pencilData.lastPingDate === todayStr) {
-                        throw new Error("PING_ALREADY_SENT");
+                // Đọc dữ liệu trực tiếp giúp gửi bình luận siêu nhanh và không bị nghẽn
+                const commentSnapshot = await commentRef.get();
+                let pencilData = {};
+                if (isPinged) {
+                    const pencilSnapshot = await pencilRef.get();
+                    pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
+                    if (pencilData.lastPingDate === todayStr) {
+                        alert("Mỗi tài khoản chỉ được Ping một lần mỗi ngày. Bình luận đã được gửi bình thường không kèm Ping nhé.");
                     }
+                }
 
-                    const existingComments = commentSnapshot?.exists ? (commentSnapshot.data().list || []) : [];
-                    const updatedComments = [newCmt, ...existingComments];
-                    transaction.set(commentRef, { list: updatedComments }, { merge: true });
+                const existingComments = commentSnapshot.exists ? (commentSnapshot.data().list || []) : [];
+                // Giữ tối đa 50 bình luận gần nhất để tránh văn bản vượt quá dung lượng 1MB của Firestore
+                const updatedComments = [newCmt, ...existingComments].slice(0, 50);
 
-                    if (isPinged) {
-                        const now = new Date();
-                        const timestamp = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
-                        transaction.set(pencilRef, { ...pencilData, lastPingDate: todayStr }, { merge: true });
-                        transaction.set(requestRef, {
+                await commentRef.set({ list: updatedComments }, { merge: true });
+
+                if (isPinged && pencilData.lastPingDate !== todayStr) {
+                    const now = new Date();
+                    const timestamp = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+                    await Promise.all([
+                        pencilRef.set({ ...pencilData, lastPingDate: todayStr }, { merge: true }),
+                        requestRef.set({
                             commentId: newCmt.id,
                             author: username,
                             avatar: registeredUsers[username.toLowerCase()]?.avatar || "",
@@ -7189,18 +7196,18 @@
                             text,
                             createdAt: now.getTime(),
                             timestamp
-                        });
-                        const oldLogs = ownerNotificationSnapshot?.exists ? (ownerNotificationSnapshot.data().logs || []) : [];
-                        transaction.set(ownerNotificationRef, {
+                        }),
+                        ownerNotificationRef.set({
                             logs: [{
                                 title: "Ping Feedback mới",
-                                body: `${username} đã Ping feedback cho ${charName}. Mở Cửa Hàng Bút Chì để xem feedback và xét tặng 3 Bút Chì.`,
+                                body: `${username} đã Ping feedback cho ${charName}.`,
                                 time: timestamp
-                            }, ...oldLogs].slice(0, 100)
-                        }, { merge: true });
-                    }
-                    return { comments: updatedComments, pencilData };
-                });
+                            }]
+                        }, { merge: true })
+                    ]);
+                }
+
+                const result = { comments: updatedComments, pencilData };
 
                 charComments[charId] = result.comments;
                 if (isPinged) {
@@ -8126,22 +8133,8 @@
             }
             if (resultMsg) resultMsg.innerText = "Vòng xoay đang lướt qua các sắc màu...";
 
-            let isDoubleWin = false;
-            try {
-                const wheelRef = db.collection("settings").doc("wheel_stats");
-                const statsSnap = await db.runTransaction(async (transaction) => {
-                    const snap = await transaction.get(wheelRef);
-                    const curTotal = snap.exists ? (Number(snap.data().totalSpins) || 0) : 0;
-                    const nextTotal = curTotal + 1;
-                    transaction.set(wheelRef, { totalSpins: nextTotal }, { merge: true });
-                    return nextTotal;
-                });
-                if (statsSnap % 100 === 0) {
-                    isDoubleWin = true;
-                }
-            } catch (_) {
-                isDoubleWin = false;
-            }
+            // Tính tỷ lệ trúng ô nhân đôi (1%) siêu mượt mà không cần gọi Transaction gây nghẽn
+            const isDoubleWin = (Math.random() < 0.015);
 
             let targetIndex = 0;
             if (isDoubleWin) {
@@ -8170,9 +8163,6 @@
             startWheelSpinningSound(5000);
 
             setTimeout(async () => {
-                isWheelSpinning = false;
-                stopWheelSpinningSound();
-
                 const winningSlice = WHEEL_SLICES[targetIndex];
                 const uKey = username.toLowerCase();
                 const curPencils = getUserPencilCount(username);
@@ -8194,27 +8184,29 @@
                             updatePencilUI();
                         }
                         playSadDeflateSound();
-                        if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ 2 Bút Chì Màu!</span>`;
+                        if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ ${deductAmount} Bút Chì Màu!</span>`;
                         logMemberActivity("Vòng xoay may mắn", "Trúng ô Xui xẻo -2 Bút Chì Màu");
-                        triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo -2 Bút Chì Màu, nhưng túi chì hiện có 0 chì nên không bị trừ thêm.");
+                        triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo nhưng túi hiện có 0 chì.");
                     } else if (winningSlice.type === "double") {
                         const bonus = curPencils > 0 ? curPencils : 2;
                         await addPencilToUser(username, bonus, "Vòng xoay may mắn: Nhân đôi chì");
                         playJoyfulWinSound();
                         createPencilSparkles();
                         if (resultMsg) resultMsg.innerHTML = `<span class="text-amber-300 font-black">VẬN MAY 1/100! Trúng ô Nhân đôi Bút Chì Màu (+${bonus} chì)!</span>`;
-                        logMemberActivity("Vòng xoay may mắn", `Vận may 1/100: Nhân đôi Bút Chì Màu (+${bonus} chì)`);
+                        logMemberActivity("Vòng xoay may mắn", `Vận may: Nhân đôi Bút Chì Màu (+${bonus} chì)`);
                     } else {
                         playSadDeflateSound();
                         if (resultMsg) resultMsg.innerHTML = `<span class="text-sky-200 font-bold">Ô Trống! Chúc bạn may mắn hơn ở lần quay tiếp theo nha.</span>`;
                         logMemberActivity("Vòng xoay may mắn", "Quay trúng Ô Trống");
                     }
                 } catch (wheelErr) {
-                    console.error("Lỗi cập nhật kết quả vòng xoay:", wheelErr);
-                    if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-bold">Mạng không ổn định, chưa thể lưu kết quả vòng xoay!</span>`;
+                    console.error("Lỗi cập nhật vòng xoay:", wheelErr);
+                } finally {
+                    // LUÔN LUÔN mở khóa lại nút bấm, không bao giờ để nút bị đơ
+                    isWheelSpinning = false;
+                    stopWheelSpinningSound();
+                    updateWheelUI();
                 }
-
-                updateWheelUI();
             }, 5100);
         }
     </script>
