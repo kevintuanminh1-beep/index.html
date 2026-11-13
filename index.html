@@ -1459,7 +1459,7 @@
                     </div>
                     <p class="text-[11px] text-pink-300 font-medium italic">Dành cho những Sắc Màu đã từng chơi char của Palette.</p>
                     <p class="text-sky-100/90 leading-relaxed">
-                        Vào kênh <b class="rainbow-text">Hồ Sơ Gạo Cội</b> trên Discord đăng bài Feedback theo mẫu bên dưới:
+                        Vào kênh <a href="https://discord.com/channels/1519352735894339764/1570239543355904141" target="_blank" rel="noopener noreferrer" class="underline decoration-pink-300 underline-offset-2 hover:brightness-125 transition"><b class="rainbow-text">Hồ Sơ Gạo Cội</b></a> trên Discord đăng bài Feedback theo mẫu bên dưới:
                     </p>
                     
                     <div class="bg-black/50 border border-pink-300/30 rounded-xl p-2.5 my-1.5">
@@ -1490,7 +1490,7 @@
                     </div>
                     <p class="text-[11px] text-sky-300 font-medium italic">Dành cho những Sắc Màu lần đầu đến với Palette.</p>
                     <p class="text-sky-100/90 leading-relaxed">
-                        Vào kênh <b class="blue-pastel-wave font-bold">Hồ Sơ Tân Thủ</b> trên Discord đăng bài điền theo mẫu:
+                        Vào kênh <a href="https://discord.com/channels/1519352735894339764/1570736622230573089" target="_blank" rel="noopener noreferrer" class="underline decoration-sky-300 underline-offset-2 hover:brightness-125 transition"><b class="blue-pastel-wave font-bold">Hồ Sơ Tân Thủ</b></a> trên Discord đăng bài điền theo mẫu:
                     </p>
 
                     <div class="bg-black/50 border border-sky-300/30 rounded-xl p-2.5 my-1.5">
@@ -5423,7 +5423,7 @@
                         if (elapsed >= duration) {
                             c.status = 'locked';
                             delete c.fastStartTime;
-                            db.collection("characters").doc(c.id).set(c);
+                            db.collection("characters").doc(c.id).set(c).catch(() => {});
                         }
                     }
 
@@ -5445,7 +5445,7 @@
                     if (c.status === 'closed' && c.reopenTimestamp && now >= c.reopenTimestamp) {
                         c.status = 'locked';
                         delete c.reopenTimestamp;
-                        db.collection("characters").doc(c.id).set(c);
+                        db.collection("characters").doc(c.id).set(c).catch(() => {});
                     }
                 });
                 updateCountdownDisplayOnly();
@@ -6506,6 +6506,14 @@
             e.preventDefault();
             e.stopPropagation();
 
+            const saveBtn = document.getElementById('saveCharBtn');
+            if (saveBtn && saveBtn.disabled) return;
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerText = "Đang lưu...";
+            }
+
+            try {
             const editId = document.getElementById('editCharId').value.trim();
             const name = document.getElementById('formCharName').value.trim();
             const imageFiles = Array.from(document.getElementById('formCharFile').files || []);
@@ -6608,6 +6616,12 @@
             alert(editId ? `Đã cập nhật nhân vật "${name}" thành công!` : `Đã thêm nhân vật "${name}" thành công!`);
 
             if (savedChar) openCharDetail(savedChar);
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = document.getElementById('editCharId')?.value.trim() ? "Cập nhật nhân vật" : "Xác nhận tải nhân vật lên";
+                }
+            }
         }
 
         function renderAdminExistingChars() {
