@@ -5965,136 +5965,63 @@
         }
 
         async function checkFacebookReact(dataUrl, ocrData) {
-            const words = getOcrWordsList(ocrData);
-
             return new Promise(resolve => {
                 if (!dataUrl) return resolve(false);
+
+                // 1. Kiểm tra nhanh qua chữ nếu OCR nhận diện được từ ngữ đã thả cảm xúc
+                try {
+                    const words = getOcrWordsList(ocrData);
+                    const allWords = words.map(w => normalizeOcrToken(w.text)).join(" ");
+                    const keywords = ["dathich", "liked", "yeuthich", "thuongthuong", "thich", "yeu", "thuong", "like", "love", "care", "haha", "wow"];
+                    if (keywords.some(k => allWords.includes(k))) {
+                        return resolve(true);
+                    }
+                } catch (_) {}
+
+                // 2. Quét trực tiếp dải màu đặc trưng của icon: Tim (Đỏ/Hồng), Like (Xanh dương), Thương thương/Haha (Vàng/Cam)
                 const img = new Image();
                 img.onload = () => {
                     try {
-                        const imgW = img.naturalWidth || img.width || 800;
-                        const imgH = img.naturalHeight || img.height || 1000;
+                        const imgW = img.naturalWidth || img.width || 600;
+                        const imgH = img.naturalHeight || img.height || 800;
                         const canvas = document.createElement('canvas');
                         canvas.width = imgW;
                         canvas.height = imgH;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, imgW, imgH);
 
-                        // 1. Tìm đúng tọa độ chữ "Bình luận" (Việt) hoặc "Comment" (Anh) trên thanh nút thao tác
-                        const candidates = [];
-                        for (let i = 0; i < words.length; i++) {
-                            const w = words[i];
-                            if (!w || !w.bbox) continue;
-                            if (w.bbox.y0 < imgH * 0.2) continue;
+                        // Quét từ 15% chiều cao ảnh trở xuống (loại bỏ thanh status bar/header trên cùng)
+                        const startY = Math.round(imgH * 0.15);
+                        const scanH = imgH - startY;
+                        const imgData = ctx.getImageData(0, startY, imgW, scanH).data;
 
-                            const norm = normalizeOcrToken(w.text);
-                            const yMid = (w.bbox.y0 + w.bbox.y1) / 2;
-                            const h = Math.max(8, w.bbox.y1 - w.bbox.y0);
-
-                            let anchor = null;
-                            const prev = i > 0 ? words[i - 1] : null;
-                            const prevNorm = prev ? normalizeOcrToken(prev.text) : "";
-                            const prevSameRow = prev && prev.bbox && Math.abs(((prev.bbox.y0 + prev.bbox.y1) / 2) - yMid) <= h * 1.4;
-
-                            // Bỏ qua dòng tổng số lượng kiểu "15 bình luận" / "15 comments" hoặc ô "Viết bình luận" / "Write a comment"
-                            const isSummaryOrInput = prevSameRow && (/^\d+$/.test(prevNorm) || prevNorm === "viet" || prevNorm === "write" || prevNorm === "a");
-
-                            if ((norm === "comment" || norm === "comrnent") && !isSummaryOrInput) {
-                                anchor = { x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1, score: 1 };
-                            } else if (norm === "binhluan" && !isSummaryOrInput) {
-                                anchor = { x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1, score: 1 };
-                            } else if ((norm === "binh" || norm === "blnh") && !isSummaryOrInput) {
-                                const next = i + 1 < words.length ? words[i + 1] : null;
-                                const nextNorm = next ? normalizeOcrToken(next.text) : "";
-                                const nextSameRow = next && next.bbox && Math.abs(((next.bbox.y0 + next.bbox.y1) / 2) - yMid) <= h * 1.4;
-                                if (nextSameRow && (nextNorm.startsWith("luan") || nextNorm.startsWith("iuan") || nextNorm.startsWith("1uan"))) {
-                                    anchor = {
-                                        x0: w.bbox.x0,
-                                        y0: Math.min(w.bbox.y0, next.bbox.y0),
-                                        x1: next.bbox.x1,
-                                        y1: Math.max(w.bbox.y1, next.bbox.y1),
-                                        score: 2
-                                    };
-                                }
-                            }
-
-                            if (anchor) {
-                                // Cộng điểm ưu tiên nếu cùng hàng ngang đó có chữ Thích/Yêu thích/Thương/Chia sẻ/Like/Love/Care/Share
-                                const anchorMidY = (anchor.y0 + anchor.y1) / 2;
-                                const anchorH = Math.max(10, anchor.y1 - anchor.y0);
-                                for (const ow of words) {
-                                    if (!ow || !ow.bbox) continue;
-                                    const owMidY = (ow.bbox.y0 + ow.bbox.y1) / 2;
-                                    if (Math.abs(owMidY - anchorMidY) <= anchorH * 1.4) {
-                                        const onorm = normalizeOcrToken(ow.text);
-                                        if (["thich", "yeu", "thuong", "chia", "se", "like", "love", "care", "share", "haha", "wow", "buon", "sad"].includes(onorm)) {
-                                            anchor.score += 3;
-                                        }
-                                    }
-                                }
-                                candidates.push(anchor);
-                            }
-                        }
-
-                        if (candidates.length === 0) return resolve(false);
-
-                        candidates.sort((a, b) => b.score - a.score || b.y0 - a.y0);
-                        const commentAnchor = candidates[0];
-                        const rowH = Math.max(12, commentAnchor.y1 - commentAnchor.y0);
-
-                        // 2. Chỉ quét vùng nằm CÙNG HÀNG NGANG và BÊN TRÁI nút Bình luận / Comment
-                        const boxX0 = 0;
-                        const boxX1 = Math.max(20, Math.round(commentAnchor.x0 - 4));
-                        const boxY0 = Math.max(0, Math.round(commentAnchor.y0 - Math.max(10, rowH * 0.75)));
-                        const boxY1 = Math.min(imgH, Math.round(commentAnchor.y1 + Math.max(10, rowH * 0.75)));
-                        const scanW = boxX1 - boxX0;
-                        const scanH = boxY1 - boxY0;
-                        if (scanW < 10 || scanH < 8) return resolve(false);
-
-                        // Kiểm tra màu của cảm xúc (Tim đỏ/hồng, Thích xanh dương, Thương thương vàng/cam) trên hàng này
-                        const imgData = ctx.getImageData(boxX0, boxY0, scanW, scanH).data;
-                        let redPixels = 0;
-                        let bluePixels = 0;
-                        let yellowPixels = 0;
+                        let redPixels = 0;    // Màu Đỏ / Hồng của Tim (Love)
+                        let bluePixels = 0;   // Màu Xanh Dương của nút Thích (Like)
+                        let yellowPixels = 0; // Màu Vàng / Cam của Thương thương (Care) & Haha
 
                         for (let i = 0; i < imgData.length; i += 4) {
                             const r = imgData[i];
                             const g = imgData[i + 1];
                             const b = imgData[i + 2];
 
-                            // Màu Đỏ / Hồng (Tim - Yêu thích / Love)
-                            if (r >= 175 && g <= 115 && b <= 135 && (r - g) >= 65 && r > b + 25) {
+                            // Tim đỏ / hồng
+                            if (r >= 165 && g <= 125 && b <= 140 && (r - g) >= 45 && (r - b) >= 30) {
                                 redPixels++;
                             }
-                            // Màu Xanh Dương (Thích - Like)
-                            else if (b >= 165 && (b - r) >= 55 && (b - g) >= 18) {
+                            // Like xanh dương Facebook
+                            else if (b >= 155 && (b - r) >= 45 && (b - g) >= 15) {
                                 bluePixels++;
                             }
-                            // Màu Vàng / Cam (Thương thương - Care / Haha / Wow / Sad)
-                            else if (r >= 180 && g >= 115 && b <= 115 && (r - b) >= 75) {
+                            // Thương thương / Haha vàng cam
+                            else if (r >= 175 && g >= 115 && b <= 115 && (r - b) >= 60 && (g - b) >= 20) {
                                 yellowPixels++;
                             }
                         }
 
-                        const minColorPixels = Math.max(15, Math.round(imgW * 0.025));
-                        if (redPixels >= minColorPixels || bluePixels >= minColorPixels || yellowPixels >= minColorPixels) {
-                            return resolve(true);
-                        }
+                        // Ngưỡng phát hiện icon: chỉ cần gom được cụm từ 12 pixel màu trở lên
+                        const minThreshold = Math.max(12, Math.round(imgW * 0.012));
 
-                        // Dự phòng kiểm tra chữ đã đổi trạng thái nằm ngay trong ô bên trái cùng hàng Bình luận
-                        const rowWords = words
-                            .filter(w => w?.bbox && w.bbox.x1 <= commentAnchor.x0 + 8 && ((w.bbox.y0 + w.bbox.y1) / 2) >= boxY0 && ((w.bbox.y0 + w.bbox.y1) / 2) <= boxY1)
-                            .map(w => normalizeOcrToken(w.text))
-                            .join(" ");
-
-                        if (
-                            rowWords.includes("yeu thich") ||
-                            rowWords.includes("love") ||
-                            rowWords.includes("thuong thuong") ||
-                            rowWords.includes("care") ||
-                            rowWords.includes("da thich") ||
-                            rowWords.includes("liked")
-                        ) {
+                        if (redPixels >= minThreshold || bluePixels >= minThreshold || yellowPixels >= minThreshold) {
                             return resolve(true);
                         }
 
