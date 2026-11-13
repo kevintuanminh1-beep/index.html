@@ -857,6 +857,7 @@
                     </h4>
                     <button onclick="clearUserNotifications()" class="text-[10px] text-sky-300 hover:text-white underline">Xóa hết</button>
                 </div>
+                <div id="ownerNotifyFilterBar" class="hidden flex items-center gap-1.5 mb-2"></div>
                 <div id="userNotificationsList" class="space-y-2 max-h-52 overflow-y-auto custom-scroll pr-1"></div>
             </div>
 
@@ -1160,7 +1161,7 @@
                 </button>
             </div>
             <p class="text-[10px] text-pink-200/70 mt-1.5 text-center px-4">
-                Bấm vào tim nhân vật để lưu giữ vĩnh viễn, nếu quên tim thì link sẽ bị khóa lại sau một ngày.
+                Bấm vào tim nhân vật để lưu giữ vĩnh viễn. Nếu quên bấm tim, sau 1 ngày bạn sẽ phải làm lại thủ tục để lấy lại link nhé!
             </p>
             <div id="currentCharGallery" class="hidden mt-2 w-full flex flex-wrap justify-center gap-2"></div>
         </div>
@@ -1982,7 +1983,7 @@
                         <span id="faqArrow-4" class="text-xs text-sky-200/70 shrink-0 font-bold transition-transform">▼</span>
                     </button>
                     <div id="faqAnswer-4" class="hidden px-2.5 pb-2.5 pt-1 text-[11px] text-sky-100/90 leading-relaxed border-t border-white/5">
-                        Sau khi link đã mở khóa, Sắc Màu nhớ bấm vào nút <b>Lưu giữ người thương (Trái tim)</b> để rót đầy tim hồng. Nếu quên bấm tim, link sẽ bị đóng lại sau 1 ngày nha!
+                        Sau khi link đã mở khóa, Sắc Màu nhớ bấm vào nút <b>Lưu giữ người thương (Trái tim)</b> để rót đầy tim hồng và giữ link vĩnh viễn. Nếu quên bấm tim, sau 1 ngày bạn sẽ phải làm lại thủ tục để lấy lại link nha!
                     </div>
                 </div>
 
@@ -4041,9 +4042,13 @@
                 if (selectedMiniRedeemChar && selectedMiniRedeemChar.id === targetChar.id) {
                     openMiniRedeemModal(targetChar);
                 }
+                if (!userUnlockTimestamps[currentUser.username]) userUnlockTimestamps[currentUser.username] = {};
+                userUnlockTimestamps[currentUser.username][targetChar.id] = Date.now();
+                localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+
                 logMemberActivity("Đổi 10 Chì Màu mở link 🔓", `Nhân vật: ${targetChar.name}`, "link");
-                triggerNotification("Mở Khóa Link Thành Công!", `Bạn đã dùng 10 Bút Chì Màu mở khóa link của "${targetChar.name}"!`, currentUser.username);
-                alert(`🎉 Chúc mừng! Bạn đã đổi 10 Bút Chì Màu và mở khóa link của "${targetChar.name}"! Nhớ bấm thả tim để lưu giữ vĩnh viễn nhé.`);
+                triggerNotification("Mở Khóa Link Thành Công!", `Bạn đã dùng 10 Bút Chì Màu mở khóa link của "${targetChar.name}"! Nhớ bấm thả tim lưu giữ, nếu quên sau 1 ngày sẽ phải làm lại thủ tục để lấy lại link nhé.`, currentUser.username);
+                alert(`🎉 Chúc mừng! Bạn đã đổi 10 Bút Chì Màu và mở khóa link của "${targetChar.name}"! Nhớ bấm thả tim để lưu giữ vĩnh viễn, nếu quên sau 1 ngày bạn sẽ phải làm lại thủ tục để lấy lại link nhé.`);
             } catch (error) {
                 console.error("Lỗi đổi chì màu:", error);
                 alert("Có lỗi khi kết nối: " + (error?.message || "Vui lòng thử lại"));
@@ -4570,31 +4575,114 @@
             document.getElementById('userAccountModal').classList.add('hidden');
         }
 
+        let ownerNotifyFilter = 'all'; // 'all' | 'fail'
+
+        function setOwnerNotifyFilter(filterType) {
+            ownerNotifyFilter = filterType;
+            renderUserNotifications();
+            playCheerfulClickSound();
+        }
+
         function renderUserNotifications() {
             const listContainer = document.getElementById('userNotificationsList');
             const countEl = document.getElementById('userNotifyCount');
+            const filterBar = document.getElementById('ownerNotifyFilterBar');
+            if (!listContainer || !countEl || !currentUser) return;
             listContainer.innerHTML = '';
 
             const logs = userNotificationLogs[currentUser.username.toLowerCase()] || [];
             countEl.innerText = logs.length;
 
-            if (logs.length === 0) {
-                listContainer.innerHTML = `<div class="text-xs text-sky-200/60 italic text-center py-5">Bạn chưa có thông báo nào được lưu.</div>`;
+            const isFailLog = (item) => Boolean(item.isFail || (item.title || '').toLowerCase().includes('thất bại'));
+
+            if (filterBar) {
+                if (currentUser.isOwner) {
+                    const failCount = logs.filter(isFailLog).length;
+                    filterBar.classList.remove('hidden');
+                    filterBar.innerHTML = `
+                        <button type="button" onclick="setOwnerNotifyFilter('all')" class="flex-1 py-1 px-2 rounded-xl text-[10.5px] font-extrabold transition ${ownerNotifyFilter === 'all' ? 'bg-pink-500/40 text-white border border-pink-300/60 shadow' : 'bg-white/5 text-sky-200/70 border border-white/10 hover:bg-white/10'}">
+                            Tất cả (${logs.length})
+                        </button>
+                        <button type="button" onclick="setOwnerNotifyFilter('fail')" class="flex-1 py-1 px-2 rounded-xl text-[10.5px] font-extrabold transition ${ownerNotifyFilter === 'fail' ? 'bg-red-500/40 text-white border border-red-300/60 shadow' : 'bg-white/5 text-red-200/80 border border-white/10 hover:bg-white/10'}">
+                            ❌ Thất Bại (${failCount})
+                        </button>
+                    `;
+                } else {
+                    filterBar.classList.add('hidden');
+                    filterBar.innerHTML = '';
+                }
+            }
+
+            const visibleLogs = (currentUser.isOwner && ownerNotifyFilter === 'fail')
+                ? logs.filter(isFailLog)
+                : logs;
+
+            if (visibleLogs.length === 0) {
+                listContainer.innerHTML = `<div class="text-xs text-sky-200/60 italic text-center py-5">${ownerNotifyFilter === 'fail' ? 'Chưa có lượt duyệt thất bại nào.' : 'Bạn chưa có thông báo nào được lưu.'}</div>`;
                 return;
             }
 
-            logs.forEach(item => {
+            visibleLogs.forEach(item => {
+                const isFail = isFailLog(item);
                 const el = document.createElement('div');
-                el.className = "bg-white/5 border border-white/10 p-2.5 rounded-xl text-xs space-y-1";
+                el.className = isFail
+                    ? "bg-red-500/10 border border-red-400/35 p-2.5 rounded-xl text-xs space-y-1"
+                    : "bg-white/5 border border-white/10 p-2.5 rounded-xl text-xs space-y-1";
                 el.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span class="font-extrabold text-pink-300">${item.title}</span>
-                        <span class="text-[10px] text-sky-200/50">${item.time}</span>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-extrabold ${isFail ? 'text-red-300' : 'text-pink-300'}">${item.title}</span>
+                        <span class="text-[10px] text-sky-200/50 shrink-0">${item.time}</span>
                     </div>
                     <p class="text-sky-100/90 leading-relaxed text-[11px]">${item.body}</p>
                 `;
                 listContainer.appendChild(el);
             });
+        }
+
+        // Tự động báo về mục Thất Bại của Chủ Web khi có thành viên duyệt ảnh bị từ chối
+        async function logFailedProofForOwner(modeLabel, charObj, reasonMsg) {
+            if (!currentUser) return;
+            const charName = charObj?.name || "Nhân vật";
+            const charId = charObj?.id || "";
+            const cleanReason = reasonMsg || "Không rõ lý do";
+
+            // 1. Lưu vào bảng Hoạt Động (mục ❌ Thất Bại)
+            logMemberActivity(
+                `Duyệt thất bại (${modeLabel}) ❌`,
+                `Nhân vật: ${charName} · Lý do: ${cleanReason}`,
+                "fail",
+                {
+                    charId: charId,
+                    charName: charName,
+                    failReason: cleanReason,
+                    proofMode: modeLabel
+                }
+            );
+
+            // 2. Gửi vào hòm Thông Báo Đã Nhận của Chủ Web (Bibi 0304)
+            try {
+                const ownerKey = OWNER_USER.toLowerCase();
+                const now = new Date();
+                const timestampStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+                const newLog = {
+                    title: `Duyệt thất bại (${modeLabel}) ❌`,
+                    body: `${currentUser.username} duyệt cho "${charName}" bị từ chối. Lý do: ${cleanReason}`,
+                    time: timestampStr,
+                    isFail: true
+                };
+                const ownerNotifRef = db.collection("notifications").doc(ownerKey);
+                if (currentUser.username.toLowerCase() === ownerKey) {
+                    if (!userNotificationLogs[ownerKey]) userNotificationLogs[ownerKey] = [];
+                    userNotificationLogs[ownerKey].unshift(newLog);
+                    userNotificationLogs[ownerKey] = userNotificationLogs[ownerKey].slice(0, 50);
+                    await ownerNotifRef.set({ logs: userNotificationLogs[ownerKey] }, { merge: true });
+                    renderUserNotifications();
+                } else {
+                    const snap = await ownerNotifRef.get();
+                    const oldLogs = snap.exists ? (snap.data().logs || []) : [];
+                    await ownerNotifRef.set({ logs: [newLog, ...oldLogs].slice(0, 50) }, { merge: true });
+                }
+            } catch (_) {}
         }
 
         function clearUserNotifications() {
@@ -4656,11 +4744,13 @@
 
         // Tự động nhận diện phân loại của từng hoạt động
         function getActivityCategory(act) {
+            if (act.actType === 'fail') return 'fail';
             if (act.actType === 'link') return 'link';
             if (act.actType === 'comment') return 'comment';
             if (act.actType === 'wheel') return 'wheel';
 
             const t = (act.title || '').toLowerCase();
+            if (t.includes('thất bại') || t.includes('từ chối')) return 'fail';
             if (t.includes('mở khóa') || t.includes('đổi 10 chì') || t.includes('link') || t.includes('lấy link')) return 'link';
             if (t.includes('bình luận') || t.includes('trả lời') || t.includes('cmt') || t.includes('feedback')) return 'comment';
             if (t.includes('vòng xoay') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống')) return 'wheel';
@@ -4972,9 +5062,10 @@
                 const linkCount = memberActivities.filter(a => getActivityCategory(a) === 'link').length;
                 const cmtCount = memberActivities.filter(a => getActivityCategory(a) === 'comment').length;
                 const wheelCount = memberActivities.filter(a => getActivityCategory(a) === 'wheel').length;
+                const failCount = memberActivities.filter(a => getActivityCategory(a) === 'fail').length;
                 const allCount = memberActivities.length;
 
-                // Thanh 4 nút lọc danh mục con
+                // Thanh 5 nút lọc danh mục con
                 const filterBar = document.createElement('div');
                 filterBar.className = "flex items-center gap-1 p-1 bg-black/40 rounded-2xl border border-white/10 mb-2.5 overflow-x-auto no-scrollbar shrink-0 select-none";
                 filterBar.innerHTML = `
@@ -4989,6 +5080,9 @@
                     </button>
                     <button type="button" onclick="setActivitySubFilter('wheel')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'wheel' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow' : 'bg-white/5 text-sky-200/70 hover:bg-white/10'}">
                         🎡 Vòng Xoay (${wheelCount})
+                    </button>
+                    <button type="button" onclick="setActivitySubFilter('fail')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'fail' ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow' : 'bg-white/5 text-red-200/80 hover:bg-white/10'}">
+                        ❌ Thất Bại (${failCount})
                     </button>
                 `;
                 container.appendChild(filterBar);
@@ -5024,6 +5118,9 @@
                     } else if (cat === 'wheel') {
                         badgeHtml = '<span class="text-[9px] bg-amber-500/25 text-amber-300 border border-amber-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🎡 Vòng Xoay</span>';
                         borderClass = 'border-amber-300/30 bg-amber-500/10';
+                    } else if (cat === 'fail') {
+                        badgeHtml = '<span class="text-[9px] bg-red-500/25 text-red-300 border border-red-400/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">❌ Thất Bại</span>';
+                        borderClass = 'border-red-400/35 bg-red-500/10';
                     }
 
                     const targetChar = findCharForActivity(act);
@@ -5691,7 +5788,7 @@
                         }
                     }
 
-                    // Chỉ tự động khóa lại sau tròn 24 tiếng nếu người dùng không bấm thả tim
+                    // Sau tròn 24 tiếng nếu chưa bấm thả tim thì khóa lại để user làm lại thủ tục lấy link
                     if (currentUser && userUnlockedState[currentUser.username]?.[c.id] === true) {
                         const likes = charLikesData[c.id] || [];
                         const isLiked = likes.includes(currentUser.username);
@@ -5699,9 +5796,14 @@
                             const unlockTime = userUnlockTimestamps[currentUser.username]?.[c.id];
                             if (unlockTime && (now - unlockTime >= 24 * 60 * 60 * 1000)) {
                                 userUnlockedState[currentUser.username][c.id] = false;
+                                delete userUnlockTimestamps[currentUser.username][c.id];
+                                localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
                                 db.collection("unlocked").doc(currentUser.username).set({
                                     chars: userUnlockedState[currentUser.username]
                                 });
+                                if (activeChar && activeChar.id === c.id) updateAIStudioButton();
+                                renderFastColorCenter();
+                                renderCharacters();
                             }
                         }
                     }
@@ -6183,9 +6285,13 @@
                             // Thưởng 2 Chì Màu cho link mở có hạn giờ
                             addPencilToUser(currentUser.username, 2, "Mở khóa Link mở trong ngày thành công");
 
+                            if (!userUnlockTimestamps[currentUser.username]) userUnlockTimestamps[currentUser.username] = {};
+                            userUnlockTimestamps[currentUser.username][charId] = Date.now();
+                            localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+
                             const targetC = characters.find(c => c.id === charId);
                             logMemberActivity("Mở khóa link thành công 🔓", `Nhân vật: ${targetC?.name || 'Nhân vật'} (Hết giờ đếm ngược)`, "link");
-                            triggerNotification("Link Đã Mở Khóa!", `Chúc mừng bạn! Link Google AI Studio của "${targetC?.name || 'Nhân vật'}" đã mở khóa (+2 Chì Màu)! Hãy bấm tim vào nhân vật để lưu giữ vĩnh viễn nhé!`);
+                            triggerNotification("Link Đã Mở Khóa!", `Chúc mừng bạn! Link Google AI Studio của "${targetC?.name || 'Nhân vật'}" đã mở khóa (+2 Chì Màu)! Hãy bấm tim lưu giữ, nếu quên sau 1 ngày sẽ phải làm lại thủ tục để lấy lại link nhé!`);
                         }
                     }
                 }
@@ -6716,7 +6822,7 @@
                 }
 
                 updateAIStudioButton();
-                triggerNotification("Link Đã Mở Khóa!", `Chúc mừng bạn! Link Google AI Studio của "${activeChar.name}" đã được mở khóa (+1 Chì Màu)! Hãy bấm tim vào nhân vật để lưu giữ vĩnh viễn nhé!`);
+                triggerNotification("Link Đã Mở Khóa!", `Chúc mừng bạn! Link Google AI Studio của "${activeChar.name}" đã được mở khóa (+1 Chì Màu)! Hãy bấm tim lưu giữ, nếu quên sau 1 ngày sẽ phải làm lại thủ tục để lấy lại link nhé!`);
 
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-emerald-500/25 text-emerald-100 border-emerald-400/50";
                 feedbackBox.innerHTML = `
@@ -6728,7 +6834,7 @@
                         </button>
                     </div>
                     <div class="text-pink-200 font-bold bg-pink-500/20 p-2 rounded-xl border border-pink-300/30">
-                        💖 <b>Nhắc nhở quan trọng:</b> Hãy bấm thả tim vào nhân vật ngay để <b>lưu giữ link vĩnh viễn</b>, nếu quên tim thì link sẽ tự động đóng sau một ngày!
+                        💖 <b>Nhắc nhở quan trọng:</b> Hãy bấm thả tim vào nhân vật ngay để <b>lưu giữ link vĩnh viễn</b>. Nếu quên bấm tim, sau 1 ngày bạn sẽ phải làm lại thủ tục để lấy lại link nhé!
                     </div>
                 `;
 
@@ -6738,6 +6844,7 @@
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
                 const errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
                 feedbackBox.innerHTML = `❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}`;
+                logFailedProofForOwner(`Duyệt Thường - ${activeProofType}`, activeChar, errMsg);
             }
         }
 
@@ -6851,7 +6958,12 @@
                     if (!userUnlockedState[uName]) userUnlockedState[uName] = {};
                     userUnlockedState[uName][fastTargetChar.id] = true;
 
-                    // Lưu mở khóa vĩnh viễn lên Firebase
+                    // Lưu mốc giờ mở khóa để tự khóa lại sau 1 ngày nếu quên bấm tim
+                    if (!userUnlockTimestamps[uName]) userUnlockTimestamps[uName] = {};
+                    userUnlockTimestamps[uName][fastTargetChar.id] = Date.now();
+                    localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+
+                    // Lưu mở khóa lên Firebase
                     await db.collection("unlocked").doc(uName).set({
                         chars: userUnlockedState[uName]
                     }, { merge: true });
@@ -6876,7 +6988,7 @@
                             </button>
                         </div>
                         <div class="text-pink-200 font-bold bg-pink-500/20 p-2 rounded-xl border border-pink-300/30">
-                            💖 <b>Nhắc nhở:</b> Hãy bấm thả tim vào nhân vật để lưu giữ vĩnh viễn nhé!
+                            💖 <b>Nhắc nhở:</b> Hãy bấm thả tim vào nhân vật để lưu giữ vĩnh viễn. Nếu quên bấm tim, sau 1 ngày bạn sẽ phải làm lại thủ tục lấy lại link nhé!
                         </div>
                     `;
                 } else {
@@ -6903,7 +7015,7 @@
                         <div class="font-extrabold text-sm mb-1 text-emerald-300">🎉 Duyệt thành công!</div>
                         <div>Hệ thống đang đếm ngược ${waitHoursText} để mở link của "${fastTargetChar.name}". Sau khi mở khóa thành công bạn sẽ nhận được +2 Chì Màu!</div>
                         <div class="mt-2 text-pink-200 font-bold bg-pink-500/20 p-2 rounded-xl border border-pink-300/30">
-                            💖 Nhớ bấm thả tim vào nhân vật để lưu giữ vĩnh viễn nhé!
+                            💖 Nhớ bấm thả tim vào nhân vật để lưu giữ vĩnh viễn, nếu quên sau 1 ngày bạn sẽ phải làm lại thủ tục để lấy lại link nhé!
                         </div>
                     `;
                 }
@@ -6919,6 +7031,7 @@
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
                 const errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
                 feedbackBox.innerHTML = `❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}`;
+                logFailedProofForOwner("Sắc Màu Nhanh Nhẹn", fastTargetChar, errMsg);
             }
         }
 
