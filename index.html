@@ -3448,6 +3448,7 @@
         // QUẢN LÝ BỘ NHỚ ĐỆM ẢNH BẰNG CHỨNG (CHỐNG LỖI KHI NỘP LẠI NHIỀU LẦN)
         let cachedFbDataUrl = "";
         let cachedFbOcrText = "";
+        let cachedFbOcrData = null;
         let cachedDcDataUrls = [];
 
         async function handleFbFileSelected(input) {
@@ -3456,6 +3457,7 @@
             if (!file) {
                 cachedFbDataUrl = "";
                 cachedFbOcrText = "";
+                cachedFbOcrData = null;
                 if (span) {
                     span.innerText = "Chưa chọn ảnh";
                     span.className = "text-[11px] text-sky-200/70 truncate flex-1";
@@ -3468,6 +3470,7 @@
             }
             cachedFbDataUrl = await processImageForFastOCR(file);
             cachedFbOcrText = "";
+            cachedFbOcrData = null;
         }
 
         async function handleDcFileChange(input) {
@@ -5935,57 +5938,166 @@
             }
         }
 
-        // ================= BỘ QUÉT CẢM XÚC FACEBOOK (ICON TIM, LIKE, THƯƠNG THƯƠNG) =================
-        async function checkFacebookReact(dataUrl, text) {
-            const clean = (text || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-            // 1. Quét từ khóa văn bản (đầy đủ các loại react: Thích, Yêu thích, Thương thương, Like...)
-            const keywords = [
-                "thich", "da thich", "like", "liked",
-                "yeu thich", "tim", "love", "heart",
-                "thuong thuong", "care", "thuong",
-                "haha", "wow", "buon", "phan no",
-                "ban va", "ban da", "you and",
-                "binh luan", "chia se", "comment", "share"
-            ];
-            for (const kw of keywords) {
-                if (clean.includes(kw)) return true;
+        // ================= BỘ QUÉT CẢM XÚC FACEBOOK CÙNG HÀNG BÌNH LUẬN / COMMENT =================
+        function getOcrWordsList(ocrData) {
+            if (!ocrData || typeof ocrData !== 'object') return [];
+            if (Array.isArray(ocrData.words) && ocrData.words.length > 0) return ocrData.words;
+            const collected = [];
+            if (Array.isArray(ocrData.lines)) {
+                ocrData.lines.forEach(line => {
+                    if (Array.isArray(line.words)) collected.push(...line.words);
+                });
             }
+            if (collected.length === 0 && Array.isArray(ocrData.blocks)) {
+                ocrData.blocks.forEach(block => {
+                    (block.paragraphs || []).forEach(para => {
+                        (para.lines || []).forEach(line => {
+                            if (Array.isArray(line.words)) collected.push(...line.words);
+                        });
+                    });
+                });
+            }
+            return collected;
+        }
 
-            // 2. Quét điểm ảnh trực tiếp trên Canvas tìm màu icon Tim Đỏ, Like Xanh, Thương Thương
+        function normalizeOcrToken(txt) {
+            return (txt || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+        }
+
+        async function checkFacebookReact(dataUrl, ocrData) {
+            const words = getOcrWordsList(ocrData);
+
             return new Promise(resolve => {
                 if (!dataUrl) return resolve(false);
                 const img = new Image();
                 img.onload = () => {
                     try {
+                        const imgW = img.naturalWidth || img.width || 800;
+                        const imgH = img.naturalHeight || img.height || 1000;
                         const canvas = document.createElement('canvas');
-                        canvas.width = 160;
-                        canvas.height = 220;
+                        canvas.width = imgW;
+                        canvas.height = imgH;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, 160, 220);
+                        ctx.drawImage(img, 0, 0, imgW, imgH);
 
-                        // Quét nửa dưới của ảnh chụp màn hình (nơi đặt các nút react)
-                        const imgData = ctx.getImageData(0, 80, 160, 140).data;
-                        let redHeartPixels = 0;   // Màu đỏ của icon Tim
-                        let blueLikePixels = 0;   // Màu xanh của icon Like
-                        let yellowCarePixels = 0; // Màu vàng cam của Thương Thương / Haha
+                        // 1. Tìm đúng tọa độ chữ "Bình luận" (Việt) hoặc "Comment" (Anh) trên thanh nút thao tác
+                        const candidates = [];
+                        for (let i = 0; i < words.length; i++) {
+                            const w = words[i];
+                            if (!w || !w.bbox) continue;
+                            if (w.bbox.y0 < imgH * 0.2) continue;
+
+                            const norm = normalizeOcrToken(w.text);
+                            const yMid = (w.bbox.y0 + w.bbox.y1) / 2;
+                            const h = Math.max(8, w.bbox.y1 - w.bbox.y0);
+
+                            let anchor = null;
+                            const prev = i > 0 ? words[i - 1] : null;
+                            const prevNorm = prev ? normalizeOcrToken(prev.text) : "";
+                            const prevSameRow = prev && prev.bbox && Math.abs(((prev.bbox.y0 + prev.bbox.y1) / 2) - yMid) <= h * 1.4;
+
+                            // Bỏ qua dòng tổng số lượng kiểu "15 bình luận" / "15 comments" hoặc ô "Viết bình luận" / "Write a comment"
+                            const isSummaryOrInput = prevSameRow && (/^\d+$/.test(prevNorm) || prevNorm === "viet" || prevNorm === "write" || prevNorm === "a");
+
+                            if ((norm === "comment" || norm === "comrnent") && !isSummaryOrInput) {
+                                anchor = { x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1, score: 1 };
+                            } else if (norm === "binhluan" && !isSummaryOrInput) {
+                                anchor = { x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1, score: 1 };
+                            } else if ((norm === "binh" || norm === "blnh") && !isSummaryOrInput) {
+                                const next = i + 1 < words.length ? words[i + 1] : null;
+                                const nextNorm = next ? normalizeOcrToken(next.text) : "";
+                                const nextSameRow = next && next.bbox && Math.abs(((next.bbox.y0 + next.bbox.y1) / 2) - yMid) <= h * 1.4;
+                                if (nextSameRow && (nextNorm.startsWith("luan") || nextNorm.startsWith("iuan") || nextNorm.startsWith("1uan"))) {
+                                    anchor = {
+                                        x0: w.bbox.x0,
+                                        y0: Math.min(w.bbox.y0, next.bbox.y0),
+                                        x1: next.bbox.x1,
+                                        y1: Math.max(w.bbox.y1, next.bbox.y1),
+                                        score: 2
+                                    };
+                                }
+                            }
+
+                            if (anchor) {
+                                // Cộng điểm ưu tiên nếu cùng hàng ngang đó có chữ Thích/Yêu thích/Thương/Chia sẻ/Like/Love/Care/Share
+                                const anchorMidY = (anchor.y0 + anchor.y1) / 2;
+                                const anchorH = Math.max(10, anchor.y1 - anchor.y0);
+                                for (const ow of words) {
+                                    if (!ow || !ow.bbox) continue;
+                                    const owMidY = (ow.bbox.y0 + ow.bbox.y1) / 2;
+                                    if (Math.abs(owMidY - anchorMidY) <= anchorH * 1.4) {
+                                        const onorm = normalizeOcrToken(ow.text);
+                                        if (["thich", "yeu", "thuong", "chia", "se", "like", "love", "care", "share", "haha", "wow", "buon", "sad"].includes(onorm)) {
+                                            anchor.score += 3;
+                                        }
+                                    }
+                                }
+                                candidates.push(anchor);
+                            }
+                        }
+
+                        if (candidates.length === 0) return resolve(false);
+
+                        candidates.sort((a, b) => b.score - a.score || b.y0 - a.y0);
+                        const commentAnchor = candidates[0];
+                        const rowH = Math.max(12, commentAnchor.y1 - commentAnchor.y0);
+
+                        // 2. Chỉ quét vùng nằm CÙNG HÀNG NGANG và BÊN TRÁI nút Bình luận / Comment
+                        const boxX0 = 0;
+                        const boxX1 = Math.max(20, Math.round(commentAnchor.x0 - 4));
+                        const boxY0 = Math.max(0, Math.round(commentAnchor.y0 - Math.max(10, rowH * 0.75)));
+                        const boxY1 = Math.min(imgH, Math.round(commentAnchor.y1 + Math.max(10, rowH * 0.75)));
+                        const scanW = boxX1 - boxX0;
+                        const scanH = boxY1 - boxY0;
+                        if (scanW < 10 || scanH < 8) return resolve(false);
+
+                        // Kiểm tra màu của cảm xúc (Tim đỏ/hồng, Thích xanh dương, Thương thương vàng/cam) trên hàng này
+                        const imgData = ctx.getImageData(boxX0, boxY0, scanW, scanH).data;
+                        let redPixels = 0;
+                        let bluePixels = 0;
+                        let yellowPixels = 0;
 
                         for (let i = 0; i < imgData.length; i += 4) {
                             const r = imgData[i];
                             const g = imgData[i + 1];
                             const b = imgData[i + 2];
 
-                            // Nhận diện màu đỏ icon Tim Facebook (#f02849 / #e43b4f)
-                            if (r > 190 && g < 85 && b < 105) redHeartPixels++;
-                            // Nhận diện màu xanh icon Like Facebook (#1877f2)
-                            else if (r < 65 && g > 105 && g < 185 && b > 200) blueLikePixels++;
-                            // Nhận diện màu vàng cam icon Thương Thương / Haha
-                            else if (r > 215 && g > 150 && g < 225 && b < 85) yellowCarePixels++;
-
-                            if (redHeartPixels >= 5 || blueLikePixels >= 5 || yellowCarePixels >= 5) {
-                                return resolve(true);
+                            // Màu Đỏ / Hồng (Tim - Yêu thích / Love)
+                            if (r >= 175 && g <= 115 && b <= 135 && (r - g) >= 65 && r > b + 25) {
+                                redPixels++;
+                            }
+                            // Màu Xanh Dương (Thích - Like)
+                            else if (b >= 165 && (b - r) >= 55 && (b - g) >= 18) {
+                                bluePixels++;
+                            }
+                            // Màu Vàng / Cam (Thương thương - Care / Haha / Wow / Sad)
+                            else if (r >= 180 && g >= 115 && b <= 115 && (r - b) >= 75) {
+                                yellowPixels++;
                             }
                         }
+
+                        const minColorPixels = Math.max(15, Math.round(imgW * 0.025));
+                        if (redPixels >= minColorPixels || bluePixels >= minColorPixels || yellowPixels >= minColorPixels) {
+                            return resolve(true);
+                        }
+
+                        // Dự phòng kiểm tra chữ đã đổi trạng thái nằm ngay trong ô bên trái cùng hàng Bình luận
+                        const rowWords = words
+                            .filter(w => w?.bbox && w.bbox.x1 <= commentAnchor.x0 + 8 && ((w.bbox.y0 + w.bbox.y1) / 2) >= boxY0 && ((w.bbox.y0 + w.bbox.y1) / 2) <= boxY1)
+                            .map(w => normalizeOcrToken(w.text))
+                            .join(" ");
+
+                        if (
+                            rowWords.includes("yeu thich") ||
+                            rowWords.includes("love") ||
+                            rowWords.includes("thuong thuong") ||
+                            rowWords.includes("care") ||
+                            rowWords.includes("da thich") ||
+                            rowWords.includes("liked")
+                        ) {
+                            return resolve(true);
+                        }
+
                         resolve(false);
                     } catch (_) {
                         resolve(false);
@@ -6057,9 +6169,10 @@
             try {
                 // 1. Quét Facebook (nếu đã quét thành công ở lượt trước thì tự động dùng lại cache, không tốn RAM và không bao giờ bị lỗi)
                 let fbRaw = cachedFbOcrText;
-                if (!fbRaw) {
+                let fbOcrData = cachedFbOcrData;
+                if (!fbRaw || !fbOcrData) {
                     setProgressUI(25, "Đang đọc ảnh Facebook...");
-                    const { data: { text: pageText } } = await Tesseract.recognize(cachedFbDataUrl, 'vie', {
+                    const { data } = await Tesseract.recognize(cachedFbDataUrl, 'vie', {
                         logger: m => {
                             if (m.status === 'recognizing text') {
                                 const p = Math.round(20 + (m.progress || 0) * 25);
@@ -6067,13 +6180,18 @@
                             }
                         }
                     });
-                    fbRaw = pageText;
+                    fbRaw = data.text;
+                    fbOcrData = data;
                     cachedFbOcrText = fbRaw;
+                    cachedFbOcrData = fbOcrData;
                 }
 
                 const cleanFb = fbRaw.toLowerCase();
                 const hasPage = cleanFb.includes("palette số hóa") || cleanFb.includes("palette so hoa") || cleanFb.includes("palette");
                 if (!hasPage) throw new Error("Ảnh Facebook chưa nhìn thấy rõ tên Page 'Palette Số Hóa'!");
+
+                const hasReact = await checkFacebookReact(cachedFbDataUrl, fbOcrData);
+                if (!hasReact) throw new Error("Bạn chưa thả cảm xúc (Tim / Thích / Thương thương) ở cùng hàng với Bình luận (Comment) trên bài viết Facebook!");
 
                 const isOwnerTesting = (currentUser?.isOwner || currentUser?.username?.toLowerCase() === "bibi 0304");
 
@@ -6082,9 +6200,6 @@
                     const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                     const hasTag = cleanFb.includes(targetTag) || cleanFb.includes(unaccentedTag);
                     if (!hasTag) throw new Error("Ảnh Facebook gửi sai bài viết của nhân vật khác!");
-
-                    const hasReact = await checkFacebookReact(cachedFbDataUrl, cleanFb);
-                    if (!hasReact) throw new Error("Bài viết Facebook chưa hiển thị nút hoặc biểu tượng đã thả cảm xúc (Tim / Like / Thương thương)!");
                 }
 
                 // 2. Quét Discord
@@ -6299,13 +6414,14 @@
                 const fastFiles = Array.from(fileInput.files || []);
                 let combinedFastText = "";
                 let fastFbDataUrl = "";
+                let fastFbOcrData = null;
 
                 for (let i = 0; i < fastFiles.length; i++) {
                     const processedData = await processImageForFastOCR(fastFiles[i]);
                     if (!fastFbDataUrl) fastFbDataUrl = processedData;
 
                     const baseP = 20 + Math.round((i / fastFiles.length) * 70);
-                    const { data: { text } } = await Tesseract.recognize(processedData, 'vie', {
+                    const { data } = await Tesseract.recognize(processedData, 'vie', {
                         logger: m => {
                             if (m.status === 'recognizing text') {
                                 const p = Math.min(95, Math.round(baseP + m.progress * (70 / fastFiles.length)));
@@ -6313,7 +6429,8 @@
                             }
                         }
                     });
-                    combinedFastText += " " + text;
+                    if (!fastFbOcrData) fastFbOcrData = data;
+                    combinedFastText += " " + data.text;
                 }
                 const clean = combinedFastText.toLowerCase().replace(/\s+/g, ' ');
 
@@ -6327,9 +6444,9 @@
                 const hasTag = clean.includes(targetTag) || clean.includes(unaccentedTag);
                 if (!hasTag) throw new Error("Ảnh đang gửi sai bài viết của nhân vật khác!");
 
-                // 3. Kiểm tra nút hoặc icon đã thả tim / Like / Thương thương
-                const hasReact = await checkFacebookReact(fastFbDataUrl, clean);
-                if (!hasReact) throw new Error("Bài viết chưa hiển thị nút hoặc biểu tượng đã thả cảm xúc (Tim / Like / Thương thương)!");
+                // 3. Kiểm tra nút cảm xúc cùng hàng Bình luận / Comment (Tim / Thích / Thương thương)
+                const hasReact = await checkFacebookReact(fastFbDataUrl, fastFbOcrData);
+                if (!hasReact) throw new Error("Bạn chưa thả cảm xúc (Tim / Thích / Thương thương) ở cùng hàng với Bình luận (Comment) trên bài viết Facebook!");
 
                 setFastProgressUI(97, "Đang tải ảnh bằng chứng lên...");
                 await storeProofImages(fastFiles, {
@@ -7261,6 +7378,7 @@
             // 2. Xóa sạch bộ nhớ tạm
             cachedFbDataUrl = "";
             cachedFbOcrText = "";
+            cachedFbOcrData = null;
             cachedDcDataUrls = [];
             if (typeof dcFilesStore !== 'undefined') dcFilesStore = [];
 
