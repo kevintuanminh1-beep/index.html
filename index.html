@@ -3569,7 +3569,7 @@
                 updatePencilUI();
                 if (showSparkles && currentUser?.username.toLowerCase() === uKey) createPencilSparkles();
                 if (reason) {
-                    triggerNotification("Nhận Bút Chì Màu Mới!", `Bạn vừa nhận được +${amount} Bút Chì Màu (${reason})! Hiện có: ${nextCount} chì.`);
+                    triggerNotification("Nhận Bút Chì Màu Mới!", `Bạn vừa nhận được +${amount} Bút Chì Màu (${reason})! Hiện có: ${nextCount} chì.`, username);
                 }
                 return nextCount;
             } catch (error) {
@@ -4041,6 +4041,7 @@
                 if (selectedMiniRedeemChar && selectedMiniRedeemChar.id === targetChar.id) {
                     openMiniRedeemModal(targetChar);
                 }
+                logMemberActivity("Đổi 10 Chì Màu mở link 🔓", `Nhân vật: ${targetChar.name}`, "link");
                 triggerNotification("Mở Khóa Link Thành Công!", `Bạn đã dùng 10 Bút Chì Màu mở khóa link của "${targetChar.name}"!`, currentUser.username);
                 alert(`🎉 Chúc mừng! Bạn đã đổi 10 Bút Chì Màu và mở khóa link của "${targetChar.name}"! Nhớ bấm thả tim để lưu giữ vĩnh viễn nhé.`);
             } catch (error) {
@@ -4264,7 +4265,7 @@
                 };
                 updatePencilUI();
                 createPencilSparkles();
-                triggerNotification("Đã cấp Bút Chì Màu!", `${targetUsername} được chủ web duyệt và nhận +3 Bút Chì Màu.`);
+                triggerNotification("Đã cấp Bút Chì Màu!", `Bạn vừa được Chủ Web duyệt Ping Feedback và tặng +3 Bút Chì Màu!`, targetUsername);
                 alert(`Đã cấp 3 Bút Chì Màu cho "${targetUsername}" thành công!`);
                 openPencilShopModal();
             } catch (error) {
@@ -4604,16 +4605,25 @@
             renderUserNotifications();
         }
 
-        function logNotificationForUser(title, body) {
-            if (!currentUser) return;
-            const uKey = currentUser.username.toLowerCase();
+        async function logNotificationForUser(title, body, targetUsername = null) {
+            const target = targetUsername || currentUser?.username;
+            if (!target) return;
+            const uKey = target.toLowerCase();
             const timestampStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN');
             const newLog = { title, body, time: timestampStr };
 
-            if (!userNotificationLogs[uKey]) userNotificationLogs[uKey] = [];
-            userNotificationLogs[uKey].unshift(newLog);
-            userNotificationLogs[uKey] = userNotificationLogs[uKey].slice(0, 50);
-            db.collection("notifications").doc(uKey).set({ logs: userNotificationLogs[uKey] }, { merge: true });
+            try {
+                if (currentUser && currentUser.username.toLowerCase() === uKey) {
+                    if (!userNotificationLogs[uKey]) userNotificationLogs[uKey] = [];
+                    userNotificationLogs[uKey].unshift(newLog);
+                    userNotificationLogs[uKey] = userNotificationLogs[uKey].slice(0, 50);
+                    await db.collection("notifications").doc(uKey).set({ logs: userNotificationLogs[uKey] }, { merge: true });
+                } else {
+                    const snap = await db.collection("notifications").doc(uKey).get();
+                    const oldLogs = snap.exists ? (snap.data().logs || []) : [];
+                    await db.collection("notifications").doc(uKey).set({ logs: [newLog, ...oldLogs].slice(0, 50) }, { merge: true });
+                }
+            } catch (_) {}
         }
 
         function updateRegisteredUsersCountUI() {
@@ -4634,7 +4644,28 @@
         // ================= HỆ THỐNG QUẢN LÝ THÀNH VIÊN, ONLINE & HOẠT ĐỘNG =================
         let memberActivities = [];
         let activeUsersModalTab = 'registered'; // 'registered' | 'online' | 'activities'
+        let activeActivitySubFilter = 'all'; // 'all' | 'link' | 'comment_like' | 'wheel'
         let expandedMemberUsername = null;
+
+        // Đổi mục lọc hoạt động con
+        function setActivitySubFilter(filterName) {
+            activeActivitySubFilter = filterName;
+            renderUsersModalContent();
+            playCheerfulClickSound();
+        }
+
+        // Tự động nhận diện phân loại của từng hoạt động
+        function getActivityCategory(act) {
+            if (act.actType === 'link') return 'link';
+            if (act.actType === 'comment') return 'comment';
+            if (act.actType === 'wheel') return 'wheel';
+
+            const t = (act.title || '').toLowerCase();
+            if (t.includes('mở khóa') || t.includes('đổi 10 chì') || t.includes('link') || t.includes('lấy link')) return 'link';
+            if (t.includes('bình luận') || t.includes('trả lời') || t.includes('cmt') || t.includes('feedback')) return 'comment';
+            if (t.includes('vòng xoay') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống')) return 'wheel';
+            return 'other';
+        }
 
         // Hàm tính thời gian hiển thị chính xác (Dùng cho cả cmt và hoạt động)
         function formatCommentTime(item) {
@@ -4663,8 +4694,8 @@
 
          function isUserOnline(username) { return false; }
 
-        // Ghi lại bất kỳ hoạt động nào của thành viên và lưu vào Firebase
-        async function logMemberActivity(actionTitle, detailText = "") {
+        // Ghi lại bất kỳ hoạt động nào của thành viên kèm tọa độ nhân vật & bình luận
+        async function logMemberActivity(actionTitle, detailText = "", actType = "general", extraData = {}) {
             if (!currentUser) return;
             try {
                 const now = Date.now();
@@ -4674,10 +4705,120 @@
                     avatar: avt,
                     title: actionTitle,
                     details: detailText,
+                    actType: actType,
+                    ...(extraData && typeof extraData === 'object' ? extraData : {}),
                     createdAt: now
                 });
             } catch (e) {
                 console.error("Lỗi lưu hoạt động:", e);
+            }
+        }
+
+        // Tìm nhân vật tương ứng từ dữ liệu hoạt động (hỗ trợ cả dữ liệu cũ và mới)
+        function findCharForActivity(act) {
+            if (!act) return null;
+            if (act.charId) {
+                const byId = characters.find(c => c.id === act.charId);
+                if (byId) return byId;
+            }
+            if (act.charName) {
+                const byName = characters.find(c => c.name.toLowerCase() === act.charName.toLowerCase());
+                if (byName) return byName;
+            }
+            const title = act.title || "";
+            const details = act.details || "";
+
+            if (title.startsWith("Bình luận nhân vật ")) {
+                const name = title.replace("Bình luận nhân vật ", "").trim().toLowerCase();
+                const found = characters.find(c => c.name.toLowerCase() === name);
+                if (found) return found;
+            }
+            const taiMatch = details.match(/^Tại\s+([^:]+):/i);
+            if (taiMatch && taiMatch[1]) {
+                const name = taiMatch[1].trim().toLowerCase();
+                const found = characters.find(c => c.name.toLowerCase() === name);
+                if (found) return found;
+            }
+            const nvMatch = details.match(/Nhân vật:\s*([^\(\n]+)/i);
+            if (nvMatch && nvMatch[1]) {
+                const name = nvMatch[1].trim().toLowerCase();
+                const found = characters.find(c => c.name.toLowerCase() === name);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        // Bấm vào mục hoạt động để nhảy thẳng tới trang nhân vật & bình luận đó
+        function jumpToActivityTarget(actId) {
+            const act = memberActivities.find(a => a.id === actId);
+            if (!act) return;
+
+            const targetChar = findCharForActivity(act);
+            if (!targetChar) return;
+
+            closeUsersListModal();
+
+            let targetCommentId = act.commentId || null;
+            let targetParentId = act.parentId || null;
+            const comments = charComments[targetChar.id] || [];
+
+            // Tự động dò tìm đúng ID bình luận cho các log cũ trước đây
+            if (!targetCommentId && (act.actType === 'comment' || (act.title || '').includes('Bình luận') || (act.title || '').includes('Trả lời'))) {
+                const actTime = Number(act.createdAt) || 0;
+                const uLower = (act.username || "").toLowerCase();
+                let bestDiff = Infinity;
+
+                comments.forEach(c => {
+                    if ((c.author || "").toLowerCase() === uLower) {
+                        const diff = Math.abs((Number(c.createdAt) || 0) - actTime);
+                        if (diff < bestDiff && diff < 60000) {
+                            bestDiff = diff;
+                            targetCommentId = c.id;
+                            targetParentId = null;
+                        }
+                    }
+                    (c.replies || []).forEach(r => {
+                        if ((r.author || "").toLowerCase() === uLower) {
+                            const diff = Math.abs((Number(r.createdAt) || 0) - actTime);
+                            if (diff < bestDiff && diff < 60000) {
+                                bestDiff = diff;
+                                targetCommentId = r.id;
+                                targetParentId = c.id;
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Nếu là câu trả lời, tự động mở rộng phần trả lời trước
+            if (targetParentId) {
+                const parentCmt = comments.find(c => c.id === targetParentId);
+                if (parentCmt && parentCmt.replies) {
+                    visibleRepliesCount[targetParentId] = Math.max(visibleRepliesCount[targetParentId] || 0, parentCmt.replies.length);
+                }
+            }
+
+            openCharDetail(targetChar);
+
+            if (targetCommentId) {
+                let attempts = 0;
+                const findAndScroll = () => {
+                    attempts++;
+                    const el = document.getElementById(`comment-${targetCommentId}`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: "smooth", block: "center" });
+                        el.classList.add("ping-focus-glow");
+                        window.setTimeout(() => el.classList.remove("ping-focus-glow"), 3800);
+                    } else if (attempts < 8) {
+                        window.setTimeout(findAndScroll, 250);
+                    }
+                };
+                window.setTimeout(findAndScroll, 300);
+            } else if ((act.title || '').includes('Bình luận') || (act.title || '').includes('Trả lời')) {
+                window.setTimeout(() => {
+                    const cmtBox = document.getElementById('commentList');
+                    if (cmtBox) cmtBox.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 300);
             }
         }
 
@@ -4820,29 +4961,91 @@
                 });
             }
 
-            // ================= MỤC 2: HOẠT ĐỘNG THỜI GIAN THỰC =================
+            // ================= MỤC 2: HOẠT ĐỘNG THỜI GIAN THỰC (ĐÃ CHIA DANH MỤC CON) =================
             else if (activeUsersModalTab === 'activities') {
                 if (memberActivities.length === 0) {
                     container.innerHTML = `<div class="text-xs text-sky-200/60 italic text-center py-6">Chưa có hoạt động nào được ghi nhận.</div>`;
                     return;
                 }
 
-                memberActivities.forEach(act => {
+                // Đếm số lượng theo từng danh mục
+                const linkCount = memberActivities.filter(a => getActivityCategory(a) === 'link').length;
+                const cmtCount = memberActivities.filter(a => getActivityCategory(a) === 'comment').length;
+                const wheelCount = memberActivities.filter(a => getActivityCategory(a) === 'wheel').length;
+                const allCount = memberActivities.length;
+
+                // Thanh 4 nút lọc danh mục con
+                const filterBar = document.createElement('div');
+                filterBar.className = "flex items-center gap-1 p-1 bg-black/40 rounded-2xl border border-white/10 mb-2.5 overflow-x-auto no-scrollbar shrink-0 select-none";
+                filterBar.innerHTML = `
+                    <button type="button" onclick="setActivitySubFilter('all')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'all' ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow' : 'bg-white/5 text-sky-200/70 hover:bg-white/10'}">
+                        Tất cả (${allCount})
+                    </button>
+                    <button type="button" onclick="setActivitySubFilter('link')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'link' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow' : 'bg-white/5 text-sky-200/70 hover:bg-white/10'}">
+                        🔓 Mở Link (${linkCount})
+                    </button>
+                    <button type="button" onclick="setActivitySubFilter('comment')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'comment' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow' : 'bg-white/5 text-sky-200/70 hover:bg-white/10'}">
+                        💬 Cmt (${cmtCount})
+                    </button>
+                    <button type="button" onclick="setActivitySubFilter('wheel')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'wheel' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow' : 'bg-white/5 text-sky-200/70 hover:bg-white/10'}">
+                        🎡 Vòng Xoay (${wheelCount})
+                    </button>
+                `;
+                container.appendChild(filterBar);
+
+                // Lọc danh sách theo mục đang chọn
+                const filteredList = memberActivities.filter(act => {
+                    if (activeActivitySubFilter === 'all') return true;
+                    return getActivityCategory(act) === activeActivitySubFilter;
+                });
+
+                if (filteredList.length === 0) {
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = "text-xs text-sky-200/50 italic text-center py-6";
+                    emptyDiv.innerText = "Chưa có hoạt động nào trong mục này.";
+                    container.appendChild(emptyDiv);
+                    return;
+                }
+
+                filteredList.forEach(act => {
                     const timeStr = formatCommentTime(act);
                     const avt = act.avatar || PALETTE_DEFAULT_AVATARS[0];
+                    const cat = getActivityCategory(act);
+
+                    let badgeHtml = '';
+                    let borderClass = 'border-white/10 bg-white/5';
+
+                    if (cat === 'link') {
+                        badgeHtml = '<span class="text-[9px] bg-emerald-500/25 text-emerald-300 border border-emerald-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🔓 Mở Link</span>';
+                        borderClass = 'border-emerald-300/30 bg-emerald-500/10';
+                    } else if (cat === 'comment') {
+                        badgeHtml = '<span class="text-[9px] bg-pink-500/25 text-pink-300 border border-pink-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">💬 Cmt</span>';
+                        borderClass = 'border-pink-300/30 bg-pink-500/10';
+                    } else if (cat === 'wheel') {
+                        badgeHtml = '<span class="text-[9px] bg-amber-500/25 text-amber-300 border border-amber-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🎡 Vòng Xoay</span>';
+                        borderClass = 'border-amber-300/30 bg-amber-500/10';
+                    }
+
+                    const targetChar = findCharForActivity(act);
+                    const isClickable = Boolean(targetChar);
 
                     const item = document.createElement('div');
-                    item.className = "bg-white/5 border border-white/10 rounded-2xl p-2.5 text-xs space-y-1 relative";
+                    item.className = `${borderClass} border rounded-2xl p-2.5 text-xs space-y-1 relative transition ${isClickable ? 'cursor-pointer hover:brightness-110 hover:border-pink-300/70 active:scale-[0.98]' : ''}`;
+                    if (isClickable) {
+                        item.onclick = () => jumpToActivityTarget(act.id);
+                    }
                     item.innerHTML = `
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2 min-w-0">
                                 <img src="${avt}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-6 h-6 rounded-full object-cover shrink-0 border border-pink-300/40">
                                 <span class="font-extrabold text-pink-300 truncate">${act.username}</span>
+                                ${badgeHtml}
                             </div>
                             <span class="text-[10px] text-sky-200/50 shrink-0 font-mono">${timeStr}</span>
                         </div>
                         <div class="font-bold text-sky-100 pl-8 leading-snug">${act.title}</div>
-                        ${act.details ? `<div class="text-[11px] text-sky-200/70 pl-8 leading-relaxed">${act.details}</div>` : ''}
+                        ${act.details ? `<div class="text-[11px] text-sky-200/75 pl-8 leading-relaxed">${act.details}</div>` : ''}
+                        ${isClickable ? `<div class="text-[10px] text-sky-300 font-bold pl-8 pt-0.5 flex items-center gap-1">👉 Bấm để nhảy tới trang ${targetChar.name} ➔</div>` : ''}
                     `;
                     container.appendChild(item);
                 });
@@ -5981,6 +6184,7 @@
                             addPencilToUser(currentUser.username, 2, "Mở khóa Link mở trong ngày thành công");
 
                             const targetC = characters.find(c => c.id === charId);
+                            logMemberActivity("Mở khóa link thành công 🔓", `Nhân vật: ${targetC?.name || 'Nhân vật'} (Hết giờ đếm ngược)`, "link");
                             triggerNotification("Link Đã Mở Khóa!", `Chúc mừng bạn! Link Google AI Studio của "${targetC?.name || 'Nhân vật'}" đã mở khóa (+2 Chì Màu)! Hãy bấm tim vào nhân vật để lưu giữ vĩnh viễn nhé!`);
                         }
                     }
@@ -6506,6 +6710,7 @@
                         chars: userUnlockedState[currentUser.username]
                     });
                     addPencilToUser(currentUser.username, 1, "Mở khóa Link thường thành công", false);
+                    logMemberActivity("Mở khóa link thành công 🔓", `Nhân vật: ${activeChar.name}`, "link");
                 }
 
                 updateAIStudioButton();
@@ -6650,6 +6855,10 @@
 
                     // Thưởng ngay 2 Chì Màu
                     addPencilToUser(uName, 2, "Mở khóa Link mở trong ngày thành công");
+                    logMemberActivity("Mở khóa link thành công 🔓", `Nhân vật: ${fastTargetChar.name} (Sắc Màu Nhanh Nhẹn)`, "link", {
+                        charId: fastTargetChar.id,
+                        charName: fastTargetChar.name
+                    });
 
                     renderFastColorCenter();
                     updateAIStudioButton();
@@ -7150,6 +7359,19 @@
 
             try {
                 const images = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 850, 0.62)));
+                const commentSnapshot = await commentRef.get();
+
+                let pencilData = {};
+                let actuallyPinged = isPinged;
+                if (isPinged) {
+                    const pencilSnapshot = await pencilRef.get();
+                    pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
+                    if (pencilData.lastPingDate === todayStr) {
+                        actuallyPinged = false;
+                        alert("Mỗi tài khoản chỉ được Ping một lần mỗi ngày. Bình luận đã được gửi bình thường không kèm Ping nhé.");
+                    }
+                }
+
                 const cmtCreatedAt = Date.now();
                 const newCmt = {
                     id: 'cmt-' + cmtCreatedAt,
@@ -7159,32 +7381,34 @@
                     images,
                     createdAt: cmtCreatedAt,
                     timestamp: formatCommentTime({ createdAt: cmtCreatedAt }),
-                    isPing: isPinged,
+                    isPing: actuallyPinged,
                     likes: [],
                     replies: []
                 };
-                // Ghi nhận hoạt động gửi bình luận
-                logMemberActivity("Bình luận nhân vật " + charName, text ? `"${text.slice(0, 80)}${text.length > 80 ? '...' : ''}"` : "Đã gửi kèm ảnh");
-                // Đọc dữ liệu trực tiếp giúp gửi bình luận siêu nhanh và không bị nghẽn
-                const commentSnapshot = await commentRef.get();
-                let pencilData = {};
-                if (isPinged) {
-                    const pencilSnapshot = await pencilRef.get();
-                    pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
-                    if (pencilData.lastPingDate === todayStr) {
-                        alert("Mỗi tài khoản chỉ được Ping một lần mỗi ngày. Bình luận đã được gửi bình thường không kèm Ping nhé.");
-                    }
-                }
+
+                // Ghi nhận hoạt động gửi bình luận kèm ID để bấm là nhảy tới đúng chỗ
+                logMemberActivity("Bình luận nhân vật " + charName, text ? `"${text.slice(0, 80)}${text.length > 80 ? '...' : ''}"` : "Đã gửi kèm ảnh", "comment", {
+                    charId: charId,
+                    charName: charName,
+                    commentId: newCmt.id
+                });
 
                 const existingComments = commentSnapshot.exists ? (commentSnapshot.data().list || []) : [];
-                // Giữ tối đa 50 bình luận gần nhất để tránh văn bản vượt quá dung lượng 1MB của Firestore
                 const updatedComments = [newCmt, ...existingComments].slice(0, 50);
 
                 await commentRef.set({ list: updatedComments }, { merge: true });
 
-                if (isPinged && pencilData.lastPingDate !== todayStr) {
+                if (actuallyPinged) {
                     const now = new Date();
                     const timestamp = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+                    const ownerSnap = await ownerNotificationRef.get();
+                    const oldLogs = ownerSnap.exists ? (ownerSnap.data().logs || []) : [];
+                    const newOwnerLog = {
+                        title: "Ping Feedback mới",
+                        body: `${username} đã Ping feedback cho ${charName}. Mở Cửa Hàng Bút Chì để xem nhé.`,
+                        time: timestamp
+                    };
+
                     await Promise.all([
                         pencilRef.set({ ...pencilData, lastPingDate: todayStr }, { merge: true }),
                         requestRef.set({
@@ -7198,23 +7422,15 @@
                             timestamp
                         }),
                         ownerNotificationRef.set({
-                            logs: [{
-                                title: "Ping Feedback mới",
-                                body: `${username} đã Ping feedback cho ${charName}.`,
-                                time: timestamp
-                            }]
+                            logs: [newOwnerLog, ...oldLogs].slice(0, 100)
                         }, { merge: true })
                     ]);
-                }
 
-                const result = { comments: updatedComments, pencilData };
-
-                charComments[charId] = result.comments;
-                if (isPinged) {
-                    userPencilsData[username.toLowerCase()] = { ...result.pencilData, lastPingDate: todayStr };
+                    userPencilsData[username.toLowerCase()] = { ...pencilData, lastPingDate: todayStr };
                     alert("Đã gửi bài Feedback kèm Ping đến Cửa Hàng Bút Chì! Chủ web sẽ xem xét cấp 3 Bút Chì Màu nhé.");
                 }
 
+                charComments[charId] = updatedComments;
                 document.getElementById('mainCommentInput').value = '';
                 isPingActiveForCurrentComment = false;
                 handleCommentInput(document.getElementById('mainCommentInput'));
@@ -7452,8 +7668,9 @@
                 try {
                     const images = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 850, 0.62)));
                     const repCreatedAt = Date.now();
+                    const repId = 'rep-' + repCreatedAt;
                     parent.replies.push({
-                        id: 'rep-' + repCreatedAt,
+                        id: repId,
                         author: currentUser.username,
                         avatar: currentUser.avatar || PALETTE_DEFAULT_AVATARS[0],
                         text,
@@ -7462,7 +7679,12 @@
                         timestamp: formatCommentTime({ createdAt: repCreatedAt }),
                         likes: []
                     });
-                    logMemberActivity("Trả lời bình luận của " + parent.author, `Tại ${activeChar.name}: "${text.slice(0, 60)}"`);
+                    logMemberActivity("Trả lời bình luận của " + parent.author, `Tại ${activeChar.name}: "${text.slice(0, 60)}"`, "comment", {
+                        charId: activeChar.id,
+                        charName: activeChar.name,
+                        commentId: repId,
+                        parentId: parentId
+                    });
                     await db.collection("comments").doc(activeChar.id).set({
                         list: charComments[activeChar.id]
                     });
@@ -7540,7 +7762,7 @@
                             const repGlow = getUserPastelGlowClass(r.author);
 
                             repliesHtml += `
-                                <div class="bg-white/5 p-2.5 rounded-xl border border-white/5 space-y-1 relative">
+                                <div id="comment-${r.id}" class="bg-white/5 p-2.5 rounded-xl border border-white/5 space-y-1 relative">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-2 min-w-0">
                                             <img src="${repAvatar}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-6 h-6 rounded-full object-cover shrink-0 ${repGlow}">
@@ -7884,9 +8106,11 @@
             }
         }
 
-        function triggerNotification(title, body) {
-            logNotificationForUser(title, body);
-            playPaletteTingSound();
+        function triggerNotification(title, body, targetUsername = null) {
+            logNotificationForUser(title, body, targetUsername);
+            if (!targetUsername || (currentUser && targetUsername.toLowerCase() === currentUser.username.toLowerCase())) {
+                playPaletteTingSound();
+            }
 
             if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
                 try {
@@ -8020,11 +8244,34 @@
             } catch (_) {}
         }
 
+        function getUserWheelSpinsToday(username) {
+            if (!username) return 0;
+            const uKey = username.toLowerCase();
+            const todayKey = getLocalDateKey();
+            const pData = userPencilsData[uKey] || {};
+            let fbCount = (pData.wheelDate === todayKey) ? (Number(pData.wheelCount) || 0) : 0;
+            let localCount = 0;
+            try {
+                const localRec = JSON.parse(localStorage.getItem(`palette_wheel_spins_${uKey}`) || '{}');
+                if (localRec.date === todayKey) localCount = Number(localRec.count) || 0;
+            } catch (_) {}
+            return Math.max(fbCount, localCount);
+        }
+
         function updateWheelUI() {
             const spinBtn = document.getElementById('spinWheelBtn');
-            if (spinBtn && !isWheelSpinning) {
+            if (!spinBtn || isWheelSpinning) return;
+            const isOwner = currentUser?.isOwner;
+            const used = currentUser ? getUserWheelSpinsToday(currentUser.username) : 0;
+            const remain = Math.max(0, 3 - used);
+
+            if (!isOwner && remain <= 0) {
                 spinBtn.disabled = false;
-                spinBtn.innerText = "Quay Ngay";
+                spinBtn.innerText = "Đã hết lượt hôm nay (0/3)";
+                spinBtn.className = "w-full bg-white/10 text-pink-200/60 border border-white/20 font-bold text-xs py-2.5 rounded-xl cursor-pointer mt-2";
+            } else {
+                spinBtn.disabled = false;
+                spinBtn.innerText = isOwner ? "Quay Ngay (Chủ Web: Không giới hạn)" : `Quay Ngay (Còn ${remain}/3 lượt)`;
                 spinBtn.className = "jelly-btn w-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition mt-2";
             }
         }
@@ -8108,21 +8355,24 @@
             }
 
             const username = currentUser.username;
+            const uKey = username.toLowerCase();
             const todayKey = getLocalDateKey();
-            const storageKey = `palette_wheel_spins_${username.toLowerCase()}`;
-            let spinRecord = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            const usedCount = getUserWheelSpinsToday(username);
 
-            if (spinRecord.date !== todayKey) {
-                spinRecord = { date: todayKey, count: 0 };
-            }
-
-            if (spinRecord.count >= 3 && !currentUser.isOwner) {
+            if (usedCount >= 3 && !currentUser.isOwner) {
                 alert("Hôm nay bạn đã dùng hết 3 lượt quay rồi! Hãy quay lại thử vận may vào ngày mai nhé.");
                 return;
             }
 
-            spinRecord.count++;
-            localStorage.setItem(storageKey, JSON.stringify(spinRecord));
+            const newCount = usedCount + 1;
+            localStorage.setItem(`palette_wheel_spins_${uKey}`, JSON.stringify({ date: todayKey, count: newCount }));
+            userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), wheelDate: todayKey, wheelCount: newCount };
+
+            // Lưu số lượt quay lên Firebase để user đổi máy hay mở tab ẩn danh vẫn bị khóa đúng 3 lượt/ngày
+            db.collection("pencils").doc(uKey).set({
+                wheelDate: todayKey,
+                wheelCount: newCount
+            }, { merge: true }).catch(() => {});
 
             isWheelSpinning = true;
             const spinBtn = document.getElementById('spinWheelBtn');
