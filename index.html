@@ -1607,6 +1607,34 @@
                     </button>
                 </div>
 
+                <!-- 9. CÀI ĐẶT THỜI GIAN ĐẾM NGƯỢC MỞ LINK SAU KHI DUYỆT -->
+                <div>
+                    <label class="block font-bold text-pink-300 mb-1">9. Thời gian chờ mở link sau khi duyệt:</label>
+                    <div class="bg-black/40 border border-white/20 rounded-2xl p-3 space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center gap-1.5 cursor-pointer bg-black/30 p-2 rounded-xl border border-white/10 hover:border-pink-300/40">
+                                <input type="radio" name="formUnlockWaitType" value="immediate" onchange="toggleWaitTimeInputs(this.value)" class="text-pink-500 accent-pink-500">
+                                <span class="text-xs font-bold text-emerald-300">⚡ Mở ngay lập tức (0 đếm ngược)</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer bg-black/30 p-2 rounded-xl border border-white/10 hover:border-pink-300/40">
+                                <input type="radio" name="formUnlockWaitType" value="countdown" checked onchange="toggleWaitTimeInputs(this.value)" class="text-pink-500 accent-pink-500">
+                                <span class="text-xs font-bold text-amber-300">⏳ Có đếm ngược</span>
+                            </label>
+                        </div>
+
+                        <div id="waitCountdownInputsBox" class="pt-1 border-t border-white/10 grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-pink-200 font-bold">Số giờ đếm ngược:</label>
+                                <input id="formWaitHours" type="number" min="0" value="2" class="w-full bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-white text-center font-bold">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-pink-200 font-bold">Số phút đếm ngược:</label>
+                                <input id="formWaitMinutes" type="number" min="0" max="59" value="0" class="w-full bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-white text-center font-bold">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- CÀI ĐẶT THỜI GIAN MỞ CÓ HẠN GIỜ -->
                 <div id="unlockedTimeSettingsBox" class="hidden bg-black/30 p-3 rounded-2xl border border-fuchsia-300/40 space-y-2">
                     <label class="block font-bold text-fuchsia-300">Cài đặt thời gian mở link:</label>
@@ -5634,7 +5662,7 @@
                             <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[9.5px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow">
                                 MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ
                             </span>
-                            <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-2 flex-wrap">
+                            <h3 class="text-2xl font-black mt-2 flex items-cente-r justify-center gap-2 flex-wrap">
                                 <span class="char-pastel-0">${c.name}</span>
                                 ${c.isNew ? '<span class="new-char-badge text-[10px]"><span class="green-pastel-wave">New</span></span>' : ''}
                             </h3>
@@ -6409,27 +6437,67 @@
 
                 const uName = currentUser.username;
                 const uKey = uName.toLowerCase();
-                const unlockEndTime = Date.now() + (2 * 3600 * 1000);
 
-                if (!userUnlockTimers[uName]) userUnlockTimers[uName] = {};
-                userUnlockTimers[uName][fastTargetChar.id] = unlockEndTime;
-                localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
+                // Lấy thời gian chờ đếm ngược mà chủ web đã cài đặt cho nhân vật này (mặc định 2 tiếng nếu chưa chỉnh)
+                const waitMs = (typeof fastTargetChar.unlockWaitMs === 'number') ? fastTargetChar.unlockWaitMs : (2 * 3600 * 1000);
 
-                // Lưu trực tiếp lên Firebase để khi out ra hoặc đổi thiết bị vẫn giữ nguyên đếm ngược
-                await db.collection("unlock_timers").doc(uKey).set({
-                    [fastTargetChar.id]: unlockEndTime
-                }, { merge: true });
+                if (waitMs <= 0) {
+                    // ================= TRƯỜNG HỢP 1: MỞ LUÔN LẬP TỨC (0 ĐẾM NGƯỢC) =================
+                    if (!userUnlockedState[uName]) userUnlockedState[uName] = {};
+                    userUnlockedState[uName][fastTargetChar.id] = true;
 
-                renderFastColorCenter();
+                    // Lưu mở khóa vĩnh viễn lên Firebase
+                    await db.collection("unlocked").doc(uName).set({
+                        chars: userUnlockedState[uName]
+                    }, { merge: true });
 
-                feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-emerald-500/25 text-emerald-100 border-emerald-400/50";
-                feedbackBox.innerHTML = `
-                    <div class="font-extrabold text-sm mb-1 text-emerald-300">🎉 Duyệt thành công!</div>
-                    <div>Hệ thống đang đếm ngược 2 tiếng để mở link của "${fastTargetChar.name}". Sau khi mở khóa thành công bạn sẽ nhận được +2 Chì Màu!</div>
-                    <div class="mt-2 text-pink-200 font-bold bg-pink-500/20 p-2 rounded-xl border border-pink-300/30">
-                        💖 Nhớ bấm thả tim vào nhân vật để lưu giữ vĩnh viễn nhé!
-                    </div>
-                `;
+                    // Thưởng ngay 2 Chì Màu
+                    addPencilToUser(uName, 2, "Mở khóa Link mở trong ngày thành công");
+
+                    renderFastColorCenter();
+                    updateAIStudioButton();
+
+                    feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-emerald-500/25 text-emerald-100 border-emerald-400/50";
+                    feedbackBox.innerHTML = `
+                        <div class="font-extrabold text-sm mb-1 text-emerald-300">🎉 Duyệt thành công - Mở link ngay lập tức!</div>
+                        <div>Link của "${fastTargetChar.name}" đã được mở khóa ngay không cần chờ! Bạn nhận được +2 Bút Chì Màu! ✏️</div>
+                        <div class="my-2.5">
+                            <button type="button" onclick="window.open('${fastTargetChar.aiStudioUrl}', '_blank')" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 text-white font-black py-2.5 px-3 rounded-xl shadow-lg flex items-center justify-center gap-2 text-xs active:scale-95 transition cursor-pointer">
+                                <span>🚀 Mở Link Google AI Studio Ngay</span> ➔
+                            </button>
+                        </div>
+                        <div class="text-pink-200 font-bold bg-pink-500/20 p-2 rounded-xl border border-pink-300/30">
+                            💖 <b>Nhắc nhở:</b> Hãy bấm thả tim vào nhân vật để lưu giữ vĩnh viễn nhé!
+                        </div>
+                    `;
+                } else {
+                    // ================= TRƯỜNG HỢP 2: CÓ ĐẾM NGƯỢC =================
+                    const unlockEndTime = Date.now() + waitMs;
+
+                    if (!userUnlockTimers[uName]) userUnlockTimers[uName] = {};
+                    userUnlockTimers[uName][fastTargetChar.id] = unlockEndTime;
+                    localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
+
+                    // Lưu trực tiếp lên Firebase để khi out ra hoặc đổi thiết bị vẫn giữ nguyên đếm ngược
+                    await db.collection("unlock_timers").doc(uKey).set({
+                        [fastTargetChar.id]: unlockEndTime
+                    }, { merge: true });
+
+                    renderFastColorCenter();
+
+                    const waitHoursText = (waitMs >= 3600000)
+                        ? `${Math.round(waitMs / 3600000 * 10) / 10} tiếng`
+                        : `${Math.round(waitMs / 60000)} phút`;
+
+                    feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-emerald-500/25 text-emerald-100 border-emerald-400/50";
+                    feedbackBox.innerHTML = `
+                        <div class="font-extrabold text-sm mb-1 text-emerald-300">🎉 Duyệt thành công!</div>
+                        <div>Hệ thống đang đếm ngược ${waitHoursText} để mở link của "${fastTargetChar.name}". Sau khi mở khóa thành công bạn sẽ nhận được +2 Chì Màu!</div>
+                        <div class="mt-2 text-pink-200 font-bold bg-pink-500/20 p-2 rounded-xl border border-pink-300/30">
+                            💖 Nhớ bấm thả tim vào nhân vật để lưu giữ vĩnh viễn nhé!
+                        </div>
+                    `;
+                }
 
                 setTimeout(() => {
                     closeFastProofModal();
@@ -6458,6 +6526,17 @@
             } else {
                 openTimeBox.classList.add('hidden');
                 closedBox.classList.add('hidden');
+            }
+        }
+
+        function toggleWaitTimeInputs(val) {
+            const box = document.getElementById('waitCountdownInputsBox');
+            if (box) {
+                if (val === 'immediate') {
+                    box.classList.add('hidden');
+                } else {
+                    box.classList.remove('hidden');
+                }
             }
         }
 
@@ -6505,6 +6584,14 @@
             document.getElementById('unlockedTimeSettingsBox').classList.add('hidden');
             document.getElementById('closedSettingsBox').classList.add('hidden');
             setFormCharNewState(false);
+
+            // Mặc định cài đếm ngược 2 tiếng
+            const countdownRadio = document.querySelector('input[name="formUnlockWaitType"][value="countdown"]');
+            if (countdownRadio) countdownRadio.checked = true;
+            toggleWaitTimeInputs('countdown');
+            document.getElementById('formWaitHours').value = '2';
+            document.getElementById('formWaitMinutes').value = '0';
+
             adminSelectedTags = [];
             renderAdminCategories();
         }
@@ -6606,6 +6693,18 @@
 
             const reopenDate = document.getElementById('formReopenDate').value;
 
+            // Đọc cài đặt đếm ngược mở link
+            const waitType = document.querySelector('input[name="formUnlockWaitType"]:checked')?.value || 'countdown';
+            let unlockWaitMs = 0;
+            if (waitType === 'countdown') {
+                const waitH = parseInt(document.getElementById('formWaitHours').value) || 0;
+                const waitM = parseInt(document.getElementById('formWaitMinutes').value) || 0;
+                unlockWaitMs = (waitH * 3600 + waitM * 60) * 1000;
+                if (unlockWaitMs <= 0) unlockWaitMs = 2 * 3600 * 1000; // Mặc định 2h nếu để 0
+            } else {
+                unlockWaitMs = 0; // Mở luôn lập tức không cần đếm ngược
+            }
+
             const uploadedImages = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 1100, 0.7)));
             let imageSrc = uploadedImages[0] || urlInput;
             if (imageFiles.length > 0) {
@@ -6632,6 +6731,7 @@
                     characters[idx].aiStudioUrl = aiLink;
                     characters[idx].status = status;
                     characters[idx].isNew = isNew;
+                    characters[idx].unlockWaitMs = unlockWaitMs;
                     if (status === 'unlocked_24h') {
                         characters[idx].customDurationMs = customDurationMs;
                         if (!characters[idx].fastStartTime) characters[idx].fastStartTime = Date.now();
@@ -6662,6 +6762,7 @@
                     aiStudioUrl: aiLink,
                     status,
                     isNew,
+                    unlockWaitMs,
                     customDurationMs: status === 'unlocked_24h' ? customDurationMs : null,
                     fastStartTime: status === 'unlocked_24h' ? Date.now() : null,
                     reopenTimestamp: (status === 'closed' && reopenDate) ? new Date(reopenDate).getTime() : null
@@ -6735,6 +6836,23 @@
             document.getElementById('formCharAiLink').value = c.aiStudioUrl;
             document.getElementById('formCharStatus').value = c.status || 'locked';
             setFormCharNewState(Boolean(c.isNew));
+
+            // Đổ dữ liệu cài đặt đếm ngược
+            const waitMs = (typeof c.unlockWaitMs === 'number') ? c.unlockWaitMs : (2 * 3600 * 1000);
+            if (waitMs <= 0) {
+                const immediateRadio = document.querySelector('input[name="formUnlockWaitType"][value="immediate"]');
+                if (immediateRadio) immediateRadio.checked = true;
+                toggleWaitTimeInputs('immediate');
+                document.getElementById('formWaitHours').value = '0';
+                document.getElementById('formWaitMinutes').value = '0';
+            } else {
+                const countdownRadio = document.querySelector('input[name="formUnlockWaitType"][value="countdown"]');
+                if (countdownRadio) countdownRadio.checked = true;
+                toggleWaitTimeInputs('countdown');
+                const totalMins = Math.floor(waitMs / 60000);
+                document.getElementById('formWaitHours').value = Math.floor(totalMins / 60);
+                document.getElementById('formWaitMinutes').value = totalMins % 60;
+            }
 
             toggleStatusSettings(c.status);
 
