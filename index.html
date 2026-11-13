@@ -2064,6 +2064,7 @@
         let unlockedUnsub = null;
         let notificationsUnsub = null;
         let isOwnerListenersActive = false;
+        let allMembersUnlockTimers = {};
         const DEFAULT_VISUAL_EFFECTS = ["fx-dust", "fx-aurora", "fx-stars", "fx-paper", "fx-sakura"];
 
         function isValidAvatarSrc(src) {
@@ -4405,16 +4406,13 @@
                 renderFastColorCenter();
             });
 
-            // Tự động tải và đồng bộ bộ đếm ngược 2 tiếng từ Firebase (không bao giờ bị mất khi out ra)
+            // Tự động tải và đồng bộ bộ đếm ngược từ Firebase (xóa sạch khi đã mở xong)
             db.collection("unlock_timers").doc(uKey).onSnapshot(doc => {
-                if (doc.exists) {
-                    const remoteTimers = doc.data() || {};
-                    if (!userUnlockTimers[username]) userUnlockTimers[username] = {};
-                    Object.assign(userUnlockTimers[username], remoteTimers);
-                    localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
-                    renderFastColorCenter();
-                    updateAIStudioButton();
-                }
+                const remoteTimers = doc.exists ? (doc.data() || {}) : {};
+                userUnlockTimers[username] = remoteTimers;
+                localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
+                renderFastColorCenter();
+                updateAIStudioButton();
             });
 
             notificationsUnsub = db.collection("notifications").doc(uKey).onSnapshot(doc => {
@@ -4549,7 +4547,11 @@
                 const totalHours = Math.round(fastChar.customDurationMs / (3600 * 1000));
                 durationStr = `${totalHours} giờ`;
             }
-            descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt trong ngày khi Palette up plot mới.<br>• <b>Cách lấy:</b> Nhanh tay lấy link ngay trong ngày - Không cần feedback và join discord! Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web sau ${durationStr} (sẽ mở lại sau ba ngày).<br>• <b>Thời gian nhận link:</b> Sau khi nộp ảnh Facebook được duyệt thành công, bạn cần đợi đếm ngược 2 tiếng thì link mới mở khóa nhé!`;
+            const waitMs = (fastChar && typeof fastChar.unlockWaitMs === 'number') ? fastChar.unlockWaitMs : 7200000;
+            const waitNote = waitMs <= 0 
+                ? "link sẽ mở khóa ngay lập tức không cần chờ đợi nhé!" 
+                : `bạn cần đợi đếm ngược ${Math.round(waitMs / 3600000 * 10) / 10} tiếng thì link mới mở khóa nhé!`;
+            descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt trong ngày khi Palette up plot mới.<br>• <b>Cách lấy:</b> Nhanh tay lấy link ngay trong ngày - Không cần feedback và join discord! Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web sau ${durationStr} (sẽ mở lại sau ba ngày).<br>• <b>Thời gian nhận link:</b> Sau khi nộp ảnh Facebook được duyệt thành công, ${waitNote}`;
         }
 
         function openUserAccountModal() {
@@ -4740,6 +4742,14 @@
                 if (userKeys.length === 0) {
                     container.innerHTML = `<div class="text-xs text-sky-200/60 italic text-center py-6">Chưa có thành viên nào đăng ký!</div>`;
                     return;
+                }
+
+                // KHUNG DANH SÁCH CẦN DUYỆT GẤP ĐƯỢC ĐƯA LÊN TRÊN ĐẦU
+                const waitingListHtml = renderAllPendingCountdownsOverview();
+                if (waitingListHtml) {
+                    const topNotice = document.createElement('div');
+                    topNotice.innerHTML = waitingListHtml;
+                    container.appendChild(topNotice);
                 }
 
                 userKeys.forEach(key => {
@@ -5445,7 +5455,9 @@
                     </div>
 
                     <p class="text-[10px] text-amber-200/90 text-center mb-3 italic leading-relaxed bg-amber-500/10 p-2.5 rounded-2xl border border-amber-300/25 max-w-[280px]">
-                        Lưu ý: Sau khi duyệt ảnh thành công, hệ thống sẽ đếm ngược 2 tiếng để mở link. Bạn có thể out ra và quay trở lại sau 2 tiếng để lấy link nhé.
+                        ${(typeof c.unlockWaitMs === 'number' && c.unlockWaitMs <= 0)
+                            ? "Lưu ý: Sau khi duyệt ảnh thành công, link sẽ mở khóa NGAY LẬP TỨC để bạn lấy link nhé!"
+                            : `Lưu ý: Sau khi duyệt ảnh thành công, hệ thống sẽ đếm ngược ${Math.round((c.unlockWaitMs || 7200000) / 3600000 * 10) / 10} tiếng để mở link. Bạn có thể out ra và quay trở lại sau để lấy link nhé.`}
                     </p>
 
                     ${actionButtonHtml}
@@ -5680,7 +5692,7 @@
                             <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[9.5px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow">
                                 MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ
                             </span>
-                            <h3 class="text-2xl font-black mt-2 flex items-cente-r justify-center gap-2 flex-wrap">
+                            <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-2 flex-wrap">
                                 <span class="char-pastel-0">${c.name}</span>
                                 ${c.isNew ? '<span class="new-char-badge text-[10px]"><span class="green-pastel-wave">New</span></span>' : ''}
                             </h3>
@@ -5976,8 +5988,6 @@
             }, 1000);
         }
 
-        let allMembersUnlockTimers = {};
-
         // Xử lý khi bấm vào nút đếm ngược
         function handleFastCountdownClick(charId) {
             if (!currentUser) return;
@@ -6042,6 +6052,58 @@
                 console.error("Lỗi khi mở khóa trực tiếp:", err);
                 alert("Có lỗi xảy ra: " + (err.message || "Vui lòng thử lại"));
             }
+        }
+
+        // Tổng hợp tất cả các bạn đang đếm ngược đưa lên đầu bảng quản trị cho Chủ Web
+        function renderAllPendingCountdownsOverview() {
+            if (!checkIsOwnerAccount()) return '';
+            const now = Date.now();
+            let itemsHtml = '';
+            let totalCount = 0;
+
+            for (let uKey in allMembersUnlockTimers) {
+                const timers = allMembersUnlockTimers[uKey] || {};
+                for (let charId in timers) {
+                    if (timers[charId] && timers[charId] > now) {
+                        totalCount++;
+                        const targetChar = characters.find(c => c.id === charId);
+                        const charName = targetChar ? targetChar.name : "Nhân vật";
+                        const remainMins = Math.ceil(Math.max(0, timers[charId] - now) / 60000);
+                        const timeText = remainMins > 60 ? `${Math.floor(remainMins/60)}h ${remainMins%60}p` : `${remainMins}p`;
+                        const originalName = registeredUsers[uKey]?.username || uKey;
+
+                        itemsHtml += `
+                            <div class="flex items-center justify-between bg-black/50 border border-amber-300/40 p-2 rounded-xl text-xs">
+                                <div class="truncate mr-2">
+                                    <span class="font-bold text-pink-300">${originalName}</span>
+                                    <span class="text-sky-200"> chờ </span>
+                                    <span class="font-extrabold text-amber-200">${charName}</span>
+                                    <span class="text-[10px] text-sky-200/60 font-mono"> (còn ${timeText})</span>
+                                </div>
+                                <button type="button" onclick="ownerForceUnlockForUser('${originalName}', '${charId}')" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black text-[10px] px-2.5 py-1.5 rounded-lg active:scale-95 transition shadow whitespace-nowrap shrink-0">
+                                    ⚡ Mở Luôn
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            if (totalCount === 0) return '';
+
+            return `
+                <div class="mb-3 bg-gradient-to-r from-amber-500/20 via-pink-500/20 to-purple-500/20 border-2 border-amber-300/60 rounded-2xl p-3 space-y-2 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-amber-300 flex items-center gap-1.5 uppercase">
+                            <span>⏳ Đang chờ mở link (${totalCount} yêu cầu):</span>
+                        </span>
+                        <span class="text-[9px] bg-amber-400/30 text-amber-200 px-2 py-0.5 rounded-full font-bold">Cần duyệt</span>
+                    </div>
+                    <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                        ${itemsHtml}
+                    </div>
+                </div>
+            `;
         }
 
         // Hiển thị danh sách các nhân vật đang đếm ngược của từng thành viên trong bảng quản trị
