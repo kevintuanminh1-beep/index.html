@@ -6567,10 +6567,12 @@
                 const isOwnerTesting = (currentUser?.isOwner || currentUser?.username?.toLowerCase() === "bibi 0304");
 
                 if (!isOwnerTesting) {
-                    const targetTag = (activeChar.firstTagKeyword || activeChar.firstTagSubtitle || "").toLowerCase();
-                    const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                    const hasTag = cleanFb.includes(targetTag) || cleanFb.includes(unaccentedTag);
-                    if (!hasTag) throw new Error("Ảnh Facebook gửi sai bài viết của nhân vật khác!");
+                    const normalizedFb = cleanFb.replace(/\s+/g, ' ');
+                    const unaccentedFb = normalizedFb.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+                    const targetTag = (activeChar.firstTagKeyword || activeChar.firstTagSubtitle || "").trim().toLowerCase().replace(/\s+/g, ' ');
+                    const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+                    const hasTag = !targetTag || normalizedFb.includes(targetTag) || unaccentedFb.includes(unaccentedTag);
+                    if (!hasTag) throw new Error("Ảnh Facebook chụp sai tag hoặc chưa dính tag bài viết! Vui lòng chụp rõ đúng tag nhé.");
                 }
 
                 // 2. Quét Discord
@@ -6816,10 +6818,11 @@
                 if (!hasPage) throw new Error("Ảnh chưa nhìn thấy rõ tên Page 'Palette Số Hóa'!");
 
                 // 2. Kiểm tra đúng Tag nhân vật
-                const targetTag = (fastTargetChar.firstTagKeyword || fastTargetChar.firstTagSubtitle || "").toLowerCase();
-                const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                const hasTag = clean.includes(targetTag) || clean.includes(unaccentedTag);
-                if (!hasTag) throw new Error("Ảnh đang gửi sai bài viết của nhân vật khác!");
+                const unaccentedClean = clean.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+                const targetTag = (fastTargetChar.firstTagKeyword || fastTargetChar.firstTagSubtitle || "").trim().toLowerCase().replace(/\s+/g, ' ');
+                const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+                const hasTag = !targetTag || clean.includes(targetTag) || unaccentedClean.includes(unaccentedTag);
+                if (!hasTag) throw new Error("Ảnh Facebook chụp sai tag hoặc chưa dính tag bài viết! Vui lòng chụp rõ đúng tag nhé.");
 
                 // 3. Kiểm tra nút cảm xúc (Tim / Thích / Thương thương)
                 const hasReact = await checkFacebookReact(fastFbDataUrl, fastFbOcrData);
