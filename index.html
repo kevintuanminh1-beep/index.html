@@ -6,16 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="referrer" content="no-referrer">
     <title>Thế giới chì màu của Palette</title>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://www.gstatic.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Tesseract.js (AI OCR) -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
-    <!-- FIREBASE COMPAT SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
         html {
@@ -692,24 +690,70 @@
     </div>
 
     <!-- MODAL DUYỆT LINK THỦ CÔNG (HELP) DÀNH CHO CHỦ WEB -->
-    <div id="adminLinkReviewModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-        <div class="bg-[#121c38] border-2 border-amber-300/80 p-5 rounded-3xl max-w-md w-full text-left shadow-[0_0_40px_rgba(251,191,36,0.35)] max-h-[88vh] custom-scroll">
-            <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-2.5">
-                <div class="flex items-center gap-2">
-                    <span class="text-lg">🆘</span>
-                    <div>
-                        <h3 class="text-sm font-extrabold text-amber-200">Duyệt Link (Yêu Cầu Help)</h3>
-                        <p class="text-[10px] text-sky-200/60">Bấm Duyệt là link mở ngay cho thành viên, không cần xét lại</p>
+    <div id="adminLinkReviewModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-[#121c38] border-2 border-amber-300/80 p-4 sm:p-5 rounded-3xl max-w-md w-full text-left shadow-[0_0_40px_rgba(251,191,36,0.35)] max-h-[84vh] flex flex-col overflow-hidden my-auto">
+            <div class="flex items-center justify-between gap-2 mb-2.5 border-b border-white/10 pb-2.5 shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-lg shrink-0">🆘</span>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-extrabold text-amber-200 truncate">Duyệt Link & Ảnh Lỗi</h3>
+                        <p class="text-[10px] text-sky-200/60 truncate">Bấm Duyệt là link mở ngay cho thành viên</p>
                     </div>
                 </div>
-                <button onclick="closeLinkReviewModal()" class="text-sky-200 text-lg p-1 hover:text-white">✕</button>
+                <button type="button" onclick="closeLinkReviewModal()" class="w-8 h-8 rounded-full bg-white/15 hover:bg-red-500/40 text-white text-sm font-black flex items-center justify-center shrink-0 active:scale-90 transition" title="Đóng">✕</button>
             </div>
-            <div class="space-y-3 text-xs">
-                <div class="flex items-center justify-between">
-                    <span class="font-bold text-amber-300">Danh sách ảnh đang chờ xem xét:</span>
+            <div class="flex-1 min-h-0 flex flex-col space-y-2.5 text-xs overflow-hidden">
+                <div class="flex items-center justify-between shrink-0">
+                    <span class="font-bold text-amber-300">Danh sách ảnh chờ xem xét:</span>
                     <span id="adminPendingLinkCountInModal" class="text-[10px] text-pink-300 font-bold">0 yêu cầu</span>
                 </div>
-                <div id="adminPendingLinkList" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scroll pr-1"></div>
+                <div id="adminPendingLinkList" class="space-y-3 flex-1 min-h-0 overflow-y-auto custom-scroll pr-1 pb-1"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NHẬP LÝ DO KHI CHỦ WEB BẤM DUYỆT LINK -->
+    <div id="approveLinkReasonModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[70] hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-[#121c38] border-2 border-emerald-300/70 p-4 sm:p-5 rounded-3xl max-w-sm w-full text-left shadow-[0_0_40px_rgba(16,185,129,0.35)] space-y-3 max-h-[86vh] overflow-y-auto custom-scroll my-auto">
+            <div class="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+                <div class="min-w-0">
+                    <h3 id="approveReasonModalTitle" class="text-sm font-extrabold text-emerald-300 truncate">✓ Duyệt & Mở Link</h3>
+                    <p id="approveReasonModalSub" class="text-[10.5px] text-sky-200/75 mt-0.5 break-words"></p>
+                </div>
+                <button type="button" onclick="closeApproveReasonModal()" class="w-8 h-8 rounded-full bg-white/15 hover:bg-red-500/40 text-white text-sm font-black flex items-center justify-center shrink-0 active:scale-90 transition" title="Đóng">✕</button>
+            </div>
+
+            <div class="space-y-2.5 text-xs">
+                <div>
+                    <label class="block font-bold text-amber-200 text-[11px] mb-1.5">
+                        Chọn nhanh lý do có sẵn (chạm để chèn thêm):
+                    </label>
+                    <div id="approveReasonChipsBox" class="flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <div class="pt-1 border-t border-white/10 space-y-1.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <label class="font-bold text-pink-200 text-[11px]">
+                            ✍️ Hoặc tự ghi lý do riêng của bạn:
+                        </label>
+                        <button type="button" onclick="saveCurrentTextAsReasonChip()" class="text-[10px] bg-pink-500/20 hover:bg-pink-500/35 border border-pink-300/40 text-pink-200 font-bold px-2 py-0.5 rounded-lg transition active:scale-95" title="Lưu câu bạn vừa gõ thành nút bấm sẵn cho lần sau">
+                            + Lưu làm mẫu
+                        </button>
+                    </div>
+                    <textarea id="approveReasonInput" rows="3" placeholder="Tự gõ bất kỳ lý do nào bạn muốn nhắn cho user tại đây..." class="w-full bg-black/50 border border-white/20 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-300 resize-none"></textarea>
+                    <div class="flex justify-end">
+                        <button type="button" onclick="document.getElementById('approveReasonInput').value=''" class="text-[10px] text-sky-200/60 hover:text-white underline">Xóa ô chữ</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2 pt-1">
+                <button type="button" id="confirmApproveWithReasonBtn" onclick="confirmApproveLinkAction(true)" class="jelly-btn w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black py-2.5 px-3 rounded-xl text-xs shadow-lg active:scale-95 transition">
+                    ✓ Duyệt & Gửi thông báo kèm lý do
+                </button>
+                <button type="button" id="confirmApproveNoReasonBtn" onclick="confirmApproveLinkAction(false)" class="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-sky-100 font-bold py-2 px-3 rounded-xl text-xs active:scale-95 transition">
+                    ⚡ Không có lý do (Chỉ duyệt, không gửi TB lý do)
+                </button>
             </div>
         </div>
     </div>
@@ -890,7 +934,23 @@
                 <div id="userNotificationsList" class="space-y-2 max-h-52 overflow-y-auto custom-scroll pr-1"></div>
             </div>
 
-            <!-- Đã loại bỏ, chỉ giữ lại mục Thông Báo Đã Nhận ở trên -->
+            <!-- CÀI ĐẶT ĐẨY THÔNG BÁO RA THANH THÔNG BÁO ĐIỆN THOẠI (CHỦ WEB) -->
+            <div id="ownerPhonePushBox" class="hidden bg-gradient-to-br from-emerald-500/15 via-teal-500/15 to-sky-500/15 border border-emerald-300/40 rounded-2xl p-3 mb-4 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-extrabold text-emerald-300">📲 Thông Báo Ra Điện Thoại (ntfy)</span>
+                    <span class="text-[9px] bg-emerald-400/20 text-emerald-200 px-1.5 py-0.5 rounded-full font-bold">Chủ web</span>
+                </div>
+                <p class="text-[10.5px] text-sky-100/80 leading-relaxed">
+                    Tải app <b>ntfy</b> miễn phí trên App Store / CH Play ➔ Bấm dấu <b>+</b> đăng ký đúng tên kênh bí mật bên dưới. Tắt web vẫn báo <b>Cmt / Lỗi / Help</b> thẳng ra màn hình khóa!
+                </p>
+                <div class="flex items-center gap-1.5">
+                    <input id="ownerNtfyTopicInput" type="text" placeholder="VD: palette-bibi-0304-secret" class="flex-1 bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-emerald-300">
+                    <button type="button" onclick="saveOwnerNtfyTopic()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-2.5 py-1.5 rounded-xl text-[11px] active:scale-95 transition shrink-0">Lưu</button>
+                </div>
+                <button type="button" onclick="testOwnerPhonePush()" class="w-full bg-white/10 hover:bg-white/20 border border-emerald-300/30 text-emerald-200 font-bold py-1.5 rounded-xl text-[11px] active:scale-95 transition">
+                    🔔 Gửi thử ra thanh thông báo điện thoại
+                </button>
+            </div>
 
             <button onclick="handleLogout()" class="jelly-btn w-full bg-red-500/25 hover:bg-red-500/40 border border-red-400/50 text-red-200 font-extrabold py-2.5 rounded-xl text-xs active:scale-95 transition flex items-center justify-center gap-2">
                 <svg class="w-4 h-4 text-red-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -2056,13 +2116,13 @@
         </div>
     </div>
 
-    <!-- MODAL XEM ẢNH BÌNH LUẬN PHÓNG TO (LIGHTBOX) -->
-    <div id="imageLightboxModal" onclick="closeLightboxImage()" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] hidden flex items-center justify-center p-3 sm:p-5 select-none transition-all">
+    <!-- MODAL XEM ẢNH BÌNH LUẬN & ẢNH LỖI PHÓNG TO (LIGHTBOX) -->
+    <div id="imageLightboxModal" onclick="closeLightboxImage()" class="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] hidden flex items-center justify-center p-3 sm:p-5 select-none transition-all">
+        <button type="button" onclick="event.stopPropagation(); closeLightboxImage()" style="top: max(1rem, env(safe-area-inset-top));" class="fixed right-4 z-[110] text-white text-lg font-black bg-red-500/80 hover:bg-red-500 border border-white/30 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition active:scale-90" title="Đóng ảnh">
+            ✕
+        </button>
         <div class="relative max-w-full max-h-full flex flex-col items-center justify-center" onclick="event.stopPropagation()">
-            <button type="button" onclick="closeLightboxImage()" class="absolute -top-11 right-0 text-white/90 hover:text-pink-300 text-xl font-black bg-white/10 hover:bg-white/20 border border-white/20 rounded-full w-9 h-9 flex items-center justify-center shadow transition active:scale-95" title="Đóng ảnh">
-                ✕
-            </button>
-            <img id="lightboxImageTag" src="" alt="Ảnh phóng to" class="max-w-[95vw] max-h-[82vh] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] border border-pink-300/30">
+            <img id="lightboxImageTag" src="" alt="Ảnh phóng to" class="max-w-[95vw] max-h-[75vh] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] border border-pink-300/30">
             <p class="text-[11px] text-pink-200/80 mt-2.5 text-center pointer-events-none bg-black/50 px-3 py-1 rounded-full border border-white/10">
                 🔍 Chạm vào vùng đen bên ngoài hoặc bấm ✕ để đóng
             </p>
@@ -2072,6 +2132,10 @@
     <footer class="text-[11px] text-sky-300/50 text-center pb-2 z-10 mt-6">
         Các Character chỉ phục vụ cho mục đích giải trí.
     </footer>
+
+    <!-- FIREBASE COMPAT SDKs (Đặt cuối trang để giao diện hiện tức thì) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <!-- ============================================================== -->
     <!-- JAVASCRIPT: LOGIC ĐÃ NÂNG CẤP TỐI ĐA                          -->
@@ -2089,6 +2153,27 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        // Bật bộ nhớ đệm IndexedDB: Vào lại web là hiện dữ liệu tức thì không cần chờ tải lại từ đầu
+        db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+        let tesseractLoadPromise = null;
+        function ensureTesseractLoaded() {
+            if (window.Tesseract && typeof window.Tesseract.recognize === 'function') {
+                return Promise.resolve();
+            }
+            if (tesseractLoadPromise) return tesseractLoadPromise;
+            tesseractLoadPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+                script.onload = () => resolve();
+                script.onerror = () => {
+                    tesseractLoadPromise = null;
+                    reject(new Error("Không thể tải bộ đọc chữ AI. Vui lòng kiểm tra kết nối mạng!"));
+                };
+                document.head.appendChild(script);
+            });
+            return tesseractLoadPromise;
+        }
 
         const OWNER_USER = "Bibi 0304";
         const OWNER_PASS = "bakhongnhogihet0";
@@ -2114,6 +2199,72 @@
         let lastFailedProofContext = null;
         let isFirstNotificationSnapshot = true;
         let lastKnownNotificationTimeKey = "";
+        let knownOwnerActivityIds = null;
+        let ownerNtfyTopic = localStorage.getItem('palette_owner_ntfy_topic') || "";
+
+        async function saveOwnerNtfyTopic() {
+            if (!checkIsOwnerAccount()) return;
+            const input = document.getElementById('ownerNtfyTopicInput');
+            const val = (input ? input.value.trim() : "").replace(/[^a-zA-Z0-9_-]/g, '');
+            if (!val) {
+                alert("Vui lòng nhập tên kênh bí mật (chữ không dấu, số, gạch ngang - hoặc _), ví dụ: palette-bibi-9988");
+                return;
+            }
+            if (input) input.value = val;
+            ownerNtfyTopic = val;
+            localStorage.setItem('palette_owner_ntfy_topic', val);
+            try {
+                await db.collection("settings").doc("main").set({ ownerNtfyTopic: val }, { merge: true });
+                alert(`✓ Đã lưu kênh: "${val}"!\nGiờ bạn mở app ntfy trên điện thoại, bấm dấu + và nhập đúng chữ "${val}" để nhận thông báo nhé!`);
+            } catch (err) {
+                alert("Lỗi lưu Firebase: " + (err?.message || ""));
+            }
+        }
+
+        async function testOwnerPhonePush() {
+            if (!checkIsOwnerAccount()) return;
+            const input = document.getElementById('ownerNtfyTopicInput');
+            const topic = (input?.value.trim() || ownerNtfyTopic || "").replace(/[^a-zA-Z0-9_-]/g, '');
+            if (!topic) {
+                alert("Bạn hãy nhập tên kênh và bấm Lưu trước khi gửi thử nhé!");
+                return;
+            }
+            ownerNtfyTopic = topic;
+            await sendPhonePushToOwner(
+                "✨ Test Thông Báo Palette",
+                "Kết nối thành công! Từ giờ có Cmt, Lỗi hay Help là điện thoại bạn sẽ ting ting ngay 💖",
+                4
+            );
+            alert(`Đã gửi thử tới kênh "${topic}"! Hãy kiểm tra thanh thông báo điện thoại nhé.`);
+        }
+
+        async function sendPhonePushToOwner(title, message, priority = 4) {
+            const topic = (ownerNtfyTopic || "").trim();
+            if (!topic) return;
+            try {
+                const clickParam = window.location.href.startsWith('http')
+                    ? `&click=${encodeURIComponent(window.location.origin + window.location.pathname)}`
+                    : '';
+                const endpoint = `https://ntfy.sh/${encodeURIComponent(topic)}?title=${encodeURIComponent(title)}&priority=${priority}${clickParam}`;
+                await fetch(endpoint, {
+                    method: 'POST',
+                    body: message
+                });
+            } catch (_) {}
+        }
+
+        function showBrowserNotificationSafe(title, body) {
+            if (!notificationsEnabled || !("Notification" in window) || Notification.permission !== "granted") return;
+            try {
+                new Notification(title, { body, icon: "https://files.catbox.moe/1foc7r.gif" });
+            } catch (_) {
+                if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification(title, { body, icon: "https://files.catbox.moe/1foc7r.gif" });
+                    }).catch(() => {});
+                }
+            }
+        }
         const DEFAULT_VISUAL_EFFECTS = ["fx-dust", "fx-aurora", "fx-stars", "fx-paper", "fx-sakura"];
 
         function isValidAvatarSrc(src) {
@@ -3495,7 +3646,11 @@
             if (clearBtn) clearBtn.classList.remove('hidden');
 
             const base64 = await processImageForFastOCR(file);
-            cachedDcDataUrls = [base64];
+            cachedDcDataUrls = base64 ? [base64] : [];
+            if (!base64 && span) {
+                span.innerText = "⚠️ Ảnh lỗi / chưa hỗ trợ";
+                span.className = "text-[11px] text-amber-300 font-bold truncate flex-1";
+            }
         }
 
         function clearDcProofSelection() {
@@ -3511,45 +3666,106 @@
             if (clearBtn) clearBtn.classList.add('hidden');
         }
 
-        // BỘ NÉN ẢNH VÀ TĂNG TỐC ĐỘ NHẬN DIỆN CHO AI (TƯƠNG THÍCH MỌI ĐIỆN THOẠI)
+        async function convertHeicBlobToJpeg(file) {
+            if (typeof window.heic2any !== 'function') {
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js";
+                    s.onload = resolve;
+                    s.onerror = reject;
+                    document.head.appendChild(s);
+                });
+            }
+            if (typeof window.heic2any === 'function') {
+                const converted = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
+                return Array.isArray(converted) ? converted[0] : converted;
+            }
+            return null;
+        }
+
+        function drawBitmapOrImgToJpeg(source, w, h, maxDim = 1200, quality = 0.85) {
+            let width = w || 800;
+            let height = h || 1000;
+            if (width > maxDim || height > maxDim) {
+                if (width > height) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                } else {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, width);
+            canvas.height = Math.max(1, height);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', quality);
+        }
+
+        // BỘ NÉN & ĐỌC ẢNH ĐA NĂNG (HỖ TRỢ CẢ HEIC, ẢNH CUỘN DÀI & CHỐNG TRÀN RAM)
         async function processImageForFastOCR(file) {
-            return new Promise((resolve) => {
-                if (!file) return resolve("");
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const rawData = e.target.result;
-                    if (!rawData) return resolve("");
-                    const img = new Image();
-                    img.onload = () => {
-                        try {
-                            const canvas = document.createElement('canvas');
-                            let width = img.width || 800;
-                            let height = img.height || 1000;
-                            const maxDim = 1200;
-                            if (width > maxDim || height > maxDim) {
-                                if (width > height) {
-                                    height = Math.round((height * maxDim) / width);
-                                    width = maxDim;
-                                } else {
-                                    width = Math.round((width * maxDim) / height);
-                                    height = maxDim;
-                                }
-                            }
-                            canvas.width = Math.max(1, width);
-                            canvas.height = Math.max(1, height);
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            resolve(canvas.toDataURL('image/jpeg', 0.85));
-                        } catch (err) {
-                            resolve(rawData);
-                        }
-                    };
-                    img.onerror = () => resolve(rawData);
-                    img.src = rawData;
+            if (!file) return "";
+
+            const fileName = (file.name || "").toLowerCase();
+            const fileType = (file.type || "").toLowerCase();
+            let workingBlob = file;
+
+            if (fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif')) {
+                try {
+                    const jpgBlob = await convertHeicBlobToJpeg(file);
+                    if (jpgBlob) workingBlob = jpgBlob;
+                } catch (_) {}
+            }
+
+            if (typeof createImageBitmap === 'function') {
+                try {
+                    const bitmap = await createImageBitmap(workingBlob);
+                    const jpegUrl = drawBitmapOrImgToJpeg(bitmap, bitmap.width, bitmap.height, 1200, 0.85);
+                    if (typeof bitmap.close === 'function') bitmap.close();
+                    if (jpegUrl && jpegUrl.startsWith('data:image/jpeg')) return jpegUrl;
+                } catch (_) {}
+            }
+
+            const objResult = await new Promise((resolve) => {
+                let objUrl = "";
+                try {
+                    objUrl = URL.createObjectURL(workingBlob);
+                } catch (_) {
+                    return resolve("");
+                }
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const jpegUrl = drawBitmapOrImgToJpeg(img, img.naturalWidth || img.width, img.naturalHeight || img.height, 1200, 0.85);
+                        URL.revokeObjectURL(objUrl);
+                        resolve(jpegUrl);
+                    } catch (_) {
+                        URL.revokeObjectURL(objUrl);
+                        resolve("");
+                    }
                 };
-                reader.onerror = () => resolve("");
-                reader.readAsDataURL(file);
+                img.onerror = () => {
+                    URL.revokeObjectURL(objUrl);
+                    resolve("");
+                };
+                img.src = objUrl;
             });
+            if (objResult) return objResult;
+
+            try {
+                const retryHeic = await convertHeicBlobToJpeg(file);
+                if (retryHeic && typeof createImageBitmap === 'function') {
+                    const bitmap2 = await createImageBitmap(retryHeic);
+                    const jpeg2 = drawBitmapOrImgToJpeg(bitmap2, bitmap2.width, bitmap2.height, 1200, 0.85);
+                    if (typeof bitmap2.close === 'function') bitmap2.close();
+                    if (jpeg2) return jpeg2;
+                }
+            } catch (_) {}
+
+            return "";
         }
 
         // ================= HỆ THỐNG CHÌ MÀU & ĐIỂM DANH =================
@@ -4417,6 +4633,10 @@
                     const data = doc.data();
                     if (data.availableCategories) availableCategories = data.availableCategories;
                     if (data.customMenuIcons) customMenuIcons = data.customMenuIcons;
+                    if (typeof data.ownerNtfyTopic === 'string') {
+                        ownerNtfyTopic = data.ownerNtfyTopic;
+                        localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
+                    }
                     if (data.bgMusic) {
                         loadSavedBackgroundMusic(data.bgMusic);
                     }
@@ -4524,9 +4744,26 @@
             });
 
             db.collection("activities").onSnapshot((snapshot) => {
+                const prevIds = knownOwnerActivityIds;
                 memberActivities = [];
                 snapshot.forEach(doc => { memberActivities.push({ id: doc.id, ...doc.data() }); });
                 memberActivities.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+                const currIds = new Set(memberActivities.map(a => a.id));
+
+                if (prevIds) {
+                    const newActs = memberActivities.filter(a => !prevIds.has(a.id));
+                    newActs.forEach(act => {
+                        const cat = getActivityCategory(act);
+                        if (cat === 'comment' || cat === 'fail') {
+                            const toastTitle = cat === 'fail' ? `❌ Lỗi ảnh: ${act.username}` : `💬 Cmt mới: ${act.username}`;
+                            showInAppNotifyToast(toastTitle, `${act.title}${act.details ? ` · ${act.details}` : ''}`);
+                            showBrowserNotificationSafe(toastTitle, act.details || act.title);
+                            playPaletteTingSound();
+                        }
+                    });
+                }
+                knownOwnerActivityIds = currIds;
+
                 updateActivitiesBadgeUI();
                 renderUsersModalContent();
                 if (currentUser?.isOwner) renderUserNotifications();
@@ -4618,8 +4855,19 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            // Đổ ngay danh sách nhân vật đã lưu đệm ra màn hình không cần đợi mạng
+            const cachedChars = safeParseLocalJson('palette_cached_characters', []);
+            if (Array.isArray(cachedChars) && cachedChars.length > 0) {
+                characters = cachedChars;
+                renderCharacters();
+                renderFastColorCenter();
+            }
+
             applyVisualEffects(DEFAULT_VISUAL_EFFECTS);
             initFirebaseListeners();
+
+            // Tải ngầm AI OCR sau khi trang chủ đã hiện mượt mà
+            setTimeout(() => { ensureTesseractLoaded().catch(() => {}); }, 3500);
 
             const savedUser = safeParseLocalJson('palette_persistent_user', null);
             if (savedUser && savedUser.username) {
@@ -4662,6 +4910,16 @@
             document.getElementById('accountModalUsername').innerText = currentUser.username;
             const avatar = registeredUsers[currentUser.username.toLowerCase()]?.avatar || "";
             updateAccountAvatarUI(avatar);
+
+            const pushBox = document.getElementById('ownerPhonePushBox');
+            const topicInput = document.getElementById('ownerNtfyTopicInput');
+            if (pushBox) {
+                pushBox.classList.toggle('hidden', !checkIsOwnerAccount());
+            }
+            if (topicInput && checkIsOwnerAccount()) {
+                topicInput.value = ownerNtfyTopic || "";
+            }
+
             renderUserNotifications();
             document.getElementById('userAccountModal').classList.remove('hidden');
         }
@@ -4767,52 +5025,26 @@
             });
         }
 
-        // Duyệt mở khóa trực tiếp cho thành viên từ mục Thất Bại (không cần user phải bấm Help)
-        async function ownerQuickApproveFromFail(targetUsername, charId, modeLabel = '') {
+        // Duyệt mở khóa trực tiếp cho thành viên từ mục Thất Bại (mở bảng chọn có lý do / không lý do)
+        function ownerQuickApproveFromFail(targetUsername, charId, modeLabel = '') {
             if (!checkIsOwnerAccount() || !targetUsername || !charId) return;
             const targetChar = characters.find(c => c.id === charId);
             const charName = targetChar ? targetChar.name : "Nhân vật";
-            if (!confirm(`Chủ Web xác nhận DUYỆT & MỞ LINK NGAY cho "${targetUsername}" (${charName})?`)) return;
+            const matchedFail = memberActivities.find(a =>
+                getActivityCategory(a) === 'fail' &&
+                (a.username || '').toLowerCase() === targetUsername.toLowerCase() &&
+                a.charId === charId
+            );
+            const isFast = modeLabel.toLowerCase().includes('nhanh') || targetChar?.status === 'unlocked_24h';
 
-            try {
-                const uKey = targetUsername.toLowerCase();
-                const unlockedRef = db.collection("unlocked").doc(targetUsername);
-                const snap = await unlockedRef.get();
-                const existingChars = snap.exists ? (snap.data().chars || {}) : {};
-                existingChars[charId] = true;
-                await unlockedRef.set({ chars: existingChars }, { merge: true });
-
-                await db.collection("unlock_timers").doc(uKey).set({
-                    [charId]: firebase.firestore.FieldValue.delete()
-                }, { merge: true }).catch(() => {});
-
-                const isFast = modeLabel.toLowerCase().includes('nhanh') || targetChar?.status === 'unlocked_24h';
-                const reward = isFast ? 2 : 1;
-                await addPencilToUser(targetUsername, reward, `Chủ Web duyệt mở link ${charName}`);
-
-                triggerNotification(
-                    "Palette Đã Duyệt Link! 🎉",
-                    `Palette đã xem xét lại ảnh và mở khóa link "${charName}" cho bạn rồi nhé (+${reward} Chì Màu)! Nhớ bấm tim để lưu giữ vĩnh viễn nhé!`,
-                    targetUsername
-                );
-
-                logMemberActivity("Chủ Web duyệt mở link 🔓", `Thành viên: ${targetUsername} · Nhân vật: ${charName}`, "link", {
-                    charId: charId,
-                    charName: charName
-                });
-
-                if (currentUser && currentUser.username.toLowerCase() === uKey) {
-                    if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
-                    userUnlockedState[currentUser.username][charId] = true;
-                    renderFastColorCenter();
-                    updateAIStudioButton();
-                }
-
-                alert(`✓ Đã mở khóa link "${charName}" cho "${targetUsername}" thành công!`);
-            } catch (err) {
-                console.error("Lỗi mở khóa nhanh từ thất bại:", err);
-                alert("Có lỗi xảy ra: " + (err?.message || "Vui lòng thử lại"));
-            }
+            openApproveReasonModal({
+                reqId: null,
+                targetUsername: targetUsername,
+                charId: charId,
+                charName: charName,
+                isFast: isFast,
+                failReason: matchedFail?.failReason || ""
+            });
         }
 
         // Nén ảnh gọn nhẹ để lưu thẳng lên Firestore không bị vượt 1MB
@@ -4873,6 +5105,13 @@
             const charName = charObj?.name || "Nhân vật";
             const charId = charObj?.id || "";
             const cleanReason = reasonMsg || "Không rõ lý do";
+
+            // Đẩy thẳng thông báo ra thanh thông báo điện thoại của Chủ Web
+            sendPhonePushToOwner(
+                `❌ Lỗi duyệt ảnh: ${currentUser.username}`,
+                `Char: ${charName} (${modeLabel})\nLý do: ${cleanReason}`,
+                4
+            );
 
             // 1. Lưu vào bảng Hoạt Động (mục ❌ Thất Bại) kèm luôn ảnh chụp bị lỗi
             const failActId = await logMemberActivity(
@@ -4951,6 +5190,13 @@
                     "🆘 Có yêu cầu Duyệt Link (Help)!",
                     `${currentUser.username} vừa bấm Help gửi ảnh nhờ duyệt lại cho "${ctx.charName}". Vào mục Duyệt Link (Help) để xem ảnh nhé!`,
                     OWNER_USER
+                );
+
+                // Đẩy khẩn cấp (priority 5) ra thanh thông báo điện thoại của Chủ Web
+                sendPhonePushToOwner(
+                    `🆘 HELP DUYỆT LINK: ${currentUser.username}`,
+                    `Nhờ duyệt lại "${ctx.charName}" (${ctx.modeLabel})\nLỗi máy báo: ${ctx.failReason}`,
+                    5
                 );
 
                 if (btn) {
@@ -5122,46 +5368,214 @@
             });
         }
 
-        async function approveManualLinkRequest(reqId) {
-            if (!checkIsOwnerAccount()) return;
-            const req = pendingManualLinkRequests.find(r => r.id === reqId);
-            if (!req) return;
-            if (!confirm(`Chủ Web xác nhận DUYỆT & MỞ LINK NGAY cho "${req.username}" (${req.charName})?`)) return;
+        let pendingOwnerApproveContext = null;
+        let isApprovingLinkAction = false;
+
+        const DEFAULT_REASON_CHIPS = [
+            { label: "+ Thiếu tên Page", text: "Ảnh bị cắt thiếu tên Page Palette Số Hóa, lần sau chụp rõ tên Page nha!" },
+            { label: "+ Thiếu Tag", text: "Ảnh chụp chưa thấy rõ Tag bài viết của nhân vật, lần sau chụp đủ Tag nhé!" },
+            { label: "+ Chưa rõ Tim", text: "Chưa thấy rõ nút đã thả cảm xúc (Tim/Like), lần sau chụp rõ nút Tim nha!" },
+            { label: "+ Ảnh mờ", text: "Ảnh hơi mờ nên hệ thống không đọc được chữ, lần sau chụp nét hơn chút nhé!" },
+            { label: "+ Font khó đọc", text: "Do bạn dùng font chữ kiểu nên máy chưa đọc được rõ, lần sau chụp nét hoặc bấm Help nha!" }
+        ];
+        let customOwnerReasonChips = safeParseLocalJson('palette_custom_reason_chips', []);
+
+        function renderApproveReasonChips() {
+            const box = document.getElementById('approveReasonChipsBox');
+            if (!box) return;
+            box.innerHTML = '';
+
+            DEFAULT_REASON_CHIPS.forEach(chip => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "text-[10px] bg-white/10 hover:bg-pink-500/30 border border-white/15 px-2 py-1 rounded-lg text-sky-100 transition active:scale-95";
+                btn.innerText = chip.label;
+                btn.onclick = () => fillApproveReasonChip(chip.text);
+                box.appendChild(btn);
+            });
+
+            customOwnerReasonChips.forEach((txt, idx) => {
+                const wrap = document.createElement('div');
+                wrap.className = "inline-flex items-center bg-pink-500/20 border border-pink-300/40 rounded-lg overflow-hidden";
+                const shortLabel = txt.length > 22 ? txt.slice(0, 22) + '...' : txt;
+
+                const pickBtn = document.createElement('button');
+                pickBtn.type = 'button';
+                pickBtn.className = "text-[10px] text-pink-100 font-bold px-2 py-1 hover:bg-pink-500/30 transition";
+                pickBtn.innerText = shortLabel;
+                pickBtn.title = txt;
+                pickBtn.onclick = () => fillApproveReasonChip(txt);
+
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = "text-[10px] text-red-300 hover:text-white hover:bg-red-500/50 px-1.5 py-1 border-l border-pink-300/20 font-black";
+                delBtn.innerText = "×";
+                delBtn.title = "Xóa mẫu tự lưu này";
+                delBtn.onclick = () => deleteCustomReasonChip(idx);
+
+                wrap.appendChild(pickBtn);
+                wrap.appendChild(delBtn);
+                box.appendChild(wrap);
+            });
+        }
+
+        function saveCurrentTextAsReasonChip() {
+            const inputEl = document.getElementById('approveReasonInput');
+            const val = inputEl ? inputEl.value.trim() : '';
+            if (!val) {
+                alert("Hãy gõ nội dung lý do vào ô bên dưới trước rồi bấm '+ Lưu làm mẫu' nhé!");
+                if (inputEl) inputEl.focus();
+                return;
+            }
+            if (!customOwnerReasonChips.includes(val)) {
+                customOwnerReasonChips.unshift(val);
+                customOwnerReasonChips = customOwnerReasonChips.slice(0, 12);
+                localStorage.setItem('palette_custom_reason_chips', JSON.stringify(customOwnerReasonChips));
+            }
+            renderApproveReasonChips();
+            playPaletteTingSound();
+        }
+
+        function deleteCustomReasonChip(idx) {
+            customOwnerReasonChips.splice(idx, 1);
+            localStorage.setItem('palette_custom_reason_chips', JSON.stringify(customOwnerReasonChips));
+            renderApproveReasonChips();
+        }
+
+        function openApproveReasonModal(ctx) {
+            if (!checkIsOwnerAccount() || !ctx) return;
+            pendingOwnerApproveContext = ctx;
+            const isRejectMode = (ctx.actionMode === 'reject');
+            const titleEl = document.getElementById('approveReasonModalTitle');
+            const subEl = document.getElementById('approveReasonModalSub');
+            const inputEl = document.getElementById('approveReasonInput');
+            const btn1 = document.getElementById('confirmApproveWithReasonBtn');
+            const btn2 = document.getElementById('confirmApproveNoReasonBtn');
+
+            if (titleEl) {
+                titleEl.innerText = isRejectMode
+                    ? `✕ Từ chối & Báo lỗi cho ${ctx.targetUsername}`
+                    : `✓ Duyệt mở link cho ${ctx.targetUsername}`;
+                titleEl.className = isRejectMode
+                    ? "text-sm font-extrabold text-red-300 truncate"
+                    : "text-sm font-extrabold text-emerald-300 truncate";
+            }
+            if (subEl) subEl.innerText = `Nhân vật: ${ctx.charName}${ctx.failReason ? ` · Máy báo: ${ctx.failReason}` : ''}`;
+            if (inputEl) inputEl.value = '';
+
+            if (btn1) {
+                if (isRejectMode) {
+                    btn1.innerText = "✕ Từ chối & Gửi thông báo lý do cho User";
+                    btn1.className = "jelly-btn w-full bg-gradient-to-r from-red-500 to-rose-600 hover:brightness-110 text-white font-black py-2.5 px-3 rounded-xl text-xs shadow-lg active:scale-95 transition";
+                } else {
+                    btn1.innerText = "✓ Duyệt & Gửi thông báo kèm lý do";
+                    btn1.className = "jelly-btn w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black py-2.5 px-3 rounded-xl text-xs shadow-lg active:scale-95 transition";
+                }
+            }
+            if (btn2) {
+                btn2.innerText = isRejectMode
+                    ? "🗑️ Chỉ bỏ qua / Xóa yêu cầu (Không gửi TB)"
+                    : "⚡ Không có lý do (Chỉ duyệt, không gửi TB lý do)";
+            }
+
+            renderApproveReasonChips();
+            const modal = document.getElementById('approveLinkReasonModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeApproveReasonModal() {
+            const modal = document.getElementById('approveLinkReasonModal');
+            if (modal) modal.classList.add('hidden');
+            pendingOwnerApproveContext = null;
+        }
+
+        function fillApproveReasonChip(txt) {
+            const inputEl = document.getElementById('approveReasonInput');
+            if (!inputEl) return;
+            const current = inputEl.value.trim();
+            if (!current) {
+                inputEl.value = txt;
+            } else if (!current.includes(txt)) {
+                inputEl.value = current + "\n" + txt;
+            }
+            inputEl.focus();
+        }
+
+        async function confirmApproveLinkAction(withReason) {
+            if (!checkIsOwnerAccount() || !pendingOwnerApproveContext || isApprovingLinkAction) return;
+
+            const ctx = pendingOwnerApproveContext;
+            const isRejectMode = (ctx.actionMode === 'reject');
+            const inputEl = document.getElementById('approveReasonInput');
+            const reasonText = inputEl ? inputEl.value.trim() : '';
+
+            if (withReason && !reasonText) {
+                alert(isRejectMode
+                    ? "Vui lòng chọn hoặc tự ghi lý do từ chối gửi cho user (hoặc bấm nút 'Chỉ bỏ qua' ở bên dưới nhé)!"
+                    : "Vui lòng chọn hoặc tự ghi lý do gửi cho user (hoặc bấm nút 'Không có lý do' ở bên dưới nhé)!");
+                if (inputEl) inputEl.focus();
+                return;
+            }
+
+            const btn1 = document.getElementById('confirmApproveWithReasonBtn');
+            const btn2 = document.getElementById('confirmApproveNoReasonBtn');
+            isApprovingLinkAction = true;
+            if (btn1) btn1.disabled = true;
+            if (btn2) btn2.disabled = true;
 
             try {
-                const targetUsername = req.username;
+                const targetUsername = ctx.targetUsername;
                 const uKey = targetUsername.toLowerCase();
-                const charId = req.charId;
-                const charName = req.charName || "Nhân vật";
+                const charId = ctx.charId;
+                const charName = ctx.charName || "Nhân vật";
 
-                // 1. Mở khóa link trực tiếp trên Firebase cho user (bỏ qua mọi đếm ngược/kiểm tra)
+                if (isRejectMode) {
+                    // CHẾ ĐỘ TỪ CHỐI / BÁO LỖI CHO USER
+                    if (ctx.reqId) {
+                        await db.collection("manual_proof_requests").doc(ctx.reqId).delete();
+                    }
+                    if (withReason) {
+                        triggerNotification(
+                            "Yêu Cầu Duyệt Link Chưa Đạt ❌",
+                            `Palette đã xem ảnh cho "${charName}" nhưng chưa thể duyệt. 💡 Lý do: ${reasonText}`,
+                            targetUsername
+                        );
+                    }
+                    closeApproveReasonModal();
+                    renderAdminPendingLinkReviews();
+                    alert(withReason
+                        ? `✓ Đã gửi lý do từ chối tới "${targetUsername}"!`
+                        : `✓ Đã bỏ qua yêu cầu của "${targetUsername}"!`);
+                    return;
+                }
+
+                // CHẾ ĐỘ DUYỆT & MỞ LINK NGAY CHO USER
                 const unlockedRef = db.collection("unlocked").doc(targetUsername);
                 const snap = await unlockedRef.get();
                 const existingChars = snap.exists ? (snap.data().chars || {}) : {};
                 existingChars[charId] = true;
                 await unlockedRef.set({ chars: existingChars }, { merge: true });
 
-                // 2. Xóa bộ đếm ngược nếu user đang có timer ở nhân vật này
                 await db.collection("unlock_timers").doc(uKey).set({
                     [charId]: firebase.firestore.FieldValue.delete()
                 }, { merge: true }).catch(() => {});
 
-                // 3. Thưởng Chì Màu đúng theo chế độ (+2 nếu Nhanh Nhẹn, +1 nếu Thường)
-                const reward = req.mode === 'fast' ? 2 : 1;
-                await addPencilToUser(targetUsername, reward, `Chủ Web duyệt Help mở link ${charName}`);
+                const reward = ctx.isFast ? 2 : 1;
+                await addPencilToUser(targetUsername, reward, "");
 
-                // 4. Xóa yêu cầu khỏi danh sách chờ
-                await db.collection("manual_proof_requests").doc(reqId).delete();
+                if (ctx.reqId) {
+                    await db.collection("manual_proof_requests").doc(ctx.reqId).delete();
+                }
 
-                // 5. Gửi thông báo về máy user
-                triggerNotification(
-                    "Palette Đã Duyệt Link! 🎉",
-                    `Yêu cầu Help của bạn cho "${charName}" đã được Palette duyệt! Link Google AI Studio đã mở sẵn sàng (+${reward} Chì Màu). Nhớ bấm tim để lưu giữ vĩnh viễn nhé!`,
-                    targetUsername
-                );
+                if (withReason) {
+                    triggerNotification(
+                        "Palette Đã Duyệt Mở Link! 🎉",
+                        `Link "${charName}" đã được mở khóa cho bạn (+${reward} Chì Màu)! 💡 Lý do lúc nãy không tự duyệt được: ${reasonText}`,
+                        targetUsername
+                    );
+                }
 
-                // 6. Ghi log hoạt động
-                logMemberActivity("Chủ Web duyệt Help mở link 🔓", `Thành viên: ${targetUsername} · Nhân vật: ${charName}`, "link", {
+                logMemberActivity("Chủ Web duyệt mở link 🔓", `Thành viên: ${targetUsername} · Nhân vật: ${charName}${withReason ? ` · Lý do gửi: ${reasonText}` : ' (Không gửi TB lý do)'}`, "link", {
                     charId: charId,
                     charName: charName
                 });
@@ -5177,35 +5591,49 @@
                     updateAIStudioButton();
                 }
 
-                alert(`✓ Đã duyệt và mở khóa link "${charName}" cho "${targetUsername}" thành công!`);
+                closeApproveReasonModal();
                 renderAdminPendingLinkReviews();
+                alert(withReason
+                    ? `✓ Đã mở khóa link "${charName}" và gửi thông báo kèm lý do cho "${targetUsername}"!`
+                    : `✓ Đã duyệt mở khóa link "${charName}" cho "${targetUsername}" (không gửi thông báo lý do)!`);
             } catch (err) {
-                console.error("Lỗi khi duyệt link thủ công:", err);
+                console.error("Lỗi khi xử lý duyệt/từ chối link:", err);
                 alert("Có lỗi xảy ra: " + (err?.message || "Vui lòng thử lại"));
+            } finally {
+                isApprovingLinkAction = false;
+                if (btn1) btn1.disabled = false;
+                if (btn2) btn2.disabled = false;
             }
         }
 
-        async function rejectManualLinkRequest(reqId) {
+        function approveManualLinkRequest(reqId) {
             if (!checkIsOwnerAccount()) return;
             const req = pendingManualLinkRequests.find(r => r.id === reqId);
             if (!req) return;
-            const reason = prompt(`Nhập lý do từ chối gửi cho "${req.username}" (hoặc để trống nếu bỏ qua):`, "Ảnh vẫn chưa rõ/chưa đúng yêu cầu, bạn chụp lại rõ hơn nhé!");
-            if (reason === null) return;
+            openApproveReasonModal({
+                actionMode: 'approve',
+                reqId: reqId,
+                targetUsername: req.username,
+                charId: req.charId,
+                charName: req.charName || "Nhân vật",
+                isFast: req.mode === 'fast',
+                failReason: req.failReason || ""
+            });
+        }
 
-            try {
-                await db.collection("manual_proof_requests").doc(reqId).delete();
-                if (reason.trim()) {
-                    triggerNotification(
-                        "Yêu Cầu Duyệt Link Chưa Đạt ❌",
-                        `Palette đã xem ảnh cho "${req.charName}" nhưng chưa thể duyệt: ${reason.trim()}`,
-                        req.username
-                    );
-                }
-                renderAdminPendingLinkReviews();
-            } catch (err) {
-                console.error("Lỗi từ chối duyệt link:", err);
-                alert("Chưa thể xử lý lúc này.");
-            }
+        function rejectManualLinkRequest(reqId) {
+            if (!checkIsOwnerAccount()) return;
+            const req = pendingManualLinkRequests.find(r => r.id === reqId);
+            if (!req) return;
+            openApproveReasonModal({
+                actionMode: 'reject',
+                reqId: reqId,
+                targetUsername: req.username,
+                charId: req.charId,
+                charName: req.charName || "Nhân vật",
+                isFast: req.mode === 'fast',
+                failReason: req.failReason || ""
+            });
         }
 
         function clearUserNotifications() {
@@ -5619,6 +6047,18 @@
                     return getActivityCategory(act) === activeActivitySubFilter;
                 });
 
+                // Nút xóa sạch riêng từng mục con (khi đang đứng ở tab Mở Link / Cmt / Vòng Xoay / Thất Bại)
+                if (activeActivitySubFilter !== 'all' && filteredList.length > 0) {
+                    const subClearBar = document.createElement('div');
+                    subClearBar.className = "mb-2 flex justify-end";
+                    subClearBar.innerHTML = `
+                        <button type="button" onclick="clearActivitiesByCategory('${activeActivitySubFilter}')" class="text-[10.5px] font-bold px-2.5 py-1 rounded-xl bg-red-500/15 hover:bg-red-500/30 text-red-300 border border-red-400/30 transition active:scale-95 flex items-center gap-1">
+                            <span>🗑️ Xóa riêng mục này (${filteredList.length})</span>
+                        </button>
+                    `;
+                    container.appendChild(subClearBar);
+                }
+
                 if (filteredList.length === 0) {
                     const emptyDiv = document.createElement('div');
                     emptyDiv.className = "text-xs text-sky-200/50 italic text-center py-6";
@@ -5668,13 +6108,16 @@
                     }
 
                     item.innerHTML = `
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2 min-w-0">
                                 <img src="${avt}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-6 h-6 rounded-full object-cover shrink-0 border border-pink-300/40">
                                 <span class="font-extrabold text-pink-300 truncate">${act.username}</span>
                                 ${badgeHtml}
                             </div>
-                            <span class="text-[10px] text-sky-200/50 shrink-0 font-mono">${timeStr}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span class="text-[10px] text-sky-200/50 font-mono">${timeStr}</span>
+                                <button type="button" onclick="event.stopPropagation(); deleteSingleActivity('${act.id}')" class="w-5 h-5 rounded-full bg-red-500/20 hover:bg-red-500/50 text-red-300 border border-red-400/30 flex items-center justify-center text-[10px] font-black transition active:scale-90" title="Xóa dòng này">✕</button>
+                            </div>
                         </div>
                         <div class="font-bold text-sky-100 pl-8 leading-snug">${act.title}</div>
                         ${act.details ? `<div class="text-[11px] text-sky-200/75 pl-8 leading-relaxed">${act.details}</div>` : ''}
@@ -5687,19 +6130,65 @@
         }
 
         async function clearAllActivitiesLog() {
-            if (!currentUser?.isOwner) return;
+            if (!checkIsOwnerAccount()) return;
             if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử hoạt động không?")) return;
             try {
                 const snapshot = await db.collection("activities").get();
-                const batch = db.batch();
-                snapshot.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
+                const docs = snapshot.docs;
+                for (let i = 0; i < docs.length; i += 400) {
+                    const batch = db.batch();
+                    docs.slice(i, i + 400).forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                }
                 memberActivities = [];
+                updateActivitiesBadgeUI();
                 renderUsersModalContent();
                 alert("Đã xóa sạch lịch sử hoạt động!");
             } catch (err) {
                 console.error("Lỗi xóa hoạt động:", err);
                 alert("Chưa thể xóa hoạt động lúc này.");
+            }
+        }
+
+        async function deleteSingleActivity(actId) {
+            if (!checkIsOwnerAccount() || !actId) return;
+            try {
+                await db.collection("activities").doc(actId).delete();
+                memberActivities = memberActivities.filter(a => a.id !== actId);
+                updateActivitiesBadgeUI();
+                renderUsersModalContent();
+            } catch (e) {
+                console.error("Lỗi xóa hoạt động lẻ:", e);
+                alert("Chưa thể xóa dòng này lúc này.");
+            }
+        }
+
+        async function clearActivitiesByCategory(category) {
+            if (!checkIsOwnerAccount() || !category || category === 'all') return;
+            const labels = {
+                link: "Mở Link",
+                comment: "Cmt",
+                wheel: "Vòng Xoay",
+                fail: "Thất Bại"
+            };
+            const targetActs = memberActivities.filter(a => getActivityCategory(a) === category);
+            if (targetActs.length === 0) return;
+            if (!confirm(`Bạn có chắc muốn xóa toàn bộ ${targetActs.length} mục trong "${labels[category] || category}" không? (Các mục khác vẫn giữ nguyên)`)) return;
+
+            try {
+                for (let i = 0; i < targetActs.length; i += 400) {
+                    const batch = db.batch();
+                    targetActs.slice(i, i + 400).forEach(act => {
+                        batch.delete(db.collection("activities").doc(act.id));
+                    });
+                    await batch.commit();
+                }
+                memberActivities = memberActivities.filter(a => getActivityCategory(a) !== category);
+                updateActivitiesBadgeUI();
+                renderUsersModalContent();
+            } catch (e) {
+                console.error("Lỗi xóa riêng mục hoạt động:", e);
+                alert("Có lỗi khi xóa mục này: " + (e?.message || "Vui lòng thử lại"));
             }
         }
 
@@ -6144,7 +6633,6 @@
             updatePencilUI();
             updateAdminPencilNotificationBadge();
             updateAdminLinkReviewBadge();
-            updateAdminLinkReviewBadge();
 
             const currentCommentUserEl = document.getElementById('currentCommentUser');
             if (currentCommentUserEl) currentCommentUserEl.innerText = acc.username;
@@ -6580,7 +7068,7 @@
 
                 card.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <img src="${c.image}" class="w-14 h-14 rounded-2xl object-cover border border-white/20 shrink-0">
+                        <img src="${c.image}" loading="lazy" class="w-14 h-14 rounded-2xl object-cover border border-white/20 shrink-0">
                         <div class="flex-1 truncate">
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <h3 class="text-base font-extrabold ${getPastelColorClass(index)}">${c.name}</h3>
@@ -7124,6 +7612,63 @@
             });
         }
 
+        // Chuẩn hóa chữ chịu lỗi font kiểu (quy đổi 0->o, 1/|->l, rn->m, bỏ dấu)
+        function normalizeFuzzyOcr(str) {
+            return (str || "")
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd')
+                .replace(/0/g, 'o')
+                .replace(/1/g, 'l')
+                .replace(/\|/g, 'l')
+                .replace(/rn/g, 'm')
+                .replace(/[^a-z0-9\s]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function levenshteinDist(a, b) {
+            if (a === b) return 0;
+            if (!a.length) return b.length;
+            if (!b.length) return a.length;
+            const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+            for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+            for (let i = 1; i <= a.length; i++) {
+                for (let j = 1; j <= b.length; j++) {
+                    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                    dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+                }
+            }
+            return dp[a.length][b.length];
+        }
+
+        // Cho phép sai lệch nhẹ ký tự do font chữ kiểu nhưng vẫn chặn chuẩn ảnh sai nội dung
+        function fuzzyMatchText(ocrText, targetPhrase, minWordRatio = 0.72) {
+            const targetNorm = normalizeFuzzyOcr(targetPhrase);
+            if (!targetNorm) return true;
+            const ocrNorm = normalizeFuzzyOcr(ocrText);
+            if (ocrNorm.includes(targetNorm)) return true;
+
+            const targetWords = targetNorm.split(' ').filter(w => w.length >= 2);
+            if (targetWords.length === 0) return ocrNorm.includes(targetNorm);
+            const ocrWords = ocrNorm.split(' ').filter(Boolean);
+            const ocrCompact = ocrNorm.replace(/\s+/g, '');
+
+            let matchedCount = 0;
+            for (const tw of targetWords) {
+                if (ocrCompact.includes(tw)) {
+                    matchedCount++;
+                    continue;
+                }
+                const maxErr = tw.length >= 5 ? 2 : (tw.length >= 3 ? 1 : 0);
+                if (maxErr > 0 && ocrWords.some(ow => Math.abs(ow.length - tw.length) <= maxErr && levenshteinDist(ow, tw) <= maxErr)) {
+                    matchedCount++;
+                }
+            }
+            return (matchedCount / targetWords.length) >= minWordRatio;
+        }
+
         // ================= DUYỆT BẰNG CHỨNG (OCR AI) =================
         async function processNormalProofVerification() {
             if (!currentUser) {
@@ -7148,13 +7693,13 @@
                 const dcInput = document.getElementById('proofDcImg');
                 if (dcInput?.files?.[0]) {
                     const b64 = await processImageForFastOCR(dcInput.files[0]);
-                    cachedDcDataUrls = [b64];
+                    cachedDcDataUrls = b64 ? [b64] : [];
                 }
             }
 
             if (!cachedFbDataUrl || cachedDcDataUrls.length === 0) {
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
-                feedbackBox.innerHTML = "❌ <b>Lỗi thiếu ảnh:</b> Bạn chưa chọn đủ cả ảnh Facebook và ảnh Discord!";
+                feedbackBox.innerHTML = "❌ <b>Lỗi đọc ảnh:</b> Bạn chưa chọn đủ ảnh hoặc tệp ảnh chọn lên không đọc được (ảnh lỗi / chưa tải về máy từ iCloud). Vui lòng chụp lại ảnh màn hình JPG/PNG rồi thử lại nhé!";
                 feedbackBox.classList.remove('hidden');
                 return;
             }
@@ -7184,6 +7729,7 @@
 
             try {
                 // 1. Quét Facebook (nếu đã quét thành công ở lượt trước thì tự động dùng lại cache, không tốn RAM và không bao giờ bị lỗi)
+                await ensureTesseractLoaded();
                 let fbRaw = cachedFbOcrText;
                 let fbOcrData = cachedFbOcrData;
                 if (!fbRaw || !fbOcrData) {
@@ -7203,7 +7749,7 @@
                 }
 
                 const cleanFb = fbRaw.toLowerCase();
-                const hasPage = cleanFb.includes("palette số hóa") || cleanFb.includes("palette so hoa") || cleanFb.includes("palette");
+                const hasPage = cleanFb.includes("palette") || fuzzyMatchText(fbRaw, "palette", 1);
                 if (!hasPage) throw new Error("Ảnh Facebook chưa nhìn thấy rõ tên Page 'Palette Số Hóa'!");
 
                 const hasReact = await checkFacebookReact(cachedFbDataUrl, fbOcrData);
@@ -7212,11 +7758,8 @@
                 const isOwnerTesting = (currentUser?.isOwner || currentUser?.username?.toLowerCase() === "bibi 0304");
 
                 if (!isOwnerTesting) {
-                    const normalizedFb = cleanFb.replace(/\s+/g, ' ');
-                    const unaccentedFb = normalizedFb.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-                    const targetTag = (activeChar.firstTagKeyword || activeChar.firstTagSubtitle || "").trim().toLowerCase().replace(/\s+/g, ' ');
-                    const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-                    const hasTag = !targetTag || normalizedFb.includes(targetTag) || unaccentedFb.includes(unaccentedTag);
+                    const targetTag = (activeChar.firstTagKeyword || activeChar.firstTagSubtitle || "").trim();
+                    const hasTag = !targetTag || fuzzyMatchText(fbRaw, targetTag, 0.7);
                     if (!hasTag) throw new Error("Ảnh Facebook chụp sai tag hoặc chưa dính tag bài viết! Vui lòng chụp rõ đúng tag nhé.");
                 }
 
@@ -7381,7 +7924,10 @@
                 submitBtn.disabled = false;
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
-                const errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
+                let errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
+                if (errMsg.toLowerCase().includes("attempting to read image")) {
+                    errMsg = "Không đọc được tệp ảnh này (ảnh bị lỗi định dạng hoặc chưa tải xong về máy). Bạn hãy chụp lại ảnh màn hình rồi gửi lại nhé!";
+                }
 
                 const fbThumb = cachedFbDataUrl ? await shrinkDataUrlForFirestore(cachedFbDataUrl, 600, 0.52) : "";
                 const dcThumb = cachedDcDataUrls[0] ? await shrinkDataUrlForFirestore(cachedDcDataUrls[0], 600, 0.52) : "";
@@ -7464,12 +8010,16 @@
                     throw new Error("Không tìm thấy dữ liệu nhân vật để đối soát!");
                 }
 
+                await ensureTesseractLoaded();
                 const fastFiles = Array.from(fileInput.files || []);
                 let combinedFastText = "";
                 let fastFbOcrData = null;
 
                 for (let i = 0; i < fastFiles.length; i++) {
                     const processedData = await processImageForFastOCR(fastFiles[i]);
+                    if (!processedData) {
+                        throw new Error("Không đọc được tệp ảnh này (có thể ảnh chưa tải về từ đám mây hoặc định dạng lỗi). Bạn hãy chụp lại ảnh màn hình rồi chọn lại nhé!");
+                    }
                     if (!fastFbDataUrl) fastFbDataUrl = processedData;
 
                     const baseP = 20 + Math.round((i / fastFiles.length) * 70);
@@ -7486,15 +8036,13 @@
                 }
                 const clean = combinedFastText.toLowerCase().replace(/\s+/g, ' ');
 
-                // 1. Kiểm tra Page Palette Số Hóa
-                const hasPage = (clean.includes("palette số hóa") || clean.includes("palette so hoa") || clean.includes("palette"));
+                // 1. Kiểm tra Page Palette Số Hóa (hỗ trợ cả font kiểu đọc nhầm vài nét)
+                const hasPage = clean.includes("palette") || fuzzyMatchText(combinedFastText, "palette", 1);
                 if (!hasPage) throw new Error("Ảnh chưa nhìn thấy rõ tên Page 'Palette Số Hóa'!");
 
-                // 2. Kiểm tra đúng Tag nhân vật
-                const unaccentedClean = clean.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-                const targetTag = (fastTargetChar.firstTagKeyword || fastTargetChar.firstTagSubtitle || "").trim().toLowerCase().replace(/\s+/g, ' ');
-                const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-                const hasTag = !targetTag || clean.includes(targetTag) || unaccentedClean.includes(unaccentedTag);
+                // 2. Kiểm tra đúng Tag nhân vật (chịu lỗi nhẹ do font kiểu)
+                const targetTag = (fastTargetChar.firstTagKeyword || fastTargetChar.firstTagSubtitle || "").trim();
+                const hasTag = !targetTag || fuzzyMatchText(combinedFastText, targetTag, 0.7);
                 if (!hasTag) throw new Error("Ảnh Facebook chụp sai tag hoặc chưa dính tag bài viết! Vui lòng chụp rõ đúng tag nhé.");
 
                 // 3. Kiểm tra nút cảm xúc (Tim / Thích / Thương thương)
@@ -7595,7 +8143,10 @@
                 submitBtn.disabled = false;
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
-                const errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
+                let errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
+                if (errMsg.toLowerCase().includes("attempting to read image")) {
+                    errMsg = "Không đọc được tệp ảnh này (ảnh bị lỗi định dạng hoặc chưa tải xong về máy). Bạn hãy chụp lại ảnh màn hình rồi gửi lại nhé!";
+                }
 
                 let fastFbThumb = "";
                 if (fastFbDataUrl) {
@@ -8104,6 +8655,13 @@
                     commentId: newCmt.id
                 });
 
+                // Đẩy thông báo Cmt ra thanh thông báo điện thoại Chủ Web
+                sendPhonePushToOwner(
+                    `💬 Cmt mới: ${username} (${charName})`,
+                    text ? text.slice(0, 120) : "Đã gửi bình luận kèm hình ảnh 📸",
+                    3
+                );
+
                 const existingComments = commentSnapshot.exists ? (commentSnapshot.data().list || []) : [];
                 const updatedComments = [newCmt, ...existingComments].slice(0, 50);
 
@@ -8396,6 +8954,13 @@
                         commentId: repId,
                         parentId: parentId
                     });
+
+                    // Đẩy thông báo Trả lời ra thanh thông báo điện thoại Chủ Web
+                    sendPhonePushToOwner(
+                        `💬 Trả lời mới: ${currentUser.username} (${activeChar.name})`,
+                        `Trả lời ${parent.author}: ${text ? text.slice(0, 100) : "Đã gửi kèm ảnh 📸"}`,
+                        3
+                    );
                     await db.collection("comments").doc(activeChar.id).set({
                         list: charComments[activeChar.id]
                     });
@@ -9176,6 +9741,6 @@
     <div style="position:fixed; bottom:0; right:0; width:64px; height:64px; opacity:0.01; pointer-events:none; z-index:-10;">
         <div id="ytAudioPlayer"></div>
     </div>
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://www.youtube.com/iframe_api" async defer></script>
 </body>
 </html>
