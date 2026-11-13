@@ -4462,6 +4462,13 @@
                 updateRegisteredUsersCountUI();
                 renderUsersModalContent();
             });
+
+            // Lắng nghe danh sách tất cả các bạn đang chờ đếm ngược theo thời gian thực
+            db.collection("unlock_timers").onSnapshot((snapshot) => {
+                allMembersUnlockTimers = {};
+                snapshot.forEach(doc => { allMembersUnlockTimers[doc.id] = doc.data() || {}; });
+                renderUsersModalContent();
+            });
         }
 
         // ĐĂNG NHẬP VĨNH VIỄN
@@ -4791,6 +4798,9 @@
                                         ${favCharsHtml}
                                     </div>
                                 </div>
+
+                                <!-- KHU VỰC CHỦ WEB BẤM MỞ LINK NGAY CHO USER ĐANG ĐẾM NGƯỢC -->
+                                ${renderMemberWaitingCountdowns(u.username)}
                             </div>
                         ` : ''}
                     `;
@@ -5386,12 +5396,20 @@
                         </button>
                     `;
                 } else if (isCountingDown) {
+                    const isOwner = checkIsOwnerAccount();
                     actionButtonHtml = `
-                        <button onclick="alert('Hệ thống đang đếm ngược thời gian mở khóa, bạn vui lòng đợi nhé! Sau 2 tiếng link sẽ tự động mở.')" class="w-full bg-amber-500/25 border border-amber-300/50 text-amber-200 font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                            <span>⏳ Đang đếm ngược:</span>
-                            <span id="fastUserTimer-${c.id}" class="font-mono font-black text-sm text-amber-300">--:--:--</span>
-                            <span>mở link</span>
-                        </button>
+                        <div class="w-full space-y-1.5">
+                            <button onclick="handleFastCountdownClick('${c.id}')" class="w-full bg-amber-500/25 border border-amber-300/50 text-amber-200 font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                                <span>⏳ Đang đếm ngược:</span>
+                                <span id="fastUserTimer-${c.id}" class="font-mono font-black text-sm text-amber-300">--:--:--</span>
+                                <span>mở link</span>
+                            </button>
+                            ${isOwner ? `
+                                <button onclick="ownerForceUnlockForUser('${currentUser.username}', '${c.id}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-[11px] py-1.5 rounded-xl shadow active:scale-95 transition">
+                                    ⚡ Chủ Web: Mở Link Ngay Lập Tức
+                                </button>
+                            ` : ''}
+                        </div>
                     `;
                 } else {
                     actionButtonHtml = `
@@ -5958,6 +5976,115 @@
             }, 1000);
         }
 
+        let allMembersUnlockTimers = {};
+
+        // Xử lý khi bấm vào nút đếm ngược
+        function handleFastCountdownClick(charId) {
+            if (!currentUser) return;
+            const targetChar = characters.find(c => c.id === charId);
+            const charName = targetChar ? targetChar.name : "nhân vật";
+
+            if (checkIsOwnerAccount()) {
+                if (confirm(`👑 Quyền Chủ Web (Bibi 0304):\nBạn có muốn MỞ KHÓA LINK NGAY LẬP TỨC cho "${charName}" (bỏ qua đếm ngược) không?`)) {
+                    ownerForceUnlockForUser(currentUser.username, charId);
+                    return;
+                }
+            }
+            alert("Hệ thống đang đếm ngược thời gian mở khóa, bạn vui lòng đợi nhé! Sau khi hết giờ link sẽ tự động mở.");
+        }
+
+        // Hàm Chủ Web mở khóa link ngay lập tức cho bất kỳ ai (hoặc cho chính mình)
+        async function ownerForceUnlockForUser(targetUsername, charId) {
+            if (!checkIsOwnerAccount()) return;
+            const targetChar = characters.find(c => c.id === charId);
+            const charName = targetChar ? targetChar.name : "nhân vật";
+            
+            const isSelf = (currentUser?.username?.toLowerCase() === targetUsername.toLowerCase());
+            const confirmMsg = isSelf 
+                ? `Chủ Web xác nhận mở khóa link ngay lập tức cho chính mình (${charName})?`
+                : `Chủ Web xác nhận MỞ KHÓA LINK NGAY LẬP TỨC cho thành viên "${targetUsername}" (${charName})?`;
+
+            if (!confirm(confirmMsg)) return;
+
+            const uKey = targetUsername.toLowerCase();
+
+            try {
+                // 1. Xóa timer trên Firebase unlock_timers
+                await db.collection("unlock_timers").doc(uKey).set({
+                    [charId]: firebase.firestore.FieldValue.delete()
+                }, { merge: true });
+
+                // 2. Mở khóa vĩnh viễn trên Firebase collection unlocked
+                const unlockedRef = db.collection("unlocked").doc(targetUsername);
+                const snap = await unlockedRef.get();
+                const existingChars = snap.exists ? (snap.data().chars || {}) : {};
+                existingChars[charId] = true;
+                await unlockedRef.set({ chars: existingChars }, { merge: true });
+
+                // 3. Thưởng 2 Chì Màu cho người đó
+                await addPencilToUser(targetUsername, 2, `Chủ Web mở khóa trực tiếp ${charName}`);
+
+                // 4. Nếu mở cho chính tài khoản đang đăng nhập trên máy
+                if (isSelf) {
+                    if (userUnlockTimers[currentUser.username]) {
+                        delete userUnlockTimers[currentUser.username][charId];
+                        localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
+                    }
+                    if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
+                    userUnlockedState[currentUser.username][charId] = true;
+                    renderFastColorCenter();
+                    updateAIStudioButton();
+                }
+
+                alert(`🎉 Đã mở khóa link thành công cho "${targetUsername}"!`);
+                renderUsersModalContent();
+            } catch (err) {
+                console.error("Lỗi khi mở khóa trực tiếp:", err);
+                alert("Có lỗi xảy ra: " + (err.message || "Vui lòng thử lại"));
+            }
+        }
+
+        // Hiển thị danh sách các nhân vật đang đếm ngược của từng thành viên trong bảng quản trị
+        function renderMemberWaitingCountdowns(username) {
+            if (!checkIsOwnerAccount()) return '';
+            const uKey = username.toLowerCase();
+            const timers = allMembersUnlockTimers[uKey] || {};
+            const now = Date.now();
+            const waitingCharIds = Object.keys(timers).filter(cId => timers[cId] && timers[cId] > now);
+
+            if (waitingCharIds.length === 0) return '';
+
+            let html = `
+                <div class="mt-2 bg-amber-500/10 border border-amber-300/30 rounded-xl p-2.5 space-y-1.5">
+                    <div class="text-[11px] font-black text-amber-300 flex items-center gap-1">
+                        <span>⏳ Đang chờ đếm ngược (${waitingCharIds.length} link):</span>
+                    </div>
+            `;
+
+            waitingCharIds.forEach(charId => {
+                const targetChar = characters.find(c => c.id === charId);
+                const charName = targetChar ? targetChar.name : "Nhân vật";
+                const remainMs = Math.max(0, timers[charId] - now);
+                const remainMins = Math.ceil(remainMs / 60000);
+                const timeText = remainMins > 60 ? `${Math.floor(remainMins/60)}h ${remainMins%60}p` : `${remainMins} phút`;
+
+                html += `
+                    <div class="flex items-center justify-between bg-black/40 border border-white/10 p-1.5 rounded-lg text-xs">
+                        <div class="truncate mr-2">
+                            <span class="font-bold text-pink-200">${charName}</span>
+                            <span class="text-[10px] text-amber-200/80 font-mono"> (còn ${timeText})</span>
+                        </div>
+                        <button type="button" onclick="ownerForceUnlockForUser('${username}', '${charId}')" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-[10px] px-2.5 py-1 rounded-lg active:scale-95 transition shadow whitespace-nowrap shrink-0">
+                            ⚡ Mở Link Luôn
+                        </button>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            return html;
+        }
+
         function handleAIStudioClick() {
             if (activeChar.status === 'closed') {
                 alert("Link của nhân vật này hiện đã đóng!");
@@ -5966,6 +6093,12 @@
 
             const timerEnd = userUnlockTimers[currentUser?.username]?.[activeChar.id];
             if (timerEnd && Date.now() < timerEnd) {
+                if (checkIsOwnerAccount()) {
+                    if (confirm(`👑 Quyền Chủ Web (Bibi 0304):\nBạn có muốn MỞ KHÓA LINK NGAY LẬP TỨC cho "${activeChar.name}" (bỏ qua đếm ngược) không?`)) {
+                        ownerForceUnlockForUser(currentUser.username, activeChar.id);
+                        return;
+                    }
+                }
                 alert("Hệ thống đang đếm ngược thời gian mở khóa, bạn vui lòng đợi nhé!");
                 return;
             }
