@@ -152,58 +152,6 @@
             100% { transform: translate3d(-180px, 180px, 0) rotate(-35deg); opacity: 0; width: 0; }
         }
 
-        /* 1. HIỆU ỨNG CÁNH HOA ĐÀO BAY (SIÊU NHẸ) */
-        .fx-sakura-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-        .fx-sakura-petal {
-            position: absolute;
-            background: linear-gradient(135deg, #ffd1dc 0%, #f472b6 100%);
-            border-radius: 12px 1px 12px 1px;
-            opacity: 0.65;
-            filter: drop-shadow(0 0 3px rgba(244,114,182,0.4));
-            animation: sakuraFall linear infinite;
-            will-change: transform;
-        }
-        @keyframes sakuraFall {
-            0% { transform: translate3d(0, -10px, 0) rotate(0deg) scale(0.7); opacity: 0; }
-            15% { opacity: 0.75; }
-            85% { opacity: 0.75; }
-            100% { transform: translate3d(80px, 105vh, 0) rotate(360deg) scale(1); opacity: 0; }
-        }
-
-        /* 2. HIỆU ỨNG BONG BÓNG PASTEL (SIÊU MƯỢT) */
-        .fx-bubbles-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-        .fx-bubble-item {
-            position: absolute;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.45);
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(192,132,252,0.15) 60%, rgba(56,189,248,0.2) 100%);
-            box-shadow: 0 0 8px rgba(244,114,182,0.3);
-            animation: bubbleFloat linear infinite;
-            will-change: transform;
-        }
-        @keyframes bubbleFloat {
-            0% { transform: translate3d(0, 105vh, 0) scale(0.6); opacity: 0; }
-            20% { opacity: 0.7; }
-            80% { opacity: 0.7; }
-            100% { transform: translate3d(-35px, -10vh, 0) scale(1.15); opacity: 0; }
-        }
-
-        /* 3. HIỆU ỨNG MƯA SAO BĂNG LƯỚT NHẸ */
-        .fx-shooting-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-        .fx-shooting-star {
-            position: absolute;
-            height: 1.5px;
-            background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(244,114,182,0.8), transparent);
-            transform: rotate(-35deg);
-            animation: shootingStarGlide linear infinite;
-            will-change: transform;
-        }
-        @keyframes shootingStarGlide {
-            0% { transform: translate3d(0, 0, 0) rotate(-35deg); opacity: 0; width: 0; }
-            30% { opacity: 0.85; width: 70px; }
-            100% { transform: translate3d(-180px, 180px, 0) rotate(-35deg); opacity: 0; width: 0; }
-        }
-
         .spinner-conic {
             background: conic-gradient(from 0deg, #f472b6, #c084fc, #60a5fa, #34d399, #facc15, #f472b6);
             animation: spinConic 1.2s linear infinite;
@@ -285,15 +233,6 @@
             background-clip: text;
             animation: fastWave 6s linear infinite;
         }
-
-        .pastel-rules-title {
-            background: linear-gradient(90deg, #fbcfe8, #fed7aa, #fef08a, #bbf7d0, #bae6fd, #e9d5ff, #fbcfe8);
-            background-size: 300% auto;
-            color: transparent;
-            -webkit-background-clip: text;
-            background-clip: text;
-            animation: fastWave 6s linear infinite;
-        }
         @keyframes fastWave { to { background-position: 300% center; } }
 
         .pastel-notify-wave {
@@ -364,22 +303,6 @@
             0%, 100% { box-shadow: 0 0 12px rgba(244, 114, 182, 0.25); }
             50% { box-shadow: 0 0 28px rgba(244, 114, 182, 0.85); }
         }
-
-        /* HIỆU ỨNG KHUNG VIỀN PHÁT SÁNG PASTEL CHO AVATAR BÌNH LUẬN */
-        .avatar-glow-0 { border: 2px solid #fbcfe8; box-shadow: 0 0 8px rgba(244, 114, 182, 0.8); } /* Hồng Pastel */
-        .avatar-glow-1 { border: 2px solid #c4b5fd; box-shadow: 0 0 8px rgba(167, 139, 250, 0.8); } /* Tím Lavender */
-        .avatar-glow-2 { border: 2px solid #67e8f9; box-shadow: 0 0 8px rgba(56, 189, 248, 0.8); }  /* Xanh Baby Sky */
-        .avatar-glow-3 { border: 2px solid #a7f3d0; box-shadow: 0 0 8px rgba(52, 211, 153, 0.8); }  /* Xanh Mint */
-        .avatar-glow-4 { border: 2px solid #fef08a; box-shadow: 0 0 8px rgba(250, 204, 21, 0.8); }  /* Vàng Kem */
-        .avatar-glow-5 { border: 2px solid #fed7aa; box-shadow: 0 0 8px rgba(251, 146, 60, 0.8); }  /* Cam Đào Pastel */
-
-        /* HIỆU ỨNG KHUNG VIỀN PHÁT SÁNG PASTEL CHO AVATAR BÌNH LUẬN */
-        .avatar-glow-0 { border: 2px solid #fbcfe8; box-shadow: 0 0 8px rgba(244, 114, 182, 0.8); } /* Hồng Pastel */
-        .avatar-glow-1 { border: 2px solid #c4b5fd; box-shadow: 0 0 8px rgba(167, 139, 250, 0.8); } /* Tím Lavender */
-        .avatar-glow-2 { border: 2px solid #67e8f9; box-shadow: 0 0 8px rgba(56, 189, 248, 0.8); }  /* Xanh Baby Sky */
-        .avatar-glow-3 { border: 2px solid #a7f3d0; box-shadow: 0 0 8px rgba(52, 211, 153, 0.8); }  /* Xanh Mint */
-        .avatar-glow-4 { border: 2px solid #fef08a; box-shadow: 0 0 8px rgba(250, 204, 21, 0.8); }  /* Vàng Kem */
-        .avatar-glow-5 { border: 2px solid #fed7aa; box-shadow: 0 0 8px rgba(251, 146, 60, 0.8); }  /* Cam Đào Pastel */
 
         /* HIỆU ỨNG KHUNG VIỀN PHÁT SÁNG PASTEL CHO AVATAR BÌNH LUẬN */
         .avatar-glow-0 { border: 2px solid #fbcfe8; box-shadow: 0 0 8px rgba(244, 114, 182, 0.8); } /* Hồng Pastel */
@@ -855,7 +778,7 @@
                 </div>
 
                 <!-- MỤC ẢNH ĐẠI DIỆN TRỰC QUAN -->
-                <div class="bg-black/30 border border-pink-300/30 rounded-2xl p-3">
+                <div id="authAvatarPicker" class="bg-black/30 border border-pink-300/30 rounded-2xl p-3">
                     <label class="block text-[11px] font-bold text-pink-200 mb-2">Ảnh đại diện:</label>
                     <div class="flex items-center gap-3 mb-2.5">
                         <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-pink-300/50 bg-black/50 shrink-0 flex items-center justify-center relative">
@@ -2418,7 +2341,6 @@
 
         function renderAvatarPickers() {}
         function renderOwnerGalleryGrid() {}
-        function renderOwnerGalleryGrid() {}
 
         function playAvatarRandomSound() {
             return new Promise(resolve => {
@@ -3562,7 +3484,16 @@
 
         function getDateKeyDifference(previousDate, currentDate) {
             if (!previousDate || !currentDate) return Number.POSITIVE_INFINITY;
-            const [py, pm, pd] = previousDate.split('-').map(Number);
+            let prevStr = previousDate;
+            if (typeof prevStr === 'number') {
+                prevStr = getLocalDateKey(new Date(prevStr));
+            } else if (typeof prevStr !== 'string') {
+                return Number.POSITIVE_INFINITY;
+            }
+            if (!prevStr.includes('-') || typeof currentDate !== 'string' || !currentDate.includes('-')) {
+                return Number.POSITIVE_INFINITY;
+            }
+            const [py, pm, pd] = prevStr.split('-').map(Number);
             const [cy, cm, cd] = currentDate.split('-').map(Number);
             if (![py, pm, pd, cy, cm, cd].every(Number.isFinite)) return Number.POSITIVE_INFINITY;
             return Math.round((Date.UTC(cy, cm - 1, cd) - Date.UTC(py, pm - 1, pd)) / 86400000);
@@ -3638,15 +3569,14 @@
             const checkinProgress = getCheckinProgress(userData, todayStr);
             const checkinBtn = document.getElementById('dailyCheckinBtn');
             if (checkinBtn) {
+                checkinBtn.disabled = false; // Luôn cho phép bấm để phản hồi người dùng rõ ràng
                 if (checkinProgress.checkedToday) {
-                    checkinBtn.disabled = true;
                     checkinBtn.innerHTML = `<span>✓ Đã Điểm Danh Hôm Nay</span>`;
-                    checkinBtn.className = "bg-white/10 text-white/50 border border-white/20 font-bold text-xs py-2 px-4 rounded-xl cursor-not-allowed";
+                    checkinBtn.className = "bg-white/10 text-pink-200/80 border border-pink-300/30 font-bold text-xs py-2 px-4 rounded-xl cursor-pointer hover:bg-white/15 active:scale-95 transition";
                 } else {
-                    checkinBtn.disabled = false;
                     const reward = checkinProgress.nextDay === 7 ? 2 : 1;
                     checkinBtn.innerHTML = `<span>✨ Điểm Danh Ngày ${checkinProgress.nextDay} (+${reward} Chì)</span>`;
-                    checkinBtn.className = "jelly-btn bg-gradient-to-r from-amber-400 to-pink-500 text-black font-black text-xs py-2 px-4 rounded-xl shadow-md active:scale-95 transition flex items-center gap-1.5";
+                    checkinBtn.className = "jelly-btn bg-gradient-to-r from-amber-400 to-pink-500 text-black font-black text-xs py-2 px-4 rounded-xl shadow-md active:scale-95 transition flex items-center gap-1.5 cursor-pointer";
                 }
             }
             const progressBox = document.getElementById('checkinWeekProgress');
@@ -3672,47 +3602,74 @@
             updateCommentPingAvailability();
         }
 
+        let isDailyCheckinRunning = false;
+
         async function handleDailyCheckin() {
+            if (isDailyCheckinRunning) return;
             if (!currentUser) {
                 alert("Vui lòng đăng nhập trước khi điểm danh nhé!");
                 return;
             }
+
             const uKey = currentUser.username.toLowerCase();
             const todayStr = getLocalDateKey();
+            const cachedData = userPencilsData[uKey] || {};
+
+            // Nếu hôm nay đã điểm danh rồi, thông báo rõ ràng cho user biết
+            if (cachedData.lastCheckinDate === todayStr) {
+                alert("✨ Hôm nay bạn đã hoàn thành điểm danh rồi nhé! Hãy quay lại vào ngày mai để tiếp tục nhận Bút Chì Màu 💖");
+                return;
+            }
+
+            const checkinBtn = document.getElementById('dailyCheckinBtn');
+            if (checkinBtn) {
+                checkinBtn.innerText = "⏳ Đang ghi nhận...";
+            }
+            isDailyCheckinRunning = true;
+
             const pencilRef = db.collection("pencils").doc(uKey);
             try {
-                const result = await db.runTransaction(async (transaction) => {
-                    const snapshot = await transaction.get(pencilRef);
-                    const data = snapshot.exists ? snapshot.data() : {};
-                    if (data.lastCheckinDate === todayStr) {
-                        throw new Error("ALREADY_CHECKED_IN");
-                    }
-                    const difference = getDateKeyDifference(data.lastCheckinDate, todayStr);
-                    const oldStreak = Math.max(0, Number(data.checkinStreak) || (data.lastCheckinDate ? 1 : 0));
-                    const day = difference === 1 ? (oldStreak >= 7 ? 1 : oldStreak + 1) : 1;
-                    const reward = day === 7 ? 2 : 1;
-                    const nextData = {
-                        ...data,
-                        count: (Number(data.count) || 0) + reward,
-                        lastCheckinDate: todayStr,
-                        checkinStreak: day
-                    };
-                    transaction.set(pencilRef, nextData, { merge: true });
-                    return { ...nextData, reward, day };
-                });
-                userPencilsData[uKey] = result;
-                updatePencilUI();
-                playPaletteTingSound(); // Phát âm thanh cute
-                createPencilSparkles();
-                logMemberActivity("Điểm danh hàng ngày", `Hoàn thành ngày ${result.day}/7 (+${result.reward} Chì)`);
-                alert(`✨ Điểm danh thành công! Bạn đã hoàn thành ngày ${result.day}/7 và nhận được +${result.reward} Bút Chì Màu! ✏️💖`);
-            } catch (error) {
-                if (error.message === "ALREADY_CHECKED_IN") {
-                    alert("Hôm nay bạn đã điểm danh rồi! Hãy quay lại vào ngày mai nhé!");
-                } else {
-                    console.error("Điểm danh không thành công:", error);
-                    alert("Chưa thể lưu điểm danh. Vui lòng thử lại khi kết nối ổn định nhé.");
+                // Đọc trực tiếp tài liệu từ Firebase (hoạt động tốt cả khi mạng chập chờn)
+                const snapshot = await pencilRef.get();
+                const data = snapshot.exists ? snapshot.data() : {};
+
+                let prevDate = data.lastCheckinDate || "";
+                if (typeof prevDate === 'number') prevDate = getLocalDateKey(new Date(prevDate));
+
+                if (prevDate === todayStr) {
+                    userPencilsData[uKey] = { ...data, lastCheckinDate: todayStr };
+                    updatePencilUI();
+                    alert("✨ Hôm nay bạn đã hoàn thành điểm danh rồi nhé! Hãy quay lại vào ngày mai để tiếp tục nhận Bút Chì Màu 💖");
+                    return;
                 }
+
+                const difference = getDateKeyDifference(prevDate, todayStr);
+                const oldStreak = Math.max(0, Number(data.checkinStreak) || (prevDate ? 1 : 0));
+                const day = difference === 1 ? (oldStreak >= 7 ? 1 : oldStreak + 1) : 1;
+                const reward = day === 7 ? 2 : 1;
+                const nextCount = (Number(data.count) || 0) + reward;
+
+                const nextData = {
+                    ...data,
+                    count: nextCount,
+                    lastCheckinDate: todayStr,
+                    checkinStreak: day
+                };
+
+                await pencilRef.set(nextData, { merge: true });
+
+                userPencilsData[uKey] = nextData;
+                updatePencilUI();
+                playPaletteTingSound();
+                createPencilSparkles();
+                logMemberActivity("Điểm danh hàng ngày", `Hoàn thành ngày ${day}/7 (+${reward} Chì)`);
+                alert(`✨ Điểm danh thành công! Bạn đã hoàn thành ngày ${day}/7 và nhận được +${reward} Bút Chì Màu! ✏️💖`);
+            } catch (error) {
+                console.error("Lỗi khi điểm danh:", error);
+                alert("Chưa thể lưu điểm danh. Vui lòng kiểm tra lại kết nối mạng và thử lại nhé!");
+            } finally {
+                isDailyCheckinRunning = false;
+                updatePencilUI();
             }
         }
 
@@ -4002,6 +3959,11 @@
 
             const targetChar = characters.find(c => c.id === targetCharId);
             if (!targetChar) return;
+
+            if (targetChar.status === 'closed') {
+                alert("Nhân vật này hiện đang đóng link, không thể dùng Chì Màu để mở lúc này!");
+                return;
+            }
 
             if (!confirm(`Bạn có chắc chắn muốn dùng 10 Bút Chì Màu để mở khóa link nhân vật "${targetChar.name}" mà không cần xét duyệt?`)) return;
 
@@ -4412,6 +4374,19 @@
                 userUnlockedState[username] = doc.exists ? (doc.data().chars || {}) : {};
                 updateAIStudioButton();
                 renderUnlockedCharListInModal();
+                renderFastColorCenter();
+            });
+
+            // Tự động tải và đồng bộ bộ đếm ngược 2 tiếng từ Firebase (không bao giờ bị mất khi out ra)
+            db.collection("unlock_timers").doc(uKey).onSnapshot(doc => {
+                if (doc.exists) {
+                    const remoteTimers = doc.data() || {};
+                    if (!userUnlockTimers[username]) userUnlockTimers[username] = {};
+                    Object.assign(userUnlockTimers[username], remoteTimers);
+                    localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
+                    renderFastColorCenter();
+                    updateAIStudioButton();
+                }
             });
 
             notificationsUnsub = db.collection("notifications").doc(uKey).onSnapshot(doc => {
@@ -5372,6 +5347,31 @@
                 card.className = "w-full max-w-sm fast-center-card p-6 rounded-3xl flex flex-col items-center mb-6 relative";
                 
                 const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
+                const timerEnd = userUnlockTimers[currentUser?.username]?.[c.id];
+                const isCountingDown = timerEnd && (Date.now() < timerEnd);
+
+                let actionButtonHtml = '';
+                if (isUnlocked) {
+                    actionButtonHtml = `
+                        <button onclick="window.open('${c.aiStudioUrl}', '_blank')" class="jelly-btn w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition animate-bounce">
+                            🔓 ĐÃ MỞ KHÓA - Mở Link ${c.name} Ngay!
+                        </button>
+                    `;
+                } else if (isCountingDown) {
+                    actionButtonHtml = `
+                        <button onclick="alert('Hệ thống đang đếm ngược thời gian mở khóa, bạn vui lòng đợi nhé! Sau 2 tiếng link sẽ tự động mở.')" class="w-full bg-amber-500/25 border border-amber-300/50 text-amber-200 font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                            <span>⏳ Đang đếm ngược:</span>
+                            <span id="fastUserTimer-${c.id}" class="font-mono font-black text-sm text-amber-300">--:--:--</span>
+                            <span>mở link</span>
+                        </button>
+                    `;
+                } else {
+                    actionButtonHtml = `
+                        <button onclick="openFastProofModal('${c.id}')" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
+                            Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web (sẽ mở lại sau ba ngày).
+                        </button>
+                    `;
+                }
 
                 card.innerHTML = `
                     <div class="w-full text-center mb-4">
@@ -5402,9 +5402,7 @@
                         Lưu ý: Sau khi duyệt ảnh thành công, hệ thống sẽ đếm ngược 2 tiếng để mở link. Bạn có thể out ra và quay trở lại sau 2 tiếng để lấy link nhé.
                     </p>
 
-                    <button onclick="${isUnlocked ? `window.open('${c.aiStudioUrl}', '_blank')` : `openFastProofModal('${c.id}')`}" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
-                        ${isUnlocked ? `🔓 ĐÃ MỞ KHÓA - Mở Link ${c.name} Ngay!` : `Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web (sẽ mở lại sau ba ngày).`}
-                    </button>
+                    ${actionButtonHtml}
                 `;
                 container.appendChild(card);
             });
@@ -5475,6 +5473,19 @@
                     if (activeChar && activeChar.id === c.id) {
                         const elDetail = document.getElementById('detailCharCountdown');
                         if (elDetail) elDetail.innerText = timeStr;
+                    }
+                }
+
+                // Chạy đồng hồ đếm ngược 2 tiếng của người dùng ở thẻ Sắc Màu Nhanh Nhẹn
+                if (currentUser && userUnlockTimers[currentUser.username]) {
+                    const uTimerEnd = userUnlockTimers[currentUser.username][c.id];
+                    if (uTimerEnd) {
+                        const remain = Math.max(0, uTimerEnd - now);
+                        const h = Math.floor(remain / (1000 * 3600));
+                        const m = Math.floor((remain % (1000 * 3600)) / (1000 * 60));
+                        const s = Math.floor((remain % (1000 * 60)) / 1000);
+                        const elUser = document.getElementById(`fastUserTimer-${c.id}`);
+                        if (elUser) elUser.innerText = `${pad(h)}:${pad(m)}:${pad(s)}`;
                     }
                 }
             });
@@ -5893,11 +5904,18 @@
                             delete userUnlockTimers[currentUser.username][charId];
                             localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
 
+                            // Xóa timer trên Firebase khi đã hoàn thành
+                            db.collection("unlock_timers").doc(currentUser.username.toLowerCase()).set({
+                                [charId]: firebase.firestore.FieldValue.delete()
+                            }, { merge: true }).catch(() => {});
+
                             if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
                             userUnlockedState[currentUser.username][charId] = true;
                             db.collection("unlocked").doc(currentUser.username).set({
                                 chars: userUnlockedState[currentUser.username]
                             });
+
+                            renderFastColorCenter();
 
                             // Thưởng 2 Chì Màu cho link mở có hạn giờ
                             addPencilToUser(currentUser.username, 2, "Mở khóa Link mở trong ngày thành công");
@@ -5968,17 +5986,17 @@
             return new Promise(resolve => {
                 if (!dataUrl) return resolve(false);
 
-                // 1. Kiểm tra nhanh qua chữ nếu OCR nhận diện được từ ngữ đã thả cảm xúc
+                // 1. Quét từ khóa biểu thị trạng thái đã thả cảm xúc
                 try {
                     const words = getOcrWordsList(ocrData);
                     const allWords = words.map(w => normalizeOcrToken(w.text)).join(" ");
-                    const keywords = ["dathich", "liked", "yeuthich", "thuongthuong", "thich", "yeu", "thuong", "like", "love", "care", "haha", "wow"];
-                    if (keywords.some(k => allWords.includes(k))) {
+                    const reactedKeywords = ["dathich", "liked", "yeuthich", "thuongthuong"];
+                    if (reactedKeywords.some(k => allWords.includes(k))) {
                         return resolve(true);
                     }
                 } catch (_) {}
 
-                // 2. Quét trực tiếp dải màu đặc trưng của icon: Tim (Đỏ/Hồng), Like (Xanh dương), Thương thương/Haha (Vàng/Cam)
+                // 2. Quét màu đặc trưng icon ở vùng nửa dưới ảnh (thanh Like/Tim Facebook)
                 const img = new Image();
                 img.onload = () => {
                     try {
@@ -5990,14 +6008,13 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, imgW, imgH);
 
-                        // Quét từ 15% chiều cao ảnh trở xuống (loại bỏ thanh status bar/header trên cùng)
-                        const startY = Math.round(imgH * 0.15);
-                        const scanH = imgH - startY;
+                        const startY = Math.round(imgH * 0.45);
+                        const scanH = Math.round(imgH * 0.50);
                         const imgData = ctx.getImageData(0, startY, imgW, scanH).data;
 
-                        let redPixels = 0;    // Màu Đỏ / Hồng của Tim (Love)
-                        let bluePixels = 0;   // Màu Xanh Dương của nút Thích (Like)
-                        let yellowPixels = 0; // Màu Vàng / Cam của Thương thương (Care) & Haha
+                        let redPixels = 0;    // Tim đỏ/hồng (Love)
+                        let bluePixels = 0;   // Like xanh dương
+                        let yellowPixels = 0; // Thương thương/Haha vàng cam
 
                         for (let i = 0; i < imgData.length; i += 4) {
                             const r = imgData[i];
@@ -6005,22 +6022,20 @@
                             const b = imgData[i + 2];
 
                             // Tim đỏ / hồng
-                            if (r >= 165 && g <= 125 && b <= 140 && (r - g) >= 45 && (r - b) >= 30) {
+                            if (r >= 170 && g <= 120 && b <= 135 && (r - g) >= 50 && (r - b) >= 35) {
                                 redPixels++;
                             }
                             // Like xanh dương Facebook
-                            else if (b >= 155 && (b - r) >= 45 && (b - g) >= 15) {
+                            else if (b >= 160 && (b - r) >= 50 && (b - g) >= 20) {
                                 bluePixels++;
                             }
                             // Thương thương / Haha vàng cam
-                            else if (r >= 175 && g >= 115 && b <= 115 && (r - b) >= 60 && (g - b) >= 20) {
+                            else if (r >= 180 && g >= 120 && b <= 110 && (r - b) >= 65 && (g - b) >= 25) {
                                 yellowPixels++;
                             }
                         }
 
-                        // Ngưỡng phát hiện icon: chỉ cần gom được cụm từ 12 pixel màu trở lên
-                        const minThreshold = Math.max(12, Math.round(imgW * 0.012));
-
+                        const minThreshold = Math.max(18, Math.round(imgW * 0.018));
                         if (redPixels >= minThreshold || bluePixels >= minThreshold || yellowPixels >= minThreshold) {
                             return resolve(true);
                         }
@@ -6118,12 +6133,12 @@
                 if (!hasPage) throw new Error("Ảnh Facebook chưa nhìn thấy rõ tên Page 'Palette Số Hóa'!");
 
                 const hasReact = await checkFacebookReact(cachedFbDataUrl, fbOcrData);
-                if (!hasReact) throw new Error("Bạn chưa thả cảm xúc (Tim / Thích / Thương thương) ở cùng hàng với Bình luận (Comment) trên bài viết Facebook!");
+                if (!hasReact) throw new Error("Ảnh chưa nhận diện được nút đã thả cảm xúc (Tim / Thích / Thương thương). Vui lòng chụp rõ nút đã thả nhé!");
 
                 const isOwnerTesting = (currentUser?.isOwner || currentUser?.username?.toLowerCase() === "bibi 0304");
 
                 if (!isOwnerTesting) {
-                    const targetTag = (activeChar.firstTagKeyword || "").toLowerCase();
+                    const targetTag = (activeChar.firstTagKeyword || activeChar.firstTagSubtitle || "").toLowerCase();
                     const unaccentedTag = targetTag.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                     const hasTag = cleanFb.includes(targetTag) || cleanFb.includes(unaccentedTag);
                     if (!hasTag) throw new Error("Ảnh Facebook gửi sai bài viết của nhân vật khác!");
@@ -6295,6 +6310,11 @@
         }
 
         async function processFastProofVerification() {
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập tài khoản trước khi gửi ảnh xét duyệt mở link nhé!");
+                return;
+            }
+
             const fileInput = document.getElementById('fastProofFbImg');
             const submitBtn = document.getElementById('fastSubmitBtn');
             const submitText = document.getElementById('fastSubmitBtnText');
@@ -6371,9 +6391,9 @@
                 const hasTag = clean.includes(targetTag) || clean.includes(unaccentedTag);
                 if (!hasTag) throw new Error("Ảnh đang gửi sai bài viết của nhân vật khác!");
 
-                // 3. Kiểm tra nút cảm xúc cùng hàng Bình luận / Comment (Tim / Thích / Thương thương)
+                // 3. Kiểm tra nút cảm xúc (Tim / Thích / Thương thương)
                 const hasReact = await checkFacebookReact(fastFbDataUrl, fastFbOcrData);
-                if (!hasReact) throw new Error("Bạn chưa thả cảm xúc (Tim / Thích / Thương thương) ở cùng hàng với Bình luận (Comment) trên bài viết Facebook!");
+                if (!hasReact) throw new Error("Ảnh chưa nhận diện được nút đã thả cảm xúc (Tim / Thích / Thương thương). Vui lòng chụp rõ nút đã thả nhé!");
 
                 setFastProgressUI(97, "Đang tải ảnh bằng chứng lên...");
                 await storeProofImages(fastFiles, {
@@ -6388,9 +6408,19 @@
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
 
                 const uName = currentUser.username;
+                const uKey = uName.toLowerCase();
+                const unlockEndTime = Date.now() + (2 * 3600 * 1000);
+
                 if (!userUnlockTimers[uName]) userUnlockTimers[uName] = {};
-                userUnlockTimers[uName][fastTargetChar.id] = Date.now() + (2 * 3600 * 1000);
+                userUnlockTimers[uName][fastTargetChar.id] = unlockEndTime;
                 localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
+
+                // Lưu trực tiếp lên Firebase để khi out ra hoặc đổi thiết bị vẫn giữ nguyên đếm ngược
+                await db.collection("unlock_timers").doc(uKey).set({
+                    [fastTargetChar.id]: unlockEndTime
+                }, { merge: true });
+
+                renderFastColorCenter();
 
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-emerald-500/25 text-emerald-100 border-emerald-400/50";
                 feedbackBox.innerHTML = `
@@ -7389,6 +7419,22 @@
         function closeFastProofModal() {
             const modal = document.getElementById('fastProofPopup');
             if (modal) modal.classList.add('hidden');
+            const fileInput = document.getElementById('fastProofFbImg');
+            if (fileInput) fileInput.value = '';
+            const fileNameSpan = document.getElementById('fastProofFbImgName');
+            if (fileNameSpan) {
+                fileNameSpan.innerText = 'Chưa chọn ảnh';
+                fileNameSpan.className = 'text-[11px] text-sky-200/70 truncate flex-1';
+            }
+            const feedbackBox = document.getElementById('fastAiFeedbackBox');
+            if (feedbackBox) {
+                feedbackBox.classList.add('hidden');
+                feedbackBox.innerHTML = '';
+            }
+            const submitBtn = document.getElementById('fastSubmitBtn');
+            const submitText = document.getElementById('fastSubmitBtnText');
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitText) submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
         }
 
         function openFavoritesModal() {
