@@ -510,6 +510,12 @@
                 <svg class="custom-bell-icon w-4 h-4 text-pink-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2"></path><path d="M6.7 8.2a5.5 5.5 0 0 1 10.6 0c.8 3.4.2 5.6 2.2 7.8H4.5c2-2.2 1.4-4.4 2.2-7.8Z"></path><path d="M9.6 19a2.6 2.6 0 0 0 4.8 0"></path><path d="M4 4l2 2"></path><path d="m20 4-2 2"></path></svg>
                 <span id="adminPendingPencilCount">0</span>
             </button>
+
+            <!-- Nút Duyệt Link (Help) dành riêng cho Chủ Web -->
+            <button id="adminPendingLinkBtn" onclick="openLinkReviewModal()" class="hidden h-9 px-2.5 rounded-full border border-amber-400 bg-amber-500/20 text-amber-200 text-xs font-bold items-center gap-1 shadow animate-pulse" title="Có ảnh Help đang chờ Duyệt Link">
+                <span>🆘</span>
+                <span id="adminPendingLinkCount">0</span>
+            </button>
         </div>
 
         <!-- TÊN NGƯỜI DÙNG Ở CHÍNH GIỮA TRANG WEB -->
@@ -681,6 +687,29 @@
                     <span id="adminPendingPencilCountInModal" class="text-[10px] text-amber-300 font-bold">0 yêu cầu</span>
                 </div>
                 <div id="adminPendingPingList" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DUYỆT LINK THỦ CÔNG (HELP) DÀNH CHO CHỦ WEB -->
+    <div id="adminLinkReviewModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-[#121c38] border-2 border-amber-300/80 p-5 rounded-3xl max-w-md w-full text-left shadow-[0_0_40px_rgba(251,191,36,0.35)] max-h-[88vh] custom-scroll">
+            <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">🆘</span>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-amber-200">Duyệt Link (Yêu Cầu Help)</h3>
+                        <p class="text-[10px] text-sky-200/60">Bấm Duyệt là link mở ngay cho thành viên, không cần xét lại</p>
+                    </div>
+                </div>
+                <button onclick="closeLinkReviewModal()" class="text-sky-200 text-lg p-1 hover:text-white">✕</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-amber-300">Danh sách ảnh đang chờ xem xét:</span>
+                    <span id="adminPendingLinkCountInModal" class="text-[10px] text-pink-300 font-bold">0 yêu cầu</span>
+                </div>
+                <div id="adminPendingLinkList" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scroll pr-1"></div>
             </div>
         </div>
     </div>
@@ -1027,6 +1056,20 @@
                         <p class="text-xs text-pink-100/75">Xem Ping mới và duyệt cấp thưởng cho thành viên</p>
                     </div>
                     <span id="pencilShopPendingCount" class="shrink-0 min-w-7 h-7 px-2 rounded-full bg-pink-400/20 border border-pink-200/40 text-pink-100 text-xs font-black flex items-center justify-center">0</span>
+                </button>
+            </div>
+
+            <!-- MỤC DUYỆT LINK THỦ CÔNG (HELP) DÀNH CHO CHỦ WEB -->
+            <div id="ownerLinkReviewSection" class="hidden w-full">
+                <button onclick="openLinkReviewModal()" class="jelly-btn w-full bg-gradient-to-r from-amber-500/20 via-rose-500/20 to-pink-500/20 border-2 border-amber-300/60 hover:border-amber-200 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_20px_rgba(251,191,36,0.22)] text-left">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/50 flex items-center justify-center shrink-0 text-xl">
+                        <span>🆘</span>
+                    </div>
+                    <div class="text-left flex-1">
+                        <h3 class="text-base font-extrabold pastel-fast-wave">Duyệt Link (Help)</h3>
+                        <p class="text-xs text-amber-100/80">Xem ảnh bị từ chối & bấm duyệt mở link ngay cho user</p>
+                    </div>
+                    <span id="linkReviewPendingCount" class="shrink-0 min-w-7 h-7 px-2 rounded-full bg-amber-400/25 border border-amber-200/50 text-amber-100 text-xs font-black flex items-center justify-center">0</span>
                 </button>
             </div>
         </main>
@@ -2066,6 +2109,11 @@
         let notificationsUnsub = null;
         let isOwnerListenersActive = false;
         let allMembersUnlockTimers = {};
+        let pendingManualLinkRequests = [];
+        let knownManualLinkRequestIds = null;
+        let lastFailedProofContext = null;
+        let isFirstNotificationSnapshot = true;
+        let lastKnownNotificationTimeKey = "";
         const DEFAULT_VISUAL_EFFECTS = ["fx-dust", "fx-aurora", "fx-stars", "fx-paper", "fx-sakura"];
 
         function isValidAvatarSrc(src) {
@@ -4423,8 +4471,28 @@
                 updateAIStudioButton();
             });
 
+            isFirstNotificationSnapshot = true;
             notificationsUnsub = db.collection("notifications").doc(uKey).onSnapshot(doc => {
-                userNotificationLogs[uKey] = doc.exists ? (doc.data().logs || []) : [];
+                const newLogs = doc.exists ? (doc.data().logs || []) : [];
+                const latest = newLogs[0];
+                const latestKey = latest ? `${latest.title}|${latest.time}|${newLogs.length}` : "";
+
+                if (!isFirstNotificationSnapshot && latest && latestKey !== lastKnownNotificationTimeKey && newLogs.length >= (userNotificationLogs[uKey]?.length || 0)) {
+                    showInAppNotifyToast(latest.title, latest.body);
+                    playPaletteTingSound();
+                    if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
+                        try {
+                            new Notification(latest.title, {
+                                body: latest.body,
+                                icon: "https://files.catbox.moe/1foc7r.gif"
+                            });
+                        } catch (_) {}
+                    }
+                }
+
+                isFirstNotificationSnapshot = false;
+                lastKnownNotificationTimeKey = latestKey;
+                userNotificationLogs[uKey] = newLogs;
                 renderUserNotifications();
             });
         }
@@ -4461,6 +4529,11 @@
                 memberActivities.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
                 updateActivitiesBadgeUI();
                 renderUsersModalContent();
+                if (currentUser?.isOwner) renderUserNotifications();
+                const reviewModal = document.getElementById('adminLinkReviewModal');
+                if (reviewModal && !reviewModal.classList.contains('hidden')) {
+                    renderAdminPendingLinkReviews();
+                }
             });
 
             db.collection("users").onSnapshot((snapshot) => {
@@ -4474,6 +4547,28 @@
                 allMembersUnlockTimers = {};
                 snapshot.forEach(doc => { allMembersUnlockTimers[doc.id] = doc.data() || {}; });
                 renderUsersModalContent();
+            });
+
+            // Lắng nghe danh sách ảnh Help chờ Chủ Web Duyệt Link
+            db.collection("manual_proof_requests").onSnapshot((snapshot) => {
+                const prevIds = knownManualLinkRequestIds;
+                pendingManualLinkRequests = [];
+                snapshot.forEach(doc => { pendingManualLinkRequests.push({ id: doc.id, ...doc.data() }); });
+                pendingManualLinkRequests.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+                const currIds = new Set(pendingManualLinkRequests.map(r => r.id));
+
+                if (prevIds) {
+                    const newReqs = pendingManualLinkRequests.filter(r => !prevIds.has(r.id));
+                    if (newReqs.length > 0) playPaletteTingSound();
+                }
+                knownManualLinkRequestIds = currIds;
+                updateAdminLinkReviewBadge();
+                const reviewModal = document.getElementById('adminLinkReviewModal');
+                if (reviewModal && !reviewModal.classList.contains('hidden')) {
+                    renderAdminPendingLinkReviews();
+                }
+            }, (error) => {
+                if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
         }
 
@@ -4624,6 +4719,37 @@
 
             visibleLogs.forEach(item => {
                 const isFail = isFailLog(item);
+                let imagesHtml = '';
+                let quickApproveHtml = '';
+
+                if (isFail && currentUser.isOwner) {
+                    const matchedAct = item.activityId
+                        ? memberActivities.find(a => a.id === item.activityId)
+                        : memberActivities.find(a => getActivityCategory(a) === 'fail' && Array.isArray(a.images) && a.images.length > 0 && (item.body || '').includes(a.username));
+
+                    if (matchedAct && Array.isArray(matchedAct.images) && matchedAct.images.length > 0) {
+                        imagesHtml = `<div class="flex flex-wrap gap-2 pt-1.5">` + matchedAct.images.map(imgObj => `
+                            <div class="flex flex-col items-center">
+                                <img src="${imgObj.src}" onclick="openLightboxImage(this.src)" title="Bấm phóng to ${imgObj.label || 'ảnh'}" class="w-16 h-20 object-cover rounded-xl border border-red-300/50 cursor-pointer hover:brightness-110 active:scale-95 transition">
+                                <span class="text-[9px] text-sky-200/70 mt-0.5">${imgObj.label || 'Ảnh gửi'}</span>
+                            </div>
+                        `).join('') + `</div>`;
+                    }
+
+                    const tUser = item.targetUsername || matchedAct?.username;
+                    const tCharId = item.charId || matchedAct?.charId;
+                    const tMode = item.modeLabel || matchedAct?.proofMode || '';
+                    if (tUser && tCharId) {
+                        quickApproveHtml = `
+                            <div class="pt-1.5">
+                                <button type="button" onclick="ownerQuickApproveFromFail('${tUser}', '${tCharId}', '${tMode}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black py-1.5 px-2.5 rounded-xl text-[11px] active:scale-95 transition shadow">
+                                    ✓ Duyệt & Mở Link Cho ${tUser}
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+
                 const el = document.createElement('div');
                 el.className = isFail
                     ? "bg-red-500/10 border border-red-400/35 p-2.5 rounded-xl text-xs space-y-1"
@@ -4634,20 +4760,122 @@
                         <span class="text-[10px] text-sky-200/50 shrink-0">${item.time}</span>
                     </div>
                     <p class="text-sky-100/90 leading-relaxed text-[11px]">${item.body}</p>
+                    ${imagesHtml}
+                    ${quickApproveHtml}
                 `;
                 listContainer.appendChild(el);
             });
         }
 
-        // Tự động báo về mục Thất Bại của Chủ Web khi có thành viên duyệt ảnh bị từ chối
-        async function logFailedProofForOwner(modeLabel, charObj, reasonMsg) {
+        // Duyệt mở khóa trực tiếp cho thành viên từ mục Thất Bại (không cần user phải bấm Help)
+        async function ownerQuickApproveFromFail(targetUsername, charId, modeLabel = '') {
+            if (!checkIsOwnerAccount() || !targetUsername || !charId) return;
+            const targetChar = characters.find(c => c.id === charId);
+            const charName = targetChar ? targetChar.name : "Nhân vật";
+            if (!confirm(`Chủ Web xác nhận DUYỆT & MỞ LINK NGAY cho "${targetUsername}" (${charName})?`)) return;
+
+            try {
+                const uKey = targetUsername.toLowerCase();
+                const unlockedRef = db.collection("unlocked").doc(targetUsername);
+                const snap = await unlockedRef.get();
+                const existingChars = snap.exists ? (snap.data().chars || {}) : {};
+                existingChars[charId] = true;
+                await unlockedRef.set({ chars: existingChars }, { merge: true });
+
+                await db.collection("unlock_timers").doc(uKey).set({
+                    [charId]: firebase.firestore.FieldValue.delete()
+                }, { merge: true }).catch(() => {});
+
+                const isFast = modeLabel.toLowerCase().includes('nhanh') || targetChar?.status === 'unlocked_24h';
+                const reward = isFast ? 2 : 1;
+                await addPencilToUser(targetUsername, reward, `Chủ Web duyệt mở link ${charName}`);
+
+                triggerNotification(
+                    "Palette Đã Duyệt Link! 🎉",
+                    `Palette đã xem xét lại ảnh và mở khóa link "${charName}" cho bạn rồi nhé (+${reward} Chì Màu)! Nhớ bấm tim để lưu giữ vĩnh viễn nhé!`,
+                    targetUsername
+                );
+
+                logMemberActivity("Chủ Web duyệt mở link 🔓", `Thành viên: ${targetUsername} · Nhân vật: ${charName}`, "link", {
+                    charId: charId,
+                    charName: charName
+                });
+
+                if (currentUser && currentUser.username.toLowerCase() === uKey) {
+                    if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
+                    userUnlockedState[currentUser.username][charId] = true;
+                    renderFastColorCenter();
+                    updateAIStudioButton();
+                }
+
+                alert(`✓ Đã mở khóa link "${charName}" cho "${targetUsername}" thành công!`);
+            } catch (err) {
+                console.error("Lỗi mở khóa nhanh từ thất bại:", err);
+                alert("Có lỗi xảy ra: " + (err?.message || "Vui lòng thử lại"));
+            }
+        }
+
+        // Nén ảnh gọn nhẹ để lưu thẳng lên Firestore không bị vượt 1MB
+        function shrinkDataUrlForFirestore(dataUrl, maxDim = 600, quality = 0.52) {
+            return new Promise(resolve => {
+                if (!dataUrl || typeof dataUrl !== 'string') return resolve("");
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        let w = img.naturalWidth || img.width || 500;
+                        let h = img.naturalHeight || img.height || 700;
+                        if (w > maxDim || h > maxDim) {
+                            if (w > h) {
+                                h = Math.round((h * maxDim) / w);
+                                w = maxDim;
+                            } else {
+                                w = Math.round((w * maxDim) / h);
+                                h = maxDim;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, w);
+                        canvas.height = Math.max(1, h);
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    } catch (_) {
+                        resolve(dataUrl.slice(0, 200000));
+                    }
+                };
+                img.onerror = () => resolve("");
+                img.src = dataUrl;
+            });
+        }
+
+        // Hiện thông báo nổi pastel ngay trên màn hình User khi có kết quả từ Chủ Web
+        function showInAppNotifyToast(title, body) {
+            const old = document.getElementById('paletteLiveToast');
+            if (old) old.remove();
+            const toast = document.createElement('div');
+            toast.id = 'paletteLiveToast';
+            toast.className = "fixed top-14 left-1/2 -translate-x-1/2 z-[120] w-[92%] max-w-sm bg-[#121c38]/95 backdrop-blur-md border-2 border-pink-300/80 p-3.5 rounded-2xl shadow-[0_0_30px_rgba(244,114,182,0.55)] text-left space-y-1 cursor-pointer transition";
+            toast.onclick = () => toast.remove();
+            toast.innerHTML = `
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-black pastel-fast-wave">${title}</span>
+                    <span class="text-[10px] text-sky-200/70">✕</span>
+                </div>
+                <p class="text-[11px] text-sky-100 leading-relaxed">${body}</p>
+            `;
+            document.body.appendChild(toast);
+            window.setTimeout(() => { if (toast.parentNode) toast.remove(); }, 7500);
+        }
+
+        // Tự động báo về mục Thất Bại của Chủ Web kèm ảnh chụp khi thành viên bị từ chối
+        async function logFailedProofForOwner(modeLabel, charObj, reasonMsg, imagesArr = []) {
             if (!currentUser) return;
             const charName = charObj?.name || "Nhân vật";
             const charId = charObj?.id || "";
             const cleanReason = reasonMsg || "Không rõ lý do";
 
-            // 1. Lưu vào bảng Hoạt Động (mục ❌ Thất Bại)
-            logMemberActivity(
+            // 1. Lưu vào bảng Hoạt Động (mục ❌ Thất Bại) kèm luôn ảnh chụp bị lỗi
+            const failActId = await logMemberActivity(
                 `Duyệt thất bại (${modeLabel}) ❌`,
                 `Nhân vật: ${charName} · Lý do: ${cleanReason}`,
                 "fail",
@@ -4655,11 +4883,12 @@
                     charId: charId,
                     charName: charName,
                     failReason: cleanReason,
-                    proofMode: modeLabel
+                    proofMode: modeLabel,
+                    images: Array.isArray(imagesArr) ? imagesArr : []
                 }
             );
 
-            // 2. Gửi vào hòm Thông Báo Đã Nhận của Chủ Web (Bibi 0304)
+            // 2. Gửi vào hòm Thông Báo Đã Nhận của Chủ Web (Bibi 0304) liên kết tới ảnh
             try {
                 const ownerKey = OWNER_USER.toLowerCase();
                 const now = new Date();
@@ -4668,13 +4897,19 @@
                     title: `Duyệt thất bại (${modeLabel}) ❌`,
                     body: `${currentUser.username} duyệt cho "${charName}" bị từ chối. Lý do: ${cleanReason}`,
                     time: timestampStr,
-                    isFail: true
+                    isFail: true,
+                    activityId: failActId || "",
+                    targetUsername: currentUser.username,
+                    charId: charId,
+                    charName: charName,
+                    modeLabel: modeLabel
                 };
                 const ownerNotifRef = db.collection("notifications").doc(ownerKey);
                 if (currentUser.username.toLowerCase() === ownerKey) {
                     if (!userNotificationLogs[ownerKey]) userNotificationLogs[ownerKey] = [];
                     userNotificationLogs[ownerKey].unshift(newLog);
                     userNotificationLogs[ownerKey] = userNotificationLogs[ownerKey].slice(0, 50);
+                    lastKnownNotificationTimeKey = `${newLog.title}|${newLog.time}|${userNotificationLogs[ownerKey].length}`;
                     await ownerNotifRef.set({ logs: userNotificationLogs[ownerKey] }, { merge: true });
                     renderUserNotifications();
                 } else {
@@ -4683,6 +4918,294 @@
                     await ownerNotifRef.set({ logs: [newLog, ...oldLogs].slice(0, 50) }, { merge: true });
                 }
             } catch (_) {}
+        }
+
+        // User bấm nút Help -> Gửi yêu cầu + ảnh qua mục Duyệt Link của Chủ Web
+        async function sendManualHelpRequest(btnId) {
+            if (!currentUser || !lastFailedProofContext) return;
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = "⏳ Đang gửi ảnh cho Palette...";
+            }
+
+            try {
+                const now = new Date();
+                const timestampStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+                const ctx = lastFailedProofContext;
+
+                await db.collection("manual_proof_requests").add({
+                    username: currentUser.username,
+                    avatar: getUserAvatarOrDefault(currentUser.username),
+                    charId: ctx.charId,
+                    charName: ctx.charName,
+                    mode: ctx.mode,
+                    modeLabel: ctx.modeLabel,
+                    failReason: ctx.failReason,
+                    images: ctx.images || [],
+                    createdAt: now.getTime(),
+                    timestamp: timestampStr
+                });
+
+                triggerNotification(
+                    "🆘 Có yêu cầu Duyệt Link (Help)!",
+                    `${currentUser.username} vừa bấm Help gửi ảnh nhờ duyệt lại cho "${ctx.charName}". Vào mục Duyệt Link (Help) để xem ảnh nhé!`,
+                    OWNER_USER
+                );
+
+                if (btn) {
+                    btn.className = "w-full bg-emerald-500/25 border border-emerald-300/50 text-emerald-200 font-extrabold py-2 px-3 rounded-xl text-xs cursor-default";
+                    btn.innerText = "✓ Đã gửi cho Palette! Vui lòng đợi thông báo mở link nhé 💖";
+                }
+                playPaletteTingSound();
+            } catch (err) {
+                console.error("Lỗi gửi yêu cầu Help:", err);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = "🆘 Help - Thử gửi lại";
+                }
+                alert("Chưa thể gửi yêu cầu Help lúc này. Vui lòng thử lại nhé!");
+            }
+        }
+
+        function updateAdminLinkReviewBadge() {
+            const isOwner = checkIsOwnerAccount();
+            const headerBtn = document.getElementById('adminPendingLinkBtn');
+            const headerCount = document.getElementById('adminPendingLinkCount');
+            const homeSection = document.getElementById('ownerLinkReviewSection');
+            const homeCount = document.getElementById('linkReviewPendingCount');
+
+            if (homeCount) homeCount.innerText = pendingManualLinkRequests.length;
+            if (homeSection) homeSection.classList.toggle('hidden', !isOwner);
+
+            if (isOwner && pendingManualLinkRequests.length > 0) {
+                if (headerBtn) {
+                    headerBtn.classList.remove('hidden');
+                    headerBtn.classList.add('flex');
+                }
+                if (headerCount) headerCount.innerText = pendingManualLinkRequests.length;
+            } else {
+                if (headerBtn) {
+                    headerBtn.classList.add('hidden');
+                    headerBtn.classList.remove('flex');
+                }
+            }
+        }
+
+        function openLinkReviewModal() {
+            if (!checkIsOwnerAccount()) {
+                alert("Mục này chỉ dành riêng cho Chủ Web (Bibi 0304)!");
+                return;
+            }
+            renderAdminPendingLinkReviews();
+            const modal = document.getElementById('adminLinkReviewModal');
+            if (modal) modal.classList.remove('hidden');
+            playPaletteTingSound();
+        }
+
+        function closeLinkReviewModal() {
+            const modal = document.getElementById('adminLinkReviewModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        let activeLinkReviewTab = 'help'; // 'help' | 'all_failed'
+
+        function switchLinkReviewTab(tab) {
+            activeLinkReviewTab = tab;
+            renderAdminPendingLinkReviews();
+            playCheerfulClickSound();
+        }
+
+        function renderAdminPendingLinkReviews() {
+            const container = document.getElementById('adminPendingLinkList');
+            const countEl = document.getElementById('adminPendingLinkCountInModal');
+            const failedActs = memberActivities.filter(a => getActivityCategory(a) === 'fail' && Array.isArray(a.images) && a.images.length > 0);
+
+            if (countEl) countEl.innerText = `${pendingManualLinkRequests.length} Help · ${failedActs.length} ảnh lỗi`;
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="grid grid-cols-2 gap-1.5 p-1 bg-black/40 rounded-2xl border border-white/10 mb-2 sticky top-0 z-10 backdrop-blur-md">
+                    <button type="button" onclick="switchLinkReviewTab('help')" class="py-1.5 px-2 rounded-xl text-[11px] font-extrabold transition ${activeLinkReviewTab === 'help' ? 'bg-amber-500/35 text-amber-200 border border-amber-300/60 shadow' : 'text-sky-200/70 hover:text-white'}">
+                        🆘 Bấm Help (${pendingManualLinkRequests.length})
+                    </button>
+                    <button type="button" onclick="switchLinkReviewTab('all_failed')" class="py-1.5 px-2 rounded-xl text-[11px] font-extrabold transition ${activeLinkReviewTab === 'all_failed' ? 'bg-red-500/35 text-red-200 border border-red-400/60 shadow' : 'text-sky-200/70 hover:text-white'}">
+                        ❌ Ảnh Bị Từ Chối (${failedActs.length})
+                    </button>
+                </div>
+            `;
+
+            if (activeLinkReviewTab === 'all_failed') {
+                if (failedActs.length === 0) {
+                    container.innerHTML += `<div class="text-[11px] text-sky-200/50 italic py-6 text-center">Chưa có ảnh nào bị từ chối kèm hình chụp.</div>`;
+                    return;
+                }
+                failedActs.forEach(act => {
+                    const avt = act.avatar || PALETTE_DEFAULT_AVATARS[0];
+                    const imgsHtml = act.images.map(imgObj => `
+                        <div class="flex flex-col items-center">
+                            <img src="${imgObj.src}" onclick="openLightboxImage(this.src)" title="Chạm để phóng to xem rõ" class="w-24 h-28 object-cover rounded-xl border border-red-300/40 cursor-pointer hover:brightness-110 active:scale-95 transition">
+                            <span class="text-[10px] text-sky-200/75 mt-1 font-bold">${imgObj.label || 'Ảnh gửi'}</span>
+                        </div>
+                    `).join('');
+
+                    const card = document.createElement('div');
+                    card.className = "bg-red-500/10 border border-red-400/35 rounded-2xl p-3 space-y-2.5";
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <img src="${avt}" alt="" class="w-7 h-7 rounded-full object-cover border border-pink-300/40 shrink-0">
+                                <div class="truncate">
+                                    <div class="font-extrabold text-pink-200 truncate">${act.username}</div>
+                                    <div class="text-[10px] text-sky-200/60">${act.charName || 'Nhân vật'} · ${formatCommentTime(act)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] text-red-200 bg-black/30 border border-red-400/25 p-2 rounded-xl">
+                            <b>Lý do:</b> ${act.failReason || act.details || 'Không rõ'}
+                        </div>
+                        <div class="flex flex-wrap gap-2.5 justify-center bg-black/30 p-2.5 rounded-xl border border-white/10">${imgsHtml}</div>
+                        ${act.charId ? `
+                            <button type="button" onclick="ownerQuickApproveFromFail('${act.username}', '${act.charId}', '${act.proofMode || ''}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow">
+                                ✓ Duyệt & Mở Link Cho ${act.username}
+                            </button>
+                        ` : ''}
+                    `;
+                    container.appendChild(card);
+                });
+                return;
+            }
+
+            if (pendingManualLinkRequests.length === 0) {
+                container.innerHTML += `<div class="text-[11px] text-sky-200/50 italic py-6 text-center">Hiện chưa có yêu cầu Help duyệt link nào đang chờ. (Bấm tab "❌ Ảnh Bị Từ Chối" bên trên để xem mọi ảnh lỗi nhé!)</div>`;
+                return;
+            }
+
+            pendingManualLinkRequests.forEach(req => {
+                const avt = req.avatar || PALETTE_DEFAULT_AVATARS[0];
+                const imgsHtml = (Array.isArray(req.images) ? req.images : []).map(imgObj => `
+                    <div class="flex flex-col items-center">
+                        <img src="${imgObj.src}" onclick="openLightboxImage(this.src)" title="Chạm để phóng to xem rõ" class="w-24 h-28 object-cover rounded-xl border border-amber-300/40 cursor-pointer hover:brightness-110 active:scale-95 transition">
+                        <span class="text-[10px] text-sky-200/75 mt-1 font-bold">${imgObj.label || 'Ảnh gửi'}</span>
+                    </div>
+                `).join('');
+
+                const card = document.createElement('div');
+                card.className = "bg-white/5 border border-amber-300/40 rounded-2xl p-3 space-y-2.5";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <img src="${avt}" alt="" class="w-7 h-7 rounded-full object-cover border border-pink-300/40 shrink-0">
+                            <div class="truncate">
+                                <div class="font-extrabold text-pink-200 truncate">${req.username}</div>
+                                <div class="text-[10px] text-sky-200/60">${req.charName || 'Nhân vật'} · ${req.modeLabel || ''} · ${req.timestamp || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-red-200 bg-red-500/15 border border-red-400/30 p-2 rounded-xl">
+                        <b>Lý do bị từ chối:</b> ${req.failReason || 'Không rõ'}
+                    </div>
+
+                    ${imgsHtml ? `<div class="flex flex-wrap gap-2.5 justify-center bg-black/30 p-2.5 rounded-xl border border-white/10">${imgsHtml}</div>` : '<div class="text-[11px] text-sky-200/50 italic text-center">Không có ảnh đính kèm</div>'}
+
+                    <div class="flex items-center gap-2 pt-1">
+                        <button type="button" onclick="approveManualLinkRequest('${req.id}')" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow">
+                            ✓ Duyệt & Mở Link Cho User
+                        </button>
+                        <button type="button" onclick="rejectManualLinkRequest('${req.id}')" class="px-3 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/35 text-red-300 border border-red-400/30 font-bold text-xs active:scale-95 transition" title="Từ chối">
+                            Từ chối
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function approveManualLinkRequest(reqId) {
+            if (!checkIsOwnerAccount()) return;
+            const req = pendingManualLinkRequests.find(r => r.id === reqId);
+            if (!req) return;
+            if (!confirm(`Chủ Web xác nhận DUYỆT & MỞ LINK NGAY cho "${req.username}" (${req.charName})?`)) return;
+
+            try {
+                const targetUsername = req.username;
+                const uKey = targetUsername.toLowerCase();
+                const charId = req.charId;
+                const charName = req.charName || "Nhân vật";
+
+                // 1. Mở khóa link trực tiếp trên Firebase cho user (bỏ qua mọi đếm ngược/kiểm tra)
+                const unlockedRef = db.collection("unlocked").doc(targetUsername);
+                const snap = await unlockedRef.get();
+                const existingChars = snap.exists ? (snap.data().chars || {}) : {};
+                existingChars[charId] = true;
+                await unlockedRef.set({ chars: existingChars }, { merge: true });
+
+                // 2. Xóa bộ đếm ngược nếu user đang có timer ở nhân vật này
+                await db.collection("unlock_timers").doc(uKey).set({
+                    [charId]: firebase.firestore.FieldValue.delete()
+                }, { merge: true }).catch(() => {});
+
+                // 3. Thưởng Chì Màu đúng theo chế độ (+2 nếu Nhanh Nhẹn, +1 nếu Thường)
+                const reward = req.mode === 'fast' ? 2 : 1;
+                await addPencilToUser(targetUsername, reward, `Chủ Web duyệt Help mở link ${charName}`);
+
+                // 4. Xóa yêu cầu khỏi danh sách chờ
+                await db.collection("manual_proof_requests").doc(reqId).delete();
+
+                // 5. Gửi thông báo về máy user
+                triggerNotification(
+                    "Palette Đã Duyệt Link! 🎉",
+                    `Yêu cầu Help của bạn cho "${charName}" đã được Palette duyệt! Link Google AI Studio đã mở sẵn sàng (+${reward} Chì Màu). Nhớ bấm tim để lưu giữ vĩnh viễn nhé!`,
+                    targetUsername
+                );
+
+                // 6. Ghi log hoạt động
+                logMemberActivity("Chủ Web duyệt Help mở link 🔓", `Thành viên: ${targetUsername} · Nhân vật: ${charName}`, "link", {
+                    charId: charId,
+                    charName: charName
+                });
+
+                if (currentUser && currentUser.username.toLowerCase() === uKey) {
+                    if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
+                    userUnlockedState[currentUser.username][charId] = true;
+                    if (userUnlockTimers[currentUser.username]) {
+                        delete userUnlockTimers[currentUser.username][charId];
+                        localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
+                    }
+                    renderFastColorCenter();
+                    updateAIStudioButton();
+                }
+
+                alert(`✓ Đã duyệt và mở khóa link "${charName}" cho "${targetUsername}" thành công!`);
+                renderAdminPendingLinkReviews();
+            } catch (err) {
+                console.error("Lỗi khi duyệt link thủ công:", err);
+                alert("Có lỗi xảy ra: " + (err?.message || "Vui lòng thử lại"));
+            }
+        }
+
+        async function rejectManualLinkRequest(reqId) {
+            if (!checkIsOwnerAccount()) return;
+            const req = pendingManualLinkRequests.find(r => r.id === reqId);
+            if (!req) return;
+            const reason = prompt(`Nhập lý do từ chối gửi cho "${req.username}" (hoặc để trống nếu bỏ qua):`, "Ảnh vẫn chưa rõ/chưa đúng yêu cầu, bạn chụp lại rõ hơn nhé!");
+            if (reason === null) return;
+
+            try {
+                await db.collection("manual_proof_requests").doc(reqId).delete();
+                if (reason.trim()) {
+                    triggerNotification(
+                        "Yêu Cầu Duyệt Link Chưa Đạt ❌",
+                        `Palette đã xem ảnh cho "${req.charName}" nhưng chưa thể duyệt: ${reason.trim()}`,
+                        req.username
+                    );
+                }
+                renderAdminPendingLinkReviews();
+            } catch (err) {
+                console.error("Lỗi từ chối duyệt link:", err);
+                alert("Chưa thể xử lý lúc này.");
+            }
         }
 
         function clearUserNotifications() {
@@ -4705,6 +5228,7 @@
                     if (!userNotificationLogs[uKey]) userNotificationLogs[uKey] = [];
                     userNotificationLogs[uKey].unshift(newLog);
                     userNotificationLogs[uKey] = userNotificationLogs[uKey].slice(0, 50);
+                    lastKnownNotificationTimeKey = `${newLog.title}|${newLog.time}|${userNotificationLogs[uKey].length}`;
                     await db.collection("notifications").doc(uKey).set({ logs: userNotificationLogs[uKey] }, { merge: true });
                 } else {
                     const snap = await db.collection("notifications").doc(uKey).get();
@@ -4786,11 +5310,11 @@
 
         // Ghi lại bất kỳ hoạt động nào của thành viên kèm tọa độ nhân vật & bình luận
         async function logMemberActivity(actionTitle, detailText = "", actType = "general", extraData = {}) {
-            if (!currentUser) return;
+            if (!currentUser) return null;
             try {
                 const now = Date.now();
                 const avt = getUserAvatarOrDefault(currentUser.username);
-                await db.collection("activities").add({
+                const docRef = await db.collection("activities").add({
                     username: currentUser.username,
                     avatar: avt,
                     title: actionTitle,
@@ -4799,8 +5323,10 @@
                     ...(extraData && typeof extraData === 'object' ? extraData : {}),
                     createdAt: now
                 });
+                return docRef.id;
             } catch (e) {
                 console.error("Lỗi lưu hoạt động:", e);
+                return null;
             }
         }
 
@@ -5131,6 +5657,16 @@
                     if (isClickable) {
                         item.onclick = () => jumpToActivityTarget(act.id);
                     }
+                    let actImagesHtml = '';
+                    if (Array.isArray(act.images) && act.images.length > 0) {
+                        actImagesHtml = `<div class="flex flex-wrap gap-2 pl-8 pt-1">` + act.images.map(imgObj => `
+                            <div class="flex flex-col items-center">
+                                <img src="${imgObj.src}" onclick="event.stopPropagation(); openLightboxImage(this.src)" title="Bấm phóng to ${imgObj.label || 'ảnh'}" class="w-16 h-20 object-cover rounded-xl border border-red-300/40 cursor-pointer hover:brightness-110 active:scale-95 transition">
+                                <span class="text-[9px] text-sky-200/70 mt-0.5">${imgObj.label || 'Ảnh gửi'}</span>
+                            </div>
+                        `).join('') + `</div>`;
+                    }
+
                     item.innerHTML = `
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2 min-w-0">
@@ -5142,6 +5678,7 @@
                         </div>
                         <div class="font-bold text-sky-100 pl-8 leading-snug">${act.title}</div>
                         ${act.details ? `<div class="text-[11px] text-sky-200/75 pl-8 leading-relaxed">${act.details}</div>` : ''}
+                        ${actImagesHtml}
                         ${isClickable ? `<div class="text-[10px] text-sky-300 font-bold pl-8 pt-0.5 flex items-center gap-1">👉 Bấm để nhảy tới trang ${targetChar.name} ➔</div>` : ''}
                     `;
                     container.appendChild(item);
@@ -5606,6 +6143,8 @@
             updateRegisteredUsersCountUI();
             updatePencilUI();
             updateAdminPencilNotificationBadge();
+            updateAdminLinkReviewBadge();
+            updateAdminLinkReviewBadge();
 
             const currentCommentUserEl = document.getElementById('currentCommentUser');
             if (currentCommentUserEl) currentCommentUserEl.innerText = acc.username;
@@ -6843,8 +7382,35 @@
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
                 const errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
-                feedbackBox.innerHTML = `❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}`;
-                logFailedProofForOwner(`Duyệt Thường - ${activeProofType}`, activeChar, errMsg);
+
+                const fbThumb = cachedFbDataUrl ? await shrinkDataUrlForFirestore(cachedFbDataUrl, 600, 0.52) : "";
+                const dcThumb = cachedDcDataUrls[0] ? await shrinkDataUrlForFirestore(cachedDcDataUrls[0], 600, 0.52) : "";
+                const proofImagesList = [
+                    ...(fbThumb ? [{ label: "Ảnh Facebook", src: fbThumb }] : []),
+                    ...(dcThumb ? [{ label: "Ảnh Discord", src: dcThumb }] : [])
+                ];
+
+                lastFailedProofContext = {
+                    mode: "normal",
+                    modeLabel: `Duyệt Thường - ${activeProofType}`,
+                    charId: activeChar?.id || "",
+                    charName: activeChar?.name || "Nhân vật",
+                    failReason: errMsg,
+                    images: proofImagesList
+                };
+
+                feedbackBox.innerHTML = `
+                    <div>❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}</div>
+                    <div class="mt-2.5 pt-2.5 border-t border-red-300/30 space-y-2">
+                        <p class="text-[11px] text-amber-200 leading-relaxed">
+                            Nếu bạn chắc chắn mình chụp đúng rồi mà hệ thống vẫn báo lỗi, hãy ấn nút <b>Help</b> này để Palette xem xét duyệt link lại cho bạn nhé!
+                        </p>
+                        <button type="button" id="normalHelpBtn" onclick="sendManualHelpRequest('normalHelpBtn')" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 px-3 rounded-xl text-xs shadow active:scale-95 transition flex items-center justify-center gap-1.5">
+                            <span>🆘 Help - Nhờ Palette duyệt lại link</span>
+                        </button>
+                    </div>
+                `;
+                logFailedProofForOwner(`Duyệt Thường - ${activeProofType}`, activeChar, errMsg, proofImagesList);
             }
         }
 
@@ -6888,6 +7454,7 @@
             };
 
             setFastProgressUI(20, "Đang tối ưu ảnh chụp...");
+            let fastFbDataUrl = "";
 
             try {
                 if (!fastTargetChar) {
@@ -6899,7 +7466,6 @@
 
                 const fastFiles = Array.from(fileInput.files || []);
                 let combinedFastText = "";
-                let fastFbDataUrl = "";
                 let fastFbOcrData = null;
 
                 for (let i = 0; i < fastFiles.length; i++) {
@@ -7030,8 +7596,37 @@
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
                 const errMsg = err?.message || (typeof err === 'string' ? err : '') || "Ảnh không đọc được chữ hoặc bị mờ, vui lòng chụp lại rõ nét hơn!";
-                feedbackBox.innerHTML = `❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}`;
-                logFailedProofForOwner("Sắc Màu Nhanh Nhẹn", fastTargetChar, errMsg);
+
+                let fastFbThumb = "";
+                if (fastFbDataUrl) {
+                    fastFbThumb = await shrinkDataUrlForFirestore(fastFbDataUrl, 600, 0.52);
+                } else if (fileInput?.files?.[0]) {
+                    const raw = await processImageForFastOCR(fileInput.files[0]);
+                    if (raw) fastFbThumb = await shrinkDataUrlForFirestore(raw, 600, 0.52);
+                }
+                const fastImagesList = fastFbThumb ? [{ label: "Ảnh Facebook", src: fastFbThumb }] : [];
+
+                lastFailedProofContext = {
+                    mode: "fast",
+                    modeLabel: "Sắc Màu Nhanh Nhẹn",
+                    charId: fastTargetChar?.id || "",
+                    charName: fastTargetChar?.name || "Nhân vật",
+                    failReason: errMsg,
+                    images: fastImagesList
+                };
+
+                feedbackBox.innerHTML = `
+                    <div>❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}</div>
+                    <div class="mt-2.5 pt-2.5 border-t border-red-300/30 space-y-2">
+                        <p class="text-[11px] text-amber-200 leading-relaxed">
+                            Nếu bạn chắc chắn mình chụp đúng rồi mà hệ thống vẫn báo lỗi, hãy ấn nút <b>Help</b> này để Palette xem xét duyệt link lại cho bạn nhé!
+                        </p>
+                        <button type="button" id="fastHelpBtn" onclick="sendManualHelpRequest('fastHelpBtn')" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 px-3 rounded-xl text-xs shadow active:scale-95 transition flex items-center justify-center gap-1.5">
+                            <span>🆘 Help - Nhờ Palette duyệt lại link</span>
+                        </button>
+                    </div>
+                `;
+                logFailedProofForOwner("Sắc Màu Nhanh Nhẹn", fastTargetChar, errMsg, fastImagesList);
             }
         }
 
