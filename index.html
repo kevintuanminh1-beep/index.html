@@ -34,7 +34,7 @@
         }
 
         /* ĐẢM BẢO CHỮ HIỆU ỨNG GRADIENT TRÊN IOS SẮC NÉT Y HỆT ANDROID */
-        .shimmer-text, .rainbow-text, .blue-pastel-wave, .pastel-fast-wave, 
+        .shimmer-text, .rainbow-text, .blue-pastel-wave, .green-pastel-wave, .pastel-fast-wave, 
         .pastel-rules-title, .pastel-notify-wave, .pencil-balance-glow, 
         .reset-filter-text, .server-highlight-link,
         .char-pastel-0, .char-pastel-1, .char-pastel-2, .char-pastel-3, .char-pastel-4 {
@@ -239,6 +239,34 @@
             animation: bluePastelShift 3.5s linear infinite;
         }
         @keyframes bluePastelShift { to { background-position: 250% center; } }
+
+        .new-char-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            background: rgba(34, 197, 94, 0.18);
+            border: 1px solid rgba(134, 239, 172, 0.65);
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.35);
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+        .new-char-badge.hidden {
+            display: none !important;
+        }
+        .green-pastel-wave {
+            background: linear-gradient(90deg, #4ade80, #bbf7d0, #22c55e, #86efac, #4ade80);
+            background-size: 250% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: greenPastelShift 2.8s linear infinite;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        @keyframes greenPastelShift { to { background-position: 250% center; } }
 
         .pastel-fast-wave {
             background: linear-gradient(90deg, #f472b6, #c084fc, #60a5fa, #34d399, #fbbf24, #f472b6);
@@ -1173,7 +1201,10 @@
             </div>
         </div>
 
-        <h2 id="currentCharTitle" class="text-3xl sm:text-4xl font-extrabold mb-1"></h2>
+        <div class="flex items-center justify-center gap-2 flex-wrap mb-1 px-2">
+            <h2 id="currentCharTitle" class="text-3xl sm:text-4xl font-extrabold"></h2>
+            <span id="detailCharNewBadge" class="hidden new-char-badge text-xs"><span class="green-pastel-wave">New</span></span>
+        </div>
         <p class="text-[9.5px] text-sky-200/50 italic text-center mb-3">Non-commercial use only. All image copyrights belong to their respective owners.</p>
 
         <div class="w-full max-w-[280px] mx-auto mb-4 flex flex-col items-center">
@@ -1459,12 +1490,12 @@
                     </div>
                     <p class="text-[11px] text-sky-300 font-medium italic">Dành cho những Sắc Màu lần đầu đến với Palette.</p>
                     <p class="text-sky-100/90 leading-relaxed">
-                        Vào kênh <b class="blue-pastel-wave font-bold">Sắc Màu Tân Thủ</b> trên Discord đăng bài điền theo mẫu:
+                        Vào kênh <b class="blue-pastel-wave font-bold">Hồ Sơ Tân Thủ</b> trên Discord đăng bài điền theo mẫu:
                     </p>
 
                     <div class="bg-black/50 border border-sky-300/30 rounded-xl p-2.5 my-1.5">
                         <div class="flex items-center justify-between mb-1">
-                            <span class="text-[11px] font-bold text-sky-300 uppercase">Mẫu Sắc Màu Tân Thủ:</span>
+                            <span class="text-[11px] font-bold text-sky-300 uppercase">Mẫu Hồ Sơ Tân Thủ:</span>
                             <button onclick="copyNewbieTemplate()" class="bg-sky-500/40 hover:bg-sky-500 text-white px-2 py-0.5 rounded text-[10px] font-bold active:scale-95 transition">
                                 Sao chép
                             </button>
@@ -1475,9 +1506,9 @@
                             <div>• Hướng nội hay hướng ngoại: [Hướng nội / Hướng ngoại]</div>
                         </div>
                     </div>
-                    <p class="text-[10px] text-sky-200/80 italic">Bài đăng sắc màu tân thủ chỉ được tính trong vòng 10 phút, ít nhất phải điền theo đúng ba mục trên nhé.</p>
+                    <p class="text-[10px] text-sky-200/80 italic">Bài đăng hồ sơ tân thủ chỉ được tính trong vòng 10 phút, ít nhất phải điền theo đúng ba mục trên nhé.</p>
 
-                    <button onclick="handleProofFromGuide('Sắc màu tân thủ')" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 font-bold py-2 rounded-xl text-white mt-1 shadow-md active:scale-95">
+                    <button onclick="handleProofFromGuide('Hồ sơ tân thủ')" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 font-bold py-2 rounded-xl text-white mt-1 shadow-md active:scale-95">
                         Vẽ Đường Cho Tình Yêu Chạy ➔
                     </button>
                 </div>
@@ -1638,6 +1669,19 @@
                         <option value="unlocked_24h">Mở khóa có hạn giờ (Tùy chỉnh thời gian mở, ưu tiên chính giữa)</option>
                         <option value="closed">Đóng link (Mục đóng, tự động đếm ngược mở lại)</option>
                     </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-pink-300 mb-1">8. Nhãn nổi bật:</label>
+                    <input type="hidden" id="formCharIsNew" value="false">
+                    <button type="button" id="formCharNewBtn" onclick="toggleFormCharNew()" class="w-full flex items-center justify-between bg-black/40 hover:bg-black/55 border border-white/20 rounded-xl px-3 py-2 text-xs transition active:scale-95">
+                        <span class="flex items-center gap-2 font-bold text-sky-200">
+                            <span>Hiện khung chữ</span>
+                            <span class="new-char-badge text-[10px]"><span class="green-pastel-wave">New</span></span>
+                            <span>cạnh tên char</span>
+                        </span>
+                        <span id="formCharNewStatus" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/10 text-sky-200/70 border border-white/15">Tắt</span>
+                    </button>
                 </div>
 
                 <!-- CÀI ĐẶT THỜI GIAN MỞ CÓ HẠN GIỜ -->
@@ -3390,7 +3434,16 @@
         let notificationsEnabled = (localStorage.getItem('palette_notify_pref') === 'true');
         let currentEditingMenuKey = null;
 
-        let userUnlockTimers = JSON.parse(localStorage.getItem('palette_user_unlock_timers') || '{}');
+        function safeParseLocalJson(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? (JSON.parse(raw) || fallback) : fallback;
+            } catch (_) {
+                return fallback;
+            }
+        }
+
+        let userUnlockTimers = safeParseLocalJson('palette_user_unlock_timers', {});
 
         // QUẢN LÝ BỘ NHỚ ĐỆM ẢNH BẰNG CHỨNG (CHỐNG LỖI KHI NỘP LẠI NHIỀU LẦN)
         let cachedFbDataUrl = "";
@@ -4454,7 +4507,7 @@
             applyVisualEffects(DEFAULT_VISUAL_EFFECTS);
             initFirebaseListeners();
 
-            const savedUser = JSON.parse(localStorage.getItem('palette_persistent_user'));
+            const savedUser = safeParseLocalJson('palette_persistent_user', null);
             if (savedUser && savedUser.username) {
                 applyLogin(savedUser);
                 document.getElementById('authModal').classList.add('hidden');
@@ -5101,6 +5154,7 @@
 
             const userKey = username.toLowerCase();
 
+            try {
             if (!isRegisterMode) {
                 const isOwnerLoggingIn = (userKey === OWNER_USER.toLowerCase() && pass === OWNER_PASS);
                 
@@ -5182,6 +5236,11 @@
                 localStorage.setItem('palette_persistent_user', JSON.stringify(newUser));
                 applyLogin(newUser);
                 document.getElementById('authModal').classList.add('hidden');
+            }
+            } catch (authErr) {
+                console.error("Lỗi đăng nhập/đăng ký:", authErr);
+                errEl.innerText = "Không thể kết nối máy chủ. Vui lòng kiểm tra mạng và thử lại nhé!";
+                errEl.classList.remove('hidden');
             }
         }
 
@@ -5275,7 +5334,7 @@
             const charName = activeChar ? activeChar.name : '[Tên char]';
             const text = `• Gu thể loại yêu thích: \n• Char muốn chơi thử của Palette: ${charName}\n• Hướng nội hay hướng ngoại: [Hướng nội / Hướng ngoại]`;
             const copied = await copyTextToClipboard(text);
-            alert(copied ? "Đã sao chép Mẫu Sắc Màu Tân Thủ vào bộ nhớ tạm! Bạn chỉ cần dán vào Discord nhé." : "Trình duyệt không cho phép sao chép tự động. Hãy thử lại trên trang HTTPS.");
+            alert(copied ? "Đã sao chép Mẫu Hồ Sơ Tân Thủ vào bộ nhớ tạm! Bạn chỉ cần dán vào Discord nhé." : "Trình duyệt không cho phép sao chép tự động. Hãy thử lại trên trang HTTPS.");
         }
 
         function updateFastColorSubtitle() {
@@ -5316,7 +5375,10 @@
                         <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[10px] px-3.5 py-1 rounded-full font-black tracking-widest uppercase shadow">
                             Đang mở khóa có hạn giờ
                         </span>
-                        <h3 class="text-2xl font-black char-pastel-0 mt-2">${c.name}</h3>
+                        <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-1.5 flex-wrap">
+                            <span class="char-pastel-0">${c.name}</span>
+                            ${c.isNew ? '<span class="new-char-badge text-[10px]"><span class="green-pastel-wave">New</span></span>' : ''}
+                        </h3>
                         <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
                     </div>
 
@@ -5346,7 +5408,7 @@
             updateCountdownDisplayOnly();
         }
 
-        let userUnlockTimestamps = JSON.parse(localStorage.getItem('palette_user_unlock_timestamps') || '{}');
+        let userUnlockTimestamps = safeParseLocalJson('palette_user_unlock_timestamps', {});
 
         let countdownTimerInterval = null;
         function startFastColorTimers() {
@@ -5558,7 +5620,10 @@
                             <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[9.5px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow">
                                 MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ
                             </span>
-                            <h3 class="text-2xl font-black char-pastel-0 mt-2">${c.name}</h3>
+                            <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-2 flex-wrap">
+                                <span class="char-pastel-0">${c.name}</span>
+                                ${c.isNew ? '<span class="new-char-badge text-[10px]"><span class="green-pastel-wave">New</span></span>' : ''}
+                            </h3>
                             <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
                         </div>
 
@@ -5601,6 +5666,7 @@
                         <div class="flex-1 truncate">
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <h3 class="text-base font-extrabold ${getPastelColorClass(index)}">${c.name}</h3>
+                                ${c.isNew ? '<span class="new-char-badge text-[9.5px]"><span class="green-pastel-wave">New</span></span>' : ''}
                                 ${c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở có hạn</span>' : ''}
                                 ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-200 border border-red-300/40 px-1.5 py-0.5 rounded-full font-bold">Đã đóng</span>' : ''}
                             </div>
@@ -5655,7 +5721,9 @@
             const charIndex = characters.findIndex(c => c.id === char.id);
             const titleEl = document.getElementById('currentCharTitle');
             titleEl.innerText = char.name;
-            titleEl.className = `text-3xl sm:text-4xl font-extrabold mb-1 ${getPastelColorClass(charIndex !== -1 ? charIndex : 0)}`;
+            titleEl.className = `text-3xl sm:text-4xl font-extrabold ${getPastelColorClass(charIndex !== -1 ? charIndex : 0)}`;
+            const detailNewBadge = document.getElementById('detailCharNewBadge');
+            if (detailNewBadge) detailNewBadge.classList.toggle('hidden', !char.isNew);
 
             document.getElementById('currentCharImg').src = char.image;
             const charGallery = document.getElementById('currentCharGallery');
@@ -6048,8 +6116,8 @@
                 } else {
                     const hasHoSo = (noPunctDc.includes('ho') && noPunctDc.includes('so')) || cleanDc.includes('hồ sơ') || unaccentedDc.includes('ho so');
                     const hasTanThu = (noPunctDc.includes('tan') && noPunctDc.includes('thu')) || cleanDc.includes('tân thủ') || unaccentedDc.includes('tan thu');
-                    hasChannelName = hasTanThu || hasHoSo;
-                    if (!hasChannelName) throw new Error("Bạn chụp thiếu tên chủ đề kênh 'sắc * màu * tân * thủ'! Vui lòng không cắt ảnh để thấy rõ tên kênh nhé.");
+                    hasChannelName = hasTanThu && hasHoSo;
+                    if (!hasChannelName) throw new Error("Bạn chụp thiếu tên chủ đề kênh 'hồ * sơ * tân * thủ'! Vui lòng không cắt ảnh để thấy rõ tên kênh nhé.");
                 }
 
                 // KIỂM TRA ĐÃ GỬI CHÍNH THỨC
@@ -6329,6 +6397,31 @@
 
         function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
 
+        function setFormCharNewState(isNew) {
+            const input = document.getElementById('formCharIsNew');
+            const btn = document.getElementById('formCharNewBtn');
+            const status = document.getElementById('formCharNewStatus');
+            const active = Boolean(isNew);
+            if (input) input.value = active ? 'true' : 'false';
+            if (btn) {
+                btn.className = active
+                    ? "w-full flex items-center justify-between bg-emerald-500/20 border border-emerald-300/60 rounded-xl px-3 py-2 text-xs shadow-[0_0_12px_rgba(74,222,128,0.25)] transition active:scale-95"
+                    : "w-full flex items-center justify-between bg-black/40 hover:bg-black/55 border border-white/20 rounded-xl px-3 py-2 text-xs transition active:scale-95";
+            }
+            if (status) {
+                status.innerText = active ? "Bật" : "Tắt";
+                status.className = active
+                    ? "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-400/25 text-emerald-200 border border-emerald-300/50"
+                    : "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/10 text-sky-200/70 border border-white/15";
+            }
+        }
+
+        function toggleFormCharNew() {
+            const current = document.getElementById('formCharIsNew')?.value === 'true';
+            setFormCharNewState(!current);
+            playCheerfulClickSound();
+        }
+
         function resetAdminForm() {
             document.getElementById('adminCharForm').reset();
             document.getElementById('editCharId').value = '';
@@ -6337,6 +6430,7 @@
             document.getElementById('formCharFileName').innerText = "Chưa có file";
             document.getElementById('unlockedTimeSettingsBox').classList.add('hidden');
             document.getElementById('closedSettingsBox').classList.add('hidden');
+            setFormCharNewState(false);
             adminSelectedTags = [];
             renderAdminCategories();
         }
@@ -6421,6 +6515,7 @@
             const fbLink = document.getElementById('formCharFbLink').value.trim();
             const aiLink = document.getElementById('formCharAiLink').value.trim();
             const status = document.getElementById('formCharStatus').value;
+            const isNew = document.getElementById('formCharIsNew')?.value === 'true';
 
             const openH = parseInt(document.getElementById('formOpenHours').value) || 0;
             const openM = parseInt(document.getElementById('formOpenMinutes').value) || 0;
@@ -6454,6 +6549,7 @@
                     characters[idx].fbLink = fbLink;
                     characters[idx].aiStudioUrl = aiLink;
                     characters[idx].status = status;
+                    characters[idx].isNew = isNew;
                     if (status === 'unlocked_24h') {
                         characters[idx].customDurationMs = customDurationMs;
                         if (!characters[idx].fastStartTime) characters[idx].fastStartTime = Date.now();
@@ -6462,7 +6558,13 @@
                         characters[idx].reopenTimestamp = reopenDate ? new Date(reopenDate).getTime() : null;
                     }
                     savedChar = characters[idx];
-                    db.collection("characters").doc(editId).set(savedChar);
+                    try {
+                        await db.collection("characters").doc(editId).set(savedChar);
+                    } catch (saveErr) {
+                        console.error("Lỗi cập nhật Firebase:", saveErr);
+                        alert("Không thể lưu lên máy chủ (có thể ảnh quá dung lượng 1MB hoặc mạng yếu). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
+                        return;
+                    }
                 }
             } else {
                 const newChar = {
@@ -6477,13 +6579,20 @@
                     fbLink,
                     aiStudioUrl: aiLink,
                     status,
+                    isNew,
                     customDurationMs: status === 'unlocked_24h' ? customDurationMs : null,
                     fastStartTime: status === 'unlocked_24h' ? Date.now() : null,
                     reopenTimestamp: (status === 'closed' && reopenDate) ? new Date(reopenDate).getTime() : null
                 };
+                try {
+                    await db.collection("characters").doc(newChar.id).set(newChar);
+                } catch (saveErr) {
+                    console.error("Lỗi tạo nhân vật trên Firebase:", saveErr);
+                    alert("Không thể tải nhân vật lên máy chủ (có thể ảnh quá dung lượng 1MB hoặc mạng yếu). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
+                    return;
+                }
                 characters.push(newChar);
                 savedChar = newChar;
-                db.collection("characters").doc(newChar.id).set(newChar);
 
                 triggerNotification("Nhân Vật Mới Đã Xuất Hiện!", `Palette vừa phác thảo xong "${name}". Hãy vào ngắm nhìn ngay nhé!`);
             }
@@ -6511,6 +6620,7 @@
                     <div class="flex items-center gap-2 truncate">
                         <img src="${c.image}" class="w-8 h-8 rounded-lg object-cover">
                         <span class="font-bold text-pink-200 truncate">${c.name}</span>
+                        ${c.isNew ? '<span class="new-char-badge text-[9px]"><span class="green-pastel-wave">New</span></span>' : ''}
                         ${c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Có hạn</span>' : ''}
                         ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-300 px-1 rounded">Đóng</span>' : ''}
                     </div>
@@ -6536,6 +6646,7 @@
             document.getElementById('formCharFbLink').value = c.fbLink;
             document.getElementById('formCharAiLink').value = c.aiStudioUrl;
             document.getElementById('formCharStatus').value = c.status || 'locked';
+            setFormCharNewState(Boolean(c.isNew));
 
             toggleStatusSettings(c.status);
 
@@ -6989,7 +7100,7 @@
             }
 
             comments.forEach(c => {
-                const isLiked = c.likes && c.likes.includes(currentUser.username);
+                const isLiked = c.likes && currentUser && c.likes.includes(currentUser.username);
                 const isOwner = currentUser?.isOwner;
                 const canDelete = isOwner || c.author?.toLowerCase() === currentUser?.username?.toLowerCase();
                 const item = document.createElement('div');
@@ -7648,36 +7759,41 @@
                 const uKey = username.toLowerCase();
                 const curPencils = getUserPencilCount(username);
 
-                if (winningSlice.type === "add2") {
-                    await addPencilToUser(username, 2, "Vòng xoay may mắn");
-                    playJoyfulWinSound();
-                    createPencilSparkles();
-                    if (resultMsg) resultMsg.innerHTML = `<span class="text-emerald-300 font-black">Chúc mừng! Bạn quay trúng +2 Bút Chì Màu!</span>`;
-                    logMemberActivity("Vòng xoay may mắn", "Trúng +2 Bút Chì Màu");
-                } else if (winningSlice.type === "sub2") {
-                    const deductAmount = Math.min(2, curPencils);
-                    const remainingPencils = curPencils - deductAmount;
-                    if (deductAmount > 0) {
-                        const pencilRef = db.collection("pencils").doc(uKey);
-                        await pencilRef.set({ count: remainingPencils }, { merge: true });
-                        userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: remainingPencils };
-                        updatePencilUI();
+                try {
+                    if (winningSlice.type === "add2") {
+                        await addPencilToUser(username, 2, "Vòng xoay may mắn");
+                        playJoyfulWinSound();
+                        createPencilSparkles();
+                        if (resultMsg) resultMsg.innerHTML = `<span class="text-emerald-300 font-black">Chúc mừng! Bạn quay trúng +2 Bút Chì Màu!</span>`;
+                        logMemberActivity("Vòng xoay may mắn", "Trúng +2 Bút Chì Màu");
+                    } else if (winningSlice.type === "sub2") {
+                        const deductAmount = Math.min(2, curPencils);
+                        const remainingPencils = curPencils - deductAmount;
+                        if (deductAmount > 0) {
+                            const pencilRef = db.collection("pencils").doc(uKey);
+                            await pencilRef.set({ count: remainingPencils }, { merge: true });
+                            userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: remainingPencils };
+                            updatePencilUI();
+                        }
+                        playSadDeflateSound();
+                        if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ 2 Bút Chì Màu!</span>`;
+                        logMemberActivity("Vòng xoay may mắn", "Trúng ô Xui xẻo -2 Bút Chì Màu");
+                        triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo -2 Bút Chì Màu, nhưng túi chì hiện có 0 chì nên không bị trừ thêm.");
+                    } else if (winningSlice.type === "double") {
+                        const bonus = curPencils > 0 ? curPencils : 2;
+                        await addPencilToUser(username, bonus, "Vòng xoay may mắn: Nhân đôi chì");
+                        playJoyfulWinSound();
+                        createPencilSparkles();
+                        if (resultMsg) resultMsg.innerHTML = `<span class="text-amber-300 font-black">VẬN MAY 1/100! Trúng ô Nhân đôi Bút Chì Màu (+${bonus} chì)!</span>`;
+                        logMemberActivity("Vòng xoay may mắn", `Vận may 1/100: Nhân đôi Bút Chì Màu (+${bonus} chì)`);
+                    } else {
+                        playSadDeflateSound();
+                        if (resultMsg) resultMsg.innerHTML = `<span class="text-sky-200 font-bold">Ô Trống! Chúc bạn may mắn hơn ở lần quay tiếp theo nha.</span>`;
+                        logMemberActivity("Vòng xoay may mắn", "Quay trúng Ô Trống");
                     }
-                    playSadDeflateSound();
-                    if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ 2 Bút Chì Màu!</span>`;
-                    logMemberActivity("Vòng xoay may mắn", "Trúng ô Xui xẻo -2 Bút Chì Màu");
-                    triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo -2 Bút Chì Màu, nhưng túi chì hiện có 0 chì nên không bị trừ thêm.");
-                } else if (winningSlice.type === "double") {
-                    const bonus = curPencils > 0 ? curPencils : 2;
-                    await addPencilToUser(username, bonus, "Vòng xoay may mắn: Nhân đôi chì");
-                    playJoyfulWinSound();
-                    createPencilSparkles();
-                    if (resultMsg) resultMsg.innerHTML = `<span class="text-amber-300 font-black">VẬN MAY 1/100! Trúng ô Nhân đôi Bút Chì Màu (+${bonus} chì)!</span>`;
-                    logMemberActivity("Vòng xoay may mắn", `Vận may 1/100: Nhân đôi Bút Chì Màu (+${bonus} chì)`);
-                } else {
-                    playSadDeflateSound();
-                    if (resultMsg) resultMsg.innerHTML = `<span class="text-sky-200 font-bold">Ô Trống! Chúc bạn may mắn hơn ở lần quay tiếp theo nha.</span>`;
-                    logMemberActivity("Vòng xoay may mắn", "Quay trúng Ô Trống");
+                } catch (wheelErr) {
+                    console.error("Lỗi cập nhật kết quả vòng xoay:", wheelErr);
+                    if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-bold">Mạng không ổn định, chưa thể lưu kết quả vòng xoay!</span>`;
                 }
 
                 updateWheelUI();
