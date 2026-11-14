@@ -2318,12 +2318,16 @@
                     <span class="text-[9px] bg-pink-400/25 text-pink-200 px-2 py-0.5 rounded-full font-bold">Tự động xoay theo nhạc</span>
                 </div>
                 <p class="text-[10px] text-sky-200/70 leading-relaxed">
-                    Dán link Catbox (hỗ trợ cả đuôi .mp3 và .mp4). Thẻ bài sẽ xoay tròn đúng bằng số giây của âm thanh này!
+                    Chọn file nhạc từ máy (dưới 250KB) <b>HOẶC</b> dán link Dropbox / GitHub / Catbox (.mp3, .mp4). Thẻ bài sẽ xoay tròn đúng bằng số giây của âm thanh này!
                 </p>
                 <div class="space-y-2">
-                    <input id="sailorCustomAudioUrl" type="url" oninput="if(sailorCardsConfig) sailorCardsConfig.audioUrl=cleanAudioUrl(this.value)" placeholder="Dán link Catbox (.mp3 hoặc .mp4)..." class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-400">
+                    <label class="w-full bg-sky-500/20 hover:bg-sky-500/35 border border-sky-300/50 text-sky-100 font-extrabold py-2 px-3 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 transition">
+                        <span>📁 Chọn file nhạc/clip từ máy (dưới 250KB)</span>
+                        <input id="sailorAudioFileInput" type="file" accept="audio/*,video/mp4,.mp3,.m4a,.wav,.ogg,.mp4" class="hidden" onchange="handleSailorAudioFileUpload(this)">
+                    </label>
+                    <input id="sailorCustomAudioUrl" type="url" oninput="if(sailorCardsConfig) sailorCardsConfig.audioUrl=cleanAudioUrl(this.value)" placeholder="Hoặc dán link Dropbox / GitHub / Catbox..." class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-400">
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" id="sailorTestAudioBtn" onclick="testPlaySailorAudio()" class="w-full bg-amber-400/20 hover:bg-amber-400/35 border border-amber-300/50 text-amber-200 font-extrabold py-2 px-2.5 rounded-xl text-xs active:scale-95 transition text-center whitespace-nowrap shadow" title="Bấm để nghe thử xem link hoạt động tốt không">
+                        <button type="button" id="sailorTestAudioBtn" onclick="testPlaySailorAudio()" class="w-full bg-amber-400/20 hover:bg-amber-400/35 border border-amber-300/50 text-amber-200 font-extrabold py-2 px-2.5 rounded-xl text-xs active:scale-95 transition text-center whitespace-nowrap shadow" title="Bấm để nghe thử xem âm thanh hoạt động tốt không">
                             ▶ Nghe Thử
                         </button>
                         <button type="button" onclick="saveSailorAudioSetting()" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-black py-2 px-2.5 rounded-xl text-xs shadow-md active:scale-95 transition text-center whitespace-nowrap">
