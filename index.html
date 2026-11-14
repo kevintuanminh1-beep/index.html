@@ -1,4 +1,4 @@
-
+=""
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -3725,6 +3725,19 @@
 
         let characters = [];
         let charactersSyncedFromServer = false;
+        let activeFastCharIdsInSession = new Set();
+        function isCharPausedLimit(c) {
+            if (!c || c.status !== 'unlocked_24h') return false;
+            if (c.fastEndTime) {
+                return Date.now() >= c.fastEndTime;
+            }
+            if (c.fastModeType === 'paused_limit') return true;
+            if (c.fastStartTime) {
+                const duration = c.customDurationMs || (24 * 60 * 60 * 1000);
+                return (Date.now() - c.fastStartTime) >= duration;
+            }
+            return false;
+        }
         let charLikesData = {};
         let charComments = {};
         let legacyCommentsByChar = {};
@@ -5262,7 +5275,7 @@
             const descEl = document.getElementById('guide24hDescription');
             if (!descEl) return;
             const fastChar = characters.find(c => c.status === 'unlocked_24h');
-            const isPaused = (fastChar && fastChar.fastModeType === 'paused_limit');
+            const isPaused = (fastChar && isCharPausedLimit(fastChar));
             let durationStr = "24h";
             if (fastChar && fastChar.customDurationMs) {
                 const totalHours = Math.round(fastChar.customDurationMs / (3600 * 1000));
@@ -7070,8 +7083,8 @@
         function updateFastColorSubtitle() {
             const subtitleEl = document.getElementById('fastColorSubtitle');
             if (!subtitleEl) return;
-            const hasLimited = characters.some(c => c.status === 'unlocked_24h' && c.fastModeType !== 'paused_limit');
-            const hasPaused = characters.some(c => c.status === 'unlocked_24h' && c.fastModeType === 'paused_limit');
+            const hasLimited = characters.some(c => c.status === 'unlocked_24h' && !isCharPausedLimit(c));
+            const hasPaused = characters.some(c => c.status === 'unlocked_24h' && isCharPausedLimit(c));
             if (hasLimited) {
                 subtitleEl.innerText = "Hãy thả tim và vẽ đường cho tình yêu chạy trước khi kết thúc duyệt tự động.";
             } else if (hasPaused) {
@@ -7101,7 +7114,7 @@
                 const card = document.createElement('div');
                 card.className = "w-full max-w-sm fast-center-card p-6 rounded-3xl flex flex-col items-center mb-6 relative";
                 
-                const isPausedLimit = (c.fastModeType === 'paused_limit');
+                const isPausedLimit = isCharPausedLimit(c);
                 const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
                 const timerEnd = userUnlockTimers[currentUser?.username]?.[c.id];
                 const isCountingDown = !isPausedLimit && timerEnd && (Date.now() < timerEnd);
@@ -7187,14 +7200,12 @@
                 const now = Date.now();
 
                 characters.forEach(c => {
-                    if (c.status === 'unlocked_24h' && c.fastModeType !== 'paused_limit' && c.fastStartTime) {
-                        const duration = c.customDurationMs || (24 * 60 * 60 * 1000);
-                        if (now - c.fastStartTime >= duration) {
+                    if (c.status === 'unlocked_24h') {
+                        if (!isCharPausedLimit(c)) {
+                            activeFastCharIdsInSession.add(c.id);
+                        } else if (activeFastCharIdsInSession.has(c.id)) {
+                            activeFastCharIdsInSession.delete(c.id);
                             c.fastModeType = 'paused_limit';
-                            delete c.fastStartTime;
-                            if (checkIsOwnerAccount() && charactersSyncedFromServer) {
-                                db.collection("characters").doc(c.id).set(c).catch(() => {});
-                            }
                             renderCharacters();
                             renderFastColorCenter();
                             updateFastColorSubtitle();
@@ -7227,9 +7238,9 @@
         function updateCountdownDisplayOnly() {
             const now = Date.now();
             characters.forEach(c => {
-                if (c.status === 'unlocked_24h' && c.fastModeType !== 'paused_limit' && c.fastStartTime) {
-                    const duration = c.customDurationMs || (24 * 60 * 60 * 1000);
-                    const remain = Math.max(0, (c.fastStartTime + duration) - now);
+                if (c.status === 'unlocked_24h' && !isCharPausedLimit(c) && (c.fastEndTime || c.fastStartTime)) {
+                    const endTime = c.fastEndTime || (c.fastStartTime + (c.customDurationMs || (24 * 60 * 60 * 1000)));
+                    const remain = Math.max(0, endTime - now);
                     const hours = Math.floor(remain / (1000 * 60 * 60));
                     const minutes = Math.floor((remain % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((remain % (1000 * 60)) / 1000);
@@ -7397,7 +7408,7 @@
                     const card = document.createElement('div');
                     card.className = "w-full fast-center-card p-5 rounded-3xl flex flex-col items-center mb-5 relative cursor-pointer active:scale-98 transition";
                     card.onclick = () => openCharDetail(c);
-                    const isPaused = (c.fastModeType === 'paused_limit');
+                    const isPaused = isCharPausedLimit(c);
                     const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
 
                     card.innerHTML = `
@@ -7446,7 +7457,7 @@
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <h3 class="text-base font-extrabold ${getPastelColorClass(index)}">${c.name}</h3>
                                 ${c.isNew ? '<span class="new-char-badge text-[9.5px]"><span class="green-pastel-wave">New</span></span>' : ''}
-                                ${c.status === 'unlocked_24h' && c.fastModeType === 'paused_limit' ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full font-bold">Tạm giới hạn</span>' : (c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở có hạn</span>' : '')}
+                                ${c.status === 'unlocked_24h' && isCharPausedLimit(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full font-bold">Tạm giới hạn</span>' : (c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở có hạn</span>' : '')}
                                 ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-200 border border-red-300/40 px-1.5 py-0.5 rounded-full font-bold">Đang fix</span>' : ''}
                             </div>
                             <p class="text-xs text-sky-100/80 truncate mt-0.5">${c.subtitle}</p>
@@ -7526,7 +7537,7 @@
             document.getElementById('charFullSubtitle').innerText = char.subtitle || `Tag: ${char.firstTagSubtitle}`;
 
             const badge24h = document.getElementById('detailChar24hBadge');
-            if (char.status === 'unlocked_24h' && char.fastModeType !== 'paused_limit') {
+            if (char.status === 'unlocked_24h' && !isCharPausedLimit(char)) {
                 badge24h.classList.remove('hidden');
             } else {
                 badge24h.classList.add('hidden');
@@ -7626,7 +7637,7 @@
                 return;
             }
 
-            const isPausedLimit = (activeChar.status === 'unlocked_24h' && activeChar.fastModeType === 'paused_limit');
+            const isPausedLimit = (activeChar.status === 'unlocked_24h' && isCharPausedLimit(activeChar));
             if (isPausedLimit) {
                 prompt.classList.add('hidden');
                 if (pausedPrompt) pausedPrompt.classList.remove('hidden');
@@ -7907,7 +7918,7 @@
                     redeemTenPencilsForChar(activeChar.id);
                     return;
                 }
-                if (activeChar.fastModeType === 'paused_limit') {
+                if (isCharPausedLimit(activeChar)) {
                     openMiniRedeemModal(activeChar);
                     return;
                 }
@@ -8893,11 +8904,16 @@
                     characters[idx].isNew = isNew;
                     characters[idx].unlockWaitMs = unlockWaitMs;
                     if (status === 'unlocked_24h' && fastModeType === 'limited') {
+                        const nowMs = Date.now();
                         characters[idx].customDurationMs = customDurationMs;
-                        characters[idx].fastStartTime = Date.now();
+                        characters[idx].fastStartTime = nowMs;
+                        characters[idx].fastEndTime = nowMs + customDurationMs;
+                        activeFastCharIdsInSession.add(editId);
                     } else {
                         characters[idx].customDurationMs = null;
                         characters[idx].fastStartTime = null;
+                        characters[idx].fastEndTime = null;
+                        activeFastCharIdsInSession.delete(editId);
                     }
                     characters[idx].reopenTimestamp = null;
                     savedChar = characters[idx];
@@ -8927,6 +8943,7 @@
                     unlockWaitMs,
                     customDurationMs: (status === 'unlocked_24h' && fastModeType === 'limited') ? customDurationMs : null,
                     fastStartTime: (status === 'unlocked_24h' && fastModeType === 'limited') ? Date.now() : null,
+                    fastEndTime: (status === 'unlocked_24h' && fastModeType === 'limited') ? (Date.now() + customDurationMs) : null,
                     reopenTimestamp: null
                 };
                 try {
@@ -8972,7 +8989,7 @@
                         <img src="${c.image}" class="w-8 h-8 rounded-lg object-cover">
                         <span class="font-bold text-pink-200 truncate">${c.name}</span>
                         ${c.isNew ? '<span class="new-char-badge text-[9px]"><span class="green-pastel-wave">New</span></span>' : ''}
-                        ${c.status === 'unlocked_24h' && c.fastModeType === 'paused_limit' ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded">Tạm giới hạn</span>' : (c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Giới hạn</span>' : '')}
+                        ${c.status === 'unlocked_24h' && isCharPausedLimit(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded">Tạm giới hạn</span>' : (c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Giới hạn</span>' : '')}
                         ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-300 px-1 rounded">Đang fix</span>' : ''}
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
@@ -9016,7 +9033,7 @@
                 document.getElementById('formWaitMinutes').value = totalMins % 60;
             }
 
-            const fastModeVal = c.fastModeType === 'paused_limit' ? 'paused_limit' : 'limited';
+            const fastModeVal = isCharPausedLimit(c) ? 'paused_limit' : 'limited';
             const fastRadio = document.querySelector(`input[name="formFastModeType"][value="${fastModeVal}"]`);
             if (fastRadio) fastRadio.checked = true;
 
@@ -9768,7 +9785,7 @@
                 alert("Không tìm thấy thông tin nhân vật đang mở đợt!");
                 return;
             }
-            if (target.fastModeType === 'paused_limit') {
+            if (isCharPausedLimit(target)) {
                 alert("Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu.");
                 openMiniRedeemModal(target);
                 return;
@@ -10010,7 +10027,7 @@
         function getCmtRewardSectionHtml(c) {
             const isUnlocked = Boolean(currentUser && userUnlockedState[currentUser.username]?.[c.id] === true);
             // Chỉ xem là tạm giới hạn (bắt 2 ảnh để lấy 10 chì) đối với người CHƯA CÓ LINK
-            const isPaused = (c.fastModeType === 'paused_limit' && !isUnlocked);
+            const isPaused = (isCharPausedLimit(c) && !isUnlocked);
             const uKey = currentUser ? currentUser.username.toLowerCase() : "";
             const rewardedAmt = (!currentUser?.isOwner && uKey) ? getRewardedPencilInfoForChar(uKey, c.id) : 0;
 
@@ -10239,7 +10256,7 @@
             cmtRewardHeartImages = [];
             const isUnlocked = Boolean(currentUser && userUnlockedState[currentUser.username]?.[target.id] === true);
             // Người đã có link thì xem như chế độ bình thường (chọn 10 hoặc 3 chì)
-            const isPaused = (target.fastModeType === 'paused_limit' && !isUnlocked);
+            const isPaused = (isCharPausedLimit(target) && !isUnlocked);
 
             const sub = document.getElementById('cmtRewardSubtitle');
             if (sub) sub.innerHTML = isPaused
