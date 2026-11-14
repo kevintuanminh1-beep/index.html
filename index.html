@@ -6916,7 +6916,7 @@
             const hasLimited = characters.some(c => c.status === 'unlocked_24h' && c.fastModeType !== 'paused_limit');
             const hasPaused = characters.some(c => c.status === 'unlocked_24h' && c.fastModeType === 'paused_limit');
             if (hasLimited) {
-                subtitleEl.innerText = "Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web trong đợt mở này (sẽ mở lại sau ba ngày).";
+                subtitleEl.innerText = "Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web trong đợt mở này.";
             } else if (hasPaused) {
                 subtitleEl.innerText = "Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu.";
             } else {
@@ -6978,7 +6978,7 @@
                     actionButtonHtml = `
                         <div class="w-full space-y-2">
                             <button onclick="openFastProofModal('${c.id}')" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
-                                Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web (sẽ mở lại sau ba ngày).
+                                Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web.
                             </button>
                             ${hasTenPencils ? `<button onclick="redeemTenPencilsBySafeId('${cmtSafeId(c.id)}')" class="jelly-btn w-full bg-gradient-to-r from-emerald-500 via-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-2.5 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay</button>` : ''}
                         </div>
