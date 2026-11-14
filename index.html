@@ -2469,19 +2469,75 @@
             triggerFileInput('userDeviceAvatarInput');
         }
 
-        function compressUploadedImage(file, maxDimension = 600, quality = 0.7) {
+        async function compressUploadedImage(file, maxDimension = 600, quality = 0.7) {
+            if (!file) throw new Error("Không tìm thấy tệp ảnh!");
+            if (file.size === 0) throw new Error("Tệp rỗng hoặc ảnh đang trên iCloud chưa tải về máy!");
+
+            const fileName = (file.name || "").toLowerCase();
+            const fileType = (file.type || "").toLowerCase();
+            let workingBlob = file;
+
+            // 1. Tự động chuyển đổi nếu là định dạng HEIC/HEIF của iPhone
+            if (fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif')) {
+                try {
+                    const jpgBlob = await convertHeicBlobToJpeg(file);
+                    if (jpgBlob) workingBlob = jpgBlob;
+                } catch (_) {}
+            }
+
+            // 2. Thử vẽ trực tiếp qua createImageBitmap (chuẩn xác pixel, chống trắng 100% trên Safari/Android)
+            if (typeof createImageBitmap === 'function') {
+                try {
+                    const bitmap = await createImageBitmap(workingBlob);
+                    if (bitmap && bitmap.width > 0 && bitmap.height > 0) {
+                        let w = bitmap.width;
+                        let h = bitmap.height;
+                        if (w > maxDimension || h > maxDimension) {
+                            if (w > h) {
+                                h = Math.round((h * maxDimension) / w);
+                                w = maxDimension;
+                            } else {
+                                w = Math.round((w * maxDimension) / h);
+                                h = maxDimension;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, w);
+                        canvas.height = Math.max(1, h);
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                        if (typeof bitmap.close === 'function') bitmap.close();
+                        const result = canvas.toDataURL('image/jpeg', quality);
+                        if (result && result.startsWith('data:image/jpeg') && result.length > 250) {
+                            return result;
+                        }
+                    }
+                } catch (_) {}
+            }
+
+            // 3. Fallback dùng FileReader + new Image() có decode chống vẽ khung rỗng
             return new Promise((resolve, reject) => {
-                if (!file) return reject(new Error("Không tìm thấy tệp ảnh!"));
                 const reader = new FileReader();
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(workingBlob);
                 reader.onload = (e) => {
                     const rawData = e.target.result;
-                    if (!rawData) return reject(new Error("Tệp rỗng!"));
+                    if (!rawData) return reject(new Error("Tệp ảnh rỗng!"));
                     const img = new Image();
-                    img.onload = () => {
+                    img.onload = async () => {
                         try {
-                            let w = img.naturalWidth || img.width || 300;
-                            let h = img.naturalHeight || img.height || 300;
+                            if (img.decode) {
+                                await img.decode().catch(() => {});
+                            }
+                            const nw = img.naturalWidth || img.width;
+                            const nh = img.naturalHeight || img.height;
+                            // Nếu không lấy được kích thước thật, không vẽ canvas trắng mà trả về ảnh gốc
+                            if (!nw || !nh || nw <= 0 || nh <= 0) {
+                                return resolve(rawData);
+                            }
+                            let w = nw;
+                            let h = nh;
                             if (w > maxDimension || h > maxDimension) {
                                 if (w > h) {
                                     h = Math.round((h * maxDimension) / w);
@@ -2491,22 +2547,19 @@
                                     h = maxDimension;
                                 }
                             }
-                            w = Math.max(1, w);
-                            h = Math.max(1, h);
                             const canvas = document.createElement('canvas');
-                            canvas.width = w;
-                            canvas.height = h;
+                            canvas.width = Math.max(1, w);
+                            canvas.height = Math.max(1, h);
                             const ctx = canvas.getContext('2d');
                             ctx.fillStyle = "#ffffff";
-                            ctx.fillRect(0, 0, w, h);
-                            ctx.drawImage(img, 0, 0, w, h);
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                             resolve(canvas.toDataURL('image/jpeg', quality));
-                        } catch (canvasErr) {
-                            // Nếu thiết bị yếu không chạy được canvas, trả về luôn ảnh gốc
+                        } catch (_) {
                             resolve(rawData);
                         }
                     };
-                    img.onerror = () => resolve(rawData); // Không để bị treo Promise
+                    img.onerror = () => resolve(rawData);
                     img.src = rawData;
                 };
                 reader.onerror = () => reject(new Error("Lỗi đọc tệp từ thiết bị!"));
@@ -3797,8 +3850,16 @@
         }
 
         function drawBitmapOrImgToJpeg(source, w, h, maxDim = 1200, quality = 0.85) {
-            let width = w || 800;
-            let height = h || 1000;
+            const rawW = Number(w) || (source ? (source.naturalWidth || source.width) : 0) || 0;
+            const rawH = Number(h) || (source ? (source.naturalHeight || source.height) : 0) || 0;
+
+            // TUYỆT ĐỐI KHÔNG tự gán 800x1000 để vẽ nền trắng khi ảnh bị lỗi kích thước
+            if (!rawW || !rawH || rawW <= 0 || rawH <= 0) {
+                return "";
+            }
+
+            let width = rawW;
+            let height = rawH;
             if (width > maxDim || height > maxDim) {
                 if (width > height) {
                     height = Math.round((height * maxDim) / width);
@@ -3814,8 +3875,12 @@
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-            return canvas.toDataURL('image/jpeg', quality);
+            try {
+                ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+                return canvas.toDataURL('image/jpeg', quality);
+            } catch (_) {
+                return "";
+            }
         }
 
         // BỘ NÉN & ĐỌC ẢNH ĐA NĂNG (HỖ TRỢ CẢ HEIC, ẢNH CUỘN DÀI & CHỐNG TRÀN RAM)
@@ -9828,6 +9893,13 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
         async function handleCmtHeartFileChange(input) {
             const files = Array.from(input?.files || []);
             if (files.length === 0) return;
+
+            const emptyFile = files.find(f => f.size === 0);
+            if (emptyFile) {
+                alert("Ảnh tim bạn vừa chọn đang lưu trên iCloud chưa tải về máy. Bạn hãy chụp lại màn hình rồi chọn lại nhé!");
+                if (input) input.value = '';
+                return;
+            }
             const span = document.getElementById('cmtRewardHeartImgName');
             const btn = document.getElementById('cmtRewardSubmitBtn');
             isProcessingCmtRewardImg = true;
@@ -9850,20 +9922,26 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
 
         async function compressCmtImage(file) {
             if (!file) return "";
+            if (file.size === 0) return "";
+
             let baseData = await processImageForFastOCR(file);
             if (!baseData || !baseData.startsWith('data:image/')) {
                 baseData = await compressUploadedImage(file, 800, 0.65).catch(() => "");
             }
             if (!baseData || !baseData.startsWith('data:image/')) return "";
-            if (baseData.startsWith('data:image/jpeg') && baseData.length <= 220000) return baseData;
+            if (baseData.startsWith('data:image/jpeg') && baseData.length > 500 && baseData.length <= 220000) return baseData;
 
             const steps = [[800, 0.6], [640, 0.52], [500, 0.45], [380, 0.4]];
             for (const [dim, q] of steps) {
                 const resized = await new Promise(resolve => {
                     const img = new Image();
-                    img.onload = () => {
+                    img.onload = async () => {
                         try {
-                            resolve(drawBitmapOrImgToJpeg(img, img.naturalWidth || img.width, img.naturalHeight || img.height, dim, q));
+                            if (img.decode) await img.decode().catch(() => {});
+                            const nw = img.naturalWidth || img.width;
+                            const nh = img.naturalHeight || img.height;
+                            if (!nw || !nh) return resolve("");
+                            resolve(drawBitmapOrImgToJpeg(img, nw, nh, dim, q));
                         } catch (_) {
                             resolve("");
                         }
@@ -9871,7 +9949,10 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                     img.onerror = () => resolve("");
                     img.src = baseData;
                 });
-                if (resized && resized.length <= 220000) return resized;
+                // Chỉ nhận khi ảnh có dung lượng thực sự (> 500 ký tự) và dưới hạn mức 220KB
+                if (resized && resized.startsWith('data:image/jpeg') && resized.length > 500 && resized.length <= 220000) {
+                    return resized;
+                }
             }
             return (baseData.startsWith('data:image/jpeg') && baseData.length <= 320000) ? baseData : "";
         }
@@ -9879,6 +9960,13 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
         async function handleCmtRewardFileChange(input) {
             const files = Array.from(input?.files || []);
             if (files.length === 0) return;
+
+            const emptyFile = files.find(f => f.size === 0);
+            if (emptyFile) {
+                alert("Ảnh bình luận bạn vừa chọn đang lưu trên iCloud chưa tải về máy. Bạn hãy chụp lại màn hình rồi chọn lại nhé!");
+                if (input) input.value = '';
+                return;
+            }
 
             const span = document.getElementById('cmtRewardImgsName');
             const btn = document.getElementById('cmtRewardSubmitBtn');
