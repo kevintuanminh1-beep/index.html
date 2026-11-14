@@ -31,7 +31,7 @@
         }
 
         /* ĐẢM BẢO CHỮ HIỆU ỨNG GRADIENT TRÊN IOS SẮC NÉT Y HỆT ANDROID */
-        .shimmer-text, .rainbow-text, .blue-pastel-wave, .green-pastel-wave, .pastel-fast-wave, 
+        .shimmer-text, .rainbow-text, .blue-pastel-wave, .green-pastel-wave, .light-green-pastel-wave, .gold-pastel-wave, .pastel-fast-wave, 
         .pastel-rules-title, .pastel-notify-wave, .pencil-balance-glow, 
         .reset-filter-text, .server-highlight-link,
         .char-pastel-0, .char-pastel-1, .char-pastel-2, .char-pastel-3, .char-pastel-4 {
@@ -212,6 +212,22 @@
             letter-spacing: 0.04em;
         }
         @keyframes greenPastelShift { to { background-position: 250% center; } }
+        .light-green-pastel-wave {
+            background: linear-gradient(90deg, #bbf7d0, #86efac, #a7f3d0, #d9f99d, #6ee7b7, #bbf7d0);
+            background-size: 250% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: greenPastelShift 2.8s linear infinite;
+        }
+        .gold-pastel-wave {
+            background: linear-gradient(90deg, #fef08a, #fde047, #fed7aa, #fef9c3, #fbbf24, #fef08a);
+            background-size: 250% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: greenPastelShift 3s linear infinite;
+        }
 
         .purple-pastel-wave {
             background: linear-gradient(90deg, #e9d5ff, #c084fc, #a855f7, #f0abfc, #d8b4fe, #e9d5ff);
@@ -541,9 +557,10 @@
             display: block;
         }
         .sailor-card-front {
-            transform: rotateY(180deg);
-            -webkit-transform: rotateY(180deg);
-            position: relative;
+            transform: rotateY(180deg) translateZ(1px);
+            -webkit-transform: rotateY(180deg) translateZ(1px);
+            position: absolute;
+            inset: 0;
         }
         .sailor-sparkle-burst {
             position: fixed;
@@ -731,7 +748,7 @@
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-rose-300 font-bold">✏️</span>
-                        <span>Vào mục <b>Vòng xoay may mắn</b> để quay thưởng thử vận may trúng hoặc nhân đôi Bút Chì Màu.</span>
+                        <span>Vào mục <button type="button" onclick="closePencilModal(); openLuckyWheelModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-pink-500/15 border border-pink-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Vòng xoay may mắn</span></button> và <button type="button" onclick="closePencilModal(); openSailorCardModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Thẻ màu vận may</span></button> để quay thưởng thử vận may bút chì, reset 3 lần mỗi ngày.</span>
                     </li>
                 </ul>
                 <div class="mt-2.5 rounded-xl border border-amber-300/45 bg-gradient-to-r from-amber-500/15 via-pink-500/15 to-purple-500/15 p-2.5 space-y-1">
@@ -1606,7 +1623,7 @@
                 </div>
                 <p class="text-xs text-sky-100/90 leading-relaxed">
                     • <b>Đặc điểm:</b> Dành cho bạn muốn mở khóa link trực tiếp mà không cần làm thủ tục hay join Discord.<br>
-                    • <b>Cách lấy:</b> Điểm danh hàng ngày (+1 chì), quay thưởng tại "Vòng xoay may mắn", mở khóa link (+1 đến +2 chì), viết Feedback từ 1000 ký tự (+3 chì), hoặc gửi ảnh cmt ở char Sắc Màu Nhanh Nhẹn (+10 chì nếu là feedback/cảm nghĩ plot/char, +3 chì nếu cmt noti). Tích đủ 10 chì đổi ngay 1 nhân vật bất kỳ!
+                    • <b>Cách lấy:</b> Điểm danh hàng ngày (+1 chì), thử vận may tại "Vòng xoay may mắn" &amp; "Thẻ màu vận may" (reset 3 lần/ngày), mở khóa link (+1 đến +2 chì), viết Feedback từ 1000 ký tự (+3 chì), hoặc gửi ảnh cmt ở char Sắc Màu Nhanh Nhẹn (+10 chì nếu là feedback/cảm nghĩ plot/char, +3 chì nếu cmt noti). Tích đủ 10 chì đổi ngay 1 nhân vật bất kỳ!
                 </p>
             </div>
 
@@ -2252,10 +2269,6 @@
                         <span>✨ Lượt hôm nay:</span>
                         <span id="sailorRemainingFlipsBadge">3/3</span>
                     </div>
-                    <button type="button" id="ownerSailorAdminHeaderBtn" onclick="openSailorAdminModal()" class="hidden text-[11px] bg-gradient-to-r from-amber-400 to-pink-500 text-black font-black px-3 py-1 rounded-full border border-white/50 shadow active:scale-95 transition inline-flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                        <span>Quản Lý Thẻ</span>
-                    </button>
                 </div>
             </div>
 
@@ -2278,19 +2291,20 @@
 
     <!-- SÂN KHẤU HIỆU ỨNG BAY VÀO GIỮA, PHÓNG TO, PHÁT SÁNG & LẬT THẺ -->
     <div id="sailorCardStageOverlay" onclick="handleStageOverlayClick()" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[90] hidden">
-        <!-- Chữ Pastel thông báo đang biến hình -->
-        <div id="sailorTransformingBanner" class="hidden fixed left-1/2 -translate-x-1/2 top-16 sm:top-20 z-[96] pointer-events-none text-center">
-            <div class="inline-flex items-center gap-1.5 bg-black/80 backdrop-blur-md border border-pink-300/70 px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(244,114,182,0.7)]">
-                <span class="text-xs sm:text-sm font-black pastel-fast-wave drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+        <!-- Chữ Pastel xanh lá nhạt thông báo đang biến hình + gợi ý chạm để lật ngay -->
+        <div id="sailorTransformingBanner" class="hidden fixed left-1/2 -translate-x-1/2 top-14 sm:top-18 z-[96] pointer-events-none text-center space-y-1">
+            <div class="inline-flex items-center gap-1.5 bg-black/80 backdrop-blur-md border border-emerald-300/70 px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(110,231,183,0.55)]">
+                <span class="text-xs sm:text-sm font-black light-green-pastel-wave drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                     ✨ Chờ chút nhé, tớ đang biến hình! ✨
                 </span>
             </div>
+            <div class="text-[10.5px] text-sky-200/80 font-bold">👆 Chạm vào thẻ để lật mở luôn</div>
         </div>
         <div id="sailorStageCardMount"></div>
         <div id="sailorStageResultBox" onclick="event.stopPropagation()" class="hidden fixed left-1/2 -translate-x-1/2 bottom-8 sm:bottom-10 w-[90%] max-w-sm bg-[#121c38]/95 border-2 border-pink-300/70 rounded-3xl p-4 text-center shadow-[0_0_35px_rgba(244,114,182,0.5)] z-[99] space-y-2">
             <div id="sailorResultCategoryBadge" class="inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase"></div>
-            <p id="sailorResultCustomMessage" class="text-xs sm:text-sm font-extrabold text-white leading-relaxed"></p>
-            <div id="sailorResultPencilDelta" class="text-xs font-black"></div>
+            <p id="sailorResultMainStatus" class="text-xs sm:text-sm font-black leading-relaxed"></p>
+            <div id="sailorResultPencilDelta" class="text-xs font-extrabold"></div>
             <button type="button" onclick="closeSailorStageOverlay()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition mt-1">
                 Xác nhận
             </button>
@@ -2301,31 +2315,41 @@
     <div id="sailorAdminModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[80] hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
         <div class="bg-[#121c38] border-2 border-amber-300/70 p-4 sm:p-5 rounded-3xl max-w-md w-full text-left shadow-[0_0_40px_rgba(251,191,36,0.35)] max-h-[90vh] custom-scroll space-y-3 my-auto">
             <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
-                <div>
-                    <h3 class="text-sm font-extrabold text-amber-300">✨ Kho Thẻ Bài Sailor Moon</h3>
-                    <p class="text-[10px] text-sky-200/60">Mọi thẻ bài đều được random tỷ lệ bằng nhau</p>
+                <div class="flex items-center gap-2 min-w-0">
+                    <!-- Icon lấp lánh bằng code SVG -->
+                    <svg class="w-5 h-5 text-amber-300 shrink-0 filter drop-shadow-[0_0_6px_rgba(253,224,71,0.85)]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2l2.1 6.4L20.5 10.5l-6.4 2.1L12 19l-2.1-6.4L3.5 10.5l6.4-2.1L12 2z"></path>
+                        <path d="M19 16l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z"></path>
+                    </svg>
+                    <h3 class="text-sm sm:text-base font-black gold-pastel-wave truncate">Bốc bài thử thách vận may</h3>
                 </div>
-                <button type="button" onclick="closeSailorAdminModal()" class="text-sky-200 hover:text-white text-lg p-1 font-bold">✕</button>
+                <button type="button" onclick="closeSailorAdminModal()" class="text-sky-200 hover:text-white text-lg p-1 font-bold shrink-0">✕</button>
             </div>
 
-            <!-- MỤC CHÈN NHẠC BỐC BÀI (CATBOX / MP3) -->
-            <div class="bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-amber-500/15 border border-pink-300/40 rounded-2xl p-3 space-y-1.5 text-xs">
+            <!-- MỤC CHÈN NHẠC BỐC BÀI & CHỈNH ÂM LƯỢNG -->
+            <div class="bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-amber-500/15 border border-pink-300/40 rounded-2xl p-3 space-y-2 text-xs">
                 <div class="flex items-center justify-between">
                     <span class="font-extrabold text-amber-200 flex items-center gap-1.5">
                         <svg class="w-4 h-4 text-pink-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
                         <span>Nhạc khi bốc bài (Catbox/MP3):</span>
                     </span>
-                    <span class="text-[9px] bg-pink-400/25 text-pink-200 px-2 py-0.5 rounded-full font-bold">Tự động xoay theo nhạc</span>
+                    <span class="text-[9px] bg-pink-400/25 text-pink-200 px-2 py-0.5 rounded-full font-bold">Xoay theo nhạc</span>
                 </div>
                 <p class="text-[10px] text-sky-200/70 leading-relaxed">
-                    Chọn file nhạc từ máy (dưới 250KB) <b>HOẶC</b> dán link Dropbox / GitHub / Catbox (.mp3, .mp4). Thẻ bài sẽ xoay tròn đúng bằng số giây của âm thanh này!
+                    Chọn file nhạc từ máy (dưới 250KB) <b>HOẶC</b> dán link GitHub / Dropbox (.mp3, .mp4). Thẻ sẽ xoay tròn đúng bằng số giây của âm thanh này!
                 </p>
                 <div class="space-y-2">
                     <label class="w-full bg-sky-500/20 hover:bg-sky-500/35 border border-sky-300/50 text-sky-100 font-extrabold py-2 px-3 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 transition">
                         <span>📁 Chọn file nhạc/clip từ máy (dưới 250KB)</span>
                         <input id="sailorAudioFileInput" type="file" accept="audio/*,video/mp4,.mp3,.m4a,.wav,.ogg,.mp4" class="hidden" onchange="handleSailorAudioFileUpload(this)">
                     </label>
-                    <input id="sailorCustomAudioUrl" type="url" oninput="if(sailorCardsConfig) sailorCardsConfig.audioUrl=cleanAudioUrl(this.value)" placeholder="Hoặc dán link Dropbox / GitHub / Catbox..." class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-400">
+                    <input id="sailorCustomAudioUrl" type="url" oninput="if(sailorCardsConfig) sailorCardsConfig.audioUrl=cleanAudioUrl(this.value)" placeholder="Hoặc dán link GitHub / Dropbox (.mp3, .mp4)..." class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-400">
+                    <!-- Thanh chỉnh âm lượng nằm ngay dưới chỗ tải link -->
+                    <div class="bg-black/45 border border-white/15 rounded-xl px-3 py-2 flex items-center gap-2.5">
+                        <span class="text-xs font-bold text-amber-200 shrink-0">🔊 Âm lượng:</span>
+                        <input type="range" id="sailorAudioVolumeSlider" min="0" max="100" value="100" oninput="changeSailorAudioVolume(this.value)" onchange="syncSailorAudioVolumeToCloud()" class="flex-1 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-300">
+                        <span id="sailorAudioVolumePercent" class="text-[10px] font-mono font-black text-amber-300 w-8 text-right shrink-0">100%</span>
+                    </div>
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" id="sailorTestAudioBtn" onclick="testPlaySailorAudio()" class="w-full bg-amber-400/20 hover:bg-amber-400/35 border border-amber-300/50 text-amber-200 font-extrabold py-2 px-2.5 rounded-xl text-xs active:scale-95 transition text-center whitespace-nowrap shadow" title="Bấm để nghe thử xem âm thanh hoạt động tốt không">
                             ▶ Nghe Thử
@@ -2344,8 +2368,8 @@
                     <span>Meme</span>
                 </button>
                 <button type="button" id="sailorTab-sailor" onclick="switchSailorAdminTab('sailor')" class="py-1.5 px-1 rounded-xl transition text-sky-200/70 hover:text-white inline-flex items-center justify-center gap-1">
-                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                    <span>Vận May</span>
+                    <svg class="w-3.5 h-3.5 shrink-0 text-amber-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"></path></svg>
+                    <span>Thẻ Vàng</span>
                 </button>
                 <button type="button" id="sailorTab-secret" onclick="switchSailorAdminTab('secret')" class="py-1.5 px-1 rounded-xl transition text-sky-200/70 hover:text-white inline-flex items-center justify-center gap-1">
                     <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"></path></svg>
@@ -2386,17 +2410,10 @@
                     </div>
                 </div>
 
-                <!-- Tùy chọn trừ chì (chỉ cho Meme) -->
-                <div id="sailorMemePenaltyBox" class="bg-rose-500/10 border border-rose-300/30 rounded-xl p-2 flex items-center justify-between">
+                <!-- Tùy chọn trừ chì (chỉ cho Meme - điền số giống bên Thẻ Vàng) -->
+                <div id="sailorMemePenaltyBox" class="bg-rose-500/10 border border-rose-300/30 rounded-xl p-2 flex items-center justify-between gap-2">
                     <span class="text-[11px] font-bold text-rose-200">Số Bút Chì bị trừ:</span>
-                    <div class="flex items-center gap-2">
-                        <label class="inline-flex items-center gap-1 cursor-pointer text-[11px] font-bold text-white bg-black/40 px-2.5 py-1 rounded-lg border border-white/15">
-                            <input type="radio" name="sailorMemePenalty" value="1" checked class="accent-rose-500"> Trừ 1 chì
-                        </label>
-                        <label class="inline-flex items-center gap-1 cursor-pointer text-[11px] font-bold text-white bg-black/40 px-2.5 py-1 rounded-lg border border-white/15">
-                            <input type="radio" name="sailorMemePenalty" value="2" class="accent-rose-500"> Trừ 2 chì
-                        </label>
-                    </div>
+                    <input id="sailorMemePenaltyInput" type="number" min="1" max="50" value="1" class="w-20 bg-black/50 border border-white/20 rounded-xl px-2 py-1 text-center font-black text-rose-300">
                 </div>
 
                 <!-- Tùy chọn cộng chì (chỉ cho Sailor Moon) -->
@@ -5358,12 +5375,21 @@
                             secret: Array.isArray(d.secret) ? d.secret : [],
                             backImage: d.backImage || "",
                             backCropPos: d.backCropPos || "center",
-                            audioUrl: d.audioUrl || ""
+                            audioUrl: d.audioUrl || "",
+                            audioVolume: (typeof d.audioVolume === 'number') ? d.audioVolume : sailorAudioVolume
                         };
+                        if (typeof d.audioVolume === 'number') {
+                            sailorAudioVolume = Math.max(0, Math.min(100, d.audioVolume));
+                            localStorage.setItem('palette_sailor_audio_volume', sailorAudioVolume);
+                            const vSlider = document.getElementById('sailorAudioVolumeSlider');
+                            const vPct = document.getElementById('sailorAudioVolumePercent');
+                            if (vSlider) vSlider.value = sailorAudioVolume;
+                            if (vPct) vPct.innerText = sailorAudioVolume + '%';
+                        }
                         try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
                         const audioInp = document.getElementById('sailorCustomAudioUrl');
                         if (audioInp && !audioInp.matches(':focus')) {
-                            audioInp.value = sailorCardsConfig.audioUrl || "";
+                            audioInp.value = (sailorCardsConfig.audioUrl || "").startsWith('data:') ? "" : (sailorCardsConfig.audioUrl || "");
                         }
                         if (!document.getElementById('sailorCardModal')?.classList.contains('hidden') && !isSailorCardFlipping) {
                             renderSailorCardsGrid();
@@ -11098,57 +11124,112 @@
             }
         }
 
+        function getSailorVolumeFactor() {
+            const v = (typeof sailorAudioVolume === 'number') ? sailorAudioVolume : 100;
+            return Math.max(0, Math.min(1, v / 100));
+        }
+
         function playJoyfulWinSound() {
             try {
+                const vol = getSailorVolumeFactor();
+                if (vol <= 0) return;
                 const ctx = getSharedAudioContext();
                 if (!ctx) return;
-                const notes = [523.25, 659.25, 783.99, 1046.50];
+                if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
                 notes.forEach((freq, idx) => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-                    const t = ctx.currentTime + idx * 0.09;
-                    osc.type = 'sine';
+                    const t = ctx.currentTime + idx * 0.085;
+                    osc.type = 'triangle';
                     osc.frequency.setValueAtTime(freq, t);
                     gain.gain.setValueAtTime(0, t);
-                    gain.gain.linearRampToValueAtTime(0.2, t + 0.015);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+                    gain.gain.linearRampToValueAtTime(0.26 * vol, t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
                     osc.connect(gain);
                     gain.connect(ctx.destination);
                     osc.start(t);
-                    osc.stop(t + 0.48);
+                    osc.stop(t + 0.5);
                 });
+            } catch (_) {}
+        }
+
+        function playSecretJackpotSound() {
+            try {
+                const vol = getSailorVolumeFactor();
+                if (vol <= 0) return;
+                const ctx = getSharedAudioContext();
+                if (!ctx) return;
+                if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00];
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    const t = ctx.currentTime + idx * 0.07;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0, t);
+                    gain.gain.linearRampToValueAtTime(0.28 * vol, t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.62);
+                });
+            } catch (_) {}
+        }
+
+        function playEmptyCardNeutralSound() {
+            try {
+                const vol = getSailorVolumeFactor();
+                if (vol <= 0) return;
+                const ctx = getSharedAudioContext();
+                if (!ctx) return;
+                if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+                const t = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, t);
+                osc.frequency.exponentialRampToValueAtTime(349.23, t + 0.25);
+                gain.gain.setValueAtTime(0.18 * vol, t);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(t);
+                osc.stop(t + 0.32);
             } catch (_) {}
         }
 
         function playSadDeflateSound() {
             try {
+                const vol = getSailorVolumeFactor();
+                if (vol <= 0) return;
                 const ctx = getSharedAudioContext();
                 if (!ctx) return;
+                if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+                // Tiếng "xìu" tụt mood kiểu wah-wah-waaaah kéo dài xuống trầm
+                const steps = [
+                    { start: 0, dur: 0.22, f1: 370, f2: 330, type: 'sawtooth', amp: 0.14 },
+                    { start: 0.24, dur: 0.22, f1: 330, f2: 290, type: 'sawtooth', amp: 0.14 },
+                    { start: 0.48, dur: 0.72, f1: 285, f2: 95, type: 'triangle', amp: 0.22 }
+                ];
                 const t0 = ctx.currentTime;
-                const osc1 = ctx.createOscillator();
-                const gain1 = ctx.createGain();
-                osc1.type = 'sawtooth';
-                osc1.frequency.setValueAtTime(320, t0);
-                osc1.frequency.exponentialRampToValueAtTime(250, t0 + 0.25);
-                gain1.gain.setValueAtTime(0.09, t0);
-                gain1.gain.exponentialRampToValueAtTime(0.001, t0 + 0.28);
-                osc1.connect(gain1);
-                gain1.connect(ctx.destination);
-                osc1.start(t0);
-                osc1.stop(t0 + 0.29);
-
-                const t1 = t0 + 0.3;
-                const osc2 = ctx.createOscillator();
-                const gain2 = ctx.createGain();
-                osc2.type = 'triangle';
-                osc2.frequency.setValueAtTime(250, t1);
-                osc2.frequency.exponentialRampToValueAtTime(105, t1 + 0.65);
-                gain2.gain.setValueAtTime(0.12, t1);
-                gain2.gain.exponentialRampToValueAtTime(0.0001, t1 + 0.7);
-                osc2.connect(gain2);
-                gain2.connect(ctx.destination);
-                osc2.start(t1);
-                osc2.stop(t1 + 0.72);
+                steps.forEach(s => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    const st = t0 + s.start;
+                    osc.type = s.type;
+                    osc.frequency.setValueAtTime(s.f1, st);
+                    osc.frequency.exponentialRampToValueAtTime(s.f2, st + s.dur);
+                    gain.gain.setValueAtTime(0, st);
+                    gain.gain.linearRampToValueAtTime(s.amp * vol, st + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, st + s.dur);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(st);
+                    osc.stop(st + s.dur + 0.03);
+                });
             } catch (_) {}
         }
 
@@ -11453,6 +11534,34 @@
             }
         }
 
+        let sailorAudioVolume = parseInt(localStorage.getItem('palette_sailor_audio_volume') || "100");
+        if (isNaN(sailorAudioVolume)) sailorAudioVolume = 100;
+
+        function changeSailorAudioVolume(val) {
+            sailorAudioVolume = Math.max(0, Math.min(100, parseInt(val) || 0));
+            localStorage.setItem('palette_sailor_audio_volume', sailorAudioVolume);
+            if (sailorCardsConfig) sailorCardsConfig.audioVolume = sailorAudioVolume;
+            const p = document.getElementById('sailorAudioVolumePercent');
+            if (p) p.innerText = sailorAudioVolume + '%';
+            const vol = sailorAudioVolume / 100;
+            const isMuted = (sailorAudioVolume <= 0);
+            [activeSailorAudioObj, testAudioObj, document.getElementById('sailorCardAudio'), document.getElementById('sailorCardVideo')].forEach(el => {
+                if (el) {
+                    try {
+                        el.muted = isMuted;
+                        el.volume = vol;
+                    } catch (_) {}
+                }
+            });
+        }
+
+        function syncSailorAudioVolumeToCloud() {
+            if (!checkIsOwnerAccount()) return;
+            if (sailorCardsConfig) sailorCardsConfig.audioVolume = sailorAudioVolume;
+            try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
+            db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true }).catch(() => {});
+        }
+
         function openSailorCardModal() {
             if (!currentUser) {
                 alert("Vui lòng đăng nhập để tham gia Thẻ Màu May Mắn nhé!");
@@ -11460,9 +11569,7 @@
             }
             const isOwner = checkIsOwnerAccount();
             const addBtn = document.getElementById('ownerAddSailorCardBtn');
-            const headerAddBtn = document.getElementById('ownerSailorAdminHeaderBtn');
             if (addBtn) addBtn.classList.toggle('hidden', !isOwner);
-            if (headerAddBtn) headerAddBtn.classList.toggle('hidden', !isOwner);
             updateSailorLimitUI();
             renderSailorCardsGrid();
             document.getElementById('sailorCardModal').classList.remove('hidden');
@@ -11482,16 +11589,38 @@
             return pool;
         }
 
-        // Quản lý âm thanh đang phát khi bốc bài
+        // Quản lý âm thanh đang phát khi bốc bài & bấm vào thẻ để lật ngay
         let activeSailorAudioObj = null;
         let wasBgMusicPlayingBeforeSailor = false;
+        let skipCurrentSailorSpinFn = null;
+
+        function skipSailorCardSpin() {
+            if (typeof skipCurrentSailorSpinFn === 'function') {
+                const fn = skipCurrentSailorSpinFn;
+                skipCurrentSailorSpinFn = null;
+                fn();
+            }
+        }
 
         function playSailorSpinningAudio(rawUrl) {
             return new Promise((resolve) => {
                 const audioUrl = cleanAudioUrl(rawUrl);
                 if (!audioUrl) {
-                    console.log("Không có link âm thanh bốc bài, xoay mặc định 3.5s");
-                    setTimeout(() => resolve(null), 3500);
+                    let finishedNoAudio = false;
+                    const t = setTimeout(() => {
+                        if (!finishedNoAudio) {
+                            finishedNoAudio = true;
+                            skipCurrentSailorSpinFn = null;
+                            resolve(null);
+                        }
+                    }, 3500);
+                    skipCurrentSailorSpinFn = () => {
+                        if (!finishedNoAudio) {
+                            finishedNoAudio = true;
+                            clearTimeout(t);
+                            resolve(null);
+                        }
+                    };
                     return;
                 }
 
@@ -11529,32 +11658,44 @@
                 let finished = false;
                 let fallbackTimer = null;
                 let maxTimer = null;
+                let errTimer = null;
 
-                const onDone = () => {
+                const onDone = (stopMediaNow = false) => {
                     if (!finished) {
                         finished = true;
+                        skipCurrentSailorSpinFn = null;
                         if (fallbackTimer) clearTimeout(fallbackTimer);
                         if (maxTimer) clearTimeout(maxTimer);
+                        if (errTimer) clearTimeout(errTimer);
                         sound.onended = null;
                         sound.onerror = null;
                         sound.onloadedmetadata = null;
+                        if (stopMediaNow) {
+                            try { sound.pause(); sound.currentTime = 0; } catch (_) {}
+                            if (activeSailorAudioObj && activeSailorAudioObj !== sound) {
+                                try { activeSailorAudioObj.pause(); activeSailorAudioObj.currentTime = 0; } catch (_) {}
+                            }
+                        }
                         resolve(sound);
                     }
                 };
 
+                // Cho phép user chạm thẳng vào thẻ đang xoay để dừng nhạc xoay & lật kết quả ngay
+                skipCurrentSailorSpinFn = () => onDone(true);
+
                 // Khi hết bài nhạc / clip -> dừng xoay và mở thẻ
-                sound.onended = onDone;
+                sound.onended = () => onDone(false);
 
                 sound.onerror = (e) => {
                     console.warn("Lỗi tải âm thanh bốc bài từ link:", audioUrl, e);
-                    setTimeout(onDone, 3500);
+                    errTimer = setTimeout(() => onDone(false), 3500);
                 };
 
                 // Bảo hiểm: nếu có duration thì đặt timeout dôi ra 2.5s phòng sự kiện onended không bắn
                 sound.onloadedmetadata = () => {
                     if (Number.isFinite(sound.duration) && sound.duration > 0) {
                         const fallbackMs = Math.round(sound.duration * 1000) + 2500;
-                        fallbackTimer = setTimeout(onDone, fallbackMs);
+                        fallbackTimer = setTimeout(() => onDone(false), fallbackMs);
                     }
                 };
 
@@ -11563,8 +11704,8 @@
                     sound.pause();
                     sound.currentTime = 0;
                 } catch (_) {}
-                sound.volume = 1;
-                sound.muted = false;
+                sound.volume = getSailorVolumeFactor();
+                sound.muted = (sailorAudioVolume <= 0);
                 sound.src = audioUrl;
 
                 const p = sound.play();
@@ -11576,24 +11717,27 @@
                             activeSailorAudioObj = fallbackMedia;
                             fallbackMedia.setAttribute('playsinline', '');
                             fallbackMedia.setAttribute('webkit-playsinline', '');
-                            fallbackMedia.volume = 1;
+                            fallbackMedia.volume = getSailorVolumeFactor();
                             fallbackMedia.muted = false;
                             fallbackMedia.src = audioUrl;
-                            fallbackMedia.onended = onDone;
-                            fallbackMedia.onerror = () => setTimeout(onDone, 3500);
-                            fallbackMedia.play().catch(() => setTimeout(onDone, 3500));
+                            fallbackMedia.onended = () => onDone(false);
+                            fallbackMedia.onerror = () => { errTimer = setTimeout(() => onDone(false), 3500); };
+                            fallbackMedia.play().catch(() => { errTimer = setTimeout(() => onDone(false), 3500); });
                         } catch (_) {
-                            setTimeout(onDone, 3500);
+                            errTimer = setTimeout(() => onDone(false), 3500);
                         }
                     });
                 }
-                maxTimer = setTimeout(onDone, 60000); // Giới hạn an toàn tối đa 60s
+                maxTimer = setTimeout(() => onDone(false), 60000); // Giới hạn an toàn tối đa 60s
             });
         }
 
         async function onPickSailorCard(cardEl) {
             if (isSailorCardFlipping || isSailorStageWaitingClose) return;
             if (!currentUser) return;
+
+            // Đánh thức AudioContext ngay cú chạm để iPhone phát tiếng kết quả chuẩn xác
+            getSharedAudioContext();
 
             const pool = getCombinedSailorPool();
             if (pool.length === 0) {
@@ -11637,16 +11781,22 @@
                 : pickedCard.cropPos === 'bottom' ? 'object-bottom' : 'object-center';
 
             const stageWrap = document.createElement('div');
-            stageWrap.className = 'sailor-stage-card-wrap';
+            stageWrap.className = 'sailor-stage-card-wrap cursor-pointer';
             const startScale = Math.max(0.25, rect.width / 210);
             stageWrap.style.left = `${rect.left + rect.width / 2}px`;
             stageWrap.style.top = `${rect.top + rect.height / 2}px`;
             stageWrap.style.transform = `translate(-50%, -50%) scale(${startScale})`;
 
-            // Dòng chữ của Chủ Web nằm ngay dưới chân ảnh trên dải bóng đen đậm chống nhòe, màu pastel chuyển động
+            // Cho phép user chạm thẳng vào thẻ đang xoay để lật luôn không cần chờ xoay xong
+            stageWrap.onclick = (e) => {
+                e.stopPropagation();
+                skipSailorCardSpin();
+            };
+
+            // Dòng chữ của Chủ Web nằm ngay dưới chân ảnh trên dải bóng đen đậm chống nhòe, chữ màu xanh lá nhạt pastel chuyển động
             const customMsgHtml = pickedCard.message ? `
-                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/85 to-transparent px-3 pb-3 pt-10 text-center z-20 pointer-events-none rounded-b-2xl">
-                    <p class="text-xs sm:text-[13px] font-black pastel-fast-wave leading-relaxed break-words filter drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">
+                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/90 to-transparent px-3 pb-3 pt-10 text-center z-20 pointer-events-none rounded-b-2xl">
+                    <p class="text-xs sm:text-[13px] font-black light-green-pastel-wave leading-relaxed break-words filter drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">
                         ${cmtEsc(pickedCard.message)}
                     </p>
                 </div>
@@ -11656,9 +11806,9 @@
                 <div id="sailorStageInnerCard" class="sailor-stage-inner border-2 border-amber-200/80 shadow-2xl">
                     <div class="sailor-card-face">
                         ${getSailorBackCardHtml()}
-                        <!-- Dòng chữ Pastel hiển thị trực tiếp trên thẻ lúc đang xoay biến hình -->
-                        <div class="absolute inset-x-2 bottom-3.5 bg-black/80 backdrop-blur-md border border-pink-300/60 rounded-xl px-2 py-1.5 text-center shadow-[0_0_12px_rgba(244,114,182,0.6)] pointer-events-none z-10">
-                            <p class="text-[11px] font-black pastel-fast-wave leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                        <!-- Dòng chữ Xanh lá nhạt Pastel hiển thị trực tiếp trên thẻ lúc đang xoay biến hình -->
+                        <div class="absolute inset-x-2 bottom-3.5 bg-black/85 border border-emerald-300/60 rounded-xl px-2 py-1.5 text-center shadow-[0_0_12px_rgba(110,231,183,0.6)] pointer-events-none z-10">
+                            <p class="text-[11px] font-black light-green-pastel-wave leading-snug">
                                 Chờ chút nhé, tớ đang biến hình!
                             </p>
                         </div>
@@ -11686,8 +11836,8 @@
             if (transformingBanner) transformingBanner.classList.remove('hidden');
 
             // 2. Kích hoạt xoay tròn 2D (chỉ xoay mặt sau, tuyệt đối không lật để lộ hình bí mật)
-            setTimeout(() => {
-                if (inner) inner.classList.add('is-spinning');
+            const spinStartTimer = setTimeout(() => {
+                if (inner && !inner.classList.contains('is-flipped')) inner.classList.add('is-spinning');
             }, 300);
 
             // Tìm URL âm thanh từ mọi nguồn bộ nhớ để không bao giờ bị rỗng
@@ -11695,8 +11845,9 @@
                 ? sailorCardsConfig.audioUrl
                 : (safeParseLocalJson('palette_sailor_cards', {})?.audioUrl || document.getElementById('sailorCustomAudioUrl')?.value || "");
 
-            // Bật âm thanh Catbox và xoay tròn đúng số giây của bài hát
+            // Bật âm thanh và xoay tròn đúng số giây của bài hát (hoặc lật ngay nếu user chạm vào thẻ)
             await playSailorSpinningAudio(cardAudioSource);
+            clearTimeout(spinStartTimer);
 
             // 3. Dừng xoay tròn và lật thẻ 3D sang mặt trước để hiện kết quả
             if (transformingBanner) transformingBanner.classList.add('hidden');
@@ -11704,10 +11855,15 @@
                 inner.classList.remove('is-spinning');
                 inner.classList.add('is-flipped');
             }
+            stageWrap.classList.remove('cursor-pointer');
 
             const curPencils = getUserPencilCount(username);
+            const mainStatusEl = document.getElementById('sailorResultMainStatus');
             const deltaEl = document.getElementById('sailorResultPencilDelta');
+            let statusText = "";
+            let statusClass = "text-xs sm:text-sm font-black leading-relaxed";
             let deltaText = "";
+            let deltaClass = "text-xs font-extrabold";
 
             try {
                 const actType = pickedCard.actionType || (pickedCard.category === 'meme' ? 'penalty' : pickedCard.category === 'secret' ? 'secret' : 'reward');
@@ -11720,27 +11876,34 @@
                         await db.collection("pencils").doc(uKey).set({ count: nextCount }, { merge: true });
                         userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: nextCount };
                         updatePencilUI();
-                        triggerNotification("NHÂN ĐÔI BÚT CHÌ MÀU!", `Chúc mừng bạn lật trúng thẻ SECRET Sailor Moon! Số chì được nhân đôi thành ${nextCount} chì!`, username);
+                        triggerNotification("NHÂN ĐÔI BÚT CHÌ MÀU!", `Chúc mừng bạn lật trúng thẻ SECRET! Số chì được nhân đôi thành ${nextCount} chì!`, username);
                     }
-                    playJoyfulWinSound();
+                    playSecretJackpotSound();
+                    statusText = "Chúc mừng bạn đã bốc trúng thẻ Secret x2!";
+                    statusClass = "text-xs sm:text-sm font-black light-green-pastel-wave leading-relaxed";
                     deltaText = gain > 0
-                        ? `🌟 Nhân đôi thành ${nextCount} Bút Chì Màu! (+${gain} chì)`
-                        : `🌟 Thẻ Secret x2 Bút Chì (Túi đang có 0 chì nên giữ nguyên 0 chì)`;
-                    if (deltaEl) deltaEl.className = "text-xs font-black text-amber-300";
+                        ? `Đã nhân đôi Bút Chì Màu - Túi còn ${nextCount} Chì.`
+                        : `Túi đang có 0 Bút Chì Màu nên giữ nguyên 0 Chì.`;
+                    deltaClass = "text-xs font-extrabold text-amber-300";
                     logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ SECRET nhân đôi (${curPencils} ➔ ${nextCount} chì)`);
                 } else if (actType === 'reward') {
                     const addAmt = Math.max(1, numAmt || 1);
                     await addPencilToUser(username, addAmt, "Thẻ Màu May Mắn", false);
                     playJoyfulWinSound();
-                    deltaText = `✨ +${addAmt} Bút Chì Màu (Hiện có: ${curPencils + addAmt} chì)`;
-                    if (deltaEl) deltaEl.className = "text-xs font-black text-emerald-300";
-                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ cộng chì (+${addAmt} Chì)`);
+                    statusText = "Chúc mừng bạn đã bốc trúng Thẻ Vàng!";
+                    statusClass = "text-xs sm:text-sm font-black light-green-pastel-wave leading-relaxed";
+                    deltaText = `Đã được cộng ${addAmt} Bút Chì Màu - Túi còn ${curPencils + addAmt} Chì.`;
+                    deltaClass = "text-xs font-extrabold text-amber-300";
+                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng Thẻ Vàng (+${addAmt} Chì)`);
                 } else if (actType === 'empty') {
-                    deltaText = `🍂 Thẻ rỗng: Bạn không được cộng hay bị trừ bút chì nào!`;
-                    if (deltaEl) deltaEl.className = "text-xs font-bold text-sky-200";
+                    playEmptyCardNeutralSound();
+                    statusText = "Bạn đã bốc trúng thẻ rỗng!";
+                    statusClass = "text-xs sm:text-sm font-black text-sky-200 leading-relaxed";
+                    deltaText = `Không cộng hay trừ Bút Chì Màu - Túi còn ${curPencils} Chì.`;
+                    deltaClass = "text-xs font-bold text-sky-200/80";
                     logMemberActivity("Thẻ Màu May Mắn", `Lật trúng Thẻ rỗng (0 chì)`);
                 } else {
-                    // Penalty (Trừ chì)
+                    // Penalty (Trừ chì - Thẻ Meme)
                     const penAmt = Math.max(1, numAmt || 1);
                     const actualDeduct = Math.min(penAmt, curPencils);
                     const remain = curPencils - actualDeduct;
@@ -11750,10 +11913,12 @@
                         updatePencilUI();
                     }
                     playSadDeflateSound();
+                    statusText = "Bạn đã bốc trúng thẻ meme, xin chia buồn.";
+                    statusClass = "text-xs sm:text-sm font-black light-green-pastel-wave leading-relaxed";
                     deltaText = actualDeduct > 0
-                        ? `😢 Bị trừ ${actualDeduct} Bút Chì Màu (Còn: ${remain} chì)`
-                        : `😅 Trúng thẻ -${penAmt} chì nhưng túi đang có 0 chì!`;
-                    if (deltaEl) deltaEl.className = "text-xs font-black text-rose-300";
+                        ? `Đã bị trừ ${actualDeduct} Bút Chì Màu - Túi còn ${remain} Chì.`
+                        : `Túi đang có 0 Bút Chì Màu - Không bị trừ thêm Chì.`;
+                    deltaClass = "text-xs font-extrabold text-rose-300";
                     logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ trừ chì (-${penAmt} Chì)`);
                     if (actualDeduct > 0) {
                         triggerNotification("Bị Trừ Bút Chì Màu!", `Thẻ Màu May Mắn: Bạn lật trúng thẻ trừ chì và bị mất ${actualDeduct} Bút Chì Màu! Còn lại: ${remain} chì.`, username);
@@ -11763,7 +11928,14 @@
                 console.error("Lỗi xử lý thẻ:", e);
             }
 
-            if (deltaEl) deltaEl.innerText = deltaText;
+            if (mainStatusEl) {
+                mainStatusEl.innerText = statusText;
+                mainStatusEl.className = statusClass;
+            }
+            if (deltaEl) {
+                deltaEl.innerText = deltaText;
+                deltaEl.className = deltaClass;
+            }
 
             const catBadge = document.getElementById('sailorResultCategoryBadge');
             if (catBadge) {
@@ -11771,18 +11943,12 @@
                     catBadge.innerText = '✨ Secret x2';
                     catBadge.className = 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase bg-amber-400/30 text-amber-200 border border-amber-300/50';
                 } else if (pickedCard.category === 'meme') {
-                    catBadge.innerText = '🤡 Thẻ Meme';
+                    catBadge.innerText = 'Thẻ Meme';
                     catBadge.className = 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase bg-rose-500/30 text-rose-200 border border-rose-300/50';
                 } else {
-                    catBadge.innerText = '🌙 Thẻ Vận May';
-                    catBadge.className = 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase bg-emerald-500/30 text-emerald-200 border border-emerald-300/50';
+                    catBadge.innerText = '✨ Thẻ Vàng';
+                    catBadge.className = 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase bg-amber-400/25 text-amber-200 border border-amber-300/50';
                 }
-            }
-            const customMsgEl = document.getElementById('sailorResultCustomMessage');
-            if (customMsgEl) {
-                customMsgEl.innerText = pickedCard.message || '';
-                customMsgEl.className = "text-xs sm:text-sm font-black pastel-fast-wave leading-relaxed drop-shadow-[0_2px_6px_rgba(0,0,0,1)]";
-                customMsgEl.classList.toggle('hidden', !pickedCard.message);
             }
 
             setTimeout(() => {
@@ -11832,7 +11998,11 @@
         function openSailorAdminModal() {
             if (!checkIsOwnerAccount()) return;
             const audioInp = document.getElementById('sailorCustomAudioUrl');
-            if (audioInp) audioInp.value = sailorCardsConfig.audioUrl || "";
+            if (audioInp) audioInp.value = (sailorCardsConfig.audioUrl || "").startsWith('data:') ? "" : (sailorCardsConfig.audioUrl || "");
+            const vSlider = document.getElementById('sailorAudioVolumeSlider');
+            const vPct = document.getElementById('sailorAudioVolumePercent');
+            if (vSlider) vSlider.value = sailorAudioVolume;
+            if (vPct) vPct.innerText = sailorAudioVolume + '%';
             switchSailorAdminTab(activeSailorAdminTab || 'meme');
             document.getElementById('sailorAdminModal').classList.remove('hidden');
         }
@@ -11938,8 +12108,8 @@
             let testAlertShown = false;
 
             try { media.pause(); media.currentTime = 0; } catch (_) {}
-            media.volume = 1;
-            media.muted = false;
+            media.volume = getSailorVolumeFactor();
+            media.muted = (sailorAudioVolume <= 0);
 
             media.onloadedmetadata = () => {
                 const sec = Math.round(media.duration || 0);
@@ -11989,11 +12159,15 @@
                 url = cleanAudioUrl(url);
                 if (input) input.value = url;
             }
+            if (!url && (sailorCardsConfig.audioUrl || "").startsWith('data:') && !confirm("Bạn đang dùng file nhạc tải từ máy. Để trống ô link nghĩa là xóa file nhạc này nhé?")) {
+                return;
+            }
             sailorCardsConfig.audioUrl = url;
+            sailorCardsConfig.audioVolume = sailorAudioVolume;
             try {
                 await db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true });
                 try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
-                alert("✓ Đã lưu link âm thanh bốc bài thành công!\nLink: " + (url || "(Đã xóa link)"));
+                alert(`✓ Đã lưu âm thanh (Âm lượng: ${sailorAudioVolume}%) thành công!\n` + (url || "(Đã xóa link)"));
             } catch (e) {
                 alert("Lỗi lưu âm thanh: " + (e?.message || ""));
             }
@@ -12023,16 +12197,16 @@
 
             if (tab === 'meme') {
                 if (desc) {
-                    desc.innerText = "🤡 Mục Meme: Thẻ trừ chì (chọn trừ 1 hoặc 2 chì) khi user lật trúng.";
+                    desc.innerText = "Mục Meme: Nhập số Bút Chì bị trừ khi user lật trúng.";
                     desc.className = "text-[11px] font-bold text-rose-200";
                 }
                 if (saveBtn) saveBtn.innerText = "+ Lưu Thẻ Meme Vào Kho";
             } else if (tab === 'sailor') {
                 if (desc) {
-                    desc.innerText = "🌙 Mục Vận May: Thẻ cộng chì may mắn cho user.";
-                    desc.className = "text-[11px] font-bold text-emerald-200";
+                    desc.innerText = "✨ Mục Thẻ Vàng: Thẻ cộng chì may mắn cho user.";
+                    desc.className = "text-[11px] font-bold text-amber-200";
                 }
-                if (saveBtn) saveBtn.innerText = "+ Lưu Thẻ Vận May Vào Kho";
+                if (saveBtn) saveBtn.innerText = "+ Lưu Thẻ Vàng Vào Kho";
             } else if (tab === 'secret') {
                 if (desc) {
                     desc.innerText = "✨ Mục Secret: Tự động NHÂN ĐÔI số Bút Chì Màu hiện có của user!";
@@ -12212,9 +12386,9 @@
                         entry.amount = 0;
                         sailorCardsConfig.secret.unshift(entry);
                     } else if (activeSailorAdminTab === 'meme') {
-                        const penVal = parseInt(document.querySelector('input[name="sailorMemePenalty"]:checked')?.value) || 1;
+                        const penVal = parseInt(document.getElementById('sailorMemePenaltyInput')?.value) || 1;
                         entry.actionType = 'penalty';
-                        entry.amount = penVal;
+                        entry.amount = Math.max(1, penVal);
                         sailorCardsConfig.meme.unshift(entry);
                     } else if (activeSailorAdminTab === 'sailor') {
                         const rewVal = parseInt(document.getElementById('sailorRewardInput')?.value) || 1;
