@@ -5058,9 +5058,9 @@
             notificationsUnsub = db.collection("notifications").doc(uKey).onSnapshot(doc => {
                 const newLogs = doc.exists ? (doc.data().logs || []) : [];
                 const latest = newLogs[0];
-                const latestKey = latest ? `${latest.title}|${latest.time}|${newLogs.length}` : "";
+                const latestKey = latest ? `${latest.title}|${latest.body || ''}|${latest.time}` : "";
 
-                if (!isFirstNotificationSnapshot && latest && latestKey !== lastKnownNotificationTimeKey && newLogs.length >= (userNotificationLogs[uKey]?.length || 0)) {
+                if (!isFirstNotificationSnapshot && latest && latestKey !== lastKnownNotificationTimeKey) {
                     showInAppNotifyToast(latest.title, latest.body);
                     playPaletteTingSound();
                     if (notificationsEnabled && "Notification" in window && Notification.permission === "granted") {
@@ -5136,12 +5136,15 @@
                     const newActs = memberActivities.filter(a => !prevIds.has(a.id));
                     newActs.forEach(act => {
                         const cat = getActivityCategory(act);
-                        if (cat === 'comment' || cat === 'fail') {
-                            const toastTitle = cat === 'fail' ? `❌ Lỗi ảnh: ${act.username}` : `💬 Cmt mới: ${act.username}`;
-                            showInAppNotifyToast(toastTitle, `${act.title}${act.details ? ` · ${act.details}` : ''}`);
-                            showBrowserNotificationSafe(toastTitle, act.details || act.title);
-                            playPaletteTingSound();
-                        }
+                        const prefixIcon = cat === 'fail' ? '❌ Lỗi ảnh'
+                            : cat === 'comment' ? '💬 Cmt mới'
+                            : cat === 'link' ? '🔓 Mở link'
+                            : cat === 'wheel' ? '🎡 Vòng xoay'
+                            : '✨ Hoạt động mới';
+                        const toastTitle = `${prefixIcon}: ${act.username}`;
+                        showInAppNotifyToast(toastTitle, `${act.title}${act.details ? ` · ${act.details}` : ''}`);
+                        showBrowserNotificationSafe(toastTitle, act.details || act.title);
+                        playPaletteTingSound();
                     });
                 }
                 knownOwnerActivityIds = currIds;
@@ -6028,6 +6031,7 @@
             if (!currentUser) return;
             const uKey = currentUser.username.toLowerCase();
             userNotificationLogs[uKey] = [];
+            lastKnownNotificationTimeKey = "";
             db.collection("notifications").doc(uKey).set({ logs: [] });
             renderUserNotifications();
         }
@@ -6044,7 +6048,7 @@
                     if (!userNotificationLogs[uKey]) userNotificationLogs[uKey] = [];
                     userNotificationLogs[uKey].unshift(newLog);
                     userNotificationLogs[uKey] = userNotificationLogs[uKey].slice(0, 50);
-                    lastKnownNotificationTimeKey = `${newLog.title}|${newLog.time}|${userNotificationLogs[uKey].length}`;
+                    lastKnownNotificationTimeKey = `${newLog.title}|${newLog.body || ''}|${newLog.time}`;
                     await db.collection("notifications").doc(uKey).set({ logs: userNotificationLogs[uKey] }, { merge: true });
                 } else {
                     const snap = await db.collection("notifications").doc(uKey).get();
@@ -6529,6 +6533,7 @@
                     await batch.commit();
                 }
                 memberActivities = [];
+                activeActivitySubFilter = 'all';
                 updateActivitiesBadgeUI();
                 renderUsersModalContent();
                 alert("Đã xóa sạch lịch sử hoạt động!");
@@ -6572,6 +6577,7 @@
                     await batch.commit();
                 }
                 memberActivities = memberActivities.filter(a => getActivityCategory(a) !== category);
+                activeActivitySubFilter = 'all';
                 updateActivitiesBadgeUI();
                 renderUsersModalContent();
             } catch (e) {
