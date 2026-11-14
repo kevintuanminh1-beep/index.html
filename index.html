@@ -703,6 +703,7 @@
                 </div>
                 <button onclick="closeAdminPencilRequestsModal()" class="text-sky-200 text-lg p-1 hover:text-white">✕</button>
             </div>
+
             <div class="space-y-3 text-xs mb-3">
                 <div class="flex items-center justify-between">
                     <span class="font-bold text-pink-300">Danh sách Ping đang chờ duyệt:</span>
@@ -4707,20 +4708,91 @@
             document.getElementById('adminPencilRequestsModal').classList.add('hidden');
         }
 
+        let hasLoadedCommentsSnapshot = false;
+        let isAutoSyncingOldPings = false;
+
+        async function autoSyncOldPingComments() {
+            if (!checkIsOwnerAccount() || isAutoSyncingOldPings) return;
+            if (!hasLoadedCommentsSnapshot || knownPencilRequestIds === null) return;
+
+            isAutoSyncingOldPings = true;
+            try {
+                const pendingCommentIds = new Set(
+                    pendingPencilRequests.map(r => r.commentId).filter(Boolean)
+                );
+                const now = Date.now();
+                let changed = false;
+
+                for (const charId of Object.keys(charComments)) {
+                    const list = charComments[charId];
+                    if (!Array.isArray(list) || list.length === 0) continue;
+
+                    let charChanged = false;
+                    const updatedList = list.map(c => {
+                        if (c && c.isPing && !c.pingApproved && !c.pingRejected && !pendingCommentIds.has(c.id)) {
+                            const createdAt = Number(c.createdAt) || 0;
+                            if (createdAt === 0 || (now - createdAt) > 30000) {
+                                charChanged = true;
+                                return { ...c, pingApproved: true };
+                            }
+                        }
+                        return c;
+                    });
+
+                    if (charChanged) {
+                        changed = true;
+                        charComments[charId] = updatedList;
+                        await db.collection("comments").doc(charId).set({ list: updatedList }, { merge: true });
+                    }
+                }
+
+                if (changed && activeChar) renderComments();
+            } catch (err) {
+                console.error("Lỗi tự động cập nhật cmt Ping cũ:", err);
+            } finally {
+                isAutoSyncingOldPings = false;
+            }
+        }
+
         async function approvePencilRequest(reqId, targetUsername) {
             if (!currentUser?.isOwner) return;
+            const req = pendingPencilRequests.find(r => r.id === reqId);
             if (!confirm(`Bạn chắc chắn cấp 3 Bút Chì Màu cho "${targetUsername}" chứ?`)) return;
             const requestRef = db.collection("pencil_requests").doc(reqId);
             const pencilRef = db.collection("pencils").doc(targetUsername.toLowerCase());
             try {
+                const reqSnap = await requestRef.get();
+                if (!reqSnap.exists) {
+                    alert("Ping này đã được xử lý rồi.");
+                    openPencilShopModal();
+                    return;
+                }
                 const pencilSnapshot = await pencilRef.get();
                 const pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
                 const nextCount = (Number(pencilData.count) || 0) + 3;
 
-                await Promise.all([
+                const batchPromises = [
                     pencilRef.set({ ...pencilData, count: nextCount }, { merge: true }),
                     requestRef.delete()
-                ]);
+                ];
+
+                if (req && req.charId && req.commentId) {
+                    const cmtDocRef = db.collection("comments").doc(req.charId);
+                    const cmtDocSnap = await cmtDocRef.get();
+                    if (cmtDocSnap.exists) {
+                        const cmtList = cmtDocSnap.data().list || [];
+                        const updatedList = cmtList.map(c => {
+                            if (c.id === req.commentId) {
+                                return { ...c, pingApproved: true };
+                            }
+                            return c;
+                        });
+                        batchPromises.push(cmtDocRef.set({ list: updatedList }, { merge: true }));
+                        charComments[req.charId] = updatedList;
+                    }
+                }
+
+                await Promise.all(batchPromises);
 
                 userPencilsData[targetUsername.toLowerCase()] = {
                     ...(userPencilsData[targetUsername.toLowerCase()] || {}),
@@ -4728,6 +4800,7 @@
                 };
                 updatePencilUI();
                 createPencilSparkles();
+                renderComments();
                 triggerNotification("Đã cấp Bút Chì Màu!", `Bạn vừa được Chủ Web duyệt Ping Feedback và tặng +3 Bút Chì Màu!`, targetUsername);
                 alert(`Đã cấp 3 Bút Chì Màu cho "${targetUsername}" thành công!`);
                 openPencilShopModal();
@@ -4739,8 +4812,20 @@
 
         async function rejectPencilRequest(reqId) {
             if (!currentUser?.isOwner) return;
+            const req = pendingPencilRequests.find(r => r.id === reqId);
             try {
+                if (req && req.charId && req.commentId) {
+                    const cmtDocRef = db.collection("comments").doc(req.charId);
+                    const cmtDocSnap = await cmtDocRef.get();
+                    if (cmtDocSnap.exists) {
+                        const cmtList = cmtDocSnap.data().list || [];
+                        const updatedList = cmtList.map(c => c.id === req.commentId ? { ...c, pingRejected: true } : c);
+                        await cmtDocRef.set({ list: updatedList }, { merge: true });
+                        charComments[req.charId] = updatedList;
+                    }
+                }
                 await db.collection("pencil_requests").doc(reqId).delete();
+                renderComments();
                 openPencilShopModal();
             } catch (error) {
                 console.error("Không thể bỏ qua Ping:", error);
@@ -4817,7 +4902,9 @@
             db.collection("comments").onSnapshot((snapshot) => {
                 charComments = {};
                 snapshot.forEach(doc => { charComments[doc.id] = doc.data().list || []; });
+                hasLoadedCommentsSnapshot = true;
                 renderComments();
+                autoSyncOldPingComments();
             }, (error) => {
                 if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
@@ -4930,6 +5017,7 @@
                     });
                 }
                 knownPencilRequestIds = currentIds;
+                autoSyncOldPingComments();
                 updateAdminPencilNotificationBadge();
                 const requestsModal = document.getElementById('adminPencilRequestsModal');
                 if (requestsModal && !requestsModal.classList.contains('hidden')) {
@@ -9217,6 +9305,7 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                     const images = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 520, 0.55)));
                     const repCreatedAt = Date.now();
                     const repId = 'rep-' + repCreatedAt;
+                    if (!Array.isArray(parent.replies)) parent.replies = [];
                     parent.replies.push({
                         id: repId,
                         author: currentUser.username,
@@ -9435,9 +9524,11 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                         ${renderCommentImages(c, "w-28 h-28 object-cover rounded-xl mt-1 border border-white/10 inline-block mr-1")}
                     </div>
                     
-                    ${c.isPing ? `
-                        <div class="text-[10px] text-amber-200/90 font-medium italic pt-1 border-t border-white/10 pl-10">
-                            Cảm ơn Sắc Màu đã feedback, trong vòng một ngày bạn sẽ nhận được 3 Bút Chì Màu nếu như được Palette xét duyệt phù hợp, thời gian có thể chậm trễ hơn vì công việc cá nhân.
+                    ${c.isPing && !c.pingRejected ? `
+                        <div class="pt-1 border-t border-white/5 pl-10 leading-snug">
+                            ${c.pingApproved 
+                                ? `<span class="block text-[8px] leading-tight text-pink-300 font-bold tracking-wide">${cmtEsc(c.author)} đã được tặng 3 bút chì màu</span>`
+                                : `<span class="block text-[9px] text-amber-200/70 font-medium italic">Cảm ơn Sắc Màu đã feedback, trong vòng một ngày bạn sẽ nhận được 3 Bút Chì Màu nếu như được Palette xét duyệt phù hợp, thời gian có thể chậm trễ hơn vì công việc cá nhân.</span>`}
                         </div>
                     ` : ''}
 
