@@ -3727,7 +3727,59 @@
         let charactersSyncedFromServer = false;
         let charLikesData = {};
         let charComments = {};
+        let legacyCommentsByChar = {};
+        let singleCommentsByChar = {};
+        let legacyCmtUnsub = null;
+        let singleCmtUnsub = null;
+        let visibleCommentsLimit = 15;
         let userUnlockedState = {};
+
+        function rebuildCharComments(charId) {
+            if (!charId) return;
+            const singles = singleCommentsByChar[charId] || [];
+            const legacy = legacyCommentsByChar[charId] || [];
+            const seen = new Set();
+            const merged = [];
+            [...singles, ...legacy].forEach(c => {
+                if (c && c.id && !seen.has(c.id)) {
+                    seen.add(c.id);
+                    merged.push(c);
+                }
+            });
+            merged.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+            charComments[charId] = merged;
+        }
+
+        function listenCommentsForChar(charId) {
+            if (!charId) return;
+            if (legacyCmtUnsub) { legacyCmtUnsub(); legacyCmtUnsub = null; }
+            if (singleCmtUnsub) { singleCmtUnsub(); singleCmtUnsub = null; }
+            hasLoadedCommentsSnapshot = false;
+
+            legacyCmtUnsub = db.collection("comments").doc(charId).onSnapshot((doc) => {
+                legacyCommentsByChar[charId] = doc.exists ? (doc.data().list || []) : [];
+                rebuildCharComments(charId);
+                hasLoadedCommentsSnapshot = true;
+                if (activeChar && activeChar.id === charId) renderComments();
+                autoSyncOldPingComments();
+            }, (error) => {
+                if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
+            });
+
+            singleCmtUnsub = db.collection("comments").where("charId", "==", charId).onSnapshot((snapshot) => {
+                const list = [];
+                snapshot.forEach(doc => {
+                    list.push({ ...doc.data(), id: doc.id, _isSingleDoc: true });
+                });
+                singleCommentsByChar[charId] = list;
+                rebuildCharComments(charId);
+                hasLoadedCommentsSnapshot = true;
+                if (activeChar && activeChar.id === charId) renderComments();
+                autoSyncOldPingComments();
+            }, (error) => {
+                if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
+            });
+        }
         let registeredUsers = {
             "bibi 0304": { username: OWNER_USER, pass: OWNER_PASS }
         };
@@ -8157,54 +8209,110 @@
                 const isDrafting = combinedDcText.includes("gửi tin nhắn tới") || combinedDcText.includes("nhập tin nhắn");
                 if (isDrafting) throw new Error("Ảnh Discord đang ở khung soạn thảo, chưa bấm gửi chính thức!");
 
-                // KIỂM TRA THỜI GIAN GỬI: TÂN THỦ CHỈ ĐƯỢC 5 PHÚT, GẠO CỘI 1 TIẾNG
+                // KIỂM TRA THỜI GIAN GỬI: TỐI ĐA 10 PHÚT GẦN NHẤT
                 if (!isOwnerTesting) {
                     const curDateObj = new Date();
-                    const curDayStr = String(curDateObj.getDate()).padStart(2, '0');
-                    const curMonthStr = String(curDateObj.getMonth() + 1).padStart(2, '0');
+                    const curDayNum = curDateObj.getDate();
+                    const curMonthNum = curDateObj.getMonth() + 1;
+                    const curHour = curDateObj.getHours();
+                    const curMin = curDateObj.getMinutes();
+                    const curTotal = curHour * 60 + curMin;
+                    const maxAllowedMinutes = 10;
 
-                    // Sửa regex thành:
-const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/g)];
-                    let hasOldDate = cleanDc.includes("hôm qua") || cleanDc.includes("yesterday") || cleanDc.includes("days ago");
-                    for (const dm of dateRegexMatches) {
-                        const d = String(parseInt(dm[1])).padStart(2, '0');
-                        const m = String(parseInt(dm[2])).padStart(2, '0');
-                        if (d !== curDayStr || m !== curMonthStr) {
-                            hasOldDate = true;
+                    const isMatchTodayDate = (n1, n2) =>
+                        (n1 === curDayNum && n2 === curMonthNum) || (n1 === curMonthNum && n2 === curDayNum);
+
+                    // Bỏ qua phần thanh trạng thái điện thoại phía trên tên kênh Discord
+                    let dcScan = unaccentedDc.replace(/đ/g, 'd');
+                    const hdrMatch = dcScan.match(/(gao\s*coi|tan\s*thu)/);
+                    if (hdrMatch && hdrMatch.index < dcScan.length * 0.45) {
+                        dcScan = dcScan.slice(hdrMatch.index + hdrMatch[0].length);
+                    }
+
+                    const timeRegex = /\b([01]?[0-9]|2[0-3])[:h]([0-5][0-9])(?:\s*(am|pm))?\b/g;
+                    const matches = [...dcScan.matchAll(timeRegex)];
+
+                    let hasValidRecentTime = false;
+                    let foundOldTimeOnly = "";
+                    let rejectedByOldDatePrefix = false;
+
+                    for (const m of matches) {
+                        const rawH = parseInt(m[1], 10);
+                        const rawM = parseInt(m[2], 10);
+                        const meridiem = (m[3] || '').toLowerCase();
+
+                        // Chỉ kiểm tra trên cùng 1 dòng ngay trước mốc giờ (không lấn sang tin nhắn phía trên)
+                        const lastNewline = dcScan.lastIndexOf('\n', m.index - 1);
+                        const prefix = dcScan.slice(Math.max(0, m.index - 45, lastNewline + 1), m.index);
+                        let prefixIsOldDay = prefix.includes("hom qua") || prefix.includes("yesterday") || prefix.includes("days ago") || prefix.includes("ngay truoc");
+                        if (!prefixIsOldDay) {
+                            const pDateMatch = prefix.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
+                            if (pDateMatch && !isMatchTodayDate(parseInt(pDateMatch[1], 10), parseInt(pDateMatch[2], 10))) {
+                                prefixIsOldDay = true;
+                            }
+                        }
+                        if (prefixIsOldDay) {
+                            rejectedByOldDatePrefix = true;
+                            continue;
+                        }
+
+                        let candidateHours = [];
+                        if (meridiem === 'pm') {
+                            candidateHours = [rawH < 12 ? rawH + 12 : rawH];
+                        } else if (meridiem === 'am') {
+                            candidateHours = [rawH === 12 ? 0 : rawH];
+                        } else {
+                            candidateHours = (rawH >= 1 && rawH <= 12)
+                                ? [rawH, (rawH === 12 ? 0 : rawH + 12)]
+                                : [rawH];
+                        }
+
+                        let matchedThisToken = false;
+                        for (const ch of candidateHours) {
+                            let diff = curTotal - (ch * 60 + rawM);
+                            if (diff < -720) diff += 1440;
+                            if (diff > 720) diff -= 1440;
+                            // Cho phép đồng hồ máy user chạy nhanh hơn tối đa 3 phút và trễ tối đa 10 phút
+                            if (diff >= -3 && diff <= maxAllowedMinutes) {
+                                matchedThisToken = true;
+                                break;
+                            }
+                        }
+
+                        if (matchedThisToken) {
+                            hasValidRecentTime = true;
                             break;
+                        } else {
+                            foundOldTimeOnly = m[0];
                         }
                     }
-                    if (hasOldDate) {
-                        throw new Error("Mốc thời gian gửi tin nhắn đã sang ngày khác hoặc ghi rõ ngày tháng cũ, từ chối duyệt!");
-                    }
 
-                    const maxAllowedMinutes = 10; // Quy định cả Feedback và Tân thủ đều trong 10 phút
+                    if (!hasValidRecentTime) {
+                        const tailText = dcScan.slice(-300);
+                        const tailDateMatches = [...tailText.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/g)];
+                        let hasOldDateInTail = tailText.includes("hom qua") || tailText.includes("yesterday") || tailText.includes("days ago") || tailText.includes("ngay truoc");
+                        for (const dm of tailDateMatches) {
+                            if (!isMatchTodayDate(parseInt(dm[1], 10), parseInt(dm[2], 10))) {
+                                hasOldDateInTail = true;
+                                break;
+                            }
+                        }
 
-                    const hasOverHours = /\b([1-9][0-9]*)\s*(giờ trước|hours ago|h trước)\b/.test(combinedDcText);
-                    if (hasOverHours) {
-                        throw new Error("Tin nhắn trong ảnh đã gửi từ hàng giờ trước (quá hạn 10 phút)!");
-                    }
+                        if (rejectedByOldDatePrefix || hasOldDateInTail) {
+                            throw new Error("Mốc thời gian gửi tin nhắn đã sang ngày khác hoặc ghi rõ ngày tháng cũ, từ chối duyệt!");
+                        }
 
-                    const minMatch = combinedDcText.match(/\b([1-9][0-9]*)\s*(phút trước|m ago|mins? ago)\b/);
-                    if (minMatch && parseInt(minMatch[1]) > 10) {
-                        throw new Error(`Tin nhắn hiển thị gửi từ ${minMatch[1]} phút trước đã quá hạn 10 phút!`);
-                    }
+                        if (/\b([1-9][0-9]*)\s*(gio truoc|hours ago|h truoc)\b/.test(tailText)) {
+                            throw new Error("Tin nhắn trong ảnh đã gửi từ hàng giờ trước (quá hạn 10 phút)!");
+                        }
 
-                    const timeRegex = /\b([01]?[0-9]|2[0-3])[:h]([0-5][0-9])\b/g;
-                    const matches = [...combinedDcText.matchAll(timeRegex)];
-                    if (matches.length > 0) {
-                        const lastMatch = matches[matches.length - 1];
-                        const msgHour = parseInt(lastMatch[1]);
-                        const msgMin = parseInt(lastMatch[2]);
-                        const curDate = new Date();
-                        const curHour = curDate.getHours();
-                        const curMin = curDate.getMinutes();
-                        
-                        let diffMinutes = (curHour * 60 + curMin) - (msgHour * 60 + msgMin);
-                        if (diffMinutes < 0) diffMinutes += 24 * 60;
-                        if (diffMinutes >= 720) diffMinutes -= 720; // Tự động bù trừ khi Discord hiển thị giờ 12h chiều
-                        if (diffMinutes > maxAllowedMinutes) {
-                            throw new Error(`Tin nhắn gửi lúc ${lastMatch[0]} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã quá hạn 10 phút!`);
+                        const minMatch = tailText.match(/\b([1-9][0-9]*)\s*(phut truoc|m ago|mins? ago)\b/);
+                        if (minMatch && parseInt(minMatch[1], 10) > maxAllowedMinutes) {
+                            throw new Error(`Tin nhắn hiển thị gửi từ ${minMatch[1]} phút trước đã quá hạn 10 phút!`);
+                        }
+
+                        if (matches.length > 0 && foundOldTimeOnly) {
+                            throw new Error(`Tin nhắn gửi lúc ${foundOldTimeOnly} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã quá hạn 10 phút!`);
                         }
                     }
                 }
