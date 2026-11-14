@@ -2318,16 +2318,18 @@
                     <span class="text-[9px] bg-pink-400/25 text-pink-200 px-2 py-0.5 rounded-full font-bold">Tự động xoay theo nhạc</span>
                 </div>
                 <p class="text-[10px] text-sky-200/70 leading-relaxed">
-                    Dán link Catbox (đuôi .mp3). Thẻ bài sẽ xoay tròn đúng bằng số giây của bản nhạc đó trong suốt quá trình phát!
+                    Dán link Catbox (hỗ trợ cả đuôi .mp3 và .mp4). Thẻ bài sẽ xoay tròn đúng bằng số giây của âm thanh này!
                 </p>
-                <div class="flex items-center gap-1.5">
-                    <input id="sailorCustomAudioUrl" type="url" oninput="if(sailorCardsConfig) sailorCardsConfig.audioUrl=cleanAudioUrl(this.value)" placeholder="https://files.catbox.moe/abcxyz.mp3" class="flex-1 bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-pink-400">
-                    <button type="button" id="sailorTestAudioBtn" onclick="testPlaySailorAudio()" class="bg-amber-400/25 hover:bg-amber-400/40 text-amber-200 border border-amber-300/50 font-extrabold px-2.5 py-1.5 rounded-xl text-[11px] active:scale-95 transition shrink-0" title="Bấm để nghe thử xem link hoạt động tốt không">
-                        ▶ Nghe Thử
-                    </button>
-                    <button type="button" onclick="saveSailorAudioSetting()" class="bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-extrabold px-3 py-1.5 rounded-xl text-[11px] shadow active:scale-95 transition shrink-0">
-                        Lưu nhạc
-                    </button>
+                <div class="space-y-2">
+                    <input id="sailorCustomAudioUrl" type="url" oninput="if(sailorCardsConfig) sailorCardsConfig.audioUrl=cleanAudioUrl(this.value)" placeholder="Dán link Catbox (.mp3 hoặc .mp4)..." class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-400">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="sailorTestAudioBtn" onclick="testPlaySailorAudio()" class="w-full bg-amber-400/20 hover:bg-amber-400/35 border border-amber-300/50 text-amber-200 font-extrabold py-2 px-2.5 rounded-xl text-xs active:scale-95 transition text-center whitespace-nowrap shadow" title="Bấm để nghe thử xem link hoạt động tốt không">
+                            ▶ Nghe Thử
+                        </button>
+                        <button type="button" onclick="saveSailorAudioSetting()" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-black py-2 px-2.5 rounded-xl text-xs shadow-md active:scale-95 transition text-center whitespace-nowrap">
+                            ✓ Lưu Âm Thanh
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -11505,22 +11507,30 @@
                     }
                 } catch (_) {}
 
-                // 2. Sử dụng thẻ <audio> cố định trong DOM
-                let sound = document.getElementById('sailorCardAudio');
+                // 2. Tự động dùng thẻ <video> nếu là .mp4/.webm/.mov hoặc <audio> nếu là .mp3/.wav/.ogg
+                const isVideo = /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(audioUrl);
+                const elemId = isVideo ? 'sailorCardVideo' : 'sailorCardAudio';
+                let sound = document.getElementById(elemId);
                 if (!sound) {
-                    sound = document.createElement('audio');
-                    sound.id = 'sailorCardAudio';
+                    sound = document.createElement(isVideo ? 'video' : 'audio');
+                    sound.id = elemId;
                     sound.setAttribute('playsinline', '');
                     sound.setAttribute('webkit-playsinline', '');
+                    sound.style.cssText = 'position:fixed;bottom:0;right:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:-10;';
                     document.body.appendChild(sound);
                 }
 
                 activeSailorAudioObj = sound;
 
                 let finished = false;
+                let fallbackTimer = null;
+                let maxTimer = null;
+
                 const onDone = () => {
                     if (!finished) {
                         finished = true;
+                        if (fallbackTimer) clearTimeout(fallbackTimer);
+                        if (maxTimer) clearTimeout(maxTimer);
                         sound.onended = null;
                         sound.onerror = null;
                         sound.onloadedmetadata = null;
@@ -11528,7 +11538,7 @@
                     }
                 };
 
-                // Khi hết bài nhạc -> dừng xoay và mở thẻ
+                // Khi hết bài nhạc / clip -> dừng xoay và mở thẻ
                 sound.onended = onDone;
 
                 sound.onerror = (e) => {
@@ -11540,7 +11550,7 @@
                 sound.onloadedmetadata = () => {
                     if (Number.isFinite(sound.duration) && sound.duration > 0) {
                         const fallbackMs = Math.round(sound.duration * 1000) + 2500;
-                        setTimeout(onDone, fallbackMs);
+                        fallbackTimer = setTimeout(onDone, fallbackMs);
                     }
                 };
 
@@ -11556,21 +11566,24 @@
                 const p = sound.play();
                 if (p !== undefined) {
                     p.catch((err) => {
-                        console.warn("Lỗi play() thẻ âm thanh DOM:", err);
-                        // Fallback bằng đối tượng Audio độc lập nếu thẻ DOM bị chặn
+                        console.warn("Lỗi play() thẻ media DOM:", err);
                         try {
-                            const fallbackAudio = new Audio(audioUrl);
-                            activeSailorAudioObj = fallbackAudio;
-                            fallbackAudio.volume = 1;
-                            fallbackAudio.onended = onDone;
-                            fallbackAudio.onerror = () => setTimeout(onDone, 3500);
-                            fallbackAudio.play().catch(() => setTimeout(onDone, 3500));
+                            const fallbackMedia = document.createElement(isVideo ? 'video' : 'audio');
+                            activeSailorAudioObj = fallbackMedia;
+                            fallbackMedia.setAttribute('playsinline', '');
+                            fallbackMedia.setAttribute('webkit-playsinline', '');
+                            fallbackMedia.volume = 1;
+                            fallbackMedia.muted = false;
+                            fallbackMedia.src = audioUrl;
+                            fallbackMedia.onended = onDone;
+                            fallbackMedia.onerror = () => setTimeout(onDone, 3500);
+                            fallbackMedia.play().catch(() => setTimeout(onDone, 3500));
                         } catch (_) {
                             setTimeout(onDone, 3500);
                         }
                     });
                 }
-                setTimeout(onDone, 60000); // Giới hạn an toàn tối đa 60s
+                maxTimer = setTimeout(onDone, 60000); // Giới hạn an toàn tối đa 60s
             });
         }
 
@@ -11757,7 +11770,7 @@
                     catBadge.innerText = '🤡 Thẻ Meme';
                     catBadge.className = 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase bg-rose-500/30 text-rose-200 border border-rose-300/50';
                 } else {
-                    catBadge.innerText = '🌙 Thủy Thủ Mặt Trăng';
+                    catBadge.innerText = '🌙 Thẻ Vận May';
                     catBadge.className = 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase bg-emerald-500/30 text-emerald-200 border border-emerald-300/50';
                 }
             }
@@ -11787,6 +11800,14 @@
             if (activeSailorAudioObj) {
                 try { activeSailorAudioObj.pause(); activeSailorAudioObj.currentTime = 0; } catch (_) {}
                 activeSailorAudioObj = null;
+            }
+            const videoEl = document.getElementById('sailorCardVideo');
+            if (videoEl) {
+                try { videoEl.pause(); videoEl.currentTime = 0; } catch (_) {}
+            }
+            const audioEl = document.getElementById('sailorCardAudio');
+            if (audioEl) {
+                try { audioEl.pause(); audioEl.currentTime = 0; } catch (_) {}
             }
             // Khôi phục lại nhạc nền website nếu lúc trước đang phát
             if (wasBgMusicPlayingBeforeSailor && isUserMusicEnabled) {
@@ -11836,7 +11857,7 @@
             const raw = input ? input.value : "";
             const url = cleanAudioUrl(raw);
             if (!url) {
-                alert("Vui lòng dán link nhạc Catbox (đuôi .mp3) vào ô trước khi bấm Nghe Thử!");
+                alert("Vui lòng dán link nhạc Catbox (đuôi .mp3 hoặc .mp4) vào ô trước khi bấm Nghe Thử!");
                 return;
             }
             if (testAudioObj) {
@@ -11848,30 +11869,37 @@
             }
             const btn = document.getElementById('sailorTestAudioBtn');
             if (btn) btn.innerText = "⏳ Đang tải...";
-            
-            const audio = new Audio();
-            testAudioObj = audio;
-            audio.volume = 1;
-            audio.src = url;
-            
-            audio.onloadedmetadata = () => {
-                const sec = Math.round(audio.duration || 0);
+
+            const isVideo = /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(url);
+            const media = document.createElement(isVideo ? 'video' : 'audio');
+            testAudioObj = media;
+            media.setAttribute('playsinline', '');
+            media.setAttribute('webkit-playsinline', '');
+            media.volume = 1;
+            media.muted = false;
+            media.src = url;
+
+            media.onloadedmetadata = () => {
+                const sec = Math.round(media.duration || 0);
                 if (btn) btn.innerText = `⏸ Dừng (${sec}s)`;
             };
-            audio.onended = () => {
+            media.onended = () => {
                 if (btn) btn.innerText = "▶ Nghe Thử";
                 testAudioObj = null;
             };
-            audio.onerror = () => {
-                alert("❌ Không thể phát file âm thanh này! Bạn hãy kiểm tra lại link Catbox xem có đúng là file .mp3 trực tiếp không nhé.");
+            media.onerror = () => {
+                alert("❌ Không thể phát file này! Vui lòng kiểm tra lại đường link Catbox nhé.");
                 if (btn) btn.innerText = "▶ Nghe Thử";
                 testAudioObj = null;
             };
-            audio.play().catch(err => {
-                alert("❌ Trình duyệt chặn phát âm thanh: " + (err?.message || ""));
-                if (btn) btn.innerText = "▶ Nghe Thử";
-                testAudioObj = null;
-            });
+            const p = media.play();
+            if (p !== undefined) {
+                p.catch(err => {
+                    alert("❌ Trình duyệt chặn phát âm thanh: " + (err?.message || ""));
+                    if (btn) btn.innerText = "▶ Nghe Thử";
+                    testAudioObj = null;
+                });
+            }
         }
 
         async function saveSailorAudioSetting() {
@@ -12213,8 +12241,9 @@
     </script>
     <!-- BỘ PHÁT NHẠC ĐA NĂNG (HỖ TRỢ CẢ AUDIO MP3 LẪN YOUTUBE) -->
     <audio id="nativeBgAudio" src="" playsinline preload="auto"></audio>
-    <!-- Thẻ âm thanh chuyên dụng phát nhạc khi bốc Thẻ Màu May Mắn -->
+    <!-- Thẻ âm thanh / video chuyên dụng phát nhạc khi bốc Thẻ Màu May Mắn (Hỗ trợ cả .mp3 lẫn .mp4) -->
     <audio id="sailorCardAudio" playsinline webkit-playsinline preload="auto"></audio>
+    <video id="sailorCardVideo" playsinline webkit-playsinline preload="auto" style="position:fixed;bottom:0;right:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:-10;"></video>
     <div style="position:fixed; bottom:0; right:0; width:64px; height:64px; opacity:0.01; pointer-events:none; z-index:-10;">
         <div id="ytAudioPlayer"></div>
     </div>
