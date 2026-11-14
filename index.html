@@ -660,7 +660,7 @@
                     </p>
                     <p class="text-[11px] text-sky-100/90 leading-relaxed">
                         • <b>Feedback / nêu cảm nghĩ về plot/char:</b> <b class="text-amber-300">+10 Bút Chì Màu</b><br>
-                        • <b>Cmt noti:</b> <b class="text-sky-300">+2 Bút Chì Màu</b><br>
+                        • <b>Cmt noti:</b> <b class="text-sky-300">+3 Bút Chì Màu</b><br>
                         <span class="text-[10px] text-pink-200/80 italic">* Nếu char đang ở chế độ <b>Tạm giới hạn</b>, cần gửi đủ <b>2 ảnh (ảnh đã tim bài + ảnh bình luận)</b>.</span>
                     </p>
                 </div>
@@ -1351,9 +1351,9 @@
                 </div>
 
                 <div id="aiPausedRequirementPrompt" class="hidden text-xs text-sky-100/90 mb-3 flex items-center gap-1 flex-wrap leading-relaxed">
-                    <span>Lấy link tự động 24h đã đóng, chỉ có thể 10</span>
-                    <button type="button" onclick="openCmtRewardModalForActiveChar()" class="bg-purple-500/20 border border-purple-300/60 px-2.5 py-0.5 rounded-lg font-black text-xs shadow-[0_0_12px_rgba(192,132,252,0.38)] active:scale-95 transition">
-                        <span class="purple-pastel-wave underline">Đổi Chì</span>
+                    <span>Lấy link tự động 24h đã đóng, bạn có thể</span>
+                    <button type="button" onclick="openMiniRedeemModal(activeChar)" class="bg-purple-500/20 border border-purple-300/60 px-2.5 py-0.5 rounded-lg font-black text-xs shadow-[0_0_12px_rgba(192,132,252,0.38)] active:scale-95 transition">
+                        <span class="purple-pastel-wave underline">Đổi 10 Chì Màu</span>
                     </button>
                     <span>để lấy link nhé.</span>
                 </div>
@@ -1501,7 +1501,7 @@
                 </div>
                 <p class="text-xs text-sky-100/90 leading-relaxed">
                     • <b>Đặc điểm:</b> Dành cho bạn muốn mở khóa link trực tiếp mà không cần làm thủ tục hay join Discord.<br>
-                    • <b>Cách lấy:</b> Điểm danh hàng ngày (+1 chì), quay thưởng tại "Vòng xoay may mắn", mở khóa link (+1 đến +2 chì), viết Feedback từ 1000 ký tự (+3 chì), hoặc gửi ảnh cmt ở char Sắc Màu Nhanh Nhẹn (+10 chì nếu là feedback/cảm nghĩ plot/char, +2 chì nếu cmt noti). Tích đủ 10 chì đổi ngay 1 nhân vật bất kỳ!
+                    • <b>Cách lấy:</b> Điểm danh hàng ngày (+1 chì), quay thưởng tại "Vòng xoay may mắn", mở khóa link (+1 đến +2 chì), viết Feedback từ 1000 ký tự (+3 chì), hoặc gửi ảnh cmt ở char Sắc Màu Nhanh Nhẹn (+10 chì nếu là feedback/cảm nghĩ plot/char, +3 chì nếu cmt noti). Tích đủ 10 chì đổi ngay 1 nhân vật bất kỳ!
                 </p>
             </div>
 
@@ -1648,7 +1648,7 @@
                 </label>
                 <label id="cmtKindLabel_noti" class="flex items-start gap-2 cursor-pointer bg-sky-500/10 border border-sky-300/30 rounded-xl p-2">
                     <input type="radio" name="cmtRewardKind" value="noti" class="mt-0.5 accent-sky-400">
-                    <span class="text-sky-100/90 leading-snug flex-1"><b class="text-sky-200">Cmt noti</b> <span class="text-amber-300 font-black">(+2 Chì)</span> <span id="cmtKindDone_noti" class="hidden text-[10px] text-emerald-300 font-black ml-1">✓ Đã nhận</span></span>
+                    <span class="text-sky-100/90 leading-snug flex-1"><b class="text-sky-200">Cmt noti</b> <span class="text-amber-300 font-black">(+3 Chì)</span> <span id="cmtKindDone_noti" class="hidden text-[10px] text-emerald-300 font-black ml-1">✓ Đã nhận</span></span>
                 </label>
             </div>
 
@@ -3908,7 +3908,8 @@
 
         function getCheckinProgress(pencilData, today = getLocalDateKey()) {
             const data = pencilData || {};
-            const lastDate = data.lastCheckinDate || "";
+            const rawDate = data.lastCheckinDate || "";
+            const lastDate = typeof rawDate === 'number' ? getLocalDateKey(new Date(rawDate)) : rawDate;
             const storedStreak = Math.max(0, Number(data.checkinStreak) || (lastDate ? 1 : 0));
             const difference = getDateKeyDifference(lastDate, today);
             const checkedToday = lastDate === today;
@@ -4448,7 +4449,7 @@
 
         // ================= XỬ LÝ GÕ BÌNH LUẬN & NÚT PING =================
         function handleCommentInput(textarea) {
-            const len = textarea.value.length;
+            const len = (textarea.value || '').trim().length;
             const counter = document.getElementById('commentCharCounter');
             if (len >= 1000) {
                 counter.innerText = `${len} ký tự (Đủ Ping ✨)`;
@@ -4465,7 +4466,7 @@
             const input = document.getElementById('mainCommentInput');
             const pingBtn = document.getElementById('pingPaletteBtn');
             if (!input || !pingBtn) return;
-            const isLongEnough = input.value.length >= 1000;
+            const isLongEnough = (input.value || '').trim().length >= 1000;
             const pencilData = currentUser ? userPencilsData[currentUser.username.toLowerCase()] : null;
             const alreadyPingedToday = Boolean(pencilData?.lastPingDate === getLocalDateKey());
 
@@ -4491,7 +4492,7 @@
 
         function togglePingButton() {
             const input = document.getElementById('mainCommentInput');
-            if (input.value.length < 1000) return;
+            if ((input?.value || '').trim().length < 1000) return;
             if (currentUser && userPencilsData[currentUser.username.toLowerCase()]?.lastPingDate === getLocalDateKey()) {
                 updateCommentPingAvailability();
                 alert("Mỗi tài khoản chỉ được Ping một lần mỗi ngày. Bạn có thể Ping lại vào ngày mai nhé!");
@@ -7988,7 +7989,8 @@
                     const curDayStr = String(curDateObj.getDate()).padStart(2, '0');
                     const curMonthStr = String(curDateObj.getMonth() + 1).padStart(2, '0');
 
-                    const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-]\d{2,4})?\b/g)];
+                    // Sửa regex thành:
+const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/g)];
                     let hasOldDate = cleanDc.includes("hôm qua") || cleanDc.includes("yesterday") || cleanDc.includes("days ago");
                     for (const dm of dateRegexMatches) {
                         const d = String(parseInt(dm[1])).padStart(2, '0');
@@ -8830,7 +8832,7 @@
             isSubmittingMainComment = true;
 
             try {
-                const images = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 850, 0.62)));
+                const images = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 520, 0.55)));
                 const commentSnapshot = await commentRef.get();
 
                 let pencilData = {};
@@ -9145,7 +9147,7 @@
             const parent = (charComments[activeChar.id] || []).find(c => c.id === parentId);
             if (parent) {
                 try {
-                    const images = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 850, 0.62)));
+                    const images = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 520, 0.55)));
                     const repCreatedAt = Date.now();
                     const repId = 'rep-' + repCreatedAt;
                     parent.replies.push({
@@ -9186,6 +9188,48 @@
         }
 
         let visibleRepliesCount = {};
+        let expandedComments = {};
+
+        function toggleCommentExpand(cmtId) {
+            expandedComments[cmtId] = !expandedComments[cmtId];
+            const shortEl = document.getElementById(`cmt-short-${cmtId}`);
+            const fullEl = document.getElementById(`cmt-full-${cmtId}`);
+            const btnEl = document.getElementById(`cmt-btn-${cmtId}`);
+            if (shortEl && fullEl && btnEl) {
+                if (expandedComments[cmtId]) {
+                    shortEl.classList.add('hidden');
+                    fullEl.classList.remove('hidden');
+                    btnEl.innerText = "Thu gọn ▴";
+                } else {
+                    shortEl.classList.remove('hidden');
+                    fullEl.classList.add('hidden');
+                    btnEl.innerText = "Đọc thêm ▾";
+                }
+            }
+        }
+
+        function formatCommentContent(cmtId, text, paddingCls = "pl-10") {
+            if (!text) return '';
+            const maxLength = 260; // Ngưỡng ký tự tự động thu gọn
+            const isLong = text.length > maxLength;
+            const isExpanded = Boolean(expandedComments[cmtId]);
+            const safeText = cmtEsc(text);
+
+            if (!isLong) {
+                return `<p class="text-sky-100/90 leading-relaxed font-normal ${paddingCls} whitespace-pre-line break-words">${safeText}</p>`;
+            }
+
+            const shortText = cmtEsc(text.slice(0, maxLength).trim()) + '...';
+            return `
+                <div class="text-sky-100/90 leading-relaxed font-normal ${paddingCls}">
+                    <span id="cmt-short-${cmtId}" class="${isExpanded ? 'hidden' : ''} whitespace-pre-line break-words">${shortText}</span>
+                    <span id="cmt-full-${cmtId}" class="${isExpanded ? '' : 'hidden'} whitespace-pre-line break-words">${safeText}</span>
+                    <button type="button" id="cmt-btn-${cmtId}" onclick="toggleCommentExpand('${cmtId}')" class="text-pink-300 hover:text-pink-200 font-extrabold text-[11px] underline ml-1 inline-block transition active:scale-95 cursor-pointer">
+                        ${isExpanded ? 'Thu gọn ▴' : 'Đọc thêm ▾'}
+                    </button>
+                </div>
+            `;
+        }
 
         function loadMoreReplies(cmtId) {
             visibleRepliesCount[cmtId] = (visibleRepliesCount[cmtId] || 0) + 4;
@@ -9252,14 +9296,14 @@
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-2 min-w-0">
                                             <img src="${repAvatar}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-6 h-6 rounded-full object-cover shrink-0 ${repGlow}">
-                                            <span class="font-extrabold text-pink-300 truncate">${r.author}</span>
+                                            <span class="font-extrabold text-pink-300 truncate">${cmtEsc(r.author)}</span>
                                         </div>
                                         <div class="flex items-center gap-2 shrink-0">
                                             <span class="text-[10px] text-sky-200/50 font-mono">${formatCommentTime(r)}</span>
                                             ${canDeleteReply ? `<button onclick="deleteCommentByBibi('${r.id}', true, '${c.id}')" class="text-red-400 hover:text-red-300 font-bold text-[10px]" title="Xóa">Xóa</button>` : ''}
                                         </div>
                                     </div>
-                                    ${r.text ? `<p class="text-sky-100/90 leading-relaxed pl-8">${r.text}</p>` : ''}
+                                    ${formatCommentContent(r.id, r.text, "pl-8")}
                                     ${renderCommentImages(r, "w-24 h-24 object-cover rounded-xl mt-1 border border-white/10 inline-block mr-1")}
                                     ${renderReactionButtons(r, true, c.id)}
                                 </div>
@@ -9289,7 +9333,7 @@
                         <div class="flex items-center gap-2 min-w-0">
                             <img src="${mainAvatar}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-8 h-8 rounded-full object-cover shrink-0 ${mainGlow}">
                             <div class="flex items-center gap-1.5 truncate">
-                                <span class="font-extrabold text-pink-300 text-sm truncate">${c.author}</span>
+                                <span class="font-extrabold text-pink-300 text-sm truncate">${cmtEsc(c.author)}</span>
                                 ${c.isPing ? '<span class="text-[9px] bg-purple-500/40 text-purple-200 border border-purple-300/40 px-2 py-0.5 rounded-full font-bold shrink-0">Ping Feedback</span>' : ''}
                             </div>
                         </div>
@@ -9298,7 +9342,7 @@
                             ${canDelete ? `<button onclick="deleteCommentByBibi('${c.id}')" class="text-red-400 hover:text-red-300 font-bold text-xs" title="Xóa">Xóa</button>` : ''}
                         </div>
                     </div>
-                    ${c.text ? `<p class="text-sky-100/90 leading-relaxed font-normal pl-10">${c.text}</p>` : ''}
+                    ${formatCommentContent(c.id, c.text, "pl-10")}
                     <div class="pl-10">
                         ${renderCommentImages(c, "w-28 h-28 object-cover rounded-xl mt-1 border border-white/10 inline-block mr-1")}
                     </div>
@@ -9312,7 +9356,7 @@
                     ${renderReactionButtons(c, false)}
 
                     <div id="replyBox-${c.id}" class="hidden pt-2 space-y-2 border-t border-white/10 pl-10">
-                        <input id="replyInput-${c.id}" type="text" placeholder="Trả lời ${c.author}..." class="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-pink-400">
+                        <input id="replyInput-${c.id}" type="text" placeholder="Trả lời ${cmtEsc(c.author)}..." class="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-pink-400">
                         <div class="flex items-center justify-between">
                             <label class="cursor-pointer text-[11px] text-sky-200 hover:text-pink-300 flex items-center gap-1 bg-white/5 border border-white/10 px-2.5 py-1 rounded-xl active:scale-95 transition">
                                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -9634,7 +9678,7 @@
         let cmtRewardHeartImages = [];
         const CMT_REWARD_TYPES = {
             feedback: { reward: 10, label: "Feedback / cảm nghĩ về plot/char" },
-            noti: { reward: 2, label: "Cmt noti" }
+            noti: { reward: 3, label: "Cmt noti" }
         };
 
         function cmtEsc(str) {
@@ -9653,7 +9697,7 @@
             if (typeof cmtMap[sId] === 'number') return cmtMap[sId];
             if (typeof cmtMap[sId] === 'object' && cmtMap[sId]?.amount) return cmtMap[sId].amount;
             if (cmtMap[`${sId}__feedback`]) return 10;
-            if (cmtMap[`${sId}__noti`]) return 2;
+            if (cmtMap[`${sId}__noti`]) return typeof cmtMap[`${sId}__noti`] === 'number' ? cmtMap[`${sId}__noti`] : 3;
             return 0;
         }
 
@@ -9675,7 +9719,7 @@
 
             const guideText = isPaused
                 ? `Gửi đủ 2 ảnh (ảnh tim + ảnh cmt: noti/bất kỳ) để nhận: <b class="text-amber-300">+10 Bút Chì Màu</b> đổi mở khóa link nhé!`
-                : `Feedback / nêu cảm nghĩ về plot/char: <b class="text-amber-300">+10 Chì</b> · Cmt noti: <b class="text-amber-300">+2 Chì</b>`;
+                : `Feedback / nêu cảm nghĩ về plot/char: <b class="text-amber-300">+10 Chì</b> · Cmt noti: <b class="text-amber-300">+3 Chì</b>`;
 
             return `
                 <div class="w-full mt-3 rounded-2xl border border-pink-300/30 bg-pink-400/10 p-3 text-center">
@@ -10041,8 +10085,8 @@
                         <button type="button" onclick="approveCmtReward('${cmtSafeId(req.id)}', 10)" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
                             Tặng 10 Chì
                         </button>
-                        <button type="button" onclick="approveCmtReward('${cmtSafeId(req.id)}', 2)" class="flex-1 bg-gradient-to-r from-sky-500 to-indigo-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
-                            Tặng 2 Chì
+                        <button type="button" onclick="approveCmtReward('${cmtSafeId(req.id)}', 3)" class="flex-1 bg-gradient-to-r from-sky-500 to-indigo-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
+                            Tặng 3 Chì
                         </button>
                         <button type="button" onclick="rejectCmtReward('${cmtSafeId(req.id)}')" class="px-2.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 font-bold text-xs active:scale-95 transition" title="Từ chối">✕</button>
                     </div>
@@ -10091,6 +10135,7 @@
                         : {
                             count: nextCount,
                             cmtRewarded: {
+                                ...(pencilData.cmtRewarded || {}),
                                 [safeCharId]: rewardPoints,
                                 [`${safeCharId}__${req.kind}`]: rewardPoints
                             }
