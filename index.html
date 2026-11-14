@@ -2321,7 +2321,10 @@
                     Dán link Catbox (đuôi .mp3). Thẻ bài sẽ xoay tròn đúng bằng số giây của bản nhạc đó trong suốt quá trình phát!
                 </p>
                 <div class="flex items-center gap-1.5">
-                    <input id="sailorCustomAudioUrl" type="url" placeholder="https://files.catbox.moe/abcxyz.mp3" class="flex-1 bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-pink-400">
+                    <input id="sailorCustomAudioUrl" type="url" oninput="if(sailorCardsConfig) sailorCardsConfig.audioUrl=cleanAudioUrl(this.value)" placeholder="https://files.catbox.moe/abcxyz.mp3" class="flex-1 bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-pink-400">
+                    <button type="button" id="sailorTestAudioBtn" onclick="testPlaySailorAudio()" class="bg-amber-400/25 hover:bg-amber-400/40 text-amber-200 border border-amber-300/50 font-extrabold px-2.5 py-1.5 rounded-xl text-[11px] active:scale-95 transition shrink-0" title="Bấm để nghe thử xem link hoạt động tốt không">
+                        ▶ Nghe Thử
+                    </button>
                     <button type="button" onclick="saveSailorAudioSetting()" class="bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-extrabold px-3 py-1.5 rounded-xl text-[11px] shadow active:scale-95 transition shrink-0">
                         Lưu nhạc
                     </button>
@@ -11489,16 +11492,20 @@
                 // 1. Tạm dừng nhạc nền website để nhường kênh âm thanh cho nhạc bốc bài phát to rõ (tránh bị iOS chặn)
                 const nativeBg = document.getElementById('nativeBgAudio');
                 wasBgMusicPlayingBeforeSailor = false;
-                if (nativeBg && !nativeBg.paused && nativeBg.currentTime > 0) {
-                    wasBgMusicPlayingBeforeSailor = true;
-                    try { nativeBg.pause(); } catch (_) {}
-                }
-                if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() === 1) {
-                    wasBgMusicPlayingBeforeSailor = true;
-                    try { ytPlayer.pauseVideo(); } catch (_) {}
-                }
+                try {
+                    if (nativeBg && !nativeBg.paused && nativeBg.currentTime > 0) {
+                        wasBgMusicPlayingBeforeSailor = true;
+                        nativeBg.pause();
+                    }
+                } catch (_) {}
+                try {
+                    if (ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === 1) {
+                        wasBgMusicPlayingBeforeSailor = true;
+                        ytPlayer.pauseVideo();
+                    }
+                } catch (_) {}
 
-                // 2. Sử dụng thẻ <audio> cố định trong DOM để đảm bảo không bị chặn phát
+                // 2. Sử dụng thẻ <audio> cố định trong DOM
                 let sound = document.getElementById('sailorCardAudio');
                 if (!sound) {
                     sound = document.createElement('audio');
@@ -11509,8 +11516,6 @@
                 }
 
                 activeSailorAudioObj = sound;
-                sound.volume = 1;
-                sound.muted = false;
 
                 let finished = false;
                 const onDone = () => {
@@ -11518,17 +11523,20 @@
                         finished = true;
                         sound.onended = null;
                         sound.onerror = null;
+                        sound.onloadedmetadata = null;
                         resolve(sound);
                     }
                 };
 
+                // Khi hết bài nhạc -> dừng xoay và mở thẻ
                 sound.onended = onDone;
+
                 sound.onerror = (e) => {
                     console.warn("Lỗi tải âm thanh bốc bài từ link:", audioUrl, e);
                     setTimeout(onDone, 3500);
                 };
 
-                // Dự phòng thời gian nếu sự kiện onended không kích hoạt
+                // Bảo hiểm: nếu có duration thì đặt timeout dôi ra 2.5s phòng sự kiện onended không bắn
                 sound.onloadedmetadata = () => {
                     if (Number.isFinite(sound.duration) && sound.duration > 0) {
                         const fallbackMs = Math.round(sound.duration * 1000) + 2500;
@@ -11536,14 +11544,30 @@
                     }
                 };
 
+                // Tuyệt đối KHÔNG gọi sound.load() ngay trước play() vì sẽ gây AbortError làm tịt âm thanh!
+                try {
+                    sound.pause();
+                    sound.currentTime = 0;
+                } catch (_) {}
+                sound.volume = 1;
+                sound.muted = false;
                 sound.src = audioUrl;
-                sound.load();
 
                 const p = sound.play();
                 if (p !== undefined) {
                     p.catch((err) => {
-                        console.warn("Trình duyệt chặn phát âm thanh:", err);
-                        setTimeout(onDone, 3500);
+                        console.warn("Lỗi play() thẻ âm thanh DOM:", err);
+                        // Fallback bằng đối tượng Audio độc lập nếu thẻ DOM bị chặn
+                        try {
+                            const fallbackAudio = new Audio(audioUrl);
+                            activeSailorAudioObj = fallbackAudio;
+                            fallbackAudio.volume = 1;
+                            fallbackAudio.onended = onDone;
+                            fallbackAudio.onerror = () => setTimeout(onDone, 3500);
+                            fallbackAudio.play().catch(() => setTimeout(onDone, 3500));
+                        } catch (_) {
+                            setTimeout(onDone, 3500);
+                        }
                     });
                 }
                 setTimeout(onDone, 60000); // Giới hạn an toàn tối đa 60s
@@ -11649,8 +11673,13 @@
                 if (inner) inner.classList.add('is-spinning');
             }, 300);
 
+            // Tìm URL âm thanh từ mọi nguồn bộ nhớ để không bao giờ bị rỗng
+            const cardAudioSource = (sailorCardsConfig && sailorCardsConfig.audioUrl)
+                ? sailorCardsConfig.audioUrl
+                : (safeParseLocalJson('palette_sailor_cards', {})?.audioUrl || document.getElementById('sailorCustomAudioUrl')?.value || "");
+
             // Bật âm thanh Catbox và xoay tròn đúng số giây của bài hát
-            await playSailorSpinningAudio(sailorCardsConfig.audioUrl || "");
+            await playSailorSpinningAudio(cardAudioSource);
 
             // 3. Dừng xoay tròn và lật thẻ 3D sang mặt trước để hiện kết quả
             if (transformingBanner) transformingBanner.classList.add('hidden');
@@ -11791,11 +11820,58 @@
 
         function cleanAudioUrl(url) {
             if (!url) return "";
-            let u = String(url).trim();
+            let u = String(url).trim().replace(/^["']|["']$/g, '');
+            if (!u) return "";
+            // Tự động chuyển link trang catbox.moe thành link file trực tiếp files.catbox.moe
+            u = u.replace(/^https?:\/\/(?:www\.)?catbox\.moe\//i, "https://files.catbox.moe/");
             if (u.startsWith("//")) u = "https:" + u;
             else if (!u.startsWith("http://") && !u.startsWith("https://")) u = "https://" + u;
             u = u.replace(/^http:\/\//i, "https://");
             return u;
+        }
+
+        let testAudioObj = null;
+        function testPlaySailorAudio() {
+            const input = document.getElementById('sailorCustomAudioUrl');
+            const raw = input ? input.value : "";
+            const url = cleanAudioUrl(raw);
+            if (!url) {
+                alert("Vui lòng dán link nhạc Catbox (đuôi .mp3) vào ô trước khi bấm Nghe Thử!");
+                return;
+            }
+            if (testAudioObj) {
+                try { testAudioObj.pause(); testAudioObj.currentTime = 0; } catch (_) {}
+                testAudioObj = null;
+                const btn = document.getElementById('sailorTestAudioBtn');
+                if (btn) btn.innerText = "▶ Nghe Thử";
+                return;
+            }
+            const btn = document.getElementById('sailorTestAudioBtn');
+            if (btn) btn.innerText = "⏳ Đang tải...";
+            
+            const audio = new Audio();
+            testAudioObj = audio;
+            audio.volume = 1;
+            audio.src = url;
+            
+            audio.onloadedmetadata = () => {
+                const sec = Math.round(audio.duration || 0);
+                if (btn) btn.innerText = `⏸ Dừng (${sec}s)`;
+            };
+            audio.onended = () => {
+                if (btn) btn.innerText = "▶ Nghe Thử";
+                testAudioObj = null;
+            };
+            audio.onerror = () => {
+                alert("❌ Không thể phát file âm thanh này! Bạn hãy kiểm tra lại link Catbox xem có đúng là file .mp3 trực tiếp không nhé.");
+                if (btn) btn.innerText = "▶ Nghe Thử";
+                testAudioObj = null;
+            };
+            audio.play().catch(err => {
+                alert("❌ Trình duyệt chặn phát âm thanh: " + (err?.message || ""));
+                if (btn) btn.innerText = "▶ Nghe Thử";
+                testAudioObj = null;
+            });
         }
 
         async function saveSailorAudioSetting() {
@@ -11810,7 +11886,7 @@
             try {
                 await db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true });
                 try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
-                alert("✓ Đã lưu link âm thanh bốc bài thành công!\n" + (url || "(Đã xóa link)"));
+                alert("✓ Đã lưu link âm thanh bốc bài thành công!\nLink: " + (url || "(Đã xóa link)"));
             } catch (e) {
                 alert("Lỗi lưu âm thanh: " + (e?.message || ""));
             }
