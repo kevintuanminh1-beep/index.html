@@ -9415,48 +9415,73 @@
         }
 
     // ================= HỆ THỐNG VÒNG XOAY MAY MẮN (SẮC MÀU VẬN MAY) =================
-        // Tỉ lệ: xui (sub + empty) = 60%, trúng (add + double) = 40%
-        const WHEEL_RATE = { sub: 0.45, empty: 0.15, add: 0.33, double: 0.07 };
-        const WHEEL_MAX_VALUE = 5;   // cộng/trừ ngẫu nhiên từ 1 đến 5 chì
-        const WHEEL_DOUBLE_CAP = 10; // nhân đôi tối đa +10 chì cho vừa phải
+        // 9 ô cố định, mỗi ô xác suất bằng nhau (1/9): 3 ô trống, +1, -1, +2, -2, -5, +5
+        const WHEEL_BASE = [
+            { type: "empty", value: 0 }, { type: "sub", value: 1 }, { type: "sub", value: 1 },
+            { type: "add", value: 1 }, { type: "sub", value: 1 },
+            { type: "add", value: 2 }, { type: "sub", value: 2 },
+            { type: "sub", value: 5 }, { type: "add", value: 5 }
+        ];
         const WHEEL_PALETTE = [
             ["#fed7aa", "#704122"], ["#ffd6e0", "#6e3346"], ["#fef08a", "#614d18"], ["#d7baff", "#4b3269"],
-            ["#bae6fd", "#1f4463"], ["#bbf7d0", "#1f4a30"], ["#e8dff5", "#52406e"], ["#fce1e4", "#6e3745"]
+            ["#bae6fd", "#1f4463"], ["#bbf7d0", "#1f4a30"], ["#e8dff5", "#52406e"], ["#fce1e4", "#6e3745"],
+            ["#c7d2fe", "#2e3470"]
         ];
         const WHEEL_SLICES = [];
 
-        function rollWheelType() {
-            const r = Math.random();
-            let acc = 0;
-            for (const t of ["sub", "empty", "add", "double"]) {
-                acc += WHEEL_RATE[t];
-                if (r < acc) return t;
+        function wheelKey(s) { return s.type === "empty" ? "empty" : s.type + s.value; }
+        function wheelLabel(s) {
+            if (s.type === "empty") return "Ô Trống";
+            return s.type === "add" ? `+${s.value} Chì` : `Xui xẻo -${s.value}`;
+        }
+
+        // Đảo vị trí + màu của 9 ô mỗi lần quay
+        function shuffleWheel() {
+            const arr = WHEEL_BASE.map(s => ({ ...s }));
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
             }
-            return "sub";
-        }
-
-        function makeWheelSlice(type) {
-            const value = 1 + Math.floor(Math.random() * WHEEL_MAX_VALUE);
-            if (type === "add") return { label: `+${value} Chì`, type, value };
-            if (type === "sub") return { label: `Xui xẻo -${value}`, type, value };
-            if (type === "double") return { label: "Nhân đôi x2", type, value: 0 };
-            return { label: "Ô Trống", type: "empty", value: 0 };
-        }
-
-        // Xáo toàn bộ vòng xoay, ô kết quả nằm ở vị trí ngẫu nhiên. Trả về index ô trúng.
-        function buildWheelLayout(winType) {
-            const n = 8;
-            const slices = [];
-            for (let i = 0; i < n; i++) slices.push(makeWheelSlice(rollWheelType()));
-            const winIdx = Math.floor(Math.random() * n);
-            slices[winIdx] = makeWheelSlice(winType);
             const pal = WHEEL_PALETTE.slice().sort(() => Math.random() - 0.5);
-            slices.forEach((s, i) => { s.color = pal[i][0]; s.textColor = pal[i][1]; });
             WHEEL_SLICES.length = 0;
-            slices.forEach(s => WHEEL_SLICES.push(s));
-            return winIdx;
+            arr.forEach((s, i) => {
+                s.label = wheelLabel(s);
+                s.key = wheelKey(s);
+                s.color = pal[i][0];
+                s.textColor = pal[i][1];
+                WHEEL_SLICES.push(s);
+            });
         }
-        buildWheelLayout(rollWheelType());
+        shuffleWheel();
+
+        // Chọn ô trúng: đều 1/9 mỗi ô, chỉ loại ô trùng kết quả lượt tương ứng của hôm qua
+        function pickWheelTarget(forbiddenKey) {
+            const pool = [];
+            WHEEL_SLICES.forEach((s, i) => { if (s.key !== forbiddenKey) pool.push(i); });
+            const list = pool.length ? pool : WHEEL_SLICES.map((_, i) => i);
+            return list[Math.floor(Math.random() * list.length)];
+        }
+
+        // Nhật ký kết quả quay: { date, results: [hôm nay], prev: [hôm qua] }
+        function getWheelLog(uKey) {
+            const norm = (l) => (l && typeof l.date === "string")
+                ? { date: l.date, results: Array.isArray(l.results) ? l.results : [], prev: Array.isArray(l.prev) ? l.prev : [] }
+                : null;
+            const fb = norm(userPencilsData[uKey]?.wheelLog);
+            let local = null;
+            try { local = norm(JSON.parse(localStorage.getItem(`palette_wheel_log_${uKey}`) || "null")); } catch (_) {}
+            if (!fb && !local) return { date: "", results: [], prev: [] };
+            if (!fb) return local;
+            if (!local) return fb;
+            if (fb.date !== local.date) return fb.date > local.date ? fb : local;
+            return fb.results.length >= local.results.length ? fb : local;
+        }
+
+        function saveWheelLog(uKey, log) {
+            try { localStorage.setItem(`palette_wheel_log_${uKey}`, JSON.stringify(log)); } catch (_) {}
+            userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), wheelLog: log };
+            db.collection("pencils").doc(uKey).set({ wheelLog: log }, { merge: true }).catch(() => {});
+        }
 
         let currentWheelRotation = 0;
         let isWheelSpinning = false;
@@ -9697,8 +9722,24 @@
             }
             if (resultMsg) resultMsg.innerText = "Vòng xoay đang lướt qua các sắc màu...";
 
-            // Random hoàn toàn: đảo lại cả vòng xoay mỗi lần quay, ô trúng nằm ngẫu nhiên
-            const targetIndex = buildWheelLayout(rollWheelType());
+            // Random đều 1/9 mỗi ô; lượt thứ n hôm nay không trùng kết quả lượt thứ n hôm qua
+            const prevLog = getWheelLog(uKey);
+            let todayResults = [];
+            let yesterdayResults = [];
+            if (prevLog.date === todayKey) {
+                todayResults = prevLog.results.slice();
+                yesterdayResults = prevLog.prev.slice();
+            } else {
+                yesterdayResults = prevLog.results.slice();
+            }
+            const forbiddenKey = yesterdayResults[todayResults.length];
+            shuffleWheel();
+            const targetIndex = pickWheelTarget(forbiddenKey);
+            saveWheelLog(uKey, {
+                date: todayKey,
+                results: [...todayResults, WHEEL_SLICES[targetIndex].key],
+                prev: yesterdayResults
+            });
             currentWheelRotation = 0;
             const wheelCanvasEl = document.getElementById('luckyWheelCanvas');
             if (wheelCanvasEl) {
@@ -9753,13 +9794,6 @@
                         if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ ${deductAmount} Bút Chì Màu!</span>`;
                         logMemberActivity("Vòng xoay may mắn", `Trúng ô Xui xẻo -${winningSlice.value} Bút Chì Màu`);
                         triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo nhưng túi hiện có 0 chì.");
-                    } else if (winningSlice.type === "double") {
-                        const bonus = curPencils > 0 ? Math.min(curPencils, WHEEL_DOUBLE_CAP) : 2;
-                        await addPencilToUser(username, bonus, "Vòng xoay may mắn: Nhân đôi chì");
-                        playJoyfulWinSound();
-                        createPencilSparkles();
-                        if (resultMsg) resultMsg.innerHTML = `<span class="text-amber-300 font-black">VẬN MAY! Trúng ô Nhân đôi Bút Chì Màu (+${bonus} chì)!</span>`;
-                        logMemberActivity("Vòng xoay may mắn", `Vận may: Nhân đôi Bút Chì Màu (+${bonus} chì)`);
                     } else {
                         playSadDeflateSound();
                         if (resultMsg) resultMsg.innerHTML = `<span class="text-sky-200 font-bold">Ô Trống! Chúc bạn may mắn hơn ở lần quay tiếp theo nha.</span>`;
