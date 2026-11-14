@@ -1654,7 +1654,7 @@
             </div>
 
             <div id="cmtRewardPausedNotice" class="hidden bg-amber-500/15 border border-amber-300/40 rounded-2xl p-2.5 text-[11px] text-amber-200 font-bold mb-3 leading-relaxed">
-                ⚠️ Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu. Ở chế độ này, bạn chỉ cần gửi 2 ảnh (ảnh đã thả tim + ảnh cmt: noti hoặc nội dung gì đó bạn muốn nói) để Palette tặng 10 Chì Màu mở khóa nhé!
+                ⚠️ Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu. Ở chế độ này, bạn chỉ cần gửi 2 ảnh (ảnh đã thả tim + ảnh cmt: noti hoặc nội dung gì đó bạn muốn nói). Đợi có chì trong vòng trễ nhất một ngày nhé!
             </div>
 
             <div id="cmtHeartImgBox" class="hidden bg-black/25 p-3 rounded-2xl border border-rose-300/30 text-xs mb-3">
@@ -1687,7 +1687,7 @@
             <button type="button" id="cmtRewardSubmitBtn" onclick="submitCmtRewardRequest()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 font-extrabold text-sm py-2.5 rounded-xl shadow-lg text-white">
                 Gửi cho Palette duyệt
             </button>
-            <p class="text-[10.5px] text-pink-200/70 text-center mt-2 italic leading-tight">* Palette sẽ duyệt trong vòng 1 ngày, duyệt xong Chì Màu được cộng thẳng vào túi của bạn.</p>
+            <p id="cmtRewardFooterNote" class="text-[10.5px] text-pink-200/70 text-center mt-2 italic leading-tight">* Palette sẽ duyệt trong vòng 1 ngày, duyệt xong Chì Màu được cộng thẳng vào túi của bạn.</p>
         </div>
     </div>
 
@@ -4919,7 +4919,11 @@
                         localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
                     }
                     if (data.bgMusic) {
-                        loadSavedBackgroundMusic(data.bgMusic);
+                        const nextMusicHash = JSON.stringify(data.bgMusic.playlist || data.bgMusic.musicUrl || data.bgMusic.youtubeUrl || "");
+                        if (window._lastBgMusicHash !== nextMusicHash) {
+                            window._lastBgMusicHash = nextMusicHash;
+                            loadSavedBackgroundMusic(data.bgMusic);
+                        }
                     }
                     applyCustomMenuIcons();
                     renderCategoryTags();
@@ -4954,6 +4958,11 @@
             pencilsUnsub = db.collection("pencils").doc(uKey).onSnapshot(doc => {
                 userPencilsData[uKey] = doc.exists ? doc.data() : { count: 0 };
                 updatePencilUI();
+                renderFastColorCenter();
+                const detailBox = document.getElementById('detailCmtRewardBox');
+                if (detailBox && activeChar && activeChar.status === 'unlocked_24h') {
+                    detailBox.innerHTML = getCmtRewardSectionHtml(activeChar);
+                }
             });
 
             unlockedUnsub = db.collection("unlocked").doc(username).onSnapshot(doc => {
@@ -4961,6 +4970,10 @@
                 updateAIStudioButton();
                 renderUnlockedCharListInModal();
                 renderFastColorCenter();
+                const detailBox = document.getElementById('detailCmtRewardBox');
+                if (detailBox && activeChar && activeChar.status === 'unlocked_24h') {
+                    detailBox.innerHTML = getCmtRewardSectionHtml(activeChar);
+                }
             });
 
             // Tự động tải và đồng bộ bộ đếm ngược từ Firebase (xóa sạch khi đã mở xong)
@@ -5205,7 +5218,7 @@
                 : `bạn cần đợi đếm ngược ${Math.round(waitMs / 3600000 * 10) / 10} tiếng thì link mới mở khóa nhé!`;
 
             if (isPaused) {
-                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới.<br>• <b>Lưu ý:</b> Char mới nhất ở chế độ <b>Tạm giới hạn</b> chỉ có thể đổi bằng <b class="text-amber-300">10 Bút Chì Màu</b>.<br>• <b>Cách đổi link:</b> Tích đủ 10 Bút Chì Màu trong túi hoặc gửi 2 ảnh (ảnh tim + ảnh cmt) tại Sắc Màu Nhanh Nhẹn để Palette duyệt tặng chì đổi link nhé!`;
+                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới.<br>• <b>Lưu ý:</b> Char mới nhất ở chế độ <b>Tạm giới hạn</b> chỉ có thể đổi bằng <b class="text-amber-300">10 Bút Chì Màu</b>.<br>• <b>Cách đổi link:</b> Tích đủ 10 Bút Chì Màu trong túi hoặc gửi 2 ảnh (ảnh tim + ảnh cmt) tại Sắc Màu Nhanh Nhẹn, đợi có chì trong vòng trễ nhất một ngày để đổi link nhé!`;
             } else {
                 descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt trong ngày khi Palette up plot mới.<br>• <b>Cách lấy:</b> Nhanh tay lấy link ngay trong ngày - Không cần feedback và join discord! Hãy thả tim và nộp ảnh trước khi kết thúc đợt mở sau ${durationStr}.<br>• <b>Thời gian nhận link:</b> Sau khi nộp ảnh Facebook được duyệt thành công, ${waitNote}<br>• <b>Lưu ý:</b> Char mới nhất ở chế độ <b>Tạm giới hạn</b> chỉ có thể đổi bằng <b class="text-amber-300">10 Bút Chì Màu</b>.`;
             }
@@ -8389,12 +8402,14 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                 if (!hasReact) throw new Error("Ảnh chưa nhận diện được nút đã thả cảm xúc (Tim / Thích / Thương thương). Vui lòng chụp rõ nút đã thả nhé!");
 
                 setFastProgressUI(97, "Đang tải ảnh bằng chứng lên...");
-                await storeProofImages(fastFiles, {
-                    username: currentUser.username,
-                    charId: fastTargetChar.id,
-                    proofType: "Sắc Màu Nhanh Nhẹn",
-                    mode: "fast"
-                });
+                try {
+                    await storeProofImages(fastFiles, {
+                        username: currentUser.username,
+                        charId: fastTargetChar.id,
+                        proofType: "Sắc Màu Nhanh Nhẹn",
+                        mode: "fast"
+                    });
+                } catch (_) {}
 
                 setFastProgressUI(100, "Hoàn thành kiểm duyệt!");
                 submitBtn.disabled = false;
@@ -9900,7 +9915,7 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
             }
 
             const guideText = isPaused
-                ? `Gửi đủ 2 ảnh (ảnh tim + ảnh cmt: noti/bất kỳ) để nhận: <b class="text-amber-300">+10 Bút Chì Màu</b> đổi mở khóa link nhé!`
+                ? `Gửi đủ 2 ảnh (ảnh tim + ảnh cmt: noti/bất kỳ) để mở khóa link nhé!`
                 : `Feedback / nêu cảm nghĩ về plot/char: <b class="text-amber-300">+10 Chì</b> · Cmt noti: <b class="text-amber-300">+3 Chì</b>`;
 
             return `
@@ -9910,7 +9925,7 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                     <button type="button" onclick="openCmtRewardModal('${cmtSafeId(c.id)}')" class="jelly-btn mt-2 w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-2.5 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
                         ${isPaused ? '📸 Gửi ảnh tim &amp; cmt nhận Chì Màu' : '📸 Gửi ảnh cmt nhận Chì Màu'}
                     </button>
-                    <p class="text-[10px] text-sky-200/60 italic mt-1.5">Palette sẽ duyệt trong vòng 1 ngày.</p>
+                    <p class="text-[10px] text-sky-200/60 italic mt-1.5">${isPaused ? 'Đợi có chì trong vòng trễ nhất một ngày.' : 'Palette sẽ duyệt trong vòng 1 ngày.'}</p>
                 </div>
             `;
         }
@@ -10005,7 +10020,7 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                 }
             } finally {
                 isProcessingCmtRewardImg = false;
-                if (btn) { btn.disabled = false; btn.innerText = "Gửi cho Palette duyệt"; }
+                if (btn) { btn.disabled = false; btn.innerText = btn.dataset.defaultLabel || "Gửi cho Palette duyệt"; }
                 if (input) input.value = '';
                 renderCmtHeartPreview();
             }
@@ -10088,7 +10103,7 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                 }
             } finally {
                 isProcessingCmtRewardImg = false;
-                if (btn) { btn.disabled = false; btn.innerText = "Gửi cho Palette duyệt"; }
+                if (btn) { btn.disabled = false; btn.innerText = btn.dataset.defaultLabel || "Gửi cho Palette duyệt"; }
                 if (input) input.value = '';
                 renderCmtRewardPreview();
             }
@@ -10118,8 +10133,12 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
 
             const sub = document.getElementById('cmtRewardSubtitle');
             if (sub) sub.innerHTML = isPaused
-                ? `Gửi <b>hai ảnh: một tim và một cmt</b> để Palette xét duyệt nhé.`
+                ? `Gửi <b>hai ảnh: một tim và một cmt</b>. Đợi có chì trong vòng trễ nhất một ngày nhé.`
                 : `Gửi ảnh bình luận của bạn ở <b class="text-pink-300">[${cmtEsc(target.name)}]</b> để Palette xét duyệt nhé:`;
+            const footerNote = document.getElementById('cmtRewardFooterNote');
+            if (footerNote) footerNote.innerText = isPaused
+                ? "* Đợi có chì trong vòng trễ nhất một ngày nhé."
+                : "* Palette sẽ duyệt trong vòng 1 ngày, duyệt xong Chì Màu được cộng thẳng vào túi của bạn.";
             const pausedNotice = document.getElementById('cmtRewardPausedNotice');
             const heartBox = document.getElementById('cmtHeartImgBox');
             const kindBox = document.getElementById('cmtRewardKindBox');
@@ -10162,8 +10181,10 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
 
             const btn = document.getElementById('cmtRewardSubmitBtn');
             if (btn) {
+                const btnLabel = isPaused ? "Gửi ảnh" : "Gửi cho Palette duyệt";
                 btn.disabled = false;
-                btn.innerText = "Gửi cho Palette duyệt";
+                btn.dataset.defaultLabel = btnLabel;
+                btn.innerText = btnLabel;
             }
             const modal = document.getElementById('cmtRewardModal');
             if (modal) modal.classList.remove('hidden');
@@ -10246,20 +10267,30 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                     new Promise((_, rej) => setTimeout(() => rej(new Error("Mạng chậm quá, thử lại nhé!")), 30000))
                 ]);
                 try { logMemberActivity("Gửi ảnh cmt nhận chì", `${CMT_REWARD_TYPES[kind].label} tại ${targetChar.name}${isPausedLimitReq ? ' (2 ảnh: tim + cmt)' : ''}`); } catch (_) {}
-                triggerNotification("Đã gửi ảnh cmt!", `Vui lòng đợi Palette duyệt ảnh ${CMT_REWARD_TYPES[kind].label} trong vòng 1 ngày để nhận +${CMT_REWARD_TYPES[kind].reward} Chì nhé!`, username);
+                triggerNotification(
+                    "Đã gửi ảnh cmt!",
+                    isPausedLimitReq
+                        ? "Đã gửi ảnh thành công! Đợi có chì trong vòng trễ nhất một ngày nhé!"
+                        : `Vui lòng đợi Palette duyệt ảnh ${CMT_REWARD_TYPES[kind].label} trong vòng 1 ngày để nhận +${CMT_REWARD_TYPES[kind].reward} Chì nhé!`,
+                    username
+                );
                 triggerNotification("📸 Có ảnh cmt mới chờ duyệt!", `${username} vừa gửi ${isPausedLimitReq ? '2 ảnh (tim + cmt) ' : ''}${CMT_REWARD_TYPES[kind].label} cho "${targetChar.name}". Mở Cửa Hàng Bút Chì để duyệt (+${CMT_REWARD_TYPES[kind].reward} Chì) nhé!`, OWNER_USER);
                 sendPhonePushToOwner(`📸 Duyệt ảnh cmt: ${username}`, `${CMT_REWARD_TYPES[kind].label} tại ${targetChar.name} (+${CMT_REWARD_TYPES[kind].reward} Chì)`, 4);
                 cmtRewardSelectedImages = [];
                 cmtRewardHeartImages = [];
                 isSubmittingCmtReward = false;
                 closeCmtRewardModal();
-                alert(`⏳ Đã gửi ảnh cho Palette! Vui lòng đợi Palette xét duyệt (trong vòng 1 ngày) để nhận +${CMT_REWARD_TYPES[kind].reward} Chì Màu nhé 💖`);
+                alert(
+                    isPausedLimitReq
+                        ? "⏳ Đã gửi ảnh thành công! Đợi có chì trong vòng trễ nhất một ngày nhé 💖"
+                        : `⏳ Đã gửi ảnh cho Palette! Vui lòng đợi Palette xét duyệt (trong vòng 1 ngày) để nhận +${CMT_REWARD_TYPES[kind].reward} Chì Màu nhé 💖`
+                );
             } catch (err) {
                 console.error("Lỗi gửi ảnh cmt:", err);
                 alert(err?.code === 'permission-denied' ? "Chủ Web chưa mở quyền cmt_reward_requests trong Firestore Rules!" : (err?.message || "Chưa gửi được ảnh, thử lại nhé!"));
             } finally {
                 isSubmittingCmtReward = false;
-                if (btn) { btn.disabled = false; btn.innerText = "Gửi cho Palette duyệt"; }
+                if (btn) { btn.disabled = false; btn.innerText = btn.dataset.defaultLabel || "Gửi cho Palette duyệt"; }
             }
         }
 
