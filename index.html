@@ -11475,44 +11475,78 @@
 
         // Quản lý âm thanh đang phát khi bốc bài
         let activeSailorAudioObj = null;
+        let wasBgMusicPlayingBeforeSailor = false;
 
-        function playSailorSpinningAudio(audioUrl) {
+        function playSailorSpinningAudio(rawUrl) {
             return new Promise((resolve) => {
+                const audioUrl = cleanAudioUrl(rawUrl);
                 if (!audioUrl) {
-                    setTimeout(() => resolve(null), 3200);
+                    console.log("Không có link âm thanh bốc bài, xoay mặc định 3.5s");
+                    setTimeout(() => resolve(null), 3500);
                     return;
                 }
-                let sound = null;
-                try {
-                    sound = new Audio(audioUrl);
-                    activeSailorAudioObj = sound;
-                } catch (_) {
-                    setTimeout(() => resolve(null), 3200);
-                    return;
+
+                // 1. Tạm dừng nhạc nền website để nhường kênh âm thanh cho nhạc bốc bài phát to rõ (tránh bị iOS chặn)
+                const nativeBg = document.getElementById('nativeBgAudio');
+                wasBgMusicPlayingBeforeSailor = false;
+                if (nativeBg && !nativeBg.paused && nativeBg.currentTime > 0) {
+                    wasBgMusicPlayingBeforeSailor = true;
+                    try { nativeBg.pause(); } catch (_) {}
                 }
+                if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() === 1) {
+                    wasBgMusicPlayingBeforeSailor = true;
+                    try { ytPlayer.pauseVideo(); } catch (_) {}
+                }
+
+                // 2. Sử dụng thẻ <audio> cố định trong DOM để đảm bảo không bị chặn phát
+                let sound = document.getElementById('sailorCardAudio');
+                if (!sound) {
+                    sound = document.createElement('audio');
+                    sound.id = 'sailorCardAudio';
+                    sound.setAttribute('playsinline', '');
+                    sound.setAttribute('webkit-playsinline', '');
+                    document.body.appendChild(sound);
+                }
+
+                activeSailorAudioObj = sound;
+                sound.volume = 1;
+                sound.muted = false;
 
                 let finished = false;
                 const onDone = () => {
                     if (!finished) {
                         finished = true;
+                        sound.onended = null;
+                        sound.onerror = null;
                         resolve(sound);
                     }
                 };
 
                 sound.onended = onDone;
-                sound.onerror = () => setTimeout(onDone, 3200);
+                sound.onerror = (e) => {
+                    console.warn("Lỗi tải âm thanh bốc bài từ link:", audioUrl, e);
+                    setTimeout(onDone, 3500);
+                };
 
+                // Dự phòng thời gian nếu sự kiện onended không kích hoạt
                 sound.onloadedmetadata = () => {
                     if (Number.isFinite(sound.duration) && sound.duration > 0) {
-                        setTimeout(onDone, (sound.duration * 1000) + 2000);
+                        const fallbackMs = Math.round(sound.duration * 1000) + 2500;
+                        setTimeout(onDone, fallbackMs);
                     }
                 };
 
+                sound.src = audioUrl;
+                sound.load();
+
                 const p = sound.play();
                 if (p !== undefined) {
-                    p.catch(() => setTimeout(onDone, 3200));
+                    p.catch((err) => {
+                        console.warn("Trình duyệt chặn phát âm thanh:", err);
+                        setTimeout(onDone, 3500);
+                    });
                 }
-                setTimeout(onDone, 60000); // Bảo hiểm an toàn tối đa 60s
+                setTimeout(onDone, 60000); // Giới hạn an toàn tối đa 60s
             });
         }
 
@@ -11719,9 +11753,21 @@
         function closeSailorStageOverlay() {
             if (isSailorCardFlipping) return;
             isSailorStageWaitingClose = false;
+            const transformingBanner = document.getElementById('sailorTransformingBanner');
+            if (transformingBanner) transformingBanner.classList.add('hidden');
             if (activeSailorAudioObj) {
                 try { activeSailorAudioObj.pause(); activeSailorAudioObj.currentTime = 0; } catch (_) {}
                 activeSailorAudioObj = null;
+            }
+            // Khôi phục lại nhạc nền website nếu lúc trước đang phát
+            if (wasBgMusicPlayingBeforeSailor && isUserMusicEnabled) {
+                const nativeBg = document.getElementById('nativeBgAudio');
+                if (currentMusicType === "audio" && nativeBg) {
+                    nativeBg.play().catch(() => {});
+                } else if (currentMusicType === "youtube" && ytPlayer && ytPlayer.playVideo) {
+                    ytPlayer.playVideo();
+                }
+                wasBgMusicPlayingBeforeSailor = false;
             }
             document.getElementById('sailorCardStageOverlay').classList.add('hidden');
             document.getElementById('sailorStageCardMount').innerHTML = '';
@@ -11743,15 +11789,28 @@
 
         // Đã tối ưu các tùy chọn điểm thẻ trực tiếp theo từng mục Meme / Sailor / Secret
 
+        function cleanAudioUrl(url) {
+            if (!url) return "";
+            let u = String(url).trim();
+            if (u.startsWith("//")) u = "https:" + u;
+            else if (!u.startsWith("http://") && !u.startsWith("https://")) u = "https://" + u;
+            u = u.replace(/^http:\/\//i, "https://");
+            return u;
+        }
+
         async function saveSailorAudioSetting() {
             if (!checkIsOwnerAccount()) return;
             const input = document.getElementById('sailorCustomAudioUrl');
-            const url = (input ? input.value.trim() : "");
+            let url = (input ? input.value.trim() : "");
+            if (url) {
+                url = cleanAudioUrl(url);
+                if (input) input.value = url;
+            }
             sailorCardsConfig.audioUrl = url;
             try {
                 await db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true });
                 try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
-                alert("✓ Đã lưu link âm thanh khi bốc bài thành công!");
+                alert("✓ Đã lưu link âm thanh bốc bài thành công!\n" + (url || "(Đã xóa link)"));
             } catch (e) {
                 alert("Lỗi lưu âm thanh: " + (e?.message || ""));
             }
@@ -12078,6 +12137,8 @@
     </script>
     <!-- BỘ PHÁT NHẠC ĐA NĂNG (HỖ TRỢ CẢ AUDIO MP3 LẪN YOUTUBE) -->
     <audio id="nativeBgAudio" src="" playsinline preload="auto"></audio>
+    <!-- Thẻ âm thanh chuyên dụng phát nhạc khi bốc Thẻ Màu May Mắn -->
+    <audio id="sailorCardAudio" playsinline webkit-playsinline preload="auto"></audio>
     <div style="position:fixed; bottom:0; right:0; width:64px; height:64px; opacity:0.01; pointer-events:none; z-index:-10;">
         <div id="ytAudioPlayer"></div>
     </div>
