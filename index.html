@@ -9231,6 +9231,26 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
             `;
         }
 
+        function renderOwnerHeartBadge(item, paddingCls = "pl-10") {
+            if (!item) return '';
+            const reactions = getCommentReactions(item);
+            const hearts = reactions.heart || item.likes || [];
+            const isOwnerHearted = hearts.some(u => String(u || '').toLowerCase() === OWNER_USER.toLowerCase());
+            if (!isOwnerHearted) return '';
+
+            return `
+                <div class="pt-1 ${paddingCls} flex items-center">
+                    <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-pink-500/15 border border-pink-300/30 text-[10px] text-pink-300 font-bold whitespace-nowrap shadow-sm">
+                        <!-- Icon trái tim pastel nhỏ xinh -->
+                        <svg class="w-3 h-3 text-pink-400 fill-pink-400 shrink-0" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        <span class="whitespace-nowrap">Palette đã thương thương cmt đáng yêu này</span>
+                    </div>
+                </div>
+            `;
+        }
+
         function loadMoreReplies(cmtId) {
             visibleRepliesCount[cmtId] = (visibleRepliesCount[cmtId] || 0) + 4;
             playCheerfulClickSound();
@@ -9306,6 +9326,7 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                                     ${formatCommentContent(r.id, r.text, "pl-8")}
                                     ${renderCommentImages(r, "w-24 h-24 object-cover rounded-xl mt-1 border border-white/10 inline-block mr-1")}
                                     ${renderReactionButtons(r, true, c.id)}
+                                    ${renderOwnerHeartBadge(r, "pl-8")}
                                 </div>
                             `;
                         });
@@ -9354,6 +9375,7 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                     ` : ''}
 
                     ${renderReactionButtons(c, false)}
+                    ${renderOwnerHeartBadge(c, "pl-10")}
 
                     <div id="replyBox-${c.id}" class="hidden pt-2 space-y-2 border-t border-white/10 pl-10">
                         <input id="replyInput-${c.id}" type="text" placeholder="Trả lời ${cmtEsc(c.author)}..." class="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-pink-400">
