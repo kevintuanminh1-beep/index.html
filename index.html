@@ -4446,7 +4446,8 @@
 
         function getUserPencilCount(username) {
             if (!username) return 0;
-            return Math.max(0, Number(userPencilsData[username.toLowerCase()]?.count) || 0);
+            const key = String(username).trim().toLowerCase();
+            return Math.max(0, Number(userPencilsData[key]?.count) || 0);
         }
 
         async function addPencilToUser(username, amount, reason = "", showSparkles = true) {
@@ -5600,6 +5601,28 @@
                 renderUsersModalContent();
             });
 
+            // Đồng bộ realtime số Bút Chì Màu của tất cả thành viên cho Chủ Web
+            db.collection("pencils").onSnapshot((snapshot) => {
+                snapshot.forEach(doc => {
+                    userPencilsData[doc.id.toLowerCase()] = doc.data() || { count: 0 };
+                });
+                updatePencilUI();
+                renderUsersModalContent();
+            }, (error) => {
+                if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
+            });
+
+            // Đồng bộ realtime danh sách nhân vật đã mở khóa của tất cả thành viên cho Chủ Web
+            db.collection("unlocked").onSnapshot((snapshot) => {
+                snapshot.forEach(doc => {
+                    userUnlockedState[doc.id] = doc.data().chars || {};
+                    userUnlockedState[doc.id.toLowerCase()] = doc.data().chars || {};
+                });
+                renderUsersModalContent();
+            }, (error) => {
+                if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
+            });
+
             // Lắng nghe danh sách tất cả các bạn đang chờ đếm ngược theo thời gian thực
             db.collection("unlock_timers").onSnapshot((snapshot) => {
                 allMembersUnlockTimers = {};
@@ -6516,6 +6539,40 @@
         let activeUsersModalTab = 'registered'; // 'registered' | 'online' | 'activities'
         let activeActivitySubFilter = 'all'; // 'all' | 'link' | 'comment_like' | 'wheel'
         let expandedMemberUsername = null;
+        let memberSortCriteria = 'unlocked'; // 'unlocked' | 'pencils'
+
+        function setMemberSortCriteria(crit) {
+            memberSortCriteria = crit;
+            renderUsersModalContent();
+            playCheerfulClickSound();
+        }
+
+        // Lấy danh sách nhân vật người dùng đã mở khóa
+        function getUserUnlockedChars(username) {
+            if (!username) return [];
+            const userChars = userUnlockedState[username] || userUnlockedState[username.toLowerCase()] || {};
+            const list = [];
+            for (let charId in userChars) {
+                if (userChars[charId] === true) {
+                    const charObj = characters.find(c => c.id === charId);
+                    if (charObj) list.push(charObj);
+                }
+            }
+            return list;
+        }
+
+        function getUserUnlockedCount(username) {
+            return getUserUnlockedChars(username).length;
+        }
+
+        // Bấm vào nhân vật bất kỳ để nhảy thẳng vào trang chi tiết, mở link hoặc đổi chì
+        function openCharDetailById(charId) {
+            const target = characters.find(c => c.id === charId);
+            if (target) {
+                closeUsersListModal();
+                openCharDetail(target);
+            }
+        }
 
         // Đổi mục lọc hoạt động con
         function setActivitySubFilter(filterName) {
@@ -6754,7 +6811,7 @@
             if (regBadge) regBadge.innerText = totalUsers;
             if (actBadge) actBadge.innerText = memberActivities.length;
 
-            // ================= MỤC 1: DANH SÁCH ĐÃ ĐĂNG KÝ =================
+            // ================= MỤC 1: DANH SÁCH ĐÃ ĐĂNG KÝ (BẢNG XẾP HẠNG THÀNH VIÊN) =================
             if (activeUsersModalTab === 'registered') {
                 if (userKeys.length === 0) {
                     container.innerHTML = `<div class="text-xs text-sky-200/60 italic text-center py-6">Chưa có thành viên nào đăng ký!</div>`;
@@ -6769,60 +6826,120 @@
                     container.appendChild(topNotice);
                 }
 
-                userKeys.forEach(key => {
+                // Sắp xếp danh sách thành viên từ nhiều nhất xuống ít nhất
+                userKeys.sort((a, b) => {
+                    const userA = registeredUsers[a]?.username || a;
+                    const userB = registeredUsers[b]?.username || b;
+
+                    if (memberSortCriteria === 'unlocked') {
+                        const unlA = getUserUnlockedCount(userA);
+                        const unlB = getUserUnlockedCount(userB);
+                        if (unlB !== unlA) return unlB - unlA;
+                        const penA = getUserPencilCount(userA);
+                        const penB = getUserPencilCount(userB);
+                        if (penB !== penA) return penB - penA;
+                    } else {
+                        const penA = getUserPencilCount(userA);
+                        const penB = getUserPencilCount(userB);
+                        if (penB !== penA) return penB - penA;
+                        const unlA = getUserUnlockedCount(userA);
+                        const unlB = getUserUnlockedCount(userB);
+                        if (unlB !== unlA) return unlB - unlA;
+                    }
+                    return userA.localeCompare(userB);
+                });
+
+                // Thanh nút chọn tiêu chí Xếp Hạng: Mở Nhiều Char Nhất vs Nhiều Chì Nhất
+                const rankBar = document.createElement('div');
+                rankBar.className = "flex items-center gap-1.5 p-1 bg-black/45 border border-white/10 rounded-2xl mb-2.5 shrink-0";
+                rankBar.innerHTML = `
+                    <button type="button" onclick="setMemberSortCriteria('unlocked')" class="flex-1 py-1 px-2 rounded-xl text-[10.5px] font-extrabold transition active:scale-95 flex items-center justify-center gap-1 ${memberSortCriteria === 'unlocked' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_10px_rgba(52,211,153,0.4)]' : 'bg-white/5 text-sky-200/70 hover:bg-white/10'}">
+                        <span>🔓 Mở nhiều char nhất</span>
+                    </button>
+                    <button type="button" onclick="setMemberSortCriteria('pencils')" class="flex-1 py-1 px-2 rounded-xl text-[10.5px] font-extrabold transition active:scale-95 flex items-center justify-center gap-1 ${memberSortCriteria === 'pencils' ? 'bg-gradient-to-r from-amber-500 to-pink-500 text-white shadow-[0_0_10px_rgba(251,191,36,0.4)]' : 'bg-white/5 text-sky-200/70 hover:bg-white/10'}">
+                        <span>✏️ Nhiều chì nhất</span>
+                    </button>
+                `;
+                container.appendChild(rankBar);
+
+                userKeys.forEach((key, rankIdx) => {
                     const u = registeredUsers[key];
                     const isOwnerAcc = (u.username.toLowerCase() === OWNER_USER.toLowerCase());
                     const avt = getUserAvatarOrDefault(u.username);
                     const pencils = getUserPencilCount(u.username);
-                    const favChars = getUserFavoritedChars(u.username);
+                    const unlockedChars = getUserUnlockedChars(u.username);
                     const isExpanded = (expandedMemberUsername === u.username);
+
+                    const rankNum = rankIdx + 1;
+                    const rankBadgeHtml = rankNum === 1
+                        ? '<span class="text-[10px] font-black text-amber-300 bg-amber-400/25 border border-amber-300/50 px-1.5 py-0.5 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.4)] shrink-0">🥇 #1</span>'
+                        : rankNum === 2
+                        ? '<span class="text-[10px] font-black text-slate-100 bg-slate-400/25 border border-slate-300/50 px-1.5 py-0.5 rounded-full shrink-0">🥈 #2</span>'
+                        : rankNum === 3
+                        ? '<span class="text-[10px] font-black text-orange-300 bg-orange-500/25 border border-orange-400/50 px-1.5 py-0.5 rounded-full shrink-0">🥉 #3</span>'
+                        : `<span class="text-[9.5px] font-black text-sky-200/75 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-full font-mono shrink-0">#${rankNum}</span>`;
 
                     const card = document.createElement('div');
                     card.className = "bg-white/5 border border-white/10 hover:border-pink-300/40 rounded-2xl p-2.5 transition";
 
-                    let favCharsHtml = '';
-                    if (favChars.length === 0) {
-                        favCharsHtml = `<span class="text-[11px] text-sky-200/50 italic">Chưa bấm thả tim người thương nào.</span>`;
+                    let unlockedCharsHtml = '';
+                    if (unlockedChars.length === 0) {
+                        unlockedCharsHtml = `<span class="text-[11px] text-sky-200/50 italic">Chưa mở khóa nhân vật nào.</span>`;
                     } else {
-                        favCharsHtml = favChars.map(c => `
-                            <div class="inline-flex items-center gap-1.5 bg-black/40 border border-pink-300/30 px-2 py-1 rounded-xl">
-                                <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-5 h-5 rounded-lg object-cover">
-                                <span class="text-[11px] font-bold text-pink-200">${c.name}</span>
-                            </div>
+                        unlockedCharsHtml = unlockedChars.map(c => `
+                            <button type="button" onclick="openCharDetailById('${c.id}')" class="inline-flex items-center gap-1.5 bg-black/50 hover:bg-emerald-500/25 border border-emerald-300/40 hover:border-emerald-300 px-2 py-1 rounded-xl cursor-pointer active:scale-95 transition shadow text-left" title="Chạm để xem ${cmtEsc(c.name)}, mở link hoặc đổi chì">
+                                <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-5 h-5 rounded-lg object-cover shrink-0">
+                                <span class="text-[10.5px] font-bold text-emerald-200 truncate max-w-[120px]">${cmtEsc(c.name)}</span>
+                                <span class="text-[9px] text-sky-300 font-bold">➔</span>
+                            </button>
                         `).join('');
                     }
 
                     card.innerHTML = `
                         <div onclick="toggleMemberCardExpansion('${u.username}')" class="flex items-center justify-between cursor-pointer select-none">
-                            <div class="flex items-center gap-2.5 truncate">
+                            <div class="flex items-center gap-2 truncate flex-1 mr-1">
+                                ${rankBadgeHtml}
                                 <img src="${avt}" alt="" referrerpolicy="no-referrer" onerror="this.src='${PALETTE_DEFAULT_AVATARS[0]}'" class="w-8 h-8 rounded-full object-cover border border-pink-300/40 shrink-0">
-                                <div class="truncate">
+                                <div class="truncate flex-1">
                                     <div class="font-extrabold text-white text-xs truncate flex items-center gap-1.5">
                                         <span>${u.username}</span>
                                         ${isOwnerAcc ? '<span class="text-[9px] bg-amber-400/30 text-amber-300 px-1 rounded font-bold">Chủ Web</span>' : ''}
                                     </div>
-                                    <div class="text-[10.5px] text-pink-300 font-bold flex items-center gap-1 mt-0.5">
-                                        <span>✏️ ${pencils} chì</span>
-                                        <span>·</span>
-                                        <span>❤️ ${favChars.length} nhân vật</span>
+                                    <!-- CHIA LÀM HAI HÀNG RIÊNG BIỆT KHÔNG BỊ TRỘN LẪN -->
+                                    <div class="mt-1 flex flex-col gap-0.5 text-[10.5px] font-bold">
+                                        <div class="flex items-center gap-1.5 text-amber-300 leading-tight">
+                                            <span>✏️</span>
+                                            <span>${pencils} Bút Chì Màu</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-emerald-300 leading-tight">
+                                            <span>🔓</span>
+                                            <span>${unlockedChars.length} nhân vật đã mở khóa</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <span class="text-xs text-sky-300/70 font-bold px-1.5 py-0.5 rounded-lg hover:bg-white/10 transition">${isExpanded ? '▲ Ẩn' : '▼ Chi tiết'}</span>
+                            <span class="text-xs text-sky-300/70 font-bold px-1.5 py-0.5 rounded-lg hover:bg-white/10 transition shrink-0">${isExpanded ? '▲ Ẩn' : '▼ Chi tiết'}</span>
                         </div>
 
                         ${isExpanded ? `
-                            <div class="mt-2.5 pt-2.5 border-t border-white/10 text-xs space-y-2">
-                                <div class="flex items-center justify-between bg-black/30 p-2 rounded-xl">
-                                    <span class="text-sky-200/80 font-bold">Số Bút Chì Màu hiện có:</span>
-                                    <span class="font-black text-amber-300 text-sm">✏️ ${pencils} Chì</span>
+                            <div class="mt-2.5 pt-2.5 border-t border-white/10 text-xs space-y-2.5">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="bg-black/40 border border-amber-300/30 p-2 rounded-xl text-center">
+                                        <span class="text-[10px] text-amber-200/80 block">Túi chì màu:</span>
+                                        <span class="font-black text-amber-300 text-sm">✏️ ${pencils} chì</span>
+                                    </div>
+                                    <div class="bg-black/40 border border-emerald-300/30 p-2 rounded-xl text-center">
+                                        <span class="text-[10px] text-emerald-200/80 block">Đã mở khóa:</span>
+                                        <span class="font-black text-emerald-300 text-sm">🔓 ${unlockedChars.length} char</span>
+                                    </div>
                                 </div>
                                 <div>
-                                    <div class="text-[11px] font-bold text-pink-300 mb-1.5 flex items-center gap-1">
-                                        <span>Các nhân vật đã thả tim (${favChars.length}):</span>
+                                    <div class="text-[11px] font-bold text-emerald-300 mb-1.5 flex items-center justify-between">
+                                        <span>Danh sách nhân vật đã mở khóa (${unlockedChars.length}):</span>
+                                        <span class="text-[9.5px] text-sky-200/60 font-normal italic">Chạm vào char để xem</span>
                                     </div>
-                                    <div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto custom-scroll pr-1">
-                                        ${favCharsHtml}
+                                    <div class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto custom-scroll pr-1">
+                                        ${unlockedCharsHtml}
                                     </div>
                                 </div>
 
@@ -7029,9 +7146,22 @@
 
         function sendOnlineHeartbeat() {}
 
-        function openUsersListModal() {
+        async function openUsersListModal() {
             if (!currentUser?.isOwner) return;
             if (activeUsersModalTab !== 'activities') activeUsersModalTab = 'registered';
+            try {
+                const [pencilsSnap, unlockedSnap] = await Promise.all([
+                    db.collection("pencils").get(),
+                    db.collection("unlocked").get()
+                ]);
+                pencilsSnap.forEach(doc => {
+                    userPencilsData[doc.id.toLowerCase()] = doc.data() || { count: 0 };
+                });
+                unlockedSnap.forEach(doc => {
+                    userUnlockedState[doc.id] = doc.data().chars || {};
+                    userUnlockedState[doc.id.toLowerCase()] = doc.data().chars || {};
+                });
+            } catch (_) {}
             renderUsersModalContent();
             document.getElementById('registeredUsersModal').classList.remove('hidden');
         }
