@@ -3968,7 +3968,7 @@
             if (typeof createImageBitmap === 'function') {
                 try {
                     const bitmap = await createImageBitmap(workingBlob);
-                    const jpegUrl = drawBitmapOrImgToJpeg(bitmap, bitmap.width, bitmap.height, 1200, 0.85);
+                    const jpegUrl = drawBitmapOrImgToJpeg(bitmap, bitmap.width, bitmap.height, 2400, 0.88);
                     if (typeof bitmap.close === 'function') bitmap.close();
                     if (jpegUrl && jpegUrl.startsWith('data:image/jpeg')) return jpegUrl;
                 } catch (_) {}
@@ -3984,7 +3984,7 @@
                 const img = new Image();
                 img.onload = () => {
                     try {
-                        const jpegUrl = drawBitmapOrImgToJpeg(img, img.naturalWidth || img.width, img.naturalHeight || img.height, 1200, 0.85);
+                        const jpegUrl = drawBitmapOrImgToJpeg(img, img.naturalWidth || img.width, img.naturalHeight || img.height, 2400, 0.88);
                         URL.revokeObjectURL(objUrl);
                         resolve(jpegUrl);
                     } catch (_) {
@@ -4004,13 +4004,64 @@
                 const retryHeic = await convertHeicBlobToJpeg(file);
                 if (retryHeic && typeof createImageBitmap === 'function') {
                     const bitmap2 = await createImageBitmap(retryHeic);
-                    const jpeg2 = drawBitmapOrImgToJpeg(bitmap2, bitmap2.width, bitmap2.height, 1200, 0.85);
+                    const jpeg2 = drawBitmapOrImgToJpeg(bitmap2, bitmap2.width, bitmap2.height, 2400, 0.88);
                     if (typeof bitmap2.close === 'function') bitmap2.close();
                     if (jpeg2) return jpeg2;
                 }
             } catch (_) {}
 
             return "";
+        }
+
+        function enhanceDiscordBottomForTimeOCR(dataUrl) {
+            return new Promise(resolve => {
+                if (!dataUrl) return resolve("");
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const w = img.naturalWidth || img.width;
+                        const h = img.naturalHeight || img.height;
+                        if (!w || !h) return resolve("");
+                        const startY = Math.round(h * 0.42);
+                        const cropH = Math.max(1, h - startY);
+                        const scale = Math.min(1.6, 1800 / w);
+                        const outW = Math.max(1, Math.round(w * scale));
+                        const outH = Math.max(1, Math.round(cropH * scale));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = outW;
+                        canvas.height = outH;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, startY, w, cropH, 0, 0, outW, outH);
+                        const imgData = ctx.getImageData(0, 0, outW, outH);
+                        const d = imgData.data;
+
+                        let sum = 0;
+                        let count = 0;
+                        for (let i = 0; i < d.length; i += 64) {
+                            sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                            count++;
+                        }
+                        const isDarkMode = (sum / Math.max(1, count)) < 128;
+
+                        for (let i = 0; i < d.length; i += 4) {
+                            let gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                            if (isDarkMode) {
+                                gray = 255 - gray;
+                                gray = Math.max(0, Math.min(255, Math.round((gray - 100) * 2.5)));
+                            } else {
+                                gray = Math.max(0, Math.min(255, Math.round((gray - 125) * 2.5)));
+                            }
+                            d[i] = d[i + 1] = d[i + 2] = gray;
+                        }
+                        ctx.putImageData(imgData, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch (_) {
+                        resolve("");
+                    }
+                };
+                img.onerror = () => resolve("");
+                img.src = dataUrl;
+            });
         }
 
         // ================= HỆ THỐNG CHÌ MÀU & ĐIỂM DANH =================
@@ -8235,6 +8286,8 @@
                     const curMin = curDateObj.getMinutes();
                     const curTotal = curHour * 60 + curMin;
                     const maxAllowedMinutes = 10;
+                    const enMonths = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+                    const curEnMonth = enMonths[curMonthNum - 1];
 
                     const isMatchTodayDate = (n1, n2) =>
                         (n1 === curDayNum && n2 === curMonthNum) || (n1 === curMonthNum && n2 === curDayNum);
@@ -8246,65 +8299,96 @@
                         dcScan = dcScan.slice(hdrMatch.index + hdrMatch[0].length);
                     }
 
-                    const timeRegex = /\b([01]?[0-9]|2[0-3])[:h]([0-5][0-9])(?:\s*(am|pm))?\b/g;
-                    const matches = [...dcScan.matchAll(timeRegex)];
-
-                    let hasValidRecentTime = false;
-                    let foundOldTimeOnly = "";
-                    let rejectedByOldDatePrefix = false;
-
-                    for (const m of matches) {
-                        const rawH = parseInt(m[1], 10);
-                        const rawM = parseInt(m[2], 10);
-                        const meridiem = (m[3] || '').toLowerCase();
-
-                        // Chỉ kiểm tra trên cùng 1 dòng ngay trước mốc giờ (không lấn sang tin nhắn phía trên)
-                        const lastNewline = dcScan.lastIndexOf('\n', m.index - 1);
-                        const prefix = dcScan.slice(Math.max(0, m.index - 45, lastNewline + 1), m.index);
-                        let prefixIsOldDay = prefix.includes("hom qua") || prefix.includes("yesterday") || prefix.includes("days ago") || prefix.includes("ngay truoc");
-                        if (!prefixIsOldDay) {
-                            const pDateMatch = prefix.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
-                            if (pDateMatch && !isMatchTodayDate(parseInt(pDateMatch[1], 10), parseInt(pDateMatch[2], 10))) {
-                                prefixIsOldDay = true;
-                            }
-                        }
-                        if (prefixIsOldDay) {
-                            rejectedByOldDatePrefix = true;
-                            continue;
-                        }
-
-                        let candidateHours = [];
-                        if (meridiem === 'pm') {
-                            candidateHours = [rawH < 12 ? rawH + 12 : rawH];
-                        } else if (meridiem === 'am') {
-                            candidateHours = [rawH === 12 ? 0 : rawH];
-                        } else {
-                            candidateHours = (rawH >= 1 && rawH <= 12)
-                                ? [rawH, (rawH === 12 ? 0 : rawH + 12)]
-                                : [rawH];
-                        }
-
-                        let matchedThisToken = false;
-                        for (const ch of candidateHours) {
-                            let diff = curTotal - (ch * 60 + rawM);
-                            if (diff < -720) diff += 1440;
-                            if (diff > 720) diff -= 1440;
-                            // Cho phép đồng hồ máy user chạy nhanh hơn tối đa 3 phút và trễ tối đa 10 phút
-                            if (diff >= -3 && diff <= maxAllowedMinutes) {
-                                matchedThisToken = true;
-                                break;
-                            }
-                        }
-
-                        if (matchedThisToken) {
-                            hasValidRecentTime = true;
-                            break;
-                        } else {
-                            foundOldTimeOnly = m[0];
-                        }
+                    // Nếu có mốc chia ngày hôm nay (VD: "14 tháng 11 năm 2026" / "November 14, 2026" / "Hôm nay lúc") thì bỏ qua tin nhắn ghim cũ phía trên
+                    const todayMarkerRegex = new RegExp(
+                        `(\\b0?${curDayNum}\\s*thang\\s*0?${curMonthNum}\\b|\\b${curEnMonth}\\s+0?${curDayNum}\\b|\\b0?${curDayNum}[\\/\\-]0?${curMonthNum}[\\/\\-]20\\d{2}\\b|\\b0?${curMonthNum}[\\/\\-]0?${curDayNum}[\\/\\-]20\\d{2}\\b|\\bhom\\s*nay\\s*luc\\b|\\btoday\\s*at\\b)`,
+                        'g'
+                    );
+                    const todayMarkers = [...dcScan.matchAll(todayMarkerRegex)];
+                    if (todayMarkers.length > 0) {
+                        const lastTodayMarker = todayMarkers[todayMarkers.length - 1];
+                        dcScan = dcScan.slice(lastTodayMarker.index);
                     }
 
-                    if (!hasValidRecentTime) {
+                    const timeRegex = /\b([01]?[0-9]|2[0-3])\s*[:;h]\s*([0-5][0-9])(?:\s*(am|pm))?\b/g;
+
+                    const checkTimeMatchesInText = (textToScan) => {
+                        const matches = [...textToScan.matchAll(timeRegex)];
+                        let hasValid = false;
+                        let oldTime = "";
+                        let oldDatePrefix = false;
+
+                        for (const m of matches) {
+                            const rawH = parseInt(m[1], 10);
+                            const rawM = parseInt(m[2], 10);
+                            const meridiem = (m[3] || '').toLowerCase();
+
+                            // Chỉ kiểm tra trên cùng 1 dòng ngay trước mốc giờ (không lấn sang tin nhắn phía trên)
+                            const lastNewline = textToScan.lastIndexOf('\n', m.index - 1);
+                            const prefix = textToScan.slice(Math.max(0, m.index - 45, lastNewline + 1), m.index);
+                            let prefixIsOldDay = prefix.includes("hom qua") || prefix.includes("yesterday") || prefix.includes("days ago") || prefix.includes("ngay truoc");
+                            if (!prefixIsOldDay) {
+                                const pDateMatch = prefix.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
+                                if (pDateMatch && !isMatchTodayDate(parseInt(pDateMatch[1], 10), parseInt(pDateMatch[2], 10))) {
+                                    prefixIsOldDay = true;
+                                }
+                            }
+                            if (prefixIsOldDay) {
+                                oldDatePrefix = true;
+                                continue;
+                            }
+
+                            let candidateHours = [];
+                            if (meridiem === 'pm') {
+                                candidateHours = [rawH < 12 ? rawH + 12 : rawH];
+                            } else if (meridiem === 'am') {
+                                candidateHours = [rawH === 12 ? 0 : rawH];
+                            } else {
+                                candidateHours = (rawH >= 1 && rawH <= 12)
+                                    ? [rawH, (rawH === 12 ? 0 : rawH + 12)]
+                                    : [rawH];
+                            }
+
+                            let matchedThisToken = false;
+                            for (const ch of candidateHours) {
+                                let diff = curTotal - (ch * 60 + rawM);
+                                if (diff < -720) diff += 1440;
+                                if (diff > 720) diff -= 1440;
+                                if (diff >= -3 && diff <= maxAllowedMinutes) {
+                                    matchedThisToken = true;
+                                    break;
+                                }
+                            }
+
+                            if (matchedThisToken) {
+                                hasValid = true;
+                                break;
+                            } else {
+                                oldTime = m[0];
+                            }
+                        }
+                        return { matches, hasValid, oldTime, oldDatePrefix };
+                    };
+
+                    let timeCheck = checkTimeMatchesInText(dcScan);
+
+                    // Nếu lần 1 sót giờ do chữ giờ xám nhạt quá nhỏ, tăng độ tương phản nửa dưới ảnh để đọc lại
+                    if (!timeCheck.hasValid && cachedDcDataUrls[0]) {
+                        try {
+                            setProgressUI(88, "Đang đọc rõ hơn mốc giờ Discord...");
+                            const enhancedUrl = await enhanceDiscordBottomForTimeOCR(cachedDcDataUrls[0]);
+                            if (enhancedUrl) {
+                                const { data: { text: retryRaw } } = await Tesseract.recognize(enhancedUrl, 'eng');
+                                const retryClean = (retryRaw || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+                                const retryCheck = checkTimeMatchesInText(retryClean);
+                                if (retryCheck.hasValid) {
+                                    timeCheck = retryCheck;
+                                }
+                            }
+                        } catch (_) {}
+                    }
+
+                    if (!timeCheck.hasValid) {
                         const tailText = dcScan.slice(-300);
                         const tailDateMatches = [...tailText.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/g)];
                         let hasOldDateInTail = tailText.includes("hom qua") || tailText.includes("yesterday") || tailText.includes("days ago") || tailText.includes("ngay truoc");
@@ -8315,7 +8399,11 @@
                             }
                         }
 
-                        if (rejectedByOldDatePrefix || hasOldDateInTail) {
+                        if (timeCheck.matches.length > 0 && timeCheck.oldTime) {
+                            throw new Error(`Tin nhắn gửi lúc ${timeCheck.oldTime} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã quá hạn 10 phút!`);
+                        }
+
+                        if (timeCheck.oldDatePrefix || hasOldDateInTail) {
                             throw new Error("Mốc thời gian gửi tin nhắn đã sang ngày khác hoặc ghi rõ ngày tháng cũ, từ chối duyệt!");
                         }
 
@@ -8326,10 +8414,6 @@
                         const minMatch = tailText.match(/\b([1-9][0-9]*)\s*(phut truoc|m ago|mins? ago)\b/);
                         if (minMatch && parseInt(minMatch[1], 10) > maxAllowedMinutes) {
                             throw new Error(`Tin nhắn hiển thị gửi từ ${minMatch[1]} phút trước đã quá hạn 10 phút!`);
-                        }
-
-                        if (matches.length > 0 && foundOldTimeOnly) {
-                            throw new Error(`Tin nhắn gửi lúc ${foundOldTimeOnly} so với giờ hiện tại (${curHour}:${pad(curMin)}) đã quá hạn 10 phút!`);
                         }
                     }
                 }
