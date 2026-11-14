@@ -6921,7 +6921,9 @@
                 }
 
                 const noteHtml = isPausedLimit
-                    ? "Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu."
+                    ? (isUnlocked 
+                        ? "Bạn đã mở khóa nhân vật này rồi! Hãy bấm tim để lưu giữ link vĩnh viễn nhé." 
+                        : "Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu.")
                     : ((typeof c.unlockWaitMs === 'number' && c.unlockWaitMs <= 0)
                         ? "Lưu ý: Sau khi duyệt ảnh thành công, link sẽ mở khóa NGAY LẬP TỨC để bạn lấy link nhé!"
                         : `Lưu ý: Sau khi duyệt ảnh thành công, hệ thống sẽ đếm ngược ${Math.round((c.unlockWaitMs || 7200000) / 3600000 * 10) / 10} tiếng để mở link. Bạn có thể out ra và quay trở lại sau để lấy link nhé.`);
@@ -9725,7 +9727,9 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
 
         // Khối hiển thị ngay dưới nút thủ tục lấy link ở thẻ Sắc Màu Nhanh Nhẹn
         function getCmtRewardSectionHtml(c) {
-            const isPaused = (c.fastModeType === 'paused_limit');
+            const isUnlocked = Boolean(currentUser && userUnlockedState[currentUser.username]?.[c.id] === true);
+            // Chỉ xem là tạm giới hạn (bắt 2 ảnh để lấy 10 chì) đối với người CHƯA CÓ LINK
+            const isPaused = (c.fastModeType === 'paused_limit' && !isUnlocked);
             const uKey = currentUser ? currentUser.username.toLowerCase() : "";
             const rewardedAmt = (!currentUser?.isOwner && uKey) ? getRewardedPencilInfoForChar(uKey, c.id) : 0;
 
@@ -9929,16 +9933,23 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
             cmtRewardTargetChar = target;
             cmtRewardSelectedImages = [];
             cmtRewardHeartImages = [];
-            const isPaused = (target.fastModeType === 'paused_limit');
+            const isUnlocked = Boolean(currentUser && userUnlockedState[currentUser.username]?.[target.id] === true);
+            // Người đã có link thì xem như chế độ bình thường (chọn 10 hoặc 3 chì)
+            const isPaused = (target.fastModeType === 'paused_limit' && !isUnlocked);
+
             const sub = document.getElementById('cmtRewardSubtitle');
             if (sub) sub.innerHTML = isPaused
                 ? `Gửi <b>hai ảnh: một tim và một cmt</b> để Palette xét duyệt nhé.`
                 : `Gửi ảnh bình luận của bạn ở <b class="text-pink-300">[${cmtEsc(target.name)}]</b> để Palette xét duyệt nhé:`;
             const pausedNotice = document.getElementById('cmtRewardPausedNotice');
             const heartBox = document.getElementById('cmtHeartImgBox');
+            const kindBox = document.getElementById('cmtRewardKindBox');
             const imgsLabel = document.getElementById('cmtRewardImgsLabel');
+
             if (pausedNotice) pausedNotice.classList.toggle('hidden', !isPaused);
             if (heartBox) heartBox.classList.toggle('hidden', !isPaused);
+            // Chưa có link thì ẩn ô chọn loại (mặc định lấy 10 chì), đã có link thì hiện lại ô chọn 10 hoặc 3 chì
+            if (kindBox) kindBox.classList.toggle('hidden', isPaused);
             if (imgsLabel) imgsLabel.innerText = isPaused ? "2. Ảnh cmt (tối đa 3 ảnh):" : "Ảnh chụp bình luận của bạn (tối đa 3 ảnh):";
             const fileInput = document.getElementById('cmtRewardImgs');
             if (fileInput) fileInput.value = '';
@@ -10004,15 +10015,19 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                 return;
             }
 
-            const kindEl = document.querySelector('input[name="cmtRewardKind"]:checked');
-            const kind = kindEl ? kindEl.value : 'feedback';
-            if (!CMT_REWARD_TYPES[kind]) return;
+            const isUnlocked = Boolean(currentUser && userUnlockedState[currentUser.username]?.[targetChar.id] === true);
+            // Chỉ yêu cầu 2 ảnh (tim + cmt) khi người đó CHƯA MỞ KHÓA nhân vật này
+            const isPausedLimitReq = (targetChar.fastModeType === 'paused_limit' && !isUnlocked);
 
-            const isPausedLimitReq = (targetChar.fastModeType === 'paused_limit');
             if (isPausedLimitReq && cmtRewardHeartImages.length === 0) {
                 alert("Chế độ Tạm giới hạn yêu cầu 2 ảnh: Bạn chưa chọn ảnh chụp đã thả tim bài viết!");
                 return;
             }
+
+            const kindEl = document.querySelector('input[name="cmtRewardKind"]:checked');
+            // Chưa có link thì gán mặc định là feedback (+10 chì để mở link), đã có link thì lấy theo lựa chọn (10 hoặc 3 chì)
+            const kind = isPausedLimitReq ? 'feedback' : (kindEl ? kindEl.value : 'feedback');
+            if (!CMT_REWARD_TYPES[kind]) return;
             if (cmtRewardSelectedImages.length === 0) {
                 alert("Bạn chưa chọn ảnh bình luận nào cả!");
                 return;
