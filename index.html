@@ -11727,10 +11727,72 @@
 
         function getCombinedSailorPool() {
             const pool = [];
-            (sailorCardsConfig.meme || []).forEach(c => pool.push({ ...c, category: 'meme' }));
-            (sailorCardsConfig.sailor || []).forEach(c => pool.push({ ...c, category: 'sailor' }));
-            (sailorCardsConfig.secret || []).forEach(c => pool.push({ ...c, category: 'secret' }));
+            const pushWithUid = (c, cat, idx) => {
+                const uid = c.id ? `${cat}_${c.id}` : `${cat}_${idx}_${(c.src || '').slice(-20)}`;
+                pool.push({ ...c, category: cat, _uid: uid });
+            };
+            (sailorCardsConfig.meme || []).forEach((c, i) => pushWithUid(c, 'meme', i));
+            (sailorCardsConfig.sailor || []).forEach((c, i) => pushWithUid(c, 'sailor', i));
+            (sailorCardsConfig.secret || []).forEach((c, i) => pushWithUid(c, 'secret', i));
             return pool;
+        }
+
+        function shuffleIdArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        // Bốc bài theo bộ bài đã xáo: đảm bảo đi qua hết toàn bộ kho thẻ trước khi lặp lại
+        function pickNextFairSailorCard(username, pool) {
+            if (!pool || pool.length === 0) return null;
+            if (pool.length === 1) return pool[0];
+
+            const uKey = (username || 'guest').toLowerCase();
+            const storageKey = `palette_sailor_deck_${uKey}`;
+            let state = safeParseLocalJson(storageKey, { queue: [], knownIds: [], lastId: '' });
+            if (!state || typeof state !== 'object') state = { queue: [], knownIds: [], lastId: '' };
+
+            const allIds = pool.map(c => c._uid);
+            const allSet = new Set(allIds);
+            const knownSet = new Set(Array.isArray(state.knownIds) ? state.knownIds : []);
+
+            let queue = (Array.isArray(state.queue) ? state.queue : []).filter(id => allSet.has(id));
+            const queueSet = new Set(queue);
+
+            // Nếu chủ web mới thêm thẻ mới -> trộn luôn thẻ mới vào các vị trí ngẫu nhiên trong xấp bài hiện tại
+            const newlyAdded = allIds.filter(id => !knownSet.has(id) && !queueSet.has(id));
+            if (newlyAdded.length > 0 && queue.length > 0) {
+                shuffleIdArray(newlyAdded).forEach(newId => {
+                    const pos = Math.floor(Math.random() * (queue.length + 1));
+                    queue.splice(pos, 0, newId);
+                });
+            }
+
+            // Nếu đã lật hết vòng -> xáo toàn bộ kho cho vòng mới (tránh trùng ngay lá vừa lật cuối vòng trước)
+            if (queue.length === 0) {
+                queue = shuffleIdArray(allIds);
+                if (queue.length > 1 && queue[0] === state.lastId) {
+                    const swapIdx = 1 + Math.floor(Math.random() * (queue.length - 1));
+                    [queue[0], queue[swapIdx]] = [queue[swapIdx], queue[0]];
+                }
+            }
+
+            const pickedUid = queue.shift();
+            const pickedCard = pool.find(c => c._uid === pickedUid) || pool[0];
+
+            try {
+                localStorage.setItem(storageKey, JSON.stringify({
+                    queue: queue,
+                    knownIds: allIds,
+                    lastId: pickedUid
+                }));
+            } catch (_) {}
+
+            return pickedCard;
         }
 
         // Quản lý âm thanh đang phát khi bốc bài & bấm vào thẻ để lật ngay
@@ -11914,8 +11976,8 @@
             db.collection("pencils").doc(uKey).set({ sailorDate: todayKey, sailorCount: newCount }, { merge: true }).catch(() => {});
             updateSailorLimitUI();
 
-            // Random tỷ lệ bằng nhau giữa tất cả lá bài trong kho
-            const pickedCard = pool[Math.floor(Math.random() * pool.length)];
+            // Bốc từ bộ bài đã xáo đều không lặp lại cho tới khi hết cả kho
+            const pickedCard = pickNextFairSailorCard(username, pool);
 
             isSailorCardFlipping = true;
             isSailorStageWaitingClose = true;
@@ -12111,6 +12173,10 @@
         }
 
         function handleStageOverlayClick() {
+            if (typeof skipCurrentSailorSpinFn === 'function') {
+                handleStageSpinSkipTap();
+                return;
+            }
             if (isSailorCardFlipping) return;
             closeSailorStageOverlay();
         }
@@ -12118,6 +12184,8 @@
         function closeSailorStageOverlay() {
             if (isSailorCardFlipping) return;
             isSailorStageWaitingClose = false;
+            const fxLayer = document.getElementById('visualEffectsLayer');
+            if (fxLayer) fxLayer.style.display = '';
             const transformingBanner = document.getElementById('sailorTransformingBanner');
             if (transformingBanner) transformingBanner.classList.add('hidden');
             const skipHint = document.getElementById('sailorSkipSpinHint');
