@@ -1640,7 +1640,7 @@
             </div>
             <p id="cmtRewardSubtitle" class="text-xs text-sky-100/80 mb-3"></p>
 
-            <div class="bg-black/25 p-3 rounded-2xl border border-white/10 text-xs mb-3 space-y-2">
+            <div id="cmtRewardKindBox" class="bg-black/25 p-3 rounded-2xl border border-white/10 text-xs mb-3 space-y-2">
                 <div class="font-bold text-sky-200">Chọn loại bình luận:</div>
                 <label id="cmtKindLabel_feedback" class="flex items-start gap-2 cursor-pointer bg-pink-500/10 border border-pink-300/30 rounded-xl p-2">
                     <input type="radio" name="cmtRewardKind" value="feedback" checked class="mt-0.5 accent-pink-400">
@@ -1653,7 +1653,7 @@
             </div>
 
             <div id="cmtRewardPausedNotice" class="hidden bg-amber-500/15 border border-amber-300/40 rounded-2xl p-2.5 text-[11px] text-amber-200 font-bold mb-3 leading-relaxed">
-                ⚠️ Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu. Hãy gửi đủ 2 ảnh (ảnh đã tim bài + ảnh cmt) để Palette tặng chì mở khóa nhé!
+                ⚠️ Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu. Ở chế độ này, bạn chỉ cần gửi 2 ảnh (ảnh đã thả tim + ảnh cmt: noti hoặc nội dung gì đó bạn muốn nói) để Palette tặng 10 Chì Màu mở khóa nhé!
             </div>
 
             <div id="cmtHeartImgBox" class="hidden bg-black/25 p-3 rounded-2xl border border-rose-300/30 text-xs mb-3">
@@ -9646,13 +9646,41 @@
             return String(str || "").replace(/[\/\\\s'"`]/g, "_");
         }
 
+        function getRewardedPencilInfoForChar(uKey, charId) {
+            if (!uKey || !charId) return 0;
+            const cmtMap = userPencilsData[uKey.toLowerCase()]?.cmtRewarded || {};
+            const sId = cmtSafeId(charId);
+            if (typeof cmtMap[sId] === 'number') return cmtMap[sId];
+            if (typeof cmtMap[sId] === 'object' && cmtMap[sId]?.amount) return cmtMap[sId].amount;
+            if (cmtMap[`${sId}__feedback`]) return 10;
+            if (cmtMap[`${sId}__noti`]) return 2;
+            return 0;
+        }
+
         // Khối hiển thị ngay dưới nút thủ tục lấy link ở thẻ Sắc Màu Nhanh Nhẹn
         function getCmtRewardSectionHtml(c) {
             const isPaused = (c.fastModeType === 'paused_limit');
+            const uKey = currentUser ? currentUser.username.toLowerCase() : "";
+            const rewardedAmt = (!currentUser?.isOwner && uKey) ? getRewardedPencilInfoForChar(uKey, c.id) : 0;
+
+            if (rewardedAmt > 0) {
+                return `
+                    <div class="w-full mt-3 rounded-2xl border border-emerald-300/40 bg-emerald-500/15 p-3 text-center">
+                        <p class="text-[11px] text-emerald-200 font-black leading-relaxed">
+                            ✓ Bạn đã nhận ${rewardedAmt} bút chì, đợi đợt char mới tiếp theo để nhận tiếp nhé.
+                        </p>
+                    </div>
+                `;
+            }
+
+            const guideText = isPaused
+                ? `Gửi đủ 2 ảnh (ảnh tim + ảnh cmt: noti/bất kỳ) để nhận: <b class="text-amber-300">+10 Bút Chì Màu</b> đổi mở khóa link nhé!`
+                : `Feedback / nêu cảm nghĩ về plot/char: <b class="text-amber-300">+10 Chì</b> · Cmt noti: <b class="text-amber-300">+2 Chì</b>`;
+
             return `
                 <div class="w-full mt-3 rounded-2xl border border-pink-300/30 bg-pink-400/10 p-3 text-center">
                     <p class="text-[11px] text-pink-100 font-extrabold leading-relaxed">${isPaused ? `💬❤️ Đã tim bài &amp; cmt ở post ${cmtEsc(c.name)}? Gửi 2 ảnh (ảnh tim + ảnh cmt) để nhận Bút Chì Màu mở khóa nhé!` : `💬 Đã cmt ở post ${cmtEsc(c.name)}? Gửi ảnh để nhận Bút Chì Màu nhé!`}</p>
-                    <p class="text-[10px] text-sky-200/80 mt-0.5 leading-relaxed">Feedback / nêu cảm nghĩ về plot/char: <b class="text-amber-300">+10 Chì</b> · Cmt noti: <b class="text-amber-300">+2 Chì</b></p>
+                    <p class="text-[10px] text-sky-200/80 mt-0.5 leading-relaxed">${guideText}</p>
                     <button type="button" onclick="openCmtRewardModal('${cmtSafeId(c.id)}')" class="jelly-btn mt-2 w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-2.5 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
                         ${isPaused ? '📸 Gửi ảnh tim &amp; cmt nhận Chì Màu' : '📸 Gửi ảnh cmt nhận Chì Màu'}
                     </button>
@@ -9855,9 +9883,12 @@
             const note = document.getElementById('cmtRewardNote');
             if (note) note.value = '';
             const uKeyModal = currentUser.username.toLowerCase();
-            const rewardedMap = (!currentUser.isOwner && userPencilsData[uKeyModal]?.cmtRewarded) ? userPencilsData[uKeyModal].cmtRewarded : {};
-            const doneFeedback = Boolean(rewardedMap[`${cmtSafeId(target.id)}__feedback`]);
-            const doneNoti = Boolean(rewardedMap[`${cmtSafeId(target.id)}__noti`]);
+            const rewardedAmtModal = (!currentUser.isOwner) ? getRewardedPencilInfoForChar(uKeyModal, target.id) : 0;
+
+            if (rewardedAmtModal > 0) {
+                alert(`Bạn đã nhận ${rewardedAmtModal} bút chì, đợi đợt char mới tiếp theo để nhận tiếp nhé.`);
+                return;
+            }
 
             const rFeedback = document.querySelector('input[name="cmtRewardKind"][value="feedback"]');
             const rNoti = document.querySelector('input[name="cmtRewardKind"][value="noti"]');
@@ -9866,25 +9897,17 @@
             const tagFeedback = document.getElementById('cmtKindDone_feedback');
             const tagNoti = document.getElementById('cmtKindDone_noti');
 
-            if (rFeedback) rFeedback.disabled = doneFeedback;
-            if (rNoti) rNoti.disabled = doneNoti;
-            if (lblFeedback) lblFeedback.classList.toggle('opacity-50', doneFeedback);
-            if (lblNoti) lblNoti.classList.toggle('opacity-50', doneNoti);
-            if (tagFeedback) tagFeedback.classList.toggle('hidden', !doneFeedback);
-            if (tagNoti) tagNoti.classList.toggle('hidden', !doneNoti);
-
-            if (rFeedback && !doneFeedback) rFeedback.checked = true;
-            else if (rNoti && !doneNoti) rNoti.checked = true;
+            if (rFeedback) { rFeedback.disabled = false; rFeedback.checked = true; }
+            if (rNoti) rNoti.disabled = false;
+            if (lblFeedback) lblFeedback.classList.remove('opacity-50');
+            if (lblNoti) lblNoti.classList.remove('opacity-50');
+            if (tagFeedback) tagFeedback.classList.add('hidden');
+            if (tagNoti) tagNoti.classList.add('hidden');
 
             const btn = document.getElementById('cmtRewardSubmitBtn');
             if (btn) {
-                if (doneFeedback && doneNoti) {
-                    btn.disabled = true;
-                    btn.innerText = "✓ Bạn đã nhận đủ thưởng cmt cho char này";
-                } else {
-                    btn.disabled = false;
-                    btn.innerText = "Gửi cho Palette duyệt";
-                }
+                btn.disabled = false;
+                btn.innerText = "Gửi cho Palette duyệt";
             }
             const modal = document.getElementById('cmtRewardModal');
             if (modal) modal.classList.remove('hidden');
@@ -9903,11 +9926,23 @@
                 alert("Vui lòng đăng nhập để gửi ảnh nhé!");
                 return;
             }
+
+            const username = currentUser.username;
+            const uKey = username.toLowerCase();
+            const targetChar = cmtRewardTargetChar;
+
+            // Nếu đã nhận 10 hoặc 2 chì ở nhân vật này rồi thì khóa hoàn toàn
+            const rewardedAmt = (!currentUser.isOwner) ? getRewardedPencilInfoForChar(uKey, targetChar.id) : 0;
+            if (rewardedAmt > 0) {
+                alert(`Bạn đã nhận ${rewardedAmt} bút chì, đợi đợt char mới tiếp theo để nhận tiếp nhé.`);
+                return;
+            }
+
             const kindEl = document.querySelector('input[name="cmtRewardKind"]:checked');
             const kind = kindEl ? kindEl.value : 'feedback';
             if (!CMT_REWARD_TYPES[kind]) return;
 
-            const isPausedLimitReq = (cmtRewardTargetChar.fastModeType === 'paused_limit');
+            const isPausedLimitReq = (targetChar.fastModeType === 'paused_limit');
             if (isPausedLimitReq && cmtRewardHeartImages.length === 0) {
                 alert("Chế độ Tạm giới hạn yêu cầu 2 ảnh: Bạn chưa chọn ảnh chụp đã thả tim bài viết!");
                 return;
@@ -9917,16 +9952,7 @@
                 return;
             }
 
-            const username = currentUser.username;
-            const uKey = username.toLowerCase();
-            const targetChar = cmtRewardTargetChar;
             const rewardedKey = `${cmtSafeId(targetChar.id)}__${kind}`;
-
-            // Mỗi nhân vật mỗi loại chỉ nhận thưởng 1 lần (Chủ Web được test thoải mái không bị chặn)
-            if (!currentUser.isOwner && userPencilsData[uKey]?.cmtRewarded?.[rewardedKey]) {
-                alert(`Bạn đã được Palette duyệt và nhận thưởng "${CMT_REWARD_TYPES[kind].label}" cho ${targetChar.name} rồi nhé!`);
-                return;
-            }
 
             const btn = document.getElementById('cmtRewardSubmitBtn');
             isSubmittingCmtReward = true;
@@ -10005,17 +10031,20 @@
                             <div class="text-[10px] text-sky-200/60">${cmtEsc(req.charName || 'Nhân vật')} · ${cmtEsc(req.timestamp || '')}</div>
                         </div>
                         <span class="text-[10px] ${req.kind === 'feedback' ? 'bg-pink-500/30 text-pink-200 border-pink-300/40' : 'bg-sky-500/30 text-sky-200 border-sky-300/40'} border px-2 py-0.5 rounded-full font-bold shrink-0">
-                            ${cmtEsc(info.label)} · +${info.reward}
+                            Yêu cầu: +${req.reward || info.reward} Chì
                         </span>
                     </div>
                     ${heartThumbs ? `<div class="space-y-1"><div class="text-[10px] text-rose-300 font-bold">❤️ Ảnh đã tim bài:</div><div class="flex gap-2 overflow-x-auto">${heartThumbs}</div></div>` : ''}
                     <div class="space-y-1">${heartThumbs ? '<div class="text-[10px] text-pink-200 font-bold">💬 Ảnh bình luận:</div>' : ''}<div class="flex gap-2 overflow-x-auto">${thumbs}</div></div>
                     ${req.note ? `<p class="text-[11px] text-sky-100/80 italic bg-black/30 p-2 rounded-xl border border-white/5">"${cmtEsc(req.note)}"</p>` : ''}
-                    <div class="flex items-center gap-2 pt-1">
-                        <button type="button" onclick="approveCmtReward('${cmtSafeId(req.id)}')" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
-                            Tặng ${info.reward} Chì
+                    <div class="flex items-center gap-1.5 pt-1">
+                        <button type="button" onclick="approveCmtReward('${cmtSafeId(req.id)}', 10)" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
+                            Tặng 10 Chì
                         </button>
-                        <button type="button" onclick="rejectCmtReward('${cmtSafeId(req.id)}')" class="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 font-bold text-xs active:scale-95 transition" title="Từ chối">✕</button>
+                        <button type="button" onclick="approveCmtReward('${cmtSafeId(req.id)}', 2)" class="flex-1 bg-gradient-to-r from-sky-500 to-indigo-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
+                            Tặng 2 Chì
+                        </button>
+                        <button type="button" onclick="rejectCmtReward('${cmtSafeId(req.id)}')" class="px-2.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 font-bold text-xs active:scale-95 transition" title="Từ chối">✕</button>
                     </div>
                 `;
                 container.appendChild(item);
@@ -10033,30 +10062,39 @@
             document.body.appendChild(overlay);
         }
 
-        async function approveCmtReward(reqId) {
+        async function approveCmtReward(reqId, customAmount = null) {
             if (!currentUser?.isOwner) return;
             const req = pendingCmtRewards.find(r => cmtSafeId(r.id) === reqId);
             if (!req) { alert("Yêu cầu này đã được xử lý rồi."); return; }
-            const info = CMT_REWARD_TYPES[req.kind];
-            if (!info) { alert("Loại yêu cầu không hợp lệ."); return; }
-            if (!confirm(`Bạn chắc chắn tặng ${info.reward} Bút Chì Màu cho "${req.username}" chứ?`)) return;
+            const info = CMT_REWARD_TYPES[req.kind] || CMT_REWARD_TYPES.noti;
+            const rewardPoints = (customAmount !== null) ? Number(customAmount) : (Number(req.reward) || info.reward || 10);
+            if (!confirm(`Bạn chắc chắn tặng ${rewardPoints} Bút Chì Màu cho "${req.username}" chứ?`)) return;
 
             const reqRef = db.collection("cmt_reward_requests").doc(req.id);
             const uKey = String(req.username || "").toLowerCase();
             const pencilRef = db.collection("pencils").doc(uKey);
-            const rewardedKey = req.rewardedKey || `${cmtSafeId(req.charId)}__${req.kind}`;
+            const safeCharId = cmtSafeId(req.charId);
             const isTestingOwner = (uKey === OWNER_USER.toLowerCase());
             try {
                 const reqSnap = await reqRef.get();
                 if (!reqSnap.exists) { alert("Yêu cầu này đã được xử lý rồi."); renderAdminCmtRewards(); return; }
                 const pencilSnap = await pencilRef.get();
                 const pencilData = pencilSnap.exists ? pencilSnap.data() : {};
-                const alreadyRewarded = !isTestingOwner && (pencilData.cmtRewarded?.[rewardedKey] === true);
-                const nextCount = (Number(pencilData.count) || 0) + (alreadyRewarded ? 0 : info.reward);
+                const prevAmt = !isTestingOwner ? (pencilData.cmtRewarded?.[safeCharId] || (pencilData.cmtRewarded?.[`${safeCharId}__${req.kind}`] ? rewardPoints : 0)) : 0;
+                const alreadyRewarded = Boolean(prevAmt);
+                const nextCount = (Number(pencilData.count) || 0) + (alreadyRewarded ? 0 : rewardPoints);
 
                 const batch = db.batch();
                 if (!alreadyRewarded) {
-                    const updateObj = isTestingOwner ? { count: nextCount } : { count: nextCount, cmtRewarded: { [rewardedKey]: true } };
+                    const updateObj = isTestingOwner
+                        ? { count: nextCount }
+                        : {
+                            count: nextCount,
+                            cmtRewarded: {
+                                [safeCharId]: rewardPoints,
+                                [`${safeCharId}__${req.kind}`]: rewardPoints
+                            }
+                        };
                     batch.set(pencilRef, updateObj, { merge: true });
                 }
                 batch.delete(reqRef);
@@ -10068,15 +10106,21 @@
                         count: nextCount,
                         cmtRewarded: isTestingOwner
                             ? ((userPencilsData[uKey] || {}).cmtRewarded || {})
-                            : { ...((userPencilsData[uKey] || {}).cmtRewarded || {}), [rewardedKey]: true }
+                            : {
+                                ...((userPencilsData[uKey] || {}).cmtRewarded || {}),
+                                [safeCharId]: rewardPoints,
+                                [`${safeCharId}__${req.kind}`]: rewardPoints
+                            }
                     };
                     updatePencilUI();
-                    triggerNotification("Palette đã duyệt ảnh cmt!", `Ảnh ${info.label} của bạn tại ${req.charName || "nhân vật"} đã được duyệt, bạn nhận +${info.reward} Bút Chì Màu! Hiện có: ${nextCount} chì.`, req.username);
-                    alert(`Đã tặng ${info.reward} Bút Chì Màu cho "${req.username}" thành công!`);
+                    triggerNotification("Palette đã duyệt ảnh cmt!", `Ảnh của bạn tại ${req.charName || "nhân vật"} đã được duyệt, bạn nhận +${rewardPoints} Bút Chì Màu! Hiện có: ${nextCount} chì.`, req.username);
+                    alert(`Đã tặng ${rewardPoints} Bút Chì Màu cho "${req.username}" thành công!`);
                 } else {
-                    alert(`"${req.username}" đã nhận thưởng mục này trước đó nên không cộng thêm. Đã xóa yêu cầu.`);
+                    alert(`"${req.username}" đã nhận thưởng cho nhân vật này trước đó nên không cộng thêm. Đã xóa yêu cầu.`);
                 }
                 renderAdminCmtRewards();
+                renderFastColorCenter();
+                if (activeChar) openCharDetail(activeChar);
             } catch (error) {
                 console.error("Lỗi duyệt ảnh cmt:", error);
                 alert("Có lỗi xảy ra: " + (error?.message || "Vui lòng thử lại"));
