@@ -5367,11 +5367,19 @@
                 if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
 
+            db.collection("settings").doc("menu_icons").onSnapshot((doc) => {
+                if (doc.exists && doc.data()?.customMenuIcons) {
+                    customMenuIcons = { ...customMenuIcons, ...doc.data().customMenuIcons };
+                    try { localStorage.setItem('palette_custom_menu_icons', JSON.stringify(customMenuIcons)); } catch (_) {}
+                    applyCustomMenuIcons();
+                }
+            }, () => {});
+
             db.collection("settings").doc("main").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
                     if (data.availableCategories) availableCategories = data.availableCategories;
-                    if (data.customMenuIcons) customMenuIcons = data.customMenuIcons;
+                    if (data.customMenuIcons) customMenuIcons = { ...customMenuIcons, ...data.customMenuIcons };
                     if (typeof data.ownerNtfyTopic === 'string') {
                         ownerNtfyTopic = data.ownerNtfyTopic;
                         localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
@@ -5694,6 +5702,7 @@
             }
             updateFaqButtonVisibility();
 
+            customMenuIcons = { ...customMenuIcons, ...safeParseLocalJson('palette_custom_menu_icons', {}) };
             updateNotificationUI();
             updateFastColorSubtitle();
             updateRegisteredUsersCountUI();
@@ -7032,15 +7041,20 @@
         }
 
         // ================= XỬ LÝ ĐỔI ẢNH / GIF MỤC LỚN =================
-        function updateMenuIconPreviewUI(src) {
+        function updateMenuIconPreviewUI(src, rawFallback = '') {
             const img = document.getElementById('menuIconPreviewImg');
             const placeholder = document.getElementById('menuIconPreviewPlaceholder');
             if (img && placeholder) {
                 if (src) {
-                    img.src = src;
+                    const safeSrc = getSafeCatboxImgUrl(src);
+                    img.dataset.cbStep = '0';
+                    img.setAttribute('referrerpolicy', 'no-referrer');
+                    img.onerror = () => handleCatboxImgError(img, rawFallback || src);
+                    img.src = safeSrc;
                     img.classList.remove('hidden');
                     placeholder.classList.add('hidden');
                 } else {
+                    img.onerror = null;
                     img.src = '';
                     img.classList.add('hidden');
                     placeholder.classList.remove('hidden');
@@ -7154,18 +7168,32 @@
         }
 
         function handleMenuIconUrlInput(url) {
-            if (url && url.trim()) {
-                updateMenuIconPreviewUI(getSafeCatboxImgUrl(url.trim()));
+            const val = (url || '').trim();
+            const fileInput = document.getElementById('menuIconFileInput');
+            const nameEl = document.getElementById('menuIconFileName');
+            if (val) {
+                if (fileInput) fileInput.value = '';
+                if (nameEl) {
+                    nameEl.innerText = "Chưa chọn tệp";
+                    nameEl.className = "text-[11px] text-sky-200/70 text-center mt-1 truncate";
+                }
+                const cleanUrl = getRawCatboxUrl(val);
+                if (!/^https?:\/\/[^/\s]+\.[^/\s]+/i.test(cleanUrl)) return;
+                updateMenuIconPreviewUI(getSafeCatboxImgUrl(cleanUrl), cleanUrl);
+            } else if (!fileInput?.files?.length) {
+                updateMenuIconPreviewUI('');
             }
         }
 
         function handleMenuIconFileSelected(input) {
             const file = input.files && input.files[0];
             const nameEl = document.getElementById('menuIconFileName');
+            const urlInput = document.getElementById('menuIconUrlInput');
             if (!file) return;
 
+            if (urlInput) urlInput.value = '';
             if (nameEl) {
-                nameEl.innerText = `✓ Đã chọn: ${file.name}`;
+                nameEl.innerText = `✓ Đã chọn: ${file.name} (${Math.round(file.size / 1024)}KB)`;
                 nameEl.className = "text-[11px] text-emerald-300 font-bold text-center mt-1 truncate";
             }
 
@@ -7202,48 +7230,74 @@
             const url = urlInput ? urlInput.value.trim() : '';
             const saveBtn = document.getElementById('saveMenuIconBtn');
 
-            let finalSrc = url;
+            let finalSrc = url ? getRawCatboxUrl(url) : '';
 
             if (file) {
-                if (file.size > 1.5 * 1024 * 1024) {
-                    alert("Tệp ảnh/GIF lớn hơn 1.5MB có thể làm chậm tải trang. Palette khuyên bạn nên chọn file dưới 1.5MB hoặc dán link trực tiếp nhé!");
+                const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+                if (isGif && file.size > 700 * 1024) {
+                    alert(`File GIF "${file.name}" nặng ${Math.round(file.size / 1024)}KB (khi lưu lên Firebase sẽ vượt giới hạn 1 MB).\nBạn hãy up file GIF này lên GitHub (hoặc Catbox) rồi dán link vào ô URL để lưu mượt mà và không nặng web nhé!`);
+                    return;
                 }
-                if (saveBtn) saveBtn.innerText = "⏳ Đang tải và xử lý...";
+                if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = "⏳ Đang tải và xử lý..."; }
                 try {
                     finalSrc = await processMediaForMenu(file);
                 } catch (err) {
                     console.error("Lỗi đọc file ảnh/GIF:", err);
                     alert("Lỗi khi đọc file ảnh/GIF từ thiết bị của bạn!");
-                    if (saveBtn) saveBtn.innerText = "Cập nhật ảnh khung này";
+                    if (saveBtn) { saveBtn.disabled = false; saveBtn.innerText = "Cập nhật ảnh khung này"; }
                     return;
                 }
             }
 
             if (!finalSrc) {
                 alert("Vui lòng chọn 1 ảnh/GIF từ máy hoặc dán đường link URL vào nhé!");
-                if (saveBtn) saveBtn.innerText = "Cập nhật ảnh khung này";
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.innerText = "Cập nhật ảnh khung này"; }
                 return;
             }
 
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = "⏳ Đang lưu lên máy chủ..."; }
+            const backupIcons = { ...customMenuIcons };
+
             try {
                 customMenuIcons[currentEditingMenuKey] = finalSrc;
-                localStorage.setItem('palette_custom_menu_icons', JSON.stringify(customMenuIcons));
-                
-                await db.collection("settings").doc("main").set({
-                    availableCategories: availableCategories,
-                    customMenuIcons: customMenuIcons
-                }, { merge: true });
+                let savedToCloud = false;
 
-                applyCustomMenuIcons();
-                closeAdminMenuIconModal();
-                alert(`✓ Đã cập nhật ảnh/GIF cho mục thành công!`);
+                try {
+                    await db.collection("settings").doc("main").set({
+                        availableCategories: availableCategories,
+                        customMenuIcons: customMenuIcons
+                    }, { merge: true });
+                    savedToCloud = true;
+                } catch (mainErr) {
+                    // Nếu settings/main bị đầy 1 MB, tự lưu riêng sang settings/menu_icons
+                    await db.collection("settings").doc("menu_icons").set({
+                        customMenuIcons: customMenuIcons
+                    }, { merge: true });
+                    savedToCloud = true;
+                }
+
+                if (savedToCloud) {
+                    try { localStorage.setItem('palette_custom_menu_icons', JSON.stringify(customMenuIcons)); } catch (_) {}
+                    applyCustomMenuIcons();
+                    closeAdminMenuIconModal();
+                    alert("✓ Đã cập nhật ảnh/GIF cho mục thành công!");
+                }
             } catch (err) {
-                console.error("Lỗi lưu lên Firebase:", err);
-                applyCustomMenuIcons();
-                closeAdminMenuIconModal();
-                alert("✓ Đã lưu và hiển thị trên thiết bị của bạn thành công!");
+                console.error("Lỗi lưu icon mục lớn:", err);
+                customMenuIcons = backupIcons;
+                const msg = String(err?.message || "");
+                if (msg.includes("exceeds the maximum allowed size")) {
+                    alert("❌ Dung lượng gói dữ liệu vượt quá 1 MB của Firebase! Hãy dùng link URL ảnh GIF (GitHub / Catbox) dán vào ô URL thay vì up file GIF trực tiếp từ máy nhé.");
+                } else if (err?.code === 'permission-denied') {
+                    alert("❌ Không có quyền ghi vào Firestore! Hãy kiểm tra lại Rules hoặc thử dán link URL ảnh GIF nhẹ hơn.");
+                } else {
+                    alert("❌ Lỗi khi lưu lên Firebase: " + msg);
+                }
             } finally {
-                if (saveBtn) saveBtn.innerText = "Cập nhật ảnh khung này";
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = "Cập nhật ảnh khung này";
+                }
             }
         }
 
@@ -7251,7 +7305,7 @@
             return getSafeCatboxImgUrl(url);
         }
 
-        // Áp dụng ảnh/GIF an toàn cho toàn bộ 7 mục lớn
+        // Áp dụng ảnh/GIF an toàn cho toàn bộ các mục lớn
         function applyCustomMenuIcons() {
             const list = [
                 { key: 'story', id: 'iconBox-story', imgId: 'menuImg-story' },
@@ -7271,7 +7325,7 @@
                 if (box) {
                     const safeSrc = getSafeMenuIconUrl(rawUrl);
                     const imgIdAttr = item.imgId ? `id="${item.imgId}"` : '';
-                    box.innerHTML = `<img ${imgIdAttr} src="${safeSrc}" referrerpolicy="no-referrer" class="w-full h-full object-contain">`;
+                    box.innerHTML = `<img ${imgIdAttr} src="${safeSrc}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(rawUrl)}')" class="w-full h-full object-contain">`;
                 }
             });
         }
