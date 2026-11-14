@@ -1,4 +1,3 @@
-=""
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -475,6 +474,88 @@
             backface-visibility: hidden;
             -webkit-transform-style: preserve-3d;
             transform-style: preserve-3d;
+        }
+
+        /* HIỆU ỨNG THẺ MÀU MAY MẮN (SAILOR MOON 3D CARD FLIP) */
+        .sailor-stage-card-wrap {
+            position: fixed;
+            width: 210px;
+            height: 315px;
+            perspective: 1200px;
+            -webkit-perspective: 1200px;
+            transition: left 0.58s cubic-bezier(0.22, 1, 0.36, 1), top 0.58s cubic-bezier(0.22, 1, 0.36, 1), transform 0.58s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 95;
+            will-change: transform, left, top;
+        }
+        .sailor-stage-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.32, 1.12, 0.45, 1);
+            border-radius: 1.25rem;
+        }
+        .sailor-stage-inner.is-flipped {
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+        }
+        @keyframes sailorCardSpinZ {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.06); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        .sailor-stage-inner.is-spinning {
+            animation: sailorCardSpinZ 0.85s linear infinite !important;
+            box-shadow: 0 0 35px rgba(244, 114, 182, 0.95), 0 0 65px rgba(253, 224, 71, 0.85) !important;
+        }
+        .sailor-stage-inner.is-glowing {
+            box-shadow: 0 0 28px rgba(244, 114, 182, 0.9), 0 0 55px rgba(253, 224, 71, 0.75);
+            animation: sailorGlowPulse 0.9s ease-in-out infinite alternate, sailorSuspenseHover 1.6s ease-in-out infinite;
+        }
+        @keyframes sailorSuspenseHover {
+            0%, 100% { transform: translateY(0) rotateZ(0deg) scale(1); }
+            25% { transform: translateY(-8px) rotateZ(-3deg) scale(1.03); }
+            75% { transform: translateY(6px) rotateZ(3deg) scale(0.98); }
+        }
+        @keyframes sailorGlowPulse {
+            0% { box-shadow: 0 0 22px rgba(244, 114, 182, 0.85), 0 0 42px rgba(253, 224, 71, 0.65); }
+            100% { box-shadow: 0 0 38px rgba(232, 121, 249, 1), 0 0 70px rgba(253, 224, 71, 0.95); }
+        }
+        .sailor-card-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 1.25rem;
+            transform: rotateY(0deg);
+            -webkit-transform: rotateY(0deg);
+            overflow: hidden;
+        }
+        .sailor-card-face img {
+            width: 100%;
+            height: 100%;
+            border-radius: 1.25rem;
+            display: block;
+        }
+        .sailor-card-front {
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+            position: relative;
+        }
+        .sailor-sparkle-burst {
+            position: fixed;
+            pointer-events: none;
+            z-index: 98;
+            font-size: 20px;
+            animation: sailorSparkleFly 1.2s ease-out forwards;
+        }
+        @keyframes sailorSparkleFly {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
+            25% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(35deg); }
+            100% { opacity: 0; transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(0.5) rotate(140deg); }
         }
 
         </style>
@@ -1091,6 +1172,29 @@
                         </p>
                     </div>
                     <svg class="w-5 h-5 text-pink-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+            </div>
+
+            <!-- MỤC: THẺ MÀU MAY MẮN (DÀNH RIÊNG CHỦ WEB TEST) -->
+            <div id="ownerOnlySailorSection" class="hidden w-full relative">
+                <button onclick="openSailorCardModal()" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500/25 via-purple-500/20 to-amber-400/20 border-2 border-pink-300/50 hover:border-amber-200 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_25px_rgba(232,121,249,0.22)] text-left">
+                    <div id="iconBox-sailor" onclick="handleMenuIconClick(event, 'sailor')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-fuchsia-400/30 to-amber-300/20 border border-pink-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
+                        <div id="menuContent-sailor" class="w-full h-full flex items-center justify-center">
+                            <svg class="w-7 h-7 text-amber-300 filter drop-shadow-[0_0_8px_rgba(253,224,71,0.85)]" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-left flex-1 pr-1">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-extrabold pastel-fast-wave">Thẻ Màu May Mắn</h3>
+                            <span class="text-[9px] bg-amber-400/25 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full font-bold">Vận May</span>
+                        </div>
+                        <p class="text-xs text-pink-100/75 leading-normal mt-0.5 font-normal">
+                            Lật thẻ bài thử vận may mỗi ngày.
+                        </p>
+                    </div>
+                    <svg class="w-5 h-5 text-amber-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </button>
             </div>
 
@@ -2131,6 +2235,186 @@
             <button type="button" id="spinWheelBtn" onclick="spinLuckyWheel()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition mt-2">
                 Quay Ngay
             </button>
+        </div>
+    </div>
+
+    <!-- MODAL THẺ MÀU MAY MẮN (4 HÀNG x 4 THẺ BÀI SAILOR MOON) -->
+    <div id="sailorCardModal" class="fixed inset-0 bg-black/88 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-[#121c38] border-2 border-pink-300/60 p-4 sm:p-5 rounded-3xl max-w-md w-full text-center shadow-[0_0_45px_rgba(244,114,182,0.38)] max-h-[90vh] custom-scroll relative">
+            <button type="button" onclick="closeSailorCardModal()" class="text-sky-200 hover:text-white text-xl p-1 font-bold absolute top-3 right-3.5" title="Đóng">✕</button>
+
+            <div class="mb-3 pr-5">
+                <span class="text-[10px] bg-amber-400/20 text-amber-200 border border-amber-300/40 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Vận May</span>
+                <h3 class="text-xl font-black pastel-fast-wave mt-1">Thẻ Màu May Mắn</h3>
+                <p class="text-[11px] text-pink-200/80 font-medium">Lật thẻ bài thử vận may mỗi ngày.</p>
+                <div class="mt-1.5 flex items-center justify-center gap-2 flex-wrap">
+                    <div class="inline-flex items-center gap-1.5 bg-black/40 border border-pink-300/35 px-3 py-1 rounded-full text-[11px] font-extrabold text-amber-200">
+                        <span>✨ Lượt hôm nay:</span>
+                        <span id="sailorRemainingFlipsBadge">3/3</span>
+                    </div>
+                    <button type="button" id="ownerSailorAdminHeaderBtn" onclick="openSailorAdminModal()" class="hidden text-[11px] bg-gradient-to-r from-amber-400 to-pink-500 text-black font-black px-3 py-1 rounded-full border border-white/50 shadow active:scale-95 transition inline-flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <span>Quản Lý Thẻ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lưới 4 hàng x 4 tấm thẻ bài = 16 lá -->
+            <div id="sailorCardsGrid" class="grid grid-cols-4 gap-2 sm:gap-2.5 my-3 px-0.5"></div>
+
+            <p class="text-[10px] text-sky-200/60 italic mt-2">
+                Chạm vào bất kỳ tấm thẻ bài nào để lật xem vận may hôm nay của bạn nhé!
+            </p>
+        </div>
+
+        <!-- Nút dấu cộng (+) góc dưới bên phải dùng SVG code -->
+        <button type="button" id="ownerAddSailorCardBtn" onclick="openSailorAdminModal()" class="hidden fixed bottom-6 right-6 z-[60] w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 via-pink-500 to-purple-600 text-white shadow-[0_0_25px_rgba(244,114,182,0.9)] border-2 border-white/80 flex items-center justify-center active:scale-90 transition hover:scale-105" title="Chủ web: Thêm & Quản lý kho Thẻ Bài Sailor Moon">
+            <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+    </div>
+
+    <!-- SÂN KHẤU HIỆU ỨNG BAY VÀO GIỮA, PHÓNG TO, PHÁT SÁNG & LẬT THẺ -->
+    <div id="sailorCardStageOverlay" onclick="handleStageOverlayClick()" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[90] hidden">
+        <!-- Chữ Pastel thông báo đang biến hình -->
+        <div id="sailorTransformingBanner" class="hidden fixed left-1/2 -translate-x-1/2 top-16 sm:top-20 z-[96] pointer-events-none text-center">
+            <div class="inline-flex items-center gap-1.5 bg-black/80 backdrop-blur-md border border-pink-300/70 px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(244,114,182,0.7)]">
+                <span class="text-xs sm:text-sm font-black pastel-fast-wave drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                    ✨ Chờ chút nhé, tớ đang biến hình! ✨
+                </span>
+            </div>
+        </div>
+        <div id="sailorStageCardMount"></div>
+        <div id="sailorStageResultBox" onclick="event.stopPropagation()" class="hidden fixed left-1/2 -translate-x-1/2 bottom-8 sm:bottom-10 w-[90%] max-w-sm bg-[#121c38]/95 border-2 border-pink-300/70 rounded-3xl p-4 text-center shadow-[0_0_35px_rgba(244,114,182,0.5)] z-[99] space-y-2">
+            <div id="sailorResultCategoryBadge" class="inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase"></div>
+            <p id="sailorResultCustomMessage" class="text-xs sm:text-sm font-extrabold text-white leading-relaxed"></p>
+            <div id="sailorResultPencilDelta" class="text-xs font-black"></div>
+            <button type="button" onclick="closeSailorStageOverlay()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition mt-1">
+                Xác nhận
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL QUẢN TRỊ KHO THẺ BÀI (DÀNH CHO CHỦ WEB BIBI 0304) -->
+    <div id="sailorAdminModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[80] hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-[#121c38] border-2 border-amber-300/70 p-4 sm:p-5 rounded-3xl max-w-md w-full text-left shadow-[0_0_40px_rgba(251,191,36,0.35)] max-h-[90vh] custom-scroll space-y-3 my-auto">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+                <div>
+                    <h3 class="text-sm font-extrabold text-amber-300">✨ Kho Thẻ Bài Sailor Moon</h3>
+                    <p class="text-[10px] text-sky-200/60">Mọi thẻ bài đều được random tỷ lệ bằng nhau</p>
+                </div>
+                <button type="button" onclick="closeSailorAdminModal()" class="text-sky-200 hover:text-white text-lg p-1 font-bold">✕</button>
+            </div>
+
+            <!-- MỤC CHÈN NHẠC BỐC BÀI (CATBOX / MP3) -->
+            <div class="bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-amber-500/15 border border-pink-300/40 rounded-2xl p-3 space-y-1.5 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-extrabold text-amber-200 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-pink-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                        <span>Nhạc khi bốc bài (Catbox/MP3):</span>
+                    </span>
+                    <span class="text-[9px] bg-pink-400/25 text-pink-200 px-2 py-0.5 rounded-full font-bold">Tự động xoay theo nhạc</span>
+                </div>
+                <p class="text-[10px] text-sky-200/70 leading-relaxed">
+                    Dán link Catbox (đuôi .mp3). Thẻ bài sẽ xoay tròn đúng bằng số giây của bản nhạc đó trong suốt quá trình phát!
+                </p>
+                <div class="flex items-center gap-1.5">
+                    <input id="sailorCustomAudioUrl" type="url" placeholder="https://files.catbox.moe/abcxyz.mp3" class="flex-1 bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-pink-400">
+                    <button type="button" onclick="saveSailorAudioSetting()" class="bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-extrabold px-3 py-1.5 rounded-xl text-[11px] shadow active:scale-95 transition shrink-0">
+                        Lưu nhạc
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 MỤC CHỌN (DÙNG MÃ CODE SVG) -->
+            <div class="grid grid-cols-4 gap-1 p-1 bg-black/40 rounded-2xl border border-white/10 text-[10.5px] font-extrabold">
+                <button type="button" id="sailorTab-meme" onclick="switchSailorAdminTab('meme')" class="py-1.5 px-1 rounded-xl transition bg-rose-500/35 text-rose-200 border border-rose-300/50 inline-flex items-center justify-center gap-1">
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                    <span>Meme</span>
+                </button>
+                <button type="button" id="sailorTab-sailor" onclick="switchSailorAdminTab('sailor')" class="py-1.5 px-1 rounded-xl transition text-sky-200/70 hover:text-white inline-flex items-center justify-center gap-1">
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <span>Vận May</span>
+                </button>
+                <button type="button" id="sailorTab-secret" onclick="switchSailorAdminTab('secret')" class="py-1.5 px-1 rounded-xl transition text-sky-200/70 hover:text-white inline-flex items-center justify-center gap-1">
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"></path></svg>
+                    <span>Secret</span>
+                </button>
+                <button type="button" id="sailorTab-back" onclick="switchSailorAdminTab('back')" class="py-1.5 px-1 rounded-xl transition text-sky-200/70 hover:text-white inline-flex items-center justify-center gap-1">
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"></rect><line x1="9" y1="7" x2="15" y2="7"></line></svg>
+                    <span>Ảnh Lưng</span>
+                </button>
+            </div>
+
+            <!-- FORM THÊM ẢNH / CHỈNH KHUÔN -->
+            <div class="bg-black/35 border border-white/15 rounded-2xl p-3 space-y-2.5 text-xs">
+                <div id="sailorTabDesc" class="text-[11px] font-bold text-rose-200"></div>
+
+                <!-- Khung xem trước đúng khuôn Card 2:3 -->
+                <div class="flex items-center gap-3">
+                    <div class="w-24 aspect-[2/3] rounded-2xl overflow-hidden border-2 border-pink-300/60 bg-black/60 shrink-0 flex items-center justify-center relative">
+                        <img id="sailorCardMoldPreview" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                        <span id="sailorCardMoldEmpty" class="text-[10px] text-sky-200/50 text-center px-1 italic">Khuôn card 2:3</span>
+                    </div>
+                    <div class="flex-1 space-y-2">
+                        <label class="w-full bg-pink-500/25 hover:bg-pink-500/40 border border-pink-300/50 text-pink-100 font-bold py-1.5 px-2.5 rounded-xl text-[11px] cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition">
+                            📁 Chọn ảnh từ máy
+                            <input id="sailorAdminFileInput" type="file" accept="image/*" class="hidden" onchange="handleSailorFilePreview(this)">
+                        </label>
+                        <input id="sailorAdminUrlInput" type="url" oninput="handleSailorUrlPreview(this.value)" placeholder="Hoặc dán link ảnh URL..." class="w-full bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-pink-400">
+
+                        <!-- Căn chỉnh khuôn card -->
+                        <div>
+                            <div class="text-[10px] text-amber-200/90 font-bold mb-1">Chỉnh khuôn card nếu ảnh lệch:</div>
+                            <div class="grid grid-cols-3 gap-1">
+                                <button type="button" onclick="setSailorCropAlign('top')" id="cropBtn-top" class="py-1 rounded-lg text-[10px] font-bold bg-white/10 text-sky-200 border border-white/15">Trên</button>
+                                <button type="button" onclick="setSailorCropAlign('center')" id="cropBtn-center" class="py-1 rounded-lg text-[10px] font-black bg-pink-500/40 text-white border border-pink-300">Giữa</button>
+                                <button type="button" onclick="setSailorCropAlign('bottom')" id="cropBtn-bottom" class="py-1 rounded-lg text-[10px] font-bold bg-white/10 text-sky-200 border border-white/15">Dưới</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tùy chọn trừ chì (chỉ cho Meme) -->
+                <div id="sailorMemePenaltyBox" class="bg-rose-500/10 border border-rose-300/30 rounded-xl p-2 flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-rose-200">Số Bút Chì bị trừ:</span>
+                    <div class="flex items-center gap-2">
+                        <label class="inline-flex items-center gap-1 cursor-pointer text-[11px] font-bold text-white bg-black/40 px-2.5 py-1 rounded-lg border border-white/15">
+                            <input type="radio" name="sailorMemePenalty" value="1" checked class="accent-rose-500"> Trừ 1 chì
+                        </label>
+                        <label class="inline-flex items-center gap-1 cursor-pointer text-[11px] font-bold text-white bg-black/40 px-2.5 py-1 rounded-lg border border-white/15">
+                            <input type="radio" name="sailorMemePenalty" value="2" class="accent-rose-500"> Trừ 2 chì
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tùy chọn cộng chì (chỉ cho Sailor Moon) -->
+                <div id="sailorRewardAmountBox" class="hidden bg-emerald-500/10 border border-emerald-300/30 rounded-xl p-2 flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-bold text-emerald-200">Số Bút Chì được cộng:</span>
+                    <input id="sailorRewardInput" type="number" min="1" max="50" value="1" class="w-20 bg-black/50 border border-white/20 rounded-xl px-2 py-1 text-center font-black text-amber-300">
+                </div>
+
+                <!-- Ghi chữ hiển thị (cho Meme, Sailor, Secret) -->
+                <div id="sailorMessageInputBox">
+                    <label class="block text-[11px] font-bold text-pink-200 mb-1">Chữ hiện lên khi user lật trúng lá này:</label>
+                    <textarea id="sailorCustomMessageInput" rows="2" placeholder="VD: Chúc mừng bạn đã được Thủy Thủ Mặt Trăng tặng quà!..." class="w-full bg-black/50 border border-white/20 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-pink-400 resize-none"></textarea>
+                </div>
+
+                <button type="button" id="sailorAdminSaveBtn" onclick="saveSailorCardEntry()" class="jelly-btn w-full bg-gradient-to-r from-amber-400 to-pink-500 text-black font-black py-2 rounded-xl text-xs shadow-lg active:scale-95 transition">
+                    + Lưu Thẻ Bài Vào Kho
+                </button>
+            </div>
+
+            <!-- DANH SÁCH THẺ HIỆN CÓ TRONG MỤC ĐANG CHỌN -->
+            <div class="border-t border-white/10 pt-2.5">
+                <div class="flex items-center justify-between mb-2 text-xs">
+                    <span class="font-bold text-sky-200">Danh sách ảnh trong mục này:</span>
+                    <span id="sailorCurrentTabCount" class="text-[10px] text-amber-300 font-bold">0 ảnh</span>
+                </div>
+                <div id="sailorAdminListGrid" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto custom-scroll pr-1"></div>
+            </div>
         </div>
     </div>
 
@@ -3803,6 +4087,7 @@
             fav: 'https://files.catbox.moe/c3ruwi.gif',
             fast: 'https://files.catbox.moe/qo5869.gif',
             wheel: 'https://files.catbox.moe/51fpvw.gif',
+            sailor: '',
             notify: 'https://files.catbox.moe/5p55na.gif',
             page: 'https://files.catbox.moe/3j8l9q.gif'
         };
@@ -5051,6 +5336,35 @@
             }, (error) => {
                 if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
+
+            // Đồng bộ dữ liệu thẻ bài nằm trực tiếp trong settings/main (được cấp phép sẵn)
+            db.collection("settings").doc("main").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data() || {};
+                    if (data.sailorCards) {
+                        const d = data.sailorCards;
+                        sailorCardsConfig = {
+                            meme: Array.isArray(d.meme) ? d.meme : [],
+                            sailor: Array.isArray(d.sailor) ? d.sailor : [],
+                            secret: Array.isArray(d.secret) ? d.secret : [],
+                            backImage: d.backImage || "",
+                            backCropPos: d.backCropPos || "center",
+                            audioUrl: d.audioUrl || ""
+                        };
+                        try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
+                        const audioInp = document.getElementById('sailorCustomAudioUrl');
+                        if (audioInp && !audioInp.matches(':focus')) {
+                            audioInp.value = sailorCardsConfig.audioUrl || "";
+                        }
+                        if (!document.getElementById('sailorCardModal')?.classList.contains('hidden') && !isSailorCardFlipping) {
+                            renderSailorCardsGrid();
+                        }
+                        if (!document.getElementById('sailorAdminModal')?.classList.contains('hidden')) {
+                            renderSailorAdminList();
+                        }
+                    }
+                }
+            }, () => {});
         }
 
         // Tải duy nhất dữ liệu của chính người đang đăng nhập (Tiết kiệm 80% lượt đọc)
@@ -5251,6 +5565,9 @@
         function updateFaqButtonVisibility() {
             const faqBtn = document.getElementById('faqHeaderBtn');
             const ownerBtn = document.getElementById('ownerOnlyUsersBtn');
+            const sailorSection = document.getElementById('ownerOnlySailorSection');
+            const isOwner = Boolean(checkIsOwnerAccount());
+            if (sailorSection) sailorSection.classList.toggle('hidden', !isOwner);
             if (!faqBtn) return;
 
             if (currentUser && currentUser.isOwner) {
@@ -5298,6 +5615,7 @@
                 renderCharacters();
                 renderFastColorCenter();
             }
+            sailorCardsConfig = safeParseLocalJson('palette_sailor_cards', sailorCardsConfig);
 
             applyVisualEffects(DEFAULT_VISUAL_EFFECTS);
             initFirebaseListeners();
@@ -6684,6 +7002,7 @@
                 fav: "Bức Tranh Hoàn Chỉnh",
                 fast: "Sắc Màu Nhanh Nhẹn",
                 wheel: "Vòng Xoay May Mắn",
+                sailor: "Thẻ Màu May Mắn",
                 notify: "Thông Báo và Hiệu Ứng",
                 page: "Page và Discord"
             };
@@ -6820,6 +7139,7 @@
                 { key: 'fav', id: 'iconBox-fav', imgId: 'menuImg-fav' },
                 { key: 'fast', id: 'menuContent-fast' },
                 { key: 'wheel', id: 'menuContent-wheel' },
+                { key: 'sailor', id: 'menuContent-sailor' },
                 { key: 'notify', id: 'menuContent-notify' },
                 { key: 'page', id: 'menuContent-page' }
             ];
@@ -7065,10 +7385,13 @@
             if (manageAvatarBtn) manageAvatarBtn.classList.toggle('hidden', !isOwner);
 
             const adminSection = document.getElementById('adminSection');
+            const sailorSection = document.getElementById('ownerOnlySailorSection');
             if (isOwner) {
                 adminSection.classList.remove('hidden');
+                if (sailorSection) sailorSection.classList.remove('hidden');
             } else {
                 adminSection.classList.add('hidden');
+                if (sailorSection) sailorSection.classList.add('hidden');
             }
 
             appliedVisualEffects = getUserVisualEffects();
@@ -10433,8 +10756,8 @@
             }
 
             const isUnlocked = Boolean(currentUser && userUnlockedState[currentUser.username]?.[targetChar.id] === true);
-            // Chỉ yêu cầu 2 ảnh (tim + cmt) khi người đó CHƯA MỞ KHÓA nhân vật này
-            const isPausedLimitReq = (targetChar.fastModeType === 'paused_limit' && !isUnlocked);
+            // Chỉ yêu cầu 2 ảnh (tim + cmt) khi nhân vật đang tạm giới hạn (hoặc hết hạn 24h) và người đó CHƯA MỞ KHÓA
+            const isPausedLimitReq = (isCharPausedLimit(targetChar) && !isUnlocked);
 
             if (isPausedLimitReq && cmtRewardHeartImages.length === 0) {
                 alert("Chế độ Tạm giới hạn yêu cầu 2 ảnh: Bạn chưa chọn ảnh chụp đã thả tim bài viết!");
@@ -10654,7 +10977,7 @@
     // ================= HỆ THỐNG VÒNG XOAY MAY MẮN (SẮC MÀU VẬN MAY) =================
         // 9 ô cố định, mỗi ô xác suất bằng nhau (1/9): 3 ô trống, +1, -1, +2, -2, -5, +5
         const WHEEL_BASE = [
-            { type: "empty", value: 0 }, { type: "sub", value: 1 }, { type: "sub", value: 1 },
+            { type: "empty", value: 0 }, { type: "empty", value: 0 }, { type: "empty", value: 0 },
             { type: "add", value: 1 }, { type: "sub", value: 1 },
             { type: "add", value: 2 }, { type: "sub", value: 2 },
             { type: "sub", value: 5 }, { type: "add", value: 5 }
@@ -11045,6 +11368,712 @@
                     updateWheelUI();
                 }
             }, 5100);
+        }
+
+        // ================= HỆ THỐNG THẺ MÀU MAY MẮN (SAILOR MOON 4x4) =================
+        let sailorCardsConfig = {
+            meme: [],
+            sailor: [],
+            secret: [],
+            backImage: "",
+            backCropPos: "center",
+            audioUrl: ""
+        };
+        let activeSailorAdminTab = "meme";
+        let currentSailorCropPos = "center";
+        let currentSailorPreviewSrc = "";
+        let isSailorCardFlipping = false;
+        let isSailorStageWaitingClose = false;
+
+        function getUserSailorFlipsToday(username) {
+            if (!username) return 0;
+            const uKey = username.toLowerCase();
+            const todayKey = getLocalDateKey();
+            const pData = userPencilsData[uKey] || {};
+            let fbCount = (pData.sailorDate === todayKey) ? (Number(pData.sailorCount) || 0) : 0;
+            let localCount = 0;
+            try {
+                const localRec = JSON.parse(localStorage.getItem(`palette_sailor_flips_${uKey}`) || '{}');
+                if (localRec.date === todayKey) localCount = Number(localRec.count) || 0;
+            } catch (_) {}
+            return Math.max(fbCount, localCount);
+        }
+
+        function updateSailorLimitUI() {
+            const badge = document.getElementById('sailorRemainingFlipsBadge');
+            if (!badge || !currentUser) return;
+            if (currentUser.isOwner) {
+                badge.innerText = "Không giới hạn (Chủ Web)";
+            } else {
+                const used = getUserSailorFlipsToday(currentUser.username);
+                const remain = Math.max(0, 3 - used);
+                badge.innerText = `${remain}/3 lượt`;
+            }
+        }
+
+        function getSailorBackCardHtml() {
+            if (sailorCardsConfig.backImage) {
+                const posClass = sailorCardsConfig.backCropPos === 'top' ? 'object-top'
+                    : sailorCardsConfig.backCropPos === 'bottom' ? 'object-bottom' : 'object-center';
+                return `<img src="${sailorCardsConfig.backImage}" alt="Mặt lưng thẻ" referrerpolicy="no-referrer" class="w-full h-full object-cover ${posClass}">`;
+            }
+            return `
+                <div class="w-full h-full bg-gradient-to-br from-[#2b1055] via-[#75276d] to-[#f472b6] flex flex-col items-center justify-center p-1.5 border-2 border-amber-200/70 rounded-xl relative">
+                    <div class="w-full h-full border border-amber-200/50 rounded-lg flex flex-col items-center justify-center">
+                        <span class="text-xl sm:text-2xl drop-shadow-[0_0_8px_rgba(253,224,71,0.9)]">🌙</span>
+                        <span class="text-[8px] font-black text-amber-200 tracking-widest uppercase mt-1">Vận May</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSailorCardsGrid() {
+            const grid = document.getElementById('sailorCardsGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            const backHtml = getSailorBackCardHtml();
+
+            for (let i = 0; i < 16; i++) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.id = `sailorGridCard-${i}`;
+                btn.className = "aspect-[2/3] w-full rounded-xl overflow-hidden border-2 border-pink-300/60 hover:border-amber-300 shadow-lg transition transform hover:scale-105 active:scale-95 relative bg-[#1a103c]";
+                btn.innerHTML = backHtml;
+                btn.onclick = () => onPickSailorCard(btn);
+                grid.appendChild(btn);
+            }
+        }
+
+        function openSailorCardModal() {
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập để tham gia Thẻ Màu May Mắn nhé!");
+                return;
+            }
+            const isOwner = checkIsOwnerAccount();
+            const addBtn = document.getElementById('ownerAddSailorCardBtn');
+            const headerAddBtn = document.getElementById('ownerSailorAdminHeaderBtn');
+            if (addBtn) addBtn.classList.toggle('hidden', !isOwner);
+            if (headerAddBtn) headerAddBtn.classList.toggle('hidden', !isOwner);
+            updateSailorLimitUI();
+            renderSailorCardsGrid();
+            document.getElementById('sailorCardModal').classList.remove('hidden');
+            playPaletteTingSound();
+        }
+
+        function closeSailorCardModal() {
+            if (isSailorCardFlipping) return;
+            document.getElementById('sailorCardModal').classList.add('hidden');
+        }
+
+        function getCombinedSailorPool() {
+            const pool = [];
+            (sailorCardsConfig.meme || []).forEach(c => pool.push({ ...c, category: 'meme' }));
+            (sailorCardsConfig.sailor || []).forEach(c => pool.push({ ...c, category: 'sailor' }));
+            (sailorCardsConfig.secret || []).forEach(c => pool.push({ ...c, category: 'secret' }));
+            return pool;
+        }
+
+        // Quản lý âm thanh đang phát khi bốc bài
+        let activeSailorAudioObj = null;
+
+        function playSailorSpinningAudio(audioUrl) {
+            return new Promise((resolve) => {
+                if (!audioUrl) {
+                    setTimeout(() => resolve(null), 3200);
+                    return;
+                }
+                let sound = null;
+                try {
+                    sound = new Audio(audioUrl);
+                    activeSailorAudioObj = sound;
+                } catch (_) {
+                    setTimeout(() => resolve(null), 3200);
+                    return;
+                }
+
+                let finished = false;
+                const onDone = () => {
+                    if (!finished) {
+                        finished = true;
+                        resolve(sound);
+                    }
+                };
+
+                sound.onended = onDone;
+                sound.onerror = () => setTimeout(onDone, 3200);
+
+                sound.onloadedmetadata = () => {
+                    if (Number.isFinite(sound.duration) && sound.duration > 0) {
+                        setTimeout(onDone, (sound.duration * 1000) + 2000);
+                    }
+                };
+
+                const p = sound.play();
+                if (p !== undefined) {
+                    p.catch(() => setTimeout(onDone, 3200));
+                }
+                setTimeout(onDone, 60000); // Bảo hiểm an toàn tối đa 60s
+            });
+        }
+
+        async function onPickSailorCard(cardEl) {
+            if (isSailorCardFlipping || isSailorStageWaitingClose) return;
+            if (!currentUser) return;
+
+            const pool = getCombinedSailorPool();
+            if (pool.length === 0) {
+                alert("Chủ Web chưa thêm lá bài nào vào kho Thẻ Màu May Mắn. Hãy quay lại sau nhé!");
+                return;
+            }
+
+            const username = currentUser.username;
+            const uKey = username.toLowerCase();
+            const todayKey = getLocalDateKey();
+            const usedCount = getUserSailorFlipsToday(username);
+
+            if (usedCount >= 3 && !currentUser.isOwner) {
+                alert("Hôm nay bạn đã dùng hết 3 lượt lật thẻ rồi! Hãy quay lại thử vận may vào ngày mai nhé 💖");
+                return;
+            }
+
+            // Ghi nhận lượt lật ngay
+            const newCount = usedCount + 1;
+            localStorage.setItem(`palette_sailor_flips_${uKey}`, JSON.stringify({ date: todayKey, count: newCount }));
+            userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), sailorDate: todayKey, sailorCount: newCount };
+            db.collection("pencils").doc(uKey).set({ sailorDate: todayKey, sailorCount: newCount }, { merge: true }).catch(() => {});
+            updateSailorLimitUI();
+
+            // Random tỷ lệ bằng nhau giữa tất cả lá bài trong kho
+            const pickedCard = pool[Math.floor(Math.random() * pool.length)];
+
+            isSailorCardFlipping = true;
+            isSailorStageWaitingClose = true;
+
+            const rect = cardEl.getBoundingClientRect();
+            const overlay = document.getElementById('sailorCardStageOverlay');
+            const mount = document.getElementById('sailorStageCardMount');
+            const resultBox = document.getElementById('sailorStageResultBox');
+
+            if (resultBox) resultBox.classList.add('hidden');
+            mount.innerHTML = '';
+            overlay.classList.remove('hidden');
+
+            const posClass = pickedCard.cropPos === 'top' ? 'object-top'
+                : pickedCard.cropPos === 'bottom' ? 'object-bottom' : 'object-center';
+
+            const stageWrap = document.createElement('div');
+            stageWrap.className = 'sailor-stage-card-wrap';
+            const startScale = Math.max(0.25, rect.width / 210);
+            stageWrap.style.left = `${rect.left + rect.width / 2}px`;
+            stageWrap.style.top = `${rect.top + rect.height / 2}px`;
+            stageWrap.style.transform = `translate(-50%, -50%) scale(${startScale})`;
+
+            // Dòng chữ của Chủ Web nằm ngay dưới chân ảnh trên dải bóng đen đậm chống nhòe, màu pastel chuyển động
+            const customMsgHtml = pickedCard.message ? `
+                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/85 to-transparent px-3 pb-3 pt-10 text-center z-20 pointer-events-none rounded-b-2xl">
+                    <p class="text-xs sm:text-[13px] font-black pastel-fast-wave leading-relaxed break-words filter drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">
+                        ${cmtEsc(pickedCard.message)}
+                    </p>
+                </div>
+            ` : '';
+
+            stageWrap.innerHTML = `
+                <div id="sailorStageInnerCard" class="sailor-stage-inner border-2 border-amber-200/80 shadow-2xl">
+                    <div class="sailor-card-face">
+                        ${getSailorBackCardHtml()}
+                        <!-- Dòng chữ Pastel hiển thị trực tiếp trên thẻ lúc đang xoay biến hình -->
+                        <div class="absolute inset-x-2 bottom-3.5 bg-black/80 backdrop-blur-md border border-pink-300/60 rounded-xl px-2 py-1.5 text-center shadow-[0_0_12px_rgba(244,114,182,0.6)] pointer-events-none z-10">
+                            <p class="text-[11px] font-black pastel-fast-wave leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                                Chờ chút nhé, tớ đang biến hình!
+                            </p>
+                        </div>
+                    </div>
+                    <div class="sailor-card-face sailor-card-front bg-[#121c38] border-2 border-pink-300">
+                        <img src="${pickedCard.src}" alt="Card" referrerpolicy="no-referrer" class="w-full h-full object-cover ${posClass}">
+                        ${customMsgHtml}
+                    </div>
+                </div>
+            `;
+            mount.appendChild(stageWrap);
+            cardEl.style.opacity = '0.2';
+
+            // 1. Thẻ bay mượt từ vị trí ô vào chính giữa
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    stageWrap.style.left = '50%';
+                    stageWrap.style.top = '38%';
+                    stageWrap.style.transform = 'translate(-50%, -50%) scale(1)';
+                });
+            });
+
+            const inner = document.getElementById('sailorStageInnerCard');
+            const transformingBanner = document.getElementById('sailorTransformingBanner');
+            if (transformingBanner) transformingBanner.classList.remove('hidden');
+
+            // 2. Kích hoạt xoay tròn 2D (chỉ xoay mặt sau, tuyệt đối không lật để lộ hình bí mật)
+            setTimeout(() => {
+                if (inner) inner.classList.add('is-spinning');
+            }, 300);
+
+            // Bật âm thanh Catbox và xoay tròn đúng số giây của bài hát
+            await playSailorSpinningAudio(sailorCardsConfig.audioUrl || "");
+
+            // 3. Dừng xoay tròn và lật thẻ 3D sang mặt trước để hiện kết quả
+            if (transformingBanner) transformingBanner.classList.add('hidden');
+            if (inner) {
+                inner.classList.remove('is-spinning');
+                inner.classList.add('is-flipped');
+            }
+
+            const curPencils = getUserPencilCount(username);
+            const deltaEl = document.getElementById('sailorResultPencilDelta');
+            let deltaText = "";
+
+            try {
+                const actType = pickedCard.actionType || (pickedCard.category === 'meme' ? 'penalty' : pickedCard.category === 'secret' ? 'secret' : 'reward');
+                const numAmt = Number(pickedCard.amount) || 0;
+
+                if (actType === 'secret' || pickedCard.category === 'secret') {
+                    const nextCount = curPencils * 2;
+                    const gain = nextCount - curPencils;
+                    if (gain > 0) {
+                        await db.collection("pencils").doc(uKey).set({ count: nextCount }, { merge: true });
+                        userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: nextCount };
+                        updatePencilUI();
+                        triggerNotification("NHÂN ĐÔI BÚT CHÌ MÀU!", `Chúc mừng bạn lật trúng thẻ SECRET Sailor Moon! Số chì được nhân đôi thành ${nextCount} chì!`, username);
+                    }
+                    playJoyfulWinSound();
+                    deltaText = gain > 0
+                        ? `🌟 Nhân đôi thành ${nextCount} Bút Chì Màu! (+${gain} chì)`
+                        : `🌟 Thẻ Secret x2 Bút Chì (Túi đang có 0 chì nên giữ nguyên 0 chì)`;
+                    if (deltaEl) deltaEl.className = "text-xs font-black text-amber-300";
+                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ SECRET nhân đôi (${curPencils} ➔ ${nextCount} chì)`);
+                } else if (actType === 'reward') {
+                    const addAmt = Math.max(1, numAmt || 1);
+                    await addPencilToUser(username, addAmt, "Thẻ Màu May Mắn", false);
+                    playJoyfulWinSound();
+                    deltaText = `✨ +${addAmt} Bút Chì Màu (Hiện có: ${curPencils + addAmt} chì)`;
+                    if (deltaEl) deltaEl.className = "text-xs font-black text-emerald-300";
+                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ cộng chì (+${addAmt} Chì)`);
+                } else if (actType === 'empty') {
+                    deltaText = `🍂 Thẻ rỗng: Bạn không được cộng hay bị trừ bút chì nào!`;
+                    if (deltaEl) deltaEl.className = "text-xs font-bold text-sky-200";
+                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng Thẻ rỗng (0 chì)`);
+                } else {
+                    // Penalty (Trừ chì)
+                    const penAmt = Math.max(1, numAmt || 1);
+                    const actualDeduct = Math.min(penAmt, curPencils);
+                    const remain = curPencils - actualDeduct;
+                    if (actualDeduct > 0) {
+                        await db.collection("pencils").doc(uKey).set({ count: remain }, { merge: true });
+                        userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: remain };
+                        updatePencilUI();
+                    }
+                    playSadDeflateSound();
+                    deltaText = actualDeduct > 0
+                        ? `😢 Bị trừ ${actualDeduct} Bút Chì Màu (Còn: ${remain} chì)`
+                        : `😅 Trúng thẻ -${penAmt} chì nhưng túi đang có 0 chì!`;
+                    if (deltaEl) deltaEl.className = "text-xs font-black text-rose-300";
+                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ trừ chì (-${penAmt} Chì)`);
+                    if (actualDeduct > 0) {
+                        triggerNotification("Bị Trừ Bút Chì Màu!", `Thẻ Màu May Mắn: Bạn lật trúng thẻ trừ chì và bị mất ${actualDeduct} Bút Chì Màu! Còn lại: ${remain} chì.`, username);
+                    }
+                }
+            } catch (e) {
+                console.error("Lỗi xử lý thẻ:", e);
+            }
+
+            if (deltaEl) deltaEl.innerText = deltaText;
+
+            const catBadge = document.getElementById('sailorResultCategoryBadge');
+            if (catBadge) {
+                if (pickedCard.category === 'secret') {
+                    catBadge.innerText = '✨ Secret x2';
+                    catBadge.className = 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase bg-amber-400/30 text-amber-200 border border-amber-300/50';
+                } else if (pickedCard.category === 'meme') {
+                    catBadge.innerText = '🤡 Thẻ Meme';
+                    catBadge.className = 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase bg-rose-500/30 text-rose-200 border border-rose-300/50';
+                } else {
+                    catBadge.innerText = '🌙 Thủy Thủ Mặt Trăng';
+                    catBadge.className = 'inline-block text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase bg-emerald-500/30 text-emerald-200 border border-emerald-300/50';
+                }
+            }
+            const customMsgEl = document.getElementById('sailorResultCustomMessage');
+            if (customMsgEl) {
+                customMsgEl.innerText = pickedCard.message || '';
+                customMsgEl.className = "text-xs sm:text-sm font-black pastel-fast-wave leading-relaxed drop-shadow-[0_2px_6px_rgba(0,0,0,1)]";
+                customMsgEl.classList.toggle('hidden', !pickedCard.message);
+            }
+
+            setTimeout(() => {
+                if (resultBox) resultBox.classList.remove('hidden');
+                isSailorCardFlipping = false;
+            }, 600);
+        }
+
+        function handleStageOverlayClick() {
+            if (isSailorCardFlipping) return;
+            closeSailorStageOverlay();
+        }
+
+        function closeSailorStageOverlay() {
+            if (isSailorCardFlipping) return;
+            isSailorStageWaitingClose = false;
+            if (activeSailorAudioObj) {
+                try { activeSailorAudioObj.pause(); activeSailorAudioObj.currentTime = 0; } catch (_) {}
+                activeSailorAudioObj = null;
+            }
+            document.getElementById('sailorCardStageOverlay').classList.add('hidden');
+            document.getElementById('sailorStageCardMount').innerHTML = '';
+            renderSailorCardsGrid();
+        }
+
+        // ---------- QUẢN TRỊ KHO THẺ BÀI (CHỦ WEB BIBI 0304) ----------
+        function openSailorAdminModal() {
+            if (!checkIsOwnerAccount()) return;
+            const audioInp = document.getElementById('sailorCustomAudioUrl');
+            if (audioInp) audioInp.value = sailorCardsConfig.audioUrl || "";
+            switchSailorAdminTab(activeSailorAdminTab || 'meme');
+            document.getElementById('sailorAdminModal').classList.remove('hidden');
+        }
+
+        function closeSailorAdminModal() {
+            document.getElementById('sailorAdminModal').classList.add('hidden');
+        }
+
+        // Đã tối ưu các tùy chọn điểm thẻ trực tiếp theo từng mục Meme / Sailor / Secret
+
+        async function saveSailorAudioSetting() {
+            if (!checkIsOwnerAccount()) return;
+            const input = document.getElementById('sailorCustomAudioUrl');
+            const url = (input ? input.value.trim() : "");
+            sailorCardsConfig.audioUrl = url;
+            try {
+                await db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true });
+                try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
+                alert("✓ Đã lưu link âm thanh khi bốc bài thành công!");
+            } catch (e) {
+                alert("Lỗi lưu âm thanh: " + (e?.message || ""));
+            }
+        }
+
+        function switchSailorAdminTab(tab) {
+            activeSailorAdminTab = tab;
+            ['meme', 'sailor', 'secret', 'back'].forEach(t => {
+                const btn = document.getElementById(`sailorTab-${t}`);
+                if (!btn) return;
+                if (t === tab) {
+                    btn.className = "py-1.5 px-1 rounded-xl transition bg-pink-500/40 text-white border border-pink-300 shadow";
+                } else {
+                    btn.className = "py-1.5 px-1 rounded-xl transition text-sky-200/70 hover:text-white";
+                }
+            });
+
+            const desc = document.getElementById('sailorTabDesc');
+            const memeBox = document.getElementById('sailorMemePenaltyBox');
+            const rewardBox = document.getElementById('sailorRewardAmountBox');
+            const msgBox = document.getElementById('sailorMessageInputBox');
+            const saveBtn = document.getElementById('sailorAdminSaveBtn');
+
+            if (memeBox) memeBox.classList.toggle('hidden', tab !== 'meme');
+            if (rewardBox) rewardBox.classList.toggle('hidden', tab !== 'sailor');
+            if (msgBox) msgBox.classList.toggle('hidden', tab === 'back');
+
+            if (tab === 'meme') {
+                if (desc) {
+                    desc.innerText = "🤡 Mục Meme: Thẻ trừ chì (chọn trừ 1 hoặc 2 chì) khi user lật trúng.";
+                    desc.className = "text-[11px] font-bold text-rose-200";
+                }
+                if (saveBtn) saveBtn.innerText = "+ Lưu Thẻ Meme Vào Kho";
+            } else if (tab === 'sailor') {
+                if (desc) {
+                    desc.innerText = "🌙 Mục Vận May: Thẻ cộng chì may mắn cho user.";
+                    desc.className = "text-[11px] font-bold text-emerald-200";
+                }
+                if (saveBtn) saveBtn.innerText = "+ Lưu Thẻ Vận May Vào Kho";
+            } else if (tab === 'secret') {
+                if (desc) {
+                    desc.innerText = "✨ Mục Secret: Tự động NHÂN ĐÔI số Bút Chì Màu hiện có của user!";
+                    desc.className = "text-[11px] font-bold text-amber-200";
+                }
+                if (saveBtn) saveBtn.innerText = "+ Lưu Thẻ Secret Vào Kho";
+            } else {
+                if (desc) {
+                    desc.innerText = "🎴 Mục Ảnh Lưng: Chọn 1 ảnh làm mặt sau chung cho tất cả thẻ chưa lật.";
+                    desc.className = "text-[11px] font-bold text-sky-200";
+                }
+                if (saveBtn) saveBtn.innerText = "✓ Đặt Làm Ảnh Lưng Của Thẻ Bài";
+            }
+
+            resetSailorAdminInputs();
+            if (tab === 'back' && sailorCardsConfig.backImage) {
+                currentSailorPreviewSrc = sailorCardsConfig.backImage;
+                setSailorCropAlign(sailorCardsConfig.backCropPos || 'center');
+                updateSailorMoldPreview(sailorCardsConfig.backImage);
+            }
+            renderSailorAdminList();
+        }
+
+        function resetSailorAdminInputs() {
+            const f = document.getElementById('sailorAdminFileInput');
+            const u = document.getElementById('sailorAdminUrlInput');
+            const m = document.getElementById('sailorCustomMessageInput');
+            if (f) f.value = '';
+            if (u) u.value = '';
+            if (m) m.value = '';
+            currentSailorPreviewSrc = '';
+            setSailorCropAlign('center');
+            updateSailorMoldPreview('');
+        }
+
+        function setSailorCropAlign(pos) {
+            currentSailorCropPos = pos;
+            ['top', 'center', 'bottom'].forEach(p => {
+                const b = document.getElementById(`cropBtn-${p}`);
+                if (!b) return;
+                b.className = (p === pos)
+                    ? "py-1 rounded-lg text-[10px] font-black bg-pink-500/40 text-white border border-pink-300"
+                    : "py-1 rounded-lg text-[10px] font-bold bg-white/10 text-sky-200 border border-white/15";
+            });
+            const img = document.getElementById('sailorCardMoldPreview');
+            if (img) {
+                img.className = `w-full h-full object-cover ${pos === 'top' ? 'object-top' : pos === 'bottom' ? 'object-bottom' : 'object-center'}`;
+            }
+        }
+
+        function updateSailorMoldPreview(src) {
+            const img = document.getElementById('sailorCardMoldPreview');
+            const empty = document.getElementById('sailorCardMoldEmpty');
+            if (!img || !empty) return;
+            if (src) {
+                img.src = src;
+                img.classList.remove('hidden');
+                empty.classList.add('hidden');
+            } else {
+                img.src = '';
+                img.classList.add('hidden');
+                empty.classList.remove('hidden');
+            }
+        }
+
+        function handleSailorFilePreview(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentSailorPreviewSrc = e.target.result;
+                updateSailorMoldPreview(currentSailorPreviewSrc);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleSailorUrlPreview(url) {
+            const val = (url || "").trim();
+            if (val) {
+                currentSailorPreviewSrc = val;
+                updateSailorMoldPreview(val);
+            }
+        }
+
+        // Căn chỉnh & cắt ảnh hỗ trợ cả iPhone HEIC sang tỉ lệ Card 2:3 siêu nhẹ
+        async function cropFileToCardMold(file, cropPos = 'center') {
+            const rawDataUrl = await processImageForFastOCR(file);
+            if (!rawDataUrl) throw new Error("Không thể xử lý tệp ảnh này!");
+
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const targetW = 320;
+                    const targetH = 480;
+                    const targetRatio = targetW / targetH;
+                    const srcW = img.naturalWidth || img.width;
+                    const srcH = img.naturalHeight || img.height;
+                    const srcRatio = srcW / srcH;
+
+                    let sx = 0, sy = 0, sW = srcW, sH = srcH;
+                    if (srcRatio > targetRatio) {
+                        sW = Math.round(srcH * targetRatio);
+                        sx = Math.round((srcW - sW) / 2);
+                    } else if (srcRatio < targetRatio) {
+                        sH = Math.round(srcW / targetRatio);
+                        if (cropPos === 'top') sy = 0;
+                        else if (cropPos === 'bottom') sy = Math.max(0, srcH - sH);
+                        else sy = Math.round((srcH - sH) / 2);
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = targetW;
+                    canvas.height = targetH;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = "#121c38";
+                    ctx.fillRect(0, 0, targetW, targetH);
+                    ctx.drawImage(img, sx, sy, sW, sH, 0, 0, targetW, targetH);
+                    resolve(canvas.toDataURL('image/jpeg', 0.68));
+                };
+                img.onerror = () => reject(new Error("Không thể tải ảnh để căn khuôn!"));
+                img.src = rawDataUrl;
+            });
+        }
+
+        async function saveSailorCardEntry() {
+            if (!checkIsOwnerAccount()) return;
+            const fileInput = document.getElementById('sailorAdminFileInput');
+            const urlInput = document.getElementById('sailorAdminUrlInput');
+            const msgInput = document.getElementById('sailorCustomMessageInput');
+            const saveBtn = document.getElementById('sailorAdminSaveBtn');
+
+            const file = fileInput?.files?.[0];
+            const url = (urlInput?.value || "").trim();
+            const message = (msgInput?.value || "").trim();
+
+            let finalSrc = url;
+            if (file) {
+                if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = "⏳ Đang căn khuôn card..."; }
+                try {
+                    finalSrc = await cropFileToCardMold(file, currentSailorCropPos);
+                } catch (err) {
+                    alert("Lỗi khi đọc ảnh: " + (err?.message || ""));
+                    if (saveBtn) { saveBtn.disabled = false; switchSailorAdminTab(activeSailorAdminTab); }
+                    return;
+                }
+            } else if (activeSailorAdminTab === 'back' && !finalSrc && sailorCardsConfig.backImage) {
+                finalSrc = sailorCardsConfig.backImage;
+            }
+
+            if (!finalSrc) {
+                alert("Vui lòng chọn 1 ảnh từ máy hoặc dán link URL ảnh vào nhé!");
+                if (saveBtn) { saveBtn.disabled = false; switchSailorAdminTab(activeSailorAdminTab); }
+                return;
+            }
+
+            if (activeSailorAdminTab !== 'back' && !message) {
+                alert("Vui lòng nhập lời nhắn/chữ hiện lên khi user lật trúng lá bài này!");
+                if (saveBtn) { saveBtn.disabled = false; switchSailorAdminTab(activeSailorAdminTab); }
+                return;
+            }
+
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = "⏳ Đang lưu..."; }
+            try {
+                if (activeSailorAdminTab === 'back') {
+                    sailorCardsConfig.backImage = finalSrc;
+                    sailorCardsConfig.backCropPos = currentSailorCropPos;
+                } else {
+                    const entry = {
+                        id: 'sc-' + Date.now(),
+                        src: finalSrc,
+                        cropPos: currentSailorCropPos,
+                        message: message,
+                        createdAt: Date.now()
+                    };
+                    if (activeSailorAdminTab === 'secret') {
+                        entry.actionType = 'secret';
+                        entry.amount = 0;
+                        sailorCardsConfig.secret.unshift(entry);
+                    } else if (activeSailorAdminTab === 'meme') {
+                        const penVal = parseInt(document.querySelector('input[name="sailorMemePenalty"]:checked')?.value) || 1;
+                        entry.actionType = 'penalty';
+                        entry.amount = penVal;
+                        sailorCardsConfig.meme.unshift(entry);
+                    } else if (activeSailorAdminTab === 'sailor') {
+                        const rewVal = parseInt(document.getElementById('sailorRewardInput')?.value) || 1;
+                        entry.actionType = 'reward';
+                        entry.amount = Math.max(1, rewVal);
+                        sailorCardsConfig.sailor.unshift(entry);
+                    }
+                }
+
+                await db.collection("settings").doc("main").set({
+                    sailorCards: sailorCardsConfig
+                }, { merge: true });
+
+                try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
+                renderSailorAdminList();
+                renderSailorCardsGrid();
+                if (activeSailorAdminTab !== 'back') resetSailorAdminInputs();
+                alert("✓ Đã lưu thành công vào kho Thẻ Màu May Mắn!");
+            } catch (err) {
+                console.error("Lỗi lưu thẻ bài:", err);
+                alert("Lỗi khi lưu thẻ bài: " + (err?.message || ""));
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    switchSailorAdminTab(activeSailorAdminTab);
+                }
+            }
+        }
+
+        function renderSailorAdminList() {
+            const grid = document.getElementById('sailorAdminListGrid');
+            const countEl = document.getElementById('sailorCurrentTabCount');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            if (activeSailorAdminTab === 'back') {
+                if (countEl) countEl.innerText = sailorCardsConfig.backImage ? "1 ảnh lưng" : "Mặc định";
+                if (!sailorCardsConfig.backImage) {
+                    grid.innerHTML = `<div class="col-span-3 text-[11px] text-sky-200/50 italic text-center py-4">Đang dùng ảnh lưng Sailor Moon mặc định.</div>`;
+                    return;
+                }
+                const posClass = sailorCardsConfig.backCropPos === 'top' ? 'object-top'
+                    : sailorCardsConfig.backCropPos === 'bottom' ? 'object-bottom' : 'object-center';
+                grid.innerHTML = `
+                    <div class="relative aspect-[2/3] rounded-xl overflow-hidden border border-pink-300/50">
+                        <img src="${sailorCardsConfig.backImage}" class="w-full h-full object-cover ${posClass}">
+                        <button type="button" onclick="clearSailorBackImage()" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 hover:bg-red-500 text-white text-xs font-black flex items-center justify-center">✕</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const list = sailorCardsConfig[activeSailorAdminTab] || [];
+            if (countEl) countEl.innerText = `${list.length} thẻ`;
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="col-span-3 text-[11px] text-sky-200/50 italic text-center py-4">Chưa có thẻ bài nào trong mục này.</div>`;
+                return;
+            }
+
+            list.forEach((item, idx) => {
+                const posClass = item.cropPos === 'top' ? 'object-top'
+                    : item.cropPos === 'bottom' ? 'object-bottom' : 'object-center';
+                let badgeTxt = 'x2 chì';
+                if (activeSailorAdminTab !== 'secret') {
+                    if (item.actionType === 'empty') badgeTxt = '0 chì (Rỗng)';
+                    else if (item.actionType === 'reward') badgeTxt = `+${item.amount || 1} chì`;
+                    else badgeTxt = `-${item.amount || 1} chì`;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-black/40 border border-white/15 rounded-xl p-1.5 flex flex-col gap-1 relative";
+                card.innerHTML = `
+                    <div class="relative aspect-[2/3] w-full rounded-lg overflow-hidden">
+                        <img src="${item.src}" class="w-full h-full object-cover ${posClass}">
+                        <span class="absolute bottom-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded bg-black/80 text-amber-300 border border-white/20">${badgeTxt}</span>
+                        <button type="button" onclick="deleteSailorCardItem('${activeSailorAdminTab}', ${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/80 hover:bg-red-500 text-white text-[10px] font-black flex items-center justify-center">✕</button>
+                    </div>
+                    <p class="text-[9.5px] text-sky-100/80 line-clamp-2 leading-tight">${cmtEsc(item.message || '')}</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function deleteSailorCardItem(tab, idx) {
+            if (!checkIsOwnerAccount()) return;
+            if (!confirm("Xóa lá bài này khỏi kho?")) return;
+            sailorCardsConfig[tab].splice(idx, 1);
+            await db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true });
+            try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
+            renderSailorAdminList();
+            renderSailorCardsGrid();
+        }
+
+        async function clearSailorBackImage() {
+            if (!checkIsOwnerAccount()) return;
+            if (!confirm("Xóa ảnh lưng tùy chỉnh và quay về ảnh lưng mặc định?")) return;
+            sailorCardsConfig.backImage = "";
+            await db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true });
+            try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
+            renderSailorAdminList();
+            renderSailorCardsGrid();
         }
     </script>
     <!-- BỘ PHÁT NHẠC ĐA NĂNG (HỖ TRỢ CẢ AUDIO MP3 LẪN YOUTUBE) -->
