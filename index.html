@@ -214,6 +214,19 @@
         }
         @keyframes greenPastelShift { to { background-position: 250% center; } }
 
+        .purple-pastel-wave {
+            background: linear-gradient(90deg, #e9d5ff, #c084fc, #a855f7, #f0abfc, #d8b4fe, #e9d5ff);
+            background-size: 250% auto;
+            color: transparent;
+            -webkit-text-fill-color: transparent !important;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
+            animation: purplePastelShift 3s linear infinite;
+        }
+        @keyframes purplePastelShift { to { background-position: 250% center; } }
+
         .pastel-fast-wave {
             background: linear-gradient(90deg, #f472b6, #c084fc, #60a5fa, #34d399, #fbbf24, #f472b6);
             background-size: 300% auto;
@@ -422,7 +435,7 @@
         /* TỐI ƯU HÓA ĐẶC QUYỀN DÀNH CHO SAFARI TRÊN IOS (IPHONE / IPAD) */
         @supports (-webkit-touch-callout: none) {
             /* Ngăn Safari tự động zoom màn hình khi gõ chữ nhưng không làm mất dấu tích của checkbox */
-            input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+            input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea {
                 font-size: 16px !important;
                 -webkit-appearance: none !important;
                 appearance: none !important;
@@ -640,6 +653,17 @@
                         <span>Vào mục <b>Vòng xoay may mắn</b> để quay thưởng thử vận may trúng hoặc nhân đôi Bút Chì Màu.</span>
                     </li>
                 </ul>
+                <div class="mt-2.5 rounded-xl border border-amber-300/45 bg-gradient-to-r from-amber-500/15 via-pink-500/15 to-purple-500/15 p-2.5 space-y-1">
+                    <div class="text-[11px] font-black text-amber-300 uppercase">🌟 Cách đặc biệt (Chỉ có khi Palette ra char mới):</div>
+                    <p class="text-[11px] text-sky-100/90 leading-relaxed">
+                        Khi Palette đăng char mới tại <button type="button" onclick="closePencilModal(); openFastColorScreen();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-fuchsia-500/15 border border-fuchsia-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Sắc Màu Nhanh Nhẹn</span></button>, bạn bình luận dưới bài đăng Facebook của char đó rồi vào nút <button type="button" onclick="closePencilModal(); openCmtRewardModal(activeChar && activeChar.status === 'unlocked_24h' ? cmtSafeId(activeChar.id) : '');" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-gradient-to-r from-pink-500/25 via-purple-500/25 to-sky-500/25 border border-pink-300/60 shadow-[0_0_8px_rgba(244,114,182,0.3)] active:scale-95 transition align-baseline"><span>📸</span><span class="pastel-notify-wave font-black underline">Gửi ảnh cmt nhận Chì Màu</span></button> để nộp ảnh cho Palette duyệt:
+                    </p>
+                    <p class="text-[11px] text-sky-100/90 leading-relaxed">
+                        • <b>Feedback / nêu cảm nghĩ về plot/char:</b> <b class="text-amber-300">+10 Bút Chì Màu</b><br>
+                        • <b>Cmt noti:</b> <b class="text-sky-300">+2 Bút Chì Màu</b><br>
+                        <span class="text-[10px] text-pink-200/80 italic">* Nếu char đang ở chế độ <b>Tạm giới hạn</b>, cần gửi đủ <b>2 ảnh (ảnh đã tim bài + ảnh bình luận)</b>.</span>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -685,6 +709,11 @@
                     <span id="adminPendingPencilCountInModal" class="text-[10px] text-amber-300 font-bold">0 yêu cầu</span>
                 </div>
                 <div id="adminPendingPingList" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+                <div class="flex items-center justify-between pt-2 border-t border-white/10">
+                    <span class="font-bold text-pink-300">Ảnh cmt chờ duyệt (Nhanh Nhẹn):</span>
+                    <span id="adminCmtRewardCountInModal" class="text-[10px] text-amber-300 font-bold">0 yêu cầu</span>
+                </div>
+                <div id="adminCmtRewardList" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
             </div>
         </div>
     </div>
@@ -1321,6 +1350,14 @@
                     </button>
                 </div>
 
+                <div id="aiPausedRequirementPrompt" class="hidden text-xs text-sky-100/90 mb-3 flex items-center gap-1 flex-wrap leading-relaxed">
+                    <span>Lấy link tự động 24h đã đóng, chỉ có thể 10</span>
+                    <button type="button" onclick="openCmtRewardModalForActiveChar()" class="bg-purple-500/20 border border-purple-300/60 px-2.5 py-0.5 rounded-lg font-black text-xs shadow-[0_0_12px_rgba(192,132,252,0.38)] active:scale-95 transition">
+                        <span class="purple-pastel-wave underline">Đổi Chì</span>
+                    </button>
+                    <span>để lấy link nhé.</span>
+                </div>
+
                 <button id="aiStudioLinkBtn" onclick="handleAIStudioClick()" class="w-full inline-flex items-center justify-center gap-2 bg-white/10 text-white/50 border border-white/20 font-bold text-xs py-3 px-4 rounded-xl transition">
                     <svg id="aiLockIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     <span id="aiBtnText">Link Google AI Studio (Chưa mở khóa)</span> ➔
@@ -1336,10 +1373,11 @@
 
                 <div id="closedNoticeSubtextContainer" class="hidden text-center mt-2 space-y-1">
                     <p id="closedNoticeSubtext" class="text-[11px] text-pink-300 font-bold"></p>
-                    <p class="text-[10px] text-sky-200/80 italic">Hãy đợi mở lại để làm thủ tục nhận link nhé.</p>
                 </div>
             </div>
         </div>
+
+        <div id="detailCmtRewardBox" class="w-full px-2 mb-6 hidden"></div>
 
         <div class="w-full px-2">
             <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-5 text-left shadow-xl">
@@ -1463,7 +1501,7 @@
                 </div>
                 <p class="text-xs text-sky-100/90 leading-relaxed">
                     • <b>Đặc điểm:</b> Dành cho bạn muốn mở khóa link trực tiếp mà không cần làm thủ tục hay join Discord.<br>
-                    • <b>Cách lấy:</b> Điểm danh hàng ngày (+1 chì), quay thưởng tại "Vòng xoay may mắn", mở khóa link (+1 đến +2 chì), hoặc viết Feedback từ 1000 ký tự (+3 chì). Tích đủ 10 chì đổi ngay 1 nhân vật bất kỳ!
+                    • <b>Cách lấy:</b> Điểm danh hàng ngày (+1 chì), quay thưởng tại "Vòng xoay may mắn", mở khóa link (+1 đến +2 chì), viết Feedback từ 1000 ký tự (+3 chì), hoặc gửi ảnh cmt ở char Sắc Màu Nhanh Nhẹn (+10 chì nếu là feedback/cảm nghĩ plot/char, +2 chì nếu cmt noti). Tích đủ 10 chì đổi ngay 1 nhân vật bất kỳ!
                 </p>
             </div>
 
@@ -1593,6 +1631,65 @@
         </div>
     </div>
 
+    <!-- MODAL GỬI ẢNH CMT NHẬN BÚT CHÌ MÀU (SẮC MÀU NHANH NHẸN) -->
+    <div id="cmtRewardModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5 overflow-y-auto">
+        <div class="bg-[#121c38] border-2 border-pink-300/60 p-5 rounded-3xl max-w-sm w-full text-left shadow-[0_0_35px_rgba(244,114,182,0.4)] max-h-[88vh] custom-scroll my-auto">
+            <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
+                <h3 class="text-sm font-extrabold text-pink-300">Gửi ảnh cmt nhận Bút Chì Màu</h3>
+                <button type="button" onclick="closeCmtRewardModal()" class="text-sky-200 text-lg p-1 hover:text-white">✕</button>
+            </div>
+            <p id="cmtRewardSubtitle" class="text-xs text-sky-100/80 mb-3"></p>
+
+            <div class="bg-black/25 p-3 rounded-2xl border border-white/10 text-xs mb-3 space-y-2">
+                <div class="font-bold text-sky-200">Chọn loại bình luận:</div>
+                <label id="cmtKindLabel_feedback" class="flex items-start gap-2 cursor-pointer bg-pink-500/10 border border-pink-300/30 rounded-xl p-2">
+                    <input type="radio" name="cmtRewardKind" value="feedback" checked class="mt-0.5 accent-pink-400">
+                    <span class="text-sky-100/90 leading-snug flex-1"><b class="text-pink-200">Feedback / nêu cảm nghĩ về plot/char</b> <span class="text-amber-300 font-black">(+10 Chì)</span> <span id="cmtKindDone_feedback" class="hidden text-[10px] text-emerald-300 font-black ml-1">✓ Đã nhận</span></span>
+                </label>
+                <label id="cmtKindLabel_noti" class="flex items-start gap-2 cursor-pointer bg-sky-500/10 border border-sky-300/30 rounded-xl p-2">
+                    <input type="radio" name="cmtRewardKind" value="noti" class="mt-0.5 accent-sky-400">
+                    <span class="text-sky-100/90 leading-snug flex-1"><b class="text-sky-200">Cmt noti</b> <span class="text-amber-300 font-black">(+2 Chì)</span> <span id="cmtKindDone_noti" class="hidden text-[10px] text-emerald-300 font-black ml-1">✓ Đã nhận</span></span>
+                </label>
+            </div>
+
+            <div id="cmtRewardPausedNotice" class="hidden bg-amber-500/15 border border-amber-300/40 rounded-2xl p-2.5 text-[11px] text-amber-200 font-bold mb-3 leading-relaxed">
+                ⚠️ Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu. Hãy gửi đủ 2 ảnh (ảnh đã tim bài + ảnh cmt) để Palette tặng chì mở khóa nhé!
+            </div>
+
+            <div id="cmtHeartImgBox" class="hidden bg-black/25 p-3 rounded-2xl border border-rose-300/30 text-xs mb-3">
+                <label class="block font-bold text-rose-200 mb-1.5">1. Ảnh tim (❤️ bài viết Facebook):</label>
+                <div class="flex items-center gap-2">
+                    <label class="bg-rose-500/30 hover:bg-rose-500/50 border border-rose-300/50 text-rose-200 font-bold px-3 py-1.5 rounded-xl text-xs active:scale-95 transition cursor-pointer shrink-0 inline-flex items-center gap-1">
+                        ❤️ Chọn ảnh tim
+                        <input id="cmtRewardHeartImg" type="file" accept="image/*" class="hidden" onchange="handleCmtHeartFileChange(this)">
+                    </label>
+                    <span id="cmtRewardHeartImgName" class="text-[11px] text-sky-200/70 truncate flex-1">Chưa chọn ảnh tim</span>
+                </div>
+                <div id="cmtRewardHeartPreview" class="hidden mt-2.5 flex flex-wrap gap-2"></div>
+            </div>
+
+            <div class="bg-black/25 p-3 rounded-2xl border border-white/10 text-xs mb-3">
+                <label id="cmtRewardImgsLabel" class="block font-bold text-sky-200 mb-1.5">Ảnh chụp bình luận của bạn (tối đa 3 ảnh):</label>
+                <div class="flex items-center gap-2">
+                    <label class="bg-pink-500/30 hover:bg-pink-500/50 border border-pink-300/50 text-pink-200 font-bold px-3 py-1.5 rounded-xl text-xs active:scale-95 transition cursor-pointer shrink-0 inline-flex items-center gap-1">
+                        📁 Chọn ảnh
+                        <input id="cmtRewardImgs" type="file" accept="image/*" class="hidden" onchange="handleCmtRewardFileChange(this)">
+                    </label>
+                    <span id="cmtRewardImgsName" class="text-[11px] text-sky-200/70 truncate flex-1">Chưa chọn ảnh</span>
+                </div>
+                <div id="cmtRewardImgsPreview" class="hidden mt-2.5 flex flex-wrap gap-2"></div>
+                <p id="cmtRewardImgsHint" class="text-[10px] text-sky-200/60 mt-2 leading-relaxed italic">* Ảnh cmt có thể feedback mọi character của Palette / cảm nghĩ về plot và trải nghiệm (có thể bấm Chọn ảnh nhiều lần để thêm tối đa 3 ảnh).</p>
+            </div>
+
+            <textarea id="cmtRewardNote" maxlength="200" rows="2" placeholder="Ghi chú cho Palette (không bắt buộc)" class="w-full bg-black/30 border border-white/15 rounded-xl p-2 text-xs text-white placeholder-sky-200/40 outline-none focus:border-pink-300/60 mb-3"></textarea>
+
+            <button type="button" id="cmtRewardSubmitBtn" onclick="submitCmtRewardRequest()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 font-extrabold text-sm py-2.5 rounded-xl shadow-lg text-white">
+                Gửi cho Palette duyệt
+            </button>
+            <p class="text-[10.5px] text-pink-200/70 text-center mt-2 italic leading-tight">* Palette sẽ duyệt trong vòng 1 ngày, duyệt xong Chì Màu được cộng thẳng vào túi của bạn.</p>
+        </div>
+    </div>
+
     <!-- MODAL DUYỆT SẮC MÀU NHANH NHẸN (CHỈ CẦN ẢNH FACEBOOK) -->
     <div id="fastProofPopup" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3.5 overflow-y-auto">
         <div class="bg-[#121c38] border-2 border-fuchsia-300/60 p-5 rounded-3xl max-w-sm w-full text-left shadow-[0_0_35px_rgba(232,121,249,0.4)] max-h-[85vh] custom-scroll my-auto">
@@ -1610,7 +1707,7 @@
                 <div class="flex items-center gap-2">
                     <label class="bg-fuchsia-500/30 hover:bg-fuchsia-500/50 border border-fuchsia-300/50 text-fuchsia-200 font-bold px-3 py-1.5 rounded-xl text-xs active:scale-95 transition cursor-pointer shrink-0 inline-flex items-center gap-1">
                         📁 Chọn ảnh Facebook
-                        <input id="fastProofFbImg" type="file" accept="image/*" class="hidden" onchange="handleFileSelected(this, 'fastProofFbImgName')">
+                        <input id="fastProofFbImg" type="file" accept="image/*" class="sr-only" onchange="handleFileSelected(this, 'fastProofFbImgName')">
                     </label>
                     <span id="fastProofFbImgName" class="text-[11px] text-sky-200/70 truncate flex-1">Chưa chọn ảnh</span>
                 </div>
@@ -1693,9 +1790,20 @@
                     <label class="block font-bold text-pink-300 mb-1">7. Trạng thái link:</label>
                     <select id="formCharStatus" onchange="toggleStatusSettings(this.value)" class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-white font-bold focus:border-yellow-400">
                         <option value="locked">Khóa (Đáp ứng yêu cầu bên Tô Màu mới mở)</option>
-                        <option value="unlocked_24h">Mở khóa có hạn giờ (Tùy chỉnh thời gian mở, ưu tiên chính giữa)</option>
-                        <option value="closed">Đóng link (Mục đóng, tự động đếm ngược mở lại)</option>
+                        <option value="unlocked_24h">Nhanh nhẹn (Mở khóa có hạn giờ / Tạm giới hạn)</option>
+                        <option value="closed">Đang fix (Tạm đóng để sửa lỗi)</option>
                     </select>
+                    <div id="fastModeChoiceBox" class="hidden mt-2 bg-black/35 border border-fuchsia-300/40 rounded-2xl p-2.5 space-y-1.5">
+                        <div class="text-[11px] font-bold text-fuchsia-300">Chọn chế độ Nhanh Nhẹn:</div>
+                        <label class="flex items-start gap-2 cursor-pointer bg-black/30 p-2 rounded-xl border border-white/10">
+                            <input type="radio" name="formFastModeType" value="limited" checked onchange="toggleFastModeType(this.value)" class="mt-0.5 accent-pink-500">
+                            <span class="text-[11px] text-sky-100"><b class="text-pink-300">Giới hạn</b> (Như cũ: chỉ duyệt ảnh tim, có chọn giờ mở &amp; đếm ngược)</span>
+                        </label>
+                        <label class="flex items-start gap-2 cursor-pointer bg-black/30 p-2 rounded-xl border border-white/10">
+                            <input type="radio" name="formFastModeType" value="paused_limit" onchange="toggleFastModeType(this.value)" class="mt-0.5 accent-amber-400">
+                            <span class="text-[11px] text-sky-100"><b class="text-amber-300">Tạm giới hạn</b> (Chỉ đổi bằng Bút Chì Màu; cmt duyệt 2 ảnh tim + cmt)</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div>
@@ -1712,7 +1820,7 @@
                 </div>
 
                 <!-- 9. CÀI ĐẶT THỜI GIAN ĐẾM NGƯỢC MỞ LINK SAU KHI DUYỆT -->
-                <div>
+                <div id="unlockWaitSettingsSection">
                     <label class="block font-bold text-pink-300 mb-1">9. Thời gian chờ mở link sau khi duyệt:</label>
                     <div class="bg-black/40 border border-white/20 rounded-2xl p-3 space-y-2">
                         <div class="grid grid-cols-2 gap-2">
@@ -1758,10 +1866,9 @@
                     </div>
                 </div>
 
-                <!-- CÀI ĐẶT ĐÓNG LINK -->
-                <div id="closedSettingsBox" class="hidden bg-black/30 p-3 rounded-2xl border border-pink-300/30 space-y-2">
-                    <label class="block font-bold text-amber-300">Chọn thời gian mở lại link:</label>
-                    <input id="formReopenDate" type="datetime-local" class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-1.5 text-white">
+                <!-- CÀI ĐẶT ĐANG FIX -->
+                <div id="closedSettingsBox" class="hidden bg-red-500/10 p-3 rounded-2xl border border-red-300/30 text-[11px] text-red-200">
+                    🔧 Nhân vật này đang ở trạng thái <b>Đang fix</b> (tạm đóng, không có đếm ngược mở lại).
                 </div>
 
                 <div class="pt-2 flex items-center gap-2">
@@ -3901,6 +4008,7 @@
                     : `Tiến độ ${checkinProgress.completedDays}/7 ngày liên tiếp · ngày 7 nhận 2 Bút Chì Màu.`;
             }
             updateCommentPingAvailability();
+            if (activeChar) updateAIStudioButton();
         }
 
         let isDailyCheckinRunning = false;
@@ -4185,7 +4293,7 @@
                     btn.onclick = () => window.open(char.aiStudioUrl, '_blank');
                 } else if (char.status === 'closed') {
                     btn.className = "w-full bg-red-500/20 text-red-200 border border-red-400/40 font-bold text-xs py-2.5 px-3 rounded-xl cursor-not-allowed";
-                    btn.innerText = "Link nhân vật hiện đã đóng";
+                    btn.innerText = "Link nhân vật hiện đang fix";
                     btn.onclick = null;
                 } else {
                     btn.className = "jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg active:scale-95 transition";
@@ -4196,6 +4304,16 @@
 
             if (modal) modal.classList.remove('hidden');
             playPaletteTingSound();
+        }
+
+        function openMiniRedeemModalBySafeId(safeId) {
+            const target = characters.find(c => cmtSafeId(c.id) === safeId);
+            if (target) openMiniRedeemModal(target);
+        }
+
+        function redeemTenPencilsBySafeId(safeId) {
+            const target = characters.find(c => cmtSafeId(c.id) === safeId);
+            if (target) redeemTenPencilsForChar(target.id);
         }
 
         function closeMiniRedeemModal() {
@@ -4319,6 +4437,9 @@
                 logMemberActivity("Đổi 10 Chì Màu mở link 🔓", `Nhân vật: ${targetChar.name}`, "link");
                 triggerNotification("Mở Khóa Link Thành Công!", `Bạn đã dùng 10 Bút Chì Màu mở khóa link của "${targetChar.name}"! Nhớ bấm thả tim lưu giữ, nếu quên sau 1 ngày sẽ phải làm lại thủ tục để lấy lại link nhé.`, currentUser.username);
                 alert(`🎉 Chúc mừng! Bạn đã đổi 10 Bút Chì Màu và mở khóa link của "${targetChar.name}"! Nhớ bấm thả tim để lưu giữ vĩnh viễn, nếu quên sau 1 ngày bạn sẽ phải làm lại thủ tục để lấy lại link nhé.`);
+                if (targetChar.status === 'unlocked_24h' && targetChar.aiStudioUrl) {
+                    window.open(targetChar.aiStudioUrl, '_blank');
+                }
             } catch (error) {
                 console.error("Lỗi đổi chì màu:", error);
                 alert("Có lỗi khi kết nối: " + (error?.message || "Vui lòng thử lại"));
@@ -4389,6 +4510,7 @@
         function renderAdminQuizCharsList() {}
 
         function renderAdminPendingPings() {
+            renderAdminCmtRewards();
             const container = document.getElementById('adminPendingPingList');
             const countEl = document.getElementById('adminPendingPencilCountInModal');
             if (countEl) countEl.innerText = `${pendingPencilRequests.length} yêu cầu`;
@@ -4566,14 +4688,14 @@
             const countSpan = document.getElementById('adminPendingPencilCount');
             const shopSection = document.getElementById('ownerPencilShopSection');
             const shopCount = document.getElementById('pencilShopPendingCount');
-            if (shopCount) shopCount.innerText = pendingPencilRequests.length;
+            if (shopCount) shopCount.innerText = pendingPencilRequests.length + pendingCmtRewards.length;
             if (shopSection) shopSection.classList.toggle('hidden', !isOwner);
-            if (isOwner && pendingPencilRequests.length > 0) {
+            if (isOwner && (pendingPencilRequests.length + pendingCmtRewards.length) > 0) {
                 if (btn) {
                     btn.classList.remove('hidden');
                     btn.classList.add('flex');
                 }
-                if (countSpan) countSpan.innerText = pendingPencilRequests.length;
+                if (countSpan) countSpan.innerText = pendingPencilRequests.length + pendingCmtRewards.length;
             } else {
                 if (btn) {
                     btn.classList.add('hidden');
@@ -4749,6 +4871,24 @@
                 }
             });
 
+            db.collection("cmt_reward_requests").onSnapshot((snapshot) => {
+                const previousIds = knownCmtRewardIds;
+                pendingCmtRewards = [];
+                snapshot.forEach(doc => { pendingCmtRewards.push({ id: doc.id, ...doc.data() }); });
+                pendingCmtRewards.sort((a, b) => (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0));
+                const currentIds = new Set(pendingCmtRewards.map(r => r.id));
+                if (previousIds) {
+                    pendingCmtRewards.filter(r => !previousIds.has(r.id)).forEach(r => {
+                        playPaletteTingSound();
+                        showInAppNotifyToast("📸 Có ảnh cmt mới chờ duyệt!", `${r.username || "Một thành viên"} vừa gửi ảnh cho ${r.charName || "nhân vật"}. Mở Cửa Hàng Bút Chì để duyệt nhé!`);
+                    });
+                }
+                knownCmtRewardIds = currentIds;
+                updateAdminPencilNotificationBadge();
+                const reqModal = document.getElementById('adminPencilRequestsModal');
+                if (reqModal && !reqModal.classList.contains('hidden')) renderAdminCmtRewards();
+            }, () => {});
+
             db.collection("activities").onSnapshot((snapshot) => {
                 const prevIds = knownOwnerActivityIds;
                 memberActivities = [];
@@ -4899,6 +5039,7 @@
             const descEl = document.getElementById('guide24hDescription');
             if (!descEl) return;
             const fastChar = characters.find(c => c.status === 'unlocked_24h');
+            const isPaused = (fastChar && fastChar.fastModeType === 'paused_limit');
             let durationStr = "24h";
             if (fastChar && fastChar.customDurationMs) {
                 const totalHours = Math.round(fastChar.customDurationMs / (3600 * 1000));
@@ -4908,7 +5049,12 @@
             const waitNote = waitMs <= 0 
                 ? "link sẽ mở khóa ngay lập tức không cần chờ đợi nhé!" 
                 : `bạn cần đợi đếm ngược ${Math.round(waitMs / 3600000 * 10) / 10} tiếng thì link mới mở khóa nhé!`;
-            descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt trong ngày khi Palette up plot mới.<br>• <b>Cách lấy:</b> Nhanh tay lấy link ngay trong ngày - Không cần feedback và join discord! Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web sau ${durationStr} (sẽ mở lại sau ba ngày).<br>• <b>Thời gian nhận link:</b> Sau khi nộp ảnh Facebook được duyệt thành công, ${waitNote}`;
+
+            if (isPaused) {
+                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới.<br>• <b>Lưu ý:</b> Char mới nhất ở chế độ <b>Tạm giới hạn</b> chỉ có thể đổi bằng <b class="text-amber-300">10 Bút Chì Màu</b>.<br>• <b>Cách đổi link:</b> Tích đủ 10 Bút Chì Màu trong túi hoặc gửi 2 ảnh (ảnh tim + ảnh cmt) tại Sắc Màu Nhanh Nhẹn để Palette duyệt tặng chì đổi link nhé!`;
+            } else {
+                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt trong ngày khi Palette up plot mới.<br>• <b>Cách lấy:</b> Nhanh tay lấy link ngay trong ngày - Không cần feedback và join discord! Hãy thả tim và nộp ảnh trước khi kết thúc đợt mở sau ${durationStr}.<br>• <b>Thời gian nhận link:</b> Sau khi nộp ảnh Facebook được duyệt thành công, ${waitNote}<br>• <b>Lưu ý:</b> Char mới nhất ở chế độ <b>Tạm giới hạn</b> chỉ có thể đổi bằng <b class="text-amber-300">10 Bút Chì Màu</b>.`;
+            }
         }
 
         function openUserAccountModal() {
@@ -6701,9 +6847,12 @@
         function updateFastColorSubtitle() {
             const subtitleEl = document.getElementById('fastColorSubtitle');
             if (!subtitleEl) return;
-            const has24hChar = characters.some(c => c.status === 'unlocked_24h');
-            if (has24hChar) {
+            const hasLimited = characters.some(c => c.status === 'unlocked_24h' && c.fastModeType !== 'paused_limit');
+            const hasPaused = characters.some(c => c.status === 'unlocked_24h' && c.fastModeType === 'paused_limit');
+            if (hasLimited) {
                 subtitleEl.innerText = "Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web trong đợt mở này (sẽ mở lại sau ba ngày).";
+            } else if (hasPaused) {
+                subtitleEl.innerText = "Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu.";
             } else {
                 subtitleEl.innerText = "Đang đóng - không có character mới nhất có thể lấy link trong ngày.";
             }
@@ -6729,9 +6878,12 @@
                 const card = document.createElement('div');
                 card.className = "w-full max-w-sm fast-center-card p-6 rounded-3xl flex flex-col items-center mb-6 relative";
                 
+                const isPausedLimit = (c.fastModeType === 'paused_limit');
                 const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
                 const timerEnd = userUnlockTimers[currentUser?.username]?.[c.id];
-                const isCountingDown = timerEnd && (Date.now() < timerEnd);
+                const isCountingDown = !isPausedLimit && timerEnd && (Date.now() < timerEnd);
+                const curPencilsFast = currentUser ? getUserPencilCount(currentUser.username) : 0;
+                const hasTenPencils = curPencilsFast >= 10;
 
                 let actionButtonHtml = '';
                 if (isUnlocked) {
@@ -6740,6 +6892,10 @@
                             🔓 ĐÃ MỞ KHÓA - Mở Link ${c.name} Ngay!
                         </button>
                     `;
+                } else if (isPausedLimit) {
+                    actionButtonHtml = hasTenPencils
+                        ? `<button onclick="redeemTenPencilsBySafeId('${cmtSafeId(c.id)}')" class="jelly-btn w-full bg-gradient-to-r from-emerald-500 via-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay</button>`
+                        : `<button onclick="openMiniRedeemModalBySafeId('${cmtSafeId(c.id)}')" class="jelly-btn w-full bg-gradient-to-r from-amber-500 via-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">✏️ Đổi 10 Bút Chì Màu để mở khóa link</button>`;
                 } else if (isCountingDown) {
                     const isOwner = checkIsOwnerAccount();
                     actionButtonHtml = `
@@ -6749,25 +6905,30 @@
                                 <span id="fastUserTimer-${c.id}" class="font-mono font-black text-sm text-amber-300">--:--:--</span>
                                 <span>mở link</span>
                             </button>
-                            ${isOwner ? `
-                                <button onclick="ownerForceUnlockForUser('${currentUser.username}', '${c.id}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-[11px] py-1.5 rounded-xl shadow active:scale-95 transition">
-                                    ⚡ Chủ Web: Mở Link Ngay Lập Tức
-                                </button>
-                            ` : ''}
+                            ${isOwner ? `<button onclick="ownerForceUnlockForUser('${currentUser.username}', '${c.id}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-[11px] py-1.5 rounded-xl shadow active:scale-95 transition">⚡ Chủ Web: Mở Link Ngay Lập Tức</button>` : ''}
                         </div>
                     `;
                 } else {
                     actionButtonHtml = `
-                        <button onclick="openFastProofModal('${c.id}')" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
-                            Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web (sẽ mở lại sau ba ngày).
-                        </button>
+                        <div class="w-full space-y-2">
+                            <button onclick="openFastProofModal('${c.id}')" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
+                                Hãy thả tim và vẽ đường cho tình yêu chạy trước khi link bị đóng trên web (sẽ mở lại sau ba ngày).
+                            </button>
+                            ${hasTenPencils ? `<button onclick="redeemTenPencilsBySafeId('${cmtSafeId(c.id)}')" class="jelly-btn w-full bg-gradient-to-r from-emerald-500 via-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-2.5 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay</button>` : ''}
+                        </div>
                     `;
                 }
+
+                const noteHtml = isPausedLimit
+                    ? "Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu."
+                    : ((typeof c.unlockWaitMs === 'number' && c.unlockWaitMs <= 0)
+                        ? "Lưu ý: Sau khi duyệt ảnh thành công, link sẽ mở khóa NGAY LẬP TỨC để bạn lấy link nhé!"
+                        : `Lưu ý: Sau khi duyệt ảnh thành công, hệ thống sẽ đếm ngược ${Math.round((c.unlockWaitMs || 7200000) / 3600000 * 10) / 10} tiếng để mở link. Bạn có thể out ra và quay trở lại sau để lấy link nhé.`);
 
                 card.innerHTML = `
                     <div class="w-full text-center mb-4">
                         <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[10px] px-3.5 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                            Đang mở khóa có hạn giờ
+                            ${isPausedLimit ? 'Tạm giới hạn · Đổi bằng Chì Màu' : 'Đang mở khóa có hạn giờ'}
                         </span>
                         <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-1.5 flex-wrap">
                             <span class="char-pastel-0">${c.name}</span>
@@ -6775,27 +6936,17 @@
                         </h3>
                         <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
                     </div>
-
                     <div class="relative mb-3 flex justify-center">
                         <div class="glowing-pastel-border">
                             <div class="w-60 h-72 rounded-[1.3rem] overflow-hidden relative">
                                 <img src="${c.image}" class="w-full h-full object-cover">
-                                
-                                <div class="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md border border-fuchsia-300/50 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    <span id="fastCountdownSmall-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span>
-                                </div>
+                                ${!isPausedLimit ? `<div class="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md border border-fuchsia-300/50 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span id="fastCountdownSmall-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span></div>` : ''}
                             </div>
                         </div>
                     </div>
-
-                    <p class="text-[10px] text-amber-200/90 text-center mb-3 italic leading-relaxed bg-amber-500/10 p-2.5 rounded-2xl border border-amber-300/25 max-w-[280px]">
-                        ${(typeof c.unlockWaitMs === 'number' && c.unlockWaitMs <= 0)
-                            ? "Lưu ý: Sau khi duyệt ảnh thành công, link sẽ mở khóa NGAY LẬP TỨC để bạn lấy link nhé!"
-                            : `Lưu ý: Sau khi duyệt ảnh thành công, hệ thống sẽ đếm ngược ${Math.round((c.unlockWaitMs || 7200000) / 3600000 * 10) / 10} tiếng để mở link. Bạn có thể out ra và quay trở lại sau để lấy link nhé.`}
-                    </p>
-
+                    <p class="text-[10px] text-amber-200/90 text-center mb-3 italic leading-relaxed bg-amber-500/10 p-2.5 rounded-2xl border border-amber-300/25 max-w-[280px]">${noteHtml}</p>
                     ${actionButtonHtml}
+                    ${getCmtRewardSectionHtml(c)}
                 `;
                 container.appendChild(card);
             });
@@ -6811,40 +6962,35 @@
                 const now = Date.now();
 
                 characters.forEach(c => {
-                    if (c.status === 'unlocked_24h' && c.fastStartTime) {
+                    if (c.status === 'unlocked_24h' && c.fastModeType !== 'paused_limit' && c.fastStartTime) {
                         const duration = c.customDurationMs || (24 * 60 * 60 * 1000);
-                        const elapsed = now - c.fastStartTime;
-                        if (elapsed >= duration) {
-                            c.status = 'locked';
+                        if (now - c.fastStartTime >= duration) {
+                            c.fastModeType = 'paused_limit';
                             delete c.fastStartTime;
                             db.collection("characters").doc(c.id).set(c).catch(() => {});
+                            renderCharacters();
+                            renderFastColorCenter();
+                            updateFastColorSubtitle();
+                            updateGuide24hText();
+                            if (activeChar && activeChar.id === c.id) openCharDetail(c);
                         }
                     }
 
                     // Sau tròn 24 tiếng nếu chưa bấm thả tim thì khóa lại để user làm lại thủ tục lấy link
                     if (currentUser && userUnlockedState[currentUser.username]?.[c.id] === true) {
                         const likes = charLikesData[c.id] || [];
-                        const isLiked = likes.includes(currentUser.username);
-                        if (!isLiked) {
+                        if (!likes.includes(currentUser.username)) {
                             const unlockTime = userUnlockTimestamps[currentUser.username]?.[c.id];
                             if (unlockTime && (now - unlockTime >= 24 * 60 * 60 * 1000)) {
                                 userUnlockedState[currentUser.username][c.id] = false;
                                 delete userUnlockTimestamps[currentUser.username][c.id];
                                 localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
-                                db.collection("unlocked").doc(currentUser.username).set({
-                                    chars: userUnlockedState[currentUser.username]
-                                });
+                                db.collection("unlocked").doc(currentUser.username).set({ chars: userUnlockedState[currentUser.username] });
                                 if (activeChar && activeChar.id === c.id) updateAIStudioButton();
                                 renderFastColorCenter();
                                 renderCharacters();
                             }
                         }
-                    }
-
-                    if (c.status === 'closed' && c.reopenTimestamp && now >= c.reopenTimestamp) {
-                        c.status = 'locked';
-                        delete c.reopenTimestamp;
-                        db.collection("characters").doc(c.id).set(c).catch(() => {});
                     }
                 });
                 updateCountdownDisplayOnly();
@@ -6854,7 +7000,7 @@
         function updateCountdownDisplayOnly() {
             const now = Date.now();
             characters.forEach(c => {
-                if (c.status === 'unlocked_24h' && c.fastStartTime) {
+                if (c.status === 'unlocked_24h' && c.fastModeType !== 'paused_limit' && c.fastStartTime) {
                     const duration = c.customDurationMs || (24 * 60 * 60 * 1000);
                     const remain = Math.max(0, (c.fastStartTime + duration) - now);
                     const hours = Math.floor(remain / (1000 * 60 * 60));
@@ -7024,13 +7170,13 @@
                     const card = document.createElement('div');
                     card.className = "w-full fast-center-card p-5 rounded-3xl flex flex-col items-center mb-5 relative cursor-pointer active:scale-98 transition";
                     card.onclick = () => openCharDetail(c);
-
+                    const isPaused = (c.fastModeType === 'paused_limit');
                     const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
 
                     card.innerHTML = `
                         <div class="w-full text-center mb-3">
                             <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[9.5px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                                MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ
+                                ${isPaused ? 'MỚI NHẤT · TẠM GIỚI HẠN' : 'MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ'}
                             </span>
                             <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-2 flex-wrap">
                                 <span class="char-pastel-0">${c.name}</span>
@@ -7038,23 +7184,17 @@
                             </h3>
                             <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
                         </div>
-
                         <div class="relative mb-3 flex justify-center">
                             <div class="glowing-pastel-border">
                                 <div class="w-52 h-64 rounded-[1.3rem] overflow-hidden relative">
                                     <img src="${c.image}" class="w-full h-full object-cover">
-                                    
-                                    <div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md border border-fuchsia-300/60 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                        <span id="storyCountdown-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span>
-                                    </div>
+                                    ${!isPaused ? `<div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md border border-fuchsia-300/60 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span id="storyCountdown-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span></div>` : ''}
                                 </div>
                             </div>
                         </div>
-
                         <div class="w-full text-center">
                             <span class="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-black py-2.5 px-4 rounded-xl shadow-md">
-                                ${isUnlocked ? `🔓 Link đã mở khóa (Bấm để xem) ➔` : `Nhanh tay lấy link trước khi kết thúc ➔`}
+                                ${isUnlocked ? '🔓 Link đã mở khóa (Bấm để xem) ➔' : (isPaused ? '✏️ Tạm giới hạn · Đổi bằng Bút Chì Màu ➔' : 'Nhanh tay lấy link trước khi kết thúc ➔')}
                             </span>
                         </div>
                     `;
@@ -7079,8 +7219,8 @@
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <h3 class="text-base font-extrabold ${getPastelColorClass(index)}">${c.name}</h3>
                                 ${c.isNew ? '<span class="new-char-badge text-[9.5px]"><span class="green-pastel-wave">New</span></span>' : ''}
-                                ${c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở có hạn</span>' : ''}
-                                ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-200 border border-red-300/40 px-1.5 py-0.5 rounded-full font-bold">Đã đóng</span>' : ''}
+                                ${c.status === 'unlocked_24h' && c.fastModeType === 'paused_limit' ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full font-bold">Tạm giới hạn</span>' : (c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở có hạn</span>' : '')}
+                                ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-200 border border-red-300/40 px-1.5 py-0.5 rounded-full font-bold">Đang fix</span>' : ''}
                             </div>
                             <p class="text-xs text-sky-100/80 truncate mt-0.5">${c.subtitle}</p>
                             <div class="flex flex-wrap gap-1 mt-1.5">${tagsHtml}</div>
@@ -7159,7 +7299,7 @@
             document.getElementById('charFullSubtitle').innerText = char.subtitle || `Tag: ${char.firstTagSubtitle}`;
 
             const badge24h = document.getElementById('detailChar24hBadge');
-            if (char.status === 'unlocked_24h') {
+            if (char.status === 'unlocked_24h' && char.fastModeType !== 'paused_limit') {
                 badge24h.classList.remove('hidden');
             } else {
                 badge24h.classList.add('hidden');
@@ -7171,6 +7311,17 @@
             updateHeartUI();
             updateAIStudioButton();
             renderComments();
+
+            const detailCmtRewardBox = document.getElementById('detailCmtRewardBox');
+            if (detailCmtRewardBox) {
+                if (char.status === 'unlocked_24h') {
+                    detailCmtRewardBox.innerHTML = getCmtRewardSectionHtml(char);
+                    detailCmtRewardBox.classList.remove('hidden');
+                } else {
+                    detailCmtRewardBox.innerHTML = '';
+                    detailCmtRewardBox.classList.add('hidden');
+                }
+            }
 
             const adminEditBtn = document.getElementById('adminEditCharBtn');
             if (currentUser?.isOwner) adminEditBtn.classList.remove('hidden');
@@ -7233,30 +7384,33 @@
             const btn = document.getElementById('aiStudioLinkBtn');
             const text = document.getElementById('aiBtnText');
             const prompt = document.getElementById('aiRequirementPrompt');
+            const pausedPrompt = document.getElementById('aiPausedRequirementPrompt');
             const targetBtn = document.getElementById('guideTargetBtn');
             const closedBox = document.getElementById('closedNoticeSubtextContainer');
             const closedSub = document.getElementById('closedNoticeSubtext');
 
             if (activeChar.status === 'closed') {
                 prompt.classList.add('hidden');
+                if (pausedPrompt) pausedPrompt.classList.add('hidden');
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-red-500/20 text-red-200 border border-red-400/40 font-bold text-xs py-3 px-4 rounded-xl cursor-not-allowed";
-                text.innerText = "Đã đóng (Link tạm thời đã đóng sau khi mở có hạn.)";
+                text.innerText = "🔧 Đang fix (Link tạm đóng để sửa lỗi)";
                 closedBox.classList.remove('hidden');
-
-                if (activeChar.reopenTimestamp) {
-                    const diffMs = Math.max(0, activeChar.reopenTimestamp - Date.now());
-                    const diffHours = Math.ceil(diffMs / (3600 * 1000));
-                    closedSub.innerText = `sau ${diffHours} tiếng sẽ mở lại`;
-                } else {
-                    closedSub.innerText = "sẽ sớm mở lại theo lịch của Palette";
-                }
+                closedSub.innerText = "Nhân vật này hiện đang fix, không có đếm ngược mở lại.";
                 return;
             }
 
-            closedBox.classList.add('hidden');
-            prompt.classList.remove('hidden');
+            const isPausedLimit = (activeChar.status === 'unlocked_24h' && activeChar.fastModeType === 'paused_limit');
+            if (isPausedLimit) {
+                prompt.classList.add('hidden');
+                if (pausedPrompt) pausedPrompt.classList.remove('hidden');
+                closedBox.classList.add('hidden');
+            } else {
+                prompt.classList.remove('hidden');
+                if (pausedPrompt) pausedPrompt.classList.add('hidden');
+                closedBox.classList.add('hidden');
+            }
 
-            if (activeChar.status === 'unlocked_24h') {
+            if (activeChar.status === 'unlocked_24h' && !isPausedLimit) {
                 targetBtn.className = "bg-transparent font-black underline text-xs pastel-fast-wave";
                 targetBtn.innerText = "Sắc Màu Nhanh Nhẹn";
                 targetBtn.onclick = () => { openFastColorScreen(); };
@@ -7268,20 +7422,25 @@
 
             const timerEnd = userUnlockTimers[currentUser?.username]?.[activeChar.id];
             const now = Date.now();
-
-            if (timerEnd && now < timerEnd) {
+            if (!isPausedLimit && timerEnd && now < timerEnd) {
                 const remainSec = Math.floor((timerEnd - now) / 1000);
-                const h = Math.floor(remainSec / 3600);
-                const m = Math.floor((remainSec % 3600) / 60);
-                const s = remainSec % 60;
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-amber-500/25 text-amber-200 border border-amber-300/40 font-bold text-xs py-3 px-4 rounded-xl";
-                text.innerText = `Link Google AI Studio (Đếm ngược ${pad(h)}:${pad(m)}:${pad(s)} mở khóa)`;
+                text.innerText = `Link Google AI Studio (Đếm ngược ${pad(Math.floor(remainSec / 3600))}:${pad(Math.floor((remainSec % 3600) / 60))}:${pad(remainSec % 60)} mở khóa)`;
                 return;
             }
+
+            const curPencilsDetail = currentUser ? getUserPencilCount(currentUser.username) : 0;
+            const canFastRedeem10 = (activeChar.status === 'unlocked_24h' && !isUnlocked && curPencilsDetail >= 10);
 
             if (isUnlocked) {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg active:scale-95 transition animate-bounce";
                 text.innerText = `ĐÃ MỞ KHÓA - Mở Link ${activeChar.name} Ngay!`;
+            } else if (canFastRedeem10) {
+                btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500/35 via-pink-500/35 to-purple-500/35 text-amber-200 border border-amber-300/70 font-black text-xs py-3 px-4 rounded-xl shadow-[0_0_16px_rgba(251,191,36,0.3)] transition active:scale-95";
+                text.innerText = "✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay";
+            } else if (isPausedLimit) {
+                btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500/30 to-pink-500/30 text-amber-200 border border-amber-300/60 font-extrabold text-xs py-3 px-4 rounded-xl transition active:scale-95";
+                text.innerText = "✏️ Đổi 10 Bút Chì Màu để mở khóa link";
             } else {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-white/10 text-white/50 border border-white/20 font-bold text-xs py-3 px-4 rounded-xl transition";
                 text.innerText = "Link Google AI Studio (Chưa mở khóa)";
@@ -7494,12 +7653,17 @@
 
         function handleAIStudioClick() {
             if (activeChar.status === 'closed') {
-                alert("Link của nhân vật này hiện đã đóng!");
+                alert("Link của nhân vật này hiện đang fix!");
+                return;
+            }
+            const isUnlockedNow = userUnlockedState[currentUser?.username]?.[activeChar.id] === true;
+            if (isUnlockedNow) {
+                window.open(activeChar.aiStudioUrl, '_blank');
                 return;
             }
 
             const timerEnd = userUnlockTimers[currentUser?.username]?.[activeChar.id];
-            if (timerEnd && Date.now() < timerEnd) {
+            if (activeChar.fastModeType !== 'paused_limit' && timerEnd && Date.now() < timerEnd) {
                 if (checkIsOwnerAccount()) {
                     if (confirm(`👑 Quyền Chủ Web (Bibi 0304):\nBạn có muốn MỞ KHÓA LINK NGAY LẬP TỨC cho "${activeChar.name}" (bỏ qua đếm ngược) không?`)) {
                         ownerForceUnlockForUser(currentUser.username, activeChar.id);
@@ -7510,7 +7674,19 @@
                 return;
             }
 
-            const isUnlocked = userUnlockedState[currentUser?.username]?.[activeChar.id] === true;
+            if (activeChar.status === 'unlocked_24h') {
+                const curPencilsClick = currentUser ? getUserPencilCount(currentUser.username) : 0;
+                if (curPencilsClick >= 10) {
+                    redeemTenPencilsForChar(activeChar.id);
+                    return;
+                }
+                if (activeChar.fastModeType === 'paused_limit') {
+                    openMiniRedeemModal(activeChar);
+                    return;
+                }
+            }
+
+            const isUnlocked = isUnlockedNow;
             if (!isUnlocked) {
                 if (activeChar.status === 'unlocked_24h') {
                     alert(`Khóa! Vui lòng nộp proof tại mục Sắc Màu Nhanh Nhẹn để mở khóa link ${activeChar.name}!`);
@@ -8188,18 +8364,36 @@
         }
 
         // ================= ADMIN: FORM & QUẢN TRỊ =================
+        function toggleFastModeType(mode) {
+            const status = document.getElementById('formCharStatus')?.value;
+            const openTimeBox = document.getElementById('unlockedTimeSettingsBox');
+            const waitSection = document.getElementById('unlockWaitSettingsSection');
+            if (status !== 'unlocked_24h') return;
+            const isPaused = (mode === 'paused_limit');
+            if (openTimeBox) openTimeBox.classList.toggle('hidden', isPaused);
+            if (waitSection) waitSection.classList.toggle('hidden', isPaused);
+        }
+
         function toggleStatusSettings(val) {
             const openTimeBox = document.getElementById('unlockedTimeSettingsBox');
             const closedBox = document.getElementById('closedSettingsBox');
+            const fastChoiceBox = document.getElementById('fastModeChoiceBox');
+            const waitSection = document.getElementById('unlockWaitSettingsSection');
             if (val === 'unlocked_24h') {
-                openTimeBox.classList.remove('hidden');
+                if (fastChoiceBox) fastChoiceBox.classList.remove('hidden');
                 closedBox.classList.add('hidden');
+                const mode = document.querySelector('input[name="formFastModeType"]:checked')?.value || 'limited';
+                toggleFastModeType(mode);
             } else if (val === 'closed') {
+                if (fastChoiceBox) fastChoiceBox.classList.add('hidden');
                 openTimeBox.classList.add('hidden');
                 closedBox.classList.remove('hidden');
+                if (waitSection) waitSection.classList.add('hidden');
             } else {
+                if (fastChoiceBox) fastChoiceBox.classList.add('hidden');
                 openTimeBox.classList.add('hidden');
                 closedBox.classList.add('hidden');
+                if (waitSection) waitSection.classList.remove('hidden');
             }
         }
 
@@ -8257,6 +8451,12 @@
             document.getElementById('formCharFileName').innerText = "Chưa có file";
             document.getElementById('unlockedTimeSettingsBox').classList.add('hidden');
             document.getElementById('closedSettingsBox').classList.add('hidden');
+            const fastChoiceBox = document.getElementById('fastModeChoiceBox');
+            if (fastChoiceBox) fastChoiceBox.classList.add('hidden');
+            const waitSection = document.getElementById('unlockWaitSettingsSection');
+            if (waitSection) waitSection.classList.remove('hidden');
+            const limitedRadio = document.querySelector('input[name="formFastModeType"][value="limited"]');
+            if (limitedRadio) limitedRadio.checked = true;
             setFormCharNewState(false);
 
             // Mặc định cài đếm ngược 2 tiếng
@@ -8360,23 +8560,22 @@
             const status = document.getElementById('formCharStatus').value;
             const isNew = document.getElementById('formCharIsNew')?.value === 'true';
 
+            const fastModeType = (status === 'unlocked_24h')
+                ? (document.querySelector('input[name="formFastModeType"]:checked')?.value || 'limited')
+                : null;
             const openH = parseInt(document.getElementById('formOpenHours').value) || 0;
             const openM = parseInt(document.getElementById('formOpenMinutes').value) || 0;
             const openS = parseInt(document.getElementById('formOpenSeconds').value) || 0;
             const customDurationMs = (openH * 3600 + openM * 60 + openS) * 1000 || (24 * 3600 * 1000);
 
-            const reopenDate = document.getElementById('formReopenDate').value;
-
-            // Đọc cài đặt đếm ngược mở link
+            // Đọc cài đặt đếm ngược mở link (không dùng khi Đang fix hoặc Tạm giới hạn)
             const waitType = document.querySelector('input[name="formUnlockWaitType"]:checked')?.value || 'countdown';
             let unlockWaitMs = 0;
-            if (waitType === 'countdown') {
+            if (status !== 'closed' && fastModeType !== 'paused_limit' && waitType === 'countdown') {
                 const waitH = parseInt(document.getElementById('formWaitHours').value) || 0;
                 const waitM = parseInt(document.getElementById('formWaitMinutes').value) || 0;
                 unlockWaitMs = (waitH * 3600 + waitM * 60) * 1000;
-                if (unlockWaitMs <= 0) unlockWaitMs = 2 * 3600 * 1000; // Mặc định 2h nếu để 0
-            } else {
-                unlockWaitMs = 0; // Mở luôn lập tức không cần đếm ngược
+                if (unlockWaitMs <= 0) unlockWaitMs = 2 * 3600 * 1000;
             }
 
             const uploadedImages = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 1100, 0.7)));
@@ -8403,16 +8602,22 @@
                     characters[idx].tags = adminSelectedTags.length > 0 ? [...adminSelectedTags] : ['Mới'];
                     characters[idx].fbLink = fbLink;
                     characters[idx].aiStudioUrl = aiLink;
+                    const wasLimited = (characters[idx].status === 'unlocked_24h' && characters[idx].fastModeType !== 'paused_limit');
+                    const prevDuration = characters[idx].customDurationMs;
                     characters[idx].status = status;
+                    characters[idx].fastModeType = fastModeType;
                     characters[idx].isNew = isNew;
                     characters[idx].unlockWaitMs = unlockWaitMs;
-                    if (status === 'unlocked_24h') {
+                    if (status === 'unlocked_24h' && fastModeType === 'limited') {
                         characters[idx].customDurationMs = customDurationMs;
-                        if (!characters[idx].fastStartTime) characters[idx].fastStartTime = Date.now();
+                        if (!wasLimited || !characters[idx].fastStartTime || prevDuration !== customDurationMs) {
+                            characters[idx].fastStartTime = Date.now();
+                        }
+                    } else {
+                        characters[idx].customDurationMs = null;
+                        characters[idx].fastStartTime = null;
                     }
-                    if (status === 'closed') {
-                        characters[idx].reopenTimestamp = reopenDate ? new Date(reopenDate).getTime() : null;
-                    }
+                    characters[idx].reopenTimestamp = null;
                     savedChar = characters[idx];
                     try {
                         await db.collection("characters").doc(editId).set(savedChar);
@@ -8435,11 +8640,12 @@
                     fbLink,
                     aiStudioUrl: aiLink,
                     status,
+                    fastModeType,
                     isNew,
                     unlockWaitMs,
-                    customDurationMs: status === 'unlocked_24h' ? customDurationMs : null,
-                    fastStartTime: status === 'unlocked_24h' ? Date.now() : null,
-                    reopenTimestamp: (status === 'closed' && reopenDate) ? new Date(reopenDate).getTime() : null
+                    customDurationMs: (status === 'unlocked_24h' && fastModeType === 'limited') ? customDurationMs : null,
+                    fastStartTime: (status === 'unlocked_24h' && fastModeType === 'limited') ? Date.now() : null,
+                    reopenTimestamp: null
                 };
                 try {
                     await db.collection("characters").doc(newChar.id).set(newChar);
@@ -8484,8 +8690,8 @@
                         <img src="${c.image}" class="w-8 h-8 rounded-lg object-cover">
                         <span class="font-bold text-pink-200 truncate">${c.name}</span>
                         ${c.isNew ? '<span class="new-char-badge text-[9px]"><span class="green-pastel-wave">New</span></span>' : ''}
-                        ${c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Có hạn</span>' : ''}
-                        ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-300 px-1 rounded">Đóng</span>' : ''}
+                        ${c.status === 'unlocked_24h' && c.fastModeType === 'paused_limit' ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded">Tạm giới hạn</span>' : (c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Giới hạn</span>' : '')}
+                        ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-300 px-1 rounded">Đang fix</span>' : ''}
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
                         <button type="button" onclick="loadCharToEdit('${c.id}')" class="bg-yellow-400/20 text-yellow-300 px-2 py-0.5 rounded-lg font-bold border border-yellow-300/40">Sửa</button>
@@ -8528,19 +8734,17 @@
                 document.getElementById('formWaitMinutes').value = totalMins % 60;
             }
 
+            const fastModeVal = c.fastModeType === 'paused_limit' ? 'paused_limit' : 'limited';
+            const fastRadio = document.querySelector(`input[name="formFastModeType"][value="${fastModeVal}"]`);
+            if (fastRadio) fastRadio.checked = true;
+
             toggleStatusSettings(c.status);
 
-            if (c.status === 'unlocked_24h' && c.customDurationMs) {
+            if (c.status === 'unlocked_24h' && fastModeVal === 'limited' && c.customDurationMs) {
                 const totalSec = Math.floor(c.customDurationMs / 1000);
                 document.getElementById('formOpenHours').value = Math.floor(totalSec / 3600);
                 document.getElementById('formOpenMinutes').value = Math.floor((totalSec % 3600) / 60);
                 document.getElementById('formOpenSeconds').value = totalSec % 60;
-            }
-
-            if (c.reopenTimestamp) {
-                const dateObj = new Date(c.reopenTimestamp);
-                const isoStr = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-                document.getElementById('formReopenDate').value = isoStr;
             }
 
             adminSelectedTags = c.tags ? [...c.tags] : [];
@@ -9128,6 +9332,7 @@
 
         function openColorGuide(fromHome) {
             isOpenedFromHome = fromHome;
+            updateGuide24hText();
             const fastSec = document.getElementById('guideFastSection');
             const pencilSec = document.getElementById('guidePencilSection');
             if (fastSec) fastSec.classList.toggle('hidden', !fromHome);
@@ -9212,6 +9417,11 @@
             }
             if (!target) {
                 alert("Không tìm thấy thông tin nhân vật đang mở đợt!");
+                return;
+            }
+            if (target.fastModeType === 'paused_limit') {
+                alert("Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu.");
+                openMiniRedeemModal(target);
                 return;
             }
             fastTargetChar = target;
@@ -9411,6 +9621,480 @@
                         }).catch(() => {});
                     }
                 }
+            }
+        }
+
+    // ================= GỬI ẢNH CMT NHẬN BÚT CHÌ MÀU (SẮC MÀU NHANH NHẸN) =================
+        var pendingCmtRewards = [];
+        var knownCmtRewardIds = null;
+        let cmtRewardTargetChar = null;
+        let isSubmittingCmtReward = false;
+        let isProcessingCmtRewardImg = false;
+        let cmtRewardSelectedImages = [];
+        let cmtRewardHeartImages = [];
+        const CMT_REWARD_TYPES = {
+            feedback: { reward: 10, label: "Feedback / cảm nghĩ về plot/char" },
+            noti: { reward: 2, label: "Cmt noti" }
+        };
+
+        function cmtEsc(str) {
+            return String(str == null ? "" : str)
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+        }
+        function cmtSafeId(str) {
+            return String(str || "").replace(/[\/\\\s'"`]/g, "_");
+        }
+
+        // Khối hiển thị ngay dưới nút thủ tục lấy link ở thẻ Sắc Màu Nhanh Nhẹn
+        function getCmtRewardSectionHtml(c) {
+            const isPaused = (c.fastModeType === 'paused_limit');
+            return `
+                <div class="w-full mt-3 rounded-2xl border border-pink-300/30 bg-pink-400/10 p-3 text-center">
+                    <p class="text-[11px] text-pink-100 font-extrabold leading-relaxed">${isPaused ? `💬❤️ Đã tim bài &amp; cmt ở post ${cmtEsc(c.name)}? Gửi 2 ảnh (ảnh tim + ảnh cmt) để nhận Bút Chì Màu mở khóa nhé!` : `💬 Đã cmt ở post ${cmtEsc(c.name)}? Gửi ảnh để nhận Bút Chì Màu nhé!`}</p>
+                    <p class="text-[10px] text-sky-200/80 mt-0.5 leading-relaxed">Feedback / nêu cảm nghĩ về plot/char: <b class="text-amber-300">+10 Chì</b> · Cmt noti: <b class="text-amber-300">+2 Chì</b></p>
+                    <button type="button" onclick="openCmtRewardModal('${cmtSafeId(c.id)}')" class="jelly-btn mt-2 w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-2.5 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
+                        ${isPaused ? '📸 Gửi ảnh tim &amp; cmt nhận Chì Màu' : '📸 Gửi ảnh cmt nhận Chì Màu'}
+                    </button>
+                    <p class="text-[10px] text-sky-200/60 italic mt-1.5">Palette sẽ duyệt trong vòng 1 ngày.</p>
+                </div>
+            `;
+        }
+
+        function renderCmtRewardPreview() {
+            const span = document.getElementById('cmtRewardImgsName');
+            const preview = document.getElementById('cmtRewardImgsPreview');
+            if (span) {
+                if (cmtRewardSelectedImages.length === 0) {
+                    span.innerText = 'Chưa chọn ảnh';
+                    span.className = 'text-[11px] text-sky-200/70 truncate flex-1';
+                } else {
+                    span.innerText = `✓ Đã chọn ${cmtRewardSelectedImages.length}/3 ảnh`;
+                    span.className = 'text-[11px] text-emerald-300 font-extrabold truncate flex-1';
+                }
+            }
+            if (preview) {
+                if (cmtRewardSelectedImages.length === 0) {
+                    preview.innerHTML = '';
+                    preview.classList.add('hidden');
+                } else {
+                    preview.classList.remove('hidden');
+                    preview.innerHTML = cmtRewardSelectedImages.map((src, idx) => `
+                        <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-pink-300/50 bg-black/40 shrink-0">
+                            <img src="${src}" alt="Ảnh cmt ${idx + 1}" class="w-full h-full object-cover">
+                            <button type="button" onclick="removeCmtRewardImage(${idx})" class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/80 hover:bg-red-500 text-white text-[10px] font-black flex items-center justify-center border border-white/30" title="Xóa ảnh">✕</button>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+
+        function removeCmtRewardImage(idx) {
+            cmtRewardSelectedImages.splice(idx, 1);
+            renderCmtRewardPreview();
+        }
+
+        function renderCmtHeartPreview() {
+            const span = document.getElementById('cmtRewardHeartImgName');
+            const preview = document.getElementById('cmtRewardHeartPreview');
+            if (span) {
+                if (cmtRewardHeartImages.length === 0) {
+                    span.innerText = 'Chưa chọn ảnh tim';
+                    span.className = 'text-[11px] text-sky-200/70 truncate flex-1';
+                } else {
+                    span.innerText = `✓ Đã chọn ${cmtRewardHeartImages.length}/2 ảnh tim`;
+                    span.className = 'text-[11px] text-emerald-300 font-extrabold truncate flex-1';
+                }
+            }
+            if (preview) {
+                if (cmtRewardHeartImages.length === 0) {
+                    preview.innerHTML = '';
+                    preview.classList.add('hidden');
+                } else {
+                    preview.classList.remove('hidden');
+                    preview.innerHTML = cmtRewardHeartImages.map((src, idx) => `
+                        <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-rose-300/50 bg-black/40 shrink-0">
+                            <img src="${src}" alt="Ảnh tim ${idx + 1}" class="w-full h-full object-cover">
+                            <button type="button" onclick="removeCmtHeartImage(${idx})" class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/80 hover:bg-red-500 text-white text-[10px] font-black flex items-center justify-center border border-white/30" title="Xóa ảnh">✕</button>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+
+        function removeCmtHeartImage(idx) {
+            cmtRewardHeartImages.splice(idx, 1);
+            renderCmtHeartPreview();
+        }
+
+        async function handleCmtHeartFileChange(input) {
+            const files = Array.from(input?.files || []);
+            if (files.length === 0) return;
+            const span = document.getElementById('cmtRewardHeartImgName');
+            const btn = document.getElementById('cmtRewardSubmitBtn');
+            isProcessingCmtRewardImg = true;
+            if (btn) { btn.disabled = true; btn.innerText = "Đang xử lý ảnh..."; }
+            if (span) { span.innerText = '⏳ Đang xử lý ảnh tim...'; span.className = 'text-[11px] text-amber-300 font-bold truncate flex-1'; }
+            try {
+                for (const file of files) {
+                    if (cmtRewardHeartImages.length >= 2) { alert("Chỉ cần tối đa 2 ảnh tim thôi nhé!"); break; }
+                    const small = await compressCmtImage(file);
+                    if (!small) { alert("Không xử lý được ảnh tim này, thử ảnh JPG/PNG khác nhé!"); continue; }
+                    cmtRewardHeartImages.push(small);
+                }
+            } finally {
+                isProcessingCmtRewardImg = false;
+                if (btn) { btn.disabled = false; btn.innerText = "Gửi cho Palette duyệt"; }
+                if (input) input.value = '';
+                renderCmtHeartPreview();
+            }
+        }
+
+        async function compressCmtImage(file) {
+            if (!file) return "";
+            let baseData = await processImageForFastOCR(file);
+            if (!baseData || !baseData.startsWith('data:image/')) {
+                baseData = await compressUploadedImage(file, 800, 0.65).catch(() => "");
+            }
+            if (!baseData || !baseData.startsWith('data:image/')) return "";
+            if (baseData.startsWith('data:image/jpeg') && baseData.length <= 220000) return baseData;
+
+            const steps = [[800, 0.6], [640, 0.52], [500, 0.45], [380, 0.4]];
+            for (const [dim, q] of steps) {
+                const resized = await new Promise(resolve => {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            resolve(drawBitmapOrImgToJpeg(img, img.naturalWidth || img.width, img.naturalHeight || img.height, dim, q));
+                        } catch (_) {
+                            resolve("");
+                        }
+                    };
+                    img.onerror = () => resolve("");
+                    img.src = baseData;
+                });
+                if (resized && resized.length <= 220000) return resized;
+            }
+            return (baseData.startsWith('data:image/jpeg') && baseData.length <= 320000) ? baseData : "";
+        }
+
+        async function handleCmtRewardFileChange(input) {
+            const files = Array.from(input?.files || []);
+            if (files.length === 0) return;
+
+            const span = document.getElementById('cmtRewardImgsName');
+            const btn = document.getElementById('cmtRewardSubmitBtn');
+            isProcessingCmtRewardImg = true;
+            if (btn) { btn.disabled = true; btn.innerText = "Đang xử lý ảnh..."; }
+            if (span) {
+                span.innerText = '⏳ Đang xử lý ảnh...';
+                span.className = 'text-[11px] text-amber-300 font-bold truncate flex-1';
+            }
+
+            try {
+                for (const file of files) {
+                    if (cmtRewardSelectedImages.length >= 3) {
+                        alert("Bạn chỉ được chọn tối đa 3 ảnh thôi nhé!");
+                        break;
+                    }
+                    try {
+                        const small = await compressCmtImage(file);
+                        if (!small) {
+                            alert("Không xử lý được ảnh này (ảnh quá nặng hoặc lỗi định dạng), bạn thử chọn ảnh JPG/PNG khác nhé!");
+                            continue;
+                        }
+                        cmtRewardSelectedImages.push(small);
+                    } catch (err) {
+                        console.error("Lỗi đọc ảnh cmt:", err);
+                        alert("Không đọc được ảnh này, bạn thử chọn lại ảnh khác nhé!");
+                    }
+                }
+            } finally {
+                isProcessingCmtRewardImg = false;
+                if (btn) { btn.disabled = false; btn.innerText = "Gửi cho Palette duyệt"; }
+                if (input) input.value = '';
+                renderCmtRewardPreview();
+            }
+        }
+
+        function openCmtRewardModalForActiveChar() {
+            openCmtRewardModal(activeChar ? cmtSafeId(activeChar.id) : '');
+        }
+
+        function openCmtRewardModal(charId) {
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập để gửi ảnh cmt nhận Bút Chì Màu nhé!");
+                return;
+            }
+            let target = characters.find(c => cmtSafeId(c.id) === charId);
+            if (!target) target = characters.find(c => c.status === 'unlocked_24h');
+            if (!target) {
+                alert("Không tìm thấy nhân vật đang mở đợt Nhanh Nhẹn!");
+                return;
+            }
+            cmtRewardTargetChar = target;
+            cmtRewardSelectedImages = [];
+            cmtRewardHeartImages = [];
+            const isPaused = (target.fastModeType === 'paused_limit');
+            const sub = document.getElementById('cmtRewardSubtitle');
+            if (sub) sub.innerHTML = isPaused
+                ? `Gửi <b>hai ảnh: một tim và một cmt</b> để Palette xét duyệt nhé.`
+                : `Gửi ảnh bình luận của bạn ở <b class="text-pink-300">[${cmtEsc(target.name)}]</b> để Palette xét duyệt nhé:`;
+            const pausedNotice = document.getElementById('cmtRewardPausedNotice');
+            const heartBox = document.getElementById('cmtHeartImgBox');
+            const imgsLabel = document.getElementById('cmtRewardImgsLabel');
+            if (pausedNotice) pausedNotice.classList.toggle('hidden', !isPaused);
+            if (heartBox) heartBox.classList.toggle('hidden', !isPaused);
+            if (imgsLabel) imgsLabel.innerText = isPaused ? "2. Ảnh cmt (tối đa 3 ảnh):" : "Ảnh chụp bình luận của bạn (tối đa 3 ảnh):";
+            const fileInput = document.getElementById('cmtRewardImgs');
+            if (fileInput) fileInput.value = '';
+            const heartInput = document.getElementById('cmtRewardHeartImg');
+            if (heartInput) heartInput.value = '';
+            renderCmtRewardPreview();
+            renderCmtHeartPreview();
+            const note = document.getElementById('cmtRewardNote');
+            if (note) note.value = '';
+            const uKeyModal = currentUser.username.toLowerCase();
+            const rewardedMap = (!currentUser.isOwner && userPencilsData[uKeyModal]?.cmtRewarded) ? userPencilsData[uKeyModal].cmtRewarded : {};
+            const doneFeedback = Boolean(rewardedMap[`${cmtSafeId(target.id)}__feedback`]);
+            const doneNoti = Boolean(rewardedMap[`${cmtSafeId(target.id)}__noti`]);
+
+            const rFeedback = document.querySelector('input[name="cmtRewardKind"][value="feedback"]');
+            const rNoti = document.querySelector('input[name="cmtRewardKind"][value="noti"]');
+            const lblFeedback = document.getElementById('cmtKindLabel_feedback');
+            const lblNoti = document.getElementById('cmtKindLabel_noti');
+            const tagFeedback = document.getElementById('cmtKindDone_feedback');
+            const tagNoti = document.getElementById('cmtKindDone_noti');
+
+            if (rFeedback) rFeedback.disabled = doneFeedback;
+            if (rNoti) rNoti.disabled = doneNoti;
+            if (lblFeedback) lblFeedback.classList.toggle('opacity-50', doneFeedback);
+            if (lblNoti) lblNoti.classList.toggle('opacity-50', doneNoti);
+            if (tagFeedback) tagFeedback.classList.toggle('hidden', !doneFeedback);
+            if (tagNoti) tagNoti.classList.toggle('hidden', !doneNoti);
+
+            if (rFeedback && !doneFeedback) rFeedback.checked = true;
+            else if (rNoti && !doneNoti) rNoti.checked = true;
+
+            const btn = document.getElementById('cmtRewardSubmitBtn');
+            if (btn) {
+                if (doneFeedback && doneNoti) {
+                    btn.disabled = true;
+                    btn.innerText = "✓ Bạn đã nhận đủ thưởng cmt cho char này";
+                } else {
+                    btn.disabled = false;
+                    btn.innerText = "Gửi cho Palette duyệt";
+                }
+            }
+            const modal = document.getElementById('cmtRewardModal');
+            if (modal) modal.classList.remove('hidden');
+            playPaletteTingSound();
+        }
+
+        function closeCmtRewardModal() {
+            if (isSubmittingCmtReward || isProcessingCmtRewardImg) return;
+            const modal = document.getElementById('cmtRewardModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function submitCmtRewardRequest() {
+            if (isSubmittingCmtReward || isProcessingCmtRewardImg) return;
+            if (!currentUser || !cmtRewardTargetChar) {
+                alert("Vui lòng đăng nhập để gửi ảnh nhé!");
+                return;
+            }
+            const kindEl = document.querySelector('input[name="cmtRewardKind"]:checked');
+            const kind = kindEl ? kindEl.value : 'feedback';
+            if (!CMT_REWARD_TYPES[kind]) return;
+
+            const isPausedLimitReq = (cmtRewardTargetChar.fastModeType === 'paused_limit');
+            if (isPausedLimitReq && cmtRewardHeartImages.length === 0) {
+                alert("Chế độ Tạm giới hạn yêu cầu 2 ảnh: Bạn chưa chọn ảnh chụp đã thả tim bài viết!");
+                return;
+            }
+            if (cmtRewardSelectedImages.length === 0) {
+                alert("Bạn chưa chọn ảnh bình luận nào cả!");
+                return;
+            }
+
+            const username = currentUser.username;
+            const uKey = username.toLowerCase();
+            const targetChar = cmtRewardTargetChar;
+            const rewardedKey = `${cmtSafeId(targetChar.id)}__${kind}`;
+
+            // Mỗi nhân vật mỗi loại chỉ nhận thưởng 1 lần (Chủ Web được test thoải mái không bị chặn)
+            if (!currentUser.isOwner && userPencilsData[uKey]?.cmtRewarded?.[rewardedKey]) {
+                alert(`Bạn đã được Palette duyệt và nhận thưởng "${CMT_REWARD_TYPES[kind].label}" cho ${targetChar.name} rồi nhé!`);
+                return;
+            }
+
+            const btn = document.getElementById('cmtRewardSubmitBtn');
+            isSubmittingCmtReward = true;
+            if (btn) { btn.disabled = true; btn.innerText = "Đang gửi..."; }
+
+            try {
+                const docId = currentUser.isOwner
+                    ? `${cmtSafeId(uKey)}__${rewardedKey}__${Date.now()}`
+                    : `${cmtSafeId(uKey)}__${rewardedKey}`;
+                const reqRef = db.collection("cmt_reward_requests").doc(docId);
+                let alreadyPending = false;
+                if (!currentUser.isOwner) {
+                    try { alreadyPending = (await reqRef.get()).exists; } catch (_) {}
+                }
+                if (alreadyPending) {
+                    alert("⏳ Bạn đã gửi ảnh loại này cho nhân vật này rồi, vui lòng đợi Palette duyệt nhé!");
+                    return;
+                }
+                const images = [...cmtRewardSelectedImages];
+                const heartImages = isPausedLimitReq ? [...cmtRewardHeartImages] : [];
+                const totalBytes = [...images, ...heartImages].reduce((s, x) => s + x.length, 0);
+                if (totalBytes > 880000) throw new Error("Ảnh quá nặng, hãy chọn ít ảnh hơn hoặc ảnh nhẹ hơn nhé!");
+                const note = (document.getElementById('cmtRewardNote')?.value || "").trim().slice(0, 200);
+                await Promise.race([
+                    reqRef.set({
+                        username, charId: targetChar.id, charName: targetChar.name,
+                        kind, reward: CMT_REWARD_TYPES[kind].reward, images, heartImages,
+                        requireHeartAndCmt: isPausedLimitReq, rewardedKey, note,
+                        createdAt: Date.now(), timestamp: new Date().toLocaleString('vi-VN')
+                    }),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error("Mạng chậm quá, thử lại nhé!")), 30000))
+                ]);
+                try { logMemberActivity("Gửi ảnh cmt nhận chì", `${CMT_REWARD_TYPES[kind].label} tại ${targetChar.name}${isPausedLimitReq ? ' (2 ảnh: tim + cmt)' : ''}`); } catch (_) {}
+                triggerNotification("Đã gửi ảnh cmt!", `Vui lòng đợi Palette duyệt ảnh ${CMT_REWARD_TYPES[kind].label} trong vòng 1 ngày để nhận +${CMT_REWARD_TYPES[kind].reward} Chì nhé!`, username);
+                triggerNotification("📸 Có ảnh cmt mới chờ duyệt!", `${username} vừa gửi ${isPausedLimitReq ? '2 ảnh (tim + cmt) ' : ''}${CMT_REWARD_TYPES[kind].label} cho "${targetChar.name}". Mở Cửa Hàng Bút Chì để duyệt (+${CMT_REWARD_TYPES[kind].reward} Chì) nhé!`, OWNER_USER);
+                sendPhonePushToOwner(`📸 Duyệt ảnh cmt: ${username}`, `${CMT_REWARD_TYPES[kind].label} tại ${targetChar.name} (+${CMT_REWARD_TYPES[kind].reward} Chì)`, 4);
+                cmtRewardSelectedImages = [];
+                cmtRewardHeartImages = [];
+                isSubmittingCmtReward = false;
+                closeCmtRewardModal();
+                alert(`⏳ Đã gửi ảnh cho Palette! Vui lòng đợi Palette xét duyệt (trong vòng 1 ngày) để nhận +${CMT_REWARD_TYPES[kind].reward} Chì Màu nhé 💖`);
+            } catch (err) {
+                console.error("Lỗi gửi ảnh cmt:", err);
+                alert(err?.code === 'permission-denied' ? "Chủ Web chưa mở quyền cmt_reward_requests trong Firestore Rules!" : (err?.message || "Chưa gửi được ảnh, thử lại nhé!"));
+            } finally {
+                isSubmittingCmtReward = false;
+                if (btn) { btn.disabled = false; btn.innerText = "Gửi cho Palette duyệt"; }
+            }
+        }
+
+        // ---------- Khu vực duyệt của Chủ Web ----------
+        function renderAdminCmtRewards() {
+            const container = document.getElementById('adminCmtRewardList');
+            const countEl = document.getElementById('adminCmtRewardCountInModal');
+            if (countEl) countEl.innerText = `${pendingCmtRewards.length} yêu cầu`;
+            if (!container) return;
+            container.innerHTML = '';
+            if (pendingCmtRewards.length === 0) {
+                container.innerHTML = `<div class="text-[11px] text-sky-200/50 italic py-4 text-center">Hiện chưa có ảnh cmt nào đang chờ duyệt.</div>`;
+                return;
+            }
+            pendingCmtRewards.forEach(req => {
+                const info = CMT_REWARD_TYPES[req.kind] || CMT_REWARD_TYPES.noti;
+                const item = document.createElement('div');
+                item.className = "bg-white/5 border border-pink-300/30 rounded-2xl p-3 space-y-2";
+                const heartThumbs = (req.heartImages || []).map((src, i) =>
+                    `<img src="${src}" alt="Tim" onclick="openCmtRewardImage('${cmtSafeId(req.id)}', ${i}, 'heart')" class="w-16 h-16 object-cover rounded-xl border border-rose-400/60 cursor-pointer shrink-0">`
+                ).join('');
+                const thumbs = (req.images || []).map((src, i) =>
+                    `<img src="${src}" alt="Cmt" onclick="openCmtRewardImage('${cmtSafeId(req.id)}', ${i}, 'cmt')" class="w-16 h-16 object-cover rounded-xl border border-pink-300/40 cursor-pointer shrink-0">`
+                ).join('');
+                item.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="font-extrabold text-pink-200 truncate">${cmtEsc(req.username)} ${heartThumbs ? '<span class="text-[9px] bg-amber-500/25 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full ml-1">2 ảnh</span>' : ''}</div>
+                            <div class="text-[10px] text-sky-200/60">${cmtEsc(req.charName || 'Nhân vật')} · ${cmtEsc(req.timestamp || '')}</div>
+                        </div>
+                        <span class="text-[10px] ${req.kind === 'feedback' ? 'bg-pink-500/30 text-pink-200 border-pink-300/40' : 'bg-sky-500/30 text-sky-200 border-sky-300/40'} border px-2 py-0.5 rounded-full font-bold shrink-0">
+                            ${cmtEsc(info.label)} · +${info.reward}
+                        </span>
+                    </div>
+                    ${heartThumbs ? `<div class="space-y-1"><div class="text-[10px] text-rose-300 font-bold">❤️ Ảnh đã tim bài:</div><div class="flex gap-2 overflow-x-auto">${heartThumbs}</div></div>` : ''}
+                    <div class="space-y-1">${heartThumbs ? '<div class="text-[10px] text-pink-200 font-bold">💬 Ảnh bình luận:</div>' : ''}<div class="flex gap-2 overflow-x-auto">${thumbs}</div></div>
+                    ${req.note ? `<p class="text-[11px] text-sky-100/80 italic bg-black/30 p-2 rounded-xl border border-white/5">"${cmtEsc(req.note)}"</p>` : ''}
+                    <div class="flex items-center gap-2 pt-1">
+                        <button type="button" onclick="approveCmtReward('${cmtSafeId(req.id)}')" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
+                            Tặng ${info.reward} Chì
+                        </button>
+                        <button type="button" onclick="rejectCmtReward('${cmtSafeId(req.id)}')" class="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 font-bold text-xs active:scale-95 transition" title="Từ chối">✕</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function openCmtRewardImage(reqId, idx, type = 'cmt') {
+            const req = pendingCmtRewards.find(r => cmtSafeId(r.id) === reqId);
+            const src = (type === 'heart') ? req?.heartImages?.[idx] : req?.images?.[idx];
+            if (!src) return;
+            const overlay = document.createElement('div');
+            overlay.className = "fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-3";
+            overlay.onclick = () => overlay.remove();
+            overlay.innerHTML = `<img src="${src}" class="max-w-full max-h-full rounded-xl object-contain">`;
+            document.body.appendChild(overlay);
+        }
+
+        async function approveCmtReward(reqId) {
+            if (!currentUser?.isOwner) return;
+            const req = pendingCmtRewards.find(r => cmtSafeId(r.id) === reqId);
+            if (!req) { alert("Yêu cầu này đã được xử lý rồi."); return; }
+            const info = CMT_REWARD_TYPES[req.kind];
+            if (!info) { alert("Loại yêu cầu không hợp lệ."); return; }
+            if (!confirm(`Bạn chắc chắn tặng ${info.reward} Bút Chì Màu cho "${req.username}" chứ?`)) return;
+
+            const reqRef = db.collection("cmt_reward_requests").doc(req.id);
+            const uKey = String(req.username || "").toLowerCase();
+            const pencilRef = db.collection("pencils").doc(uKey);
+            const rewardedKey = req.rewardedKey || `${cmtSafeId(req.charId)}__${req.kind}`;
+            const isTestingOwner = (uKey === OWNER_USER.toLowerCase());
+            try {
+                const reqSnap = await reqRef.get();
+                if (!reqSnap.exists) { alert("Yêu cầu này đã được xử lý rồi."); renderAdminCmtRewards(); return; }
+                const pencilSnap = await pencilRef.get();
+                const pencilData = pencilSnap.exists ? pencilSnap.data() : {};
+                const alreadyRewarded = !isTestingOwner && (pencilData.cmtRewarded?.[rewardedKey] === true);
+                const nextCount = (Number(pencilData.count) || 0) + (alreadyRewarded ? 0 : info.reward);
+
+                const batch = db.batch();
+                if (!alreadyRewarded) {
+                    const updateObj = isTestingOwner ? { count: nextCount } : { count: nextCount, cmtRewarded: { [rewardedKey]: true } };
+                    batch.set(pencilRef, updateObj, { merge: true });
+                }
+                batch.delete(reqRef);
+                await batch.commit();
+
+                if (!alreadyRewarded) {
+                    userPencilsData[uKey] = {
+                        ...(userPencilsData[uKey] || {}),
+                        count: nextCount,
+                        cmtRewarded: isTestingOwner
+                            ? ((userPencilsData[uKey] || {}).cmtRewarded || {})
+                            : { ...((userPencilsData[uKey] || {}).cmtRewarded || {}), [rewardedKey]: true }
+                    };
+                    updatePencilUI();
+                    triggerNotification("Palette đã duyệt ảnh cmt!", `Ảnh ${info.label} của bạn tại ${req.charName || "nhân vật"} đã được duyệt, bạn nhận +${info.reward} Bút Chì Màu! Hiện có: ${nextCount} chì.`, req.username);
+                    alert(`Đã tặng ${info.reward} Bút Chì Màu cho "${req.username}" thành công!`);
+                } else {
+                    alert(`"${req.username}" đã nhận thưởng mục này trước đó nên không cộng thêm. Đã xóa yêu cầu.`);
+                }
+                renderAdminCmtRewards();
+            } catch (error) {
+                console.error("Lỗi duyệt ảnh cmt:", error);
+                alert("Có lỗi xảy ra: " + (error?.message || "Vui lòng thử lại"));
+            }
+        }
+
+        async function rejectCmtReward(reqId) {
+            if (!currentUser?.isOwner) return;
+            const req = pendingCmtRewards.find(r => cmtSafeId(r.id) === reqId);
+            if (!req) return;
+            if (!confirm(`Từ chối ảnh cmt của "${req.username}"?`)) return;
+            try {
+                await db.collection("cmt_reward_requests").doc(req.id).delete();
+                triggerNotification("Ảnh cmt chưa được duyệt", `Ảnh ${(CMT_REWARD_TYPES[req.kind] || {}).label || "cmt"} của bạn tại ${req.charName || "nhân vật"} chưa phù hợp. Bạn có thể gửi lại ảnh rõ hơn nhé!`, req.username);
+                renderAdminCmtRewards();
+            } catch (error) {
+                console.error("Lỗi từ chối ảnh cmt:", error);
+                alert("Chưa thể từ chối lúc này, thử lại nhé!");
             }
         }
 
