@@ -9415,16 +9415,48 @@
         }
 
     // ================= HỆ THỐNG VÒNG XOAY MAY MẮN (SẮC MÀU VẬN MAY) =================
-        const WHEEL_SLICES = [
-            { label: "+2 Chì", color: "#fed7aa", textColor: "#704122", type: "add2" },
-            { label: "Xui xẻo -2", color: "#ffd6e0", textColor: "#6e3346", type: "sub2" },
-            { label: "Ô Trống", color: "#fef08a", textColor: "#614d18", type: "empty" },
-            { label: "Xui xẻo -2", color: "#d7baff", textColor: "#4b3269", type: "sub2" },
-            { label: "Nhân đôi x2", color: "#bae6fd", textColor: "#1f4463", type: "double" },
-            { label: "Xui xẻo -2", color: "#bbf7d0", textColor: "#1f4a30", type: "sub2" },
-            { label: "+2 Chì", color: "#e8dff5", textColor: "#52406e", type: "add2" },
-            { label: "Xui xẻo -2", color: "#fce1e4", textColor: "#6e3745", type: "sub2" }
+        // Tỉ lệ: xui (sub + empty) = 60%, trúng (add + double) = 40%
+        const WHEEL_RATE = { sub: 0.45, empty: 0.15, add: 0.33, double: 0.07 };
+        const WHEEL_MAX_VALUE = 5;   // cộng/trừ ngẫu nhiên từ 1 đến 5 chì
+        const WHEEL_DOUBLE_CAP = 10; // nhân đôi tối đa +10 chì cho vừa phải
+        const WHEEL_PALETTE = [
+            ["#fed7aa", "#704122"], ["#ffd6e0", "#6e3346"], ["#fef08a", "#614d18"], ["#d7baff", "#4b3269"],
+            ["#bae6fd", "#1f4463"], ["#bbf7d0", "#1f4a30"], ["#e8dff5", "#52406e"], ["#fce1e4", "#6e3745"]
         ];
+        const WHEEL_SLICES = [];
+
+        function rollWheelType() {
+            const r = Math.random();
+            let acc = 0;
+            for (const t of ["sub", "empty", "add", "double"]) {
+                acc += WHEEL_RATE[t];
+                if (r < acc) return t;
+            }
+            return "sub";
+        }
+
+        function makeWheelSlice(type) {
+            const value = 1 + Math.floor(Math.random() * WHEEL_MAX_VALUE);
+            if (type === "add") return { label: `+${value} Chì`, type, value };
+            if (type === "sub") return { label: `Xui xẻo -${value}`, type, value };
+            if (type === "double") return { label: "Nhân đôi x2", type, value: 0 };
+            return { label: "Ô Trống", type: "empty", value: 0 };
+        }
+
+        // Xáo toàn bộ vòng xoay, ô kết quả nằm ở vị trí ngẫu nhiên. Trả về index ô trúng.
+        function buildWheelLayout(winType) {
+            const n = 8;
+            const slices = [];
+            for (let i = 0; i < n; i++) slices.push(makeWheelSlice(rollWheelType()));
+            const winIdx = Math.floor(Math.random() * n);
+            slices[winIdx] = makeWheelSlice(winType);
+            const pal = WHEEL_PALETTE.slice().sort(() => Math.random() - 0.5);
+            slices.forEach((s, i) => { s.color = pal[i][0]; s.textColor = pal[i][1]; });
+            WHEEL_SLICES.length = 0;
+            slices.forEach(s => WHEEL_SLICES.push(s));
+            return winIdx;
+        }
+        buildWheelLayout(rollWheelType());
 
         let currentWheelRotation = 0;
         let isWheelSpinning = false;
@@ -9665,15 +9697,16 @@
             }
             if (resultMsg) resultMsg.innerText = "Vòng xoay đang lướt qua các sắc màu...";
 
-            // Tính tỷ lệ trúng ô nhân đôi (1%) siêu mượt mà không cần gọi Transaction gây nghẽn
-            const isDoubleWin = (Math.random() < 0.015);
-
-            let targetIndex = 0;
-            if (isDoubleWin) {
-                targetIndex = 4;
-            } else {
-                const nonDoublePool = [0, 1, 2, 3, 5, 6, 7];
-                targetIndex = nonDoublePool[Math.floor(Math.random() * nonDoublePool.length)];
+            // Random hoàn toàn: đảo lại cả vòng xoay mỗi lần quay, ô trúng nằm ngẫu nhiên
+            const targetIndex = buildWheelLayout(rollWheelType());
+            currentWheelRotation = 0;
+            const wheelCanvasEl = document.getElementById('luckyWheelCanvas');
+            if (wheelCanvasEl) {
+                wheelCanvasEl.style.transition = 'none';
+                wheelCanvasEl.style.transform = 'rotate(0deg)';
+                drawLuckyWheel();
+                void wheelCanvasEl.offsetWidth;
+                wheelCanvasEl.style.transition = 'transform 5s cubic-bezier(0.15, 0.85, 0.2, 1)';
             }
 
             const numSlices = WHEEL_SLICES.length;
@@ -9700,14 +9733,15 @@
                 const curPencils = getUserPencilCount(username);
 
                 try {
-                    if (winningSlice.type === "add2") {
-                        await addPencilToUser(username, 2, "Vòng xoay may mắn");
+                    if (winningSlice.type === "add") {
+                        const addAmt = winningSlice.value;
+                        await addPencilToUser(username, addAmt, "Vòng xoay may mắn");
                         playJoyfulWinSound();
                         createPencilSparkles();
-                        if (resultMsg) resultMsg.innerHTML = `<span class="text-emerald-300 font-black">Chúc mừng! Bạn quay trúng +2 Bút Chì Màu!</span>`;
-                        logMemberActivity("Vòng xoay may mắn", "Trúng +2 Bút Chì Màu");
-                    } else if (winningSlice.type === "sub2") {
-                        const deductAmount = Math.min(2, curPencils);
+                        if (resultMsg) resultMsg.innerHTML = `<span class="text-emerald-300 font-black">Chúc mừng! Bạn quay trúng +${addAmt} Bút Chì Màu!</span>`;
+                        logMemberActivity("Vòng xoay may mắn", `Trúng +${addAmt} Bút Chì Màu`);
+                    } else if (winningSlice.type === "sub") {
+                        const deductAmount = Math.min(winningSlice.value, curPencils);
                         const remainingPencils = curPencils - deductAmount;
                         if (deductAmount > 0) {
                             const pencilRef = db.collection("pencils").doc(uKey);
@@ -9717,14 +9751,14 @@
                         }
                         playSadDeflateSound();
                         if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ ${deductAmount} Bút Chì Màu!</span>`;
-                        logMemberActivity("Vòng xoay may mắn", "Trúng ô Xui xẻo -2 Bút Chì Màu");
+                        logMemberActivity("Vòng xoay may mắn", `Trúng ô Xui xẻo -${winningSlice.value} Bút Chì Màu`);
                         triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo nhưng túi hiện có 0 chì.");
                     } else if (winningSlice.type === "double") {
-                        const bonus = curPencils > 0 ? curPencils : 2;
+                        const bonus = curPencils > 0 ? Math.min(curPencils, WHEEL_DOUBLE_CAP) : 2;
                         await addPencilToUser(username, bonus, "Vòng xoay may mắn: Nhân đôi chì");
                         playJoyfulWinSound();
                         createPencilSparkles();
-                        if (resultMsg) resultMsg.innerHTML = `<span class="text-amber-300 font-black">VẬN MAY 1/100! Trúng ô Nhân đôi Bút Chì Màu (+${bonus} chì)!</span>`;
+                        if (resultMsg) resultMsg.innerHTML = `<span class="text-amber-300 font-black">VẬN MAY! Trúng ô Nhân đôi Bút Chì Màu (+${bonus} chì)!</span>`;
                         logMemberActivity("Vòng xoay may mắn", `Vận may: Nhân đôi Bút Chì Màu (+${bonus} chì)`);
                     } else {
                         playSadDeflateSound();
