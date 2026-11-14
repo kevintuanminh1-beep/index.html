@@ -495,13 +495,15 @@
         /* HIỆU ỨNG THẺ MÀU MAY MẮN (SAILOR MOON 3D CARD FLIP) */
         .sailor-stage-card-wrap {
             position: fixed;
+            left: 50%;
+            top: 50%;
             width: 210px;
             height: 315px;
             perspective: 1200px;
             -webkit-perspective: 1200px;
-            transition: left 0.58s cubic-bezier(0.22, 1, 0.36, 1), top 0.58s cubic-bezier(0.22, 1, 0.36, 1), transform 0.58s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
             z-index: 95;
-            will-change: transform, left, top;
+            will-change: transform;
         }
         .sailor-stage-inner {
             position: relative;
@@ -509,21 +511,21 @@
             height: 100%;
             transform-style: preserve-3d;
             -webkit-transform-style: preserve-3d;
-            transition: transform 0.8s cubic-bezier(0.32, 1.12, 0.45, 1);
+            transition: transform 0.72s cubic-bezier(0.32, 1.12, 0.45, 1);
             border-radius: 1.25rem;
+            will-change: transform;
         }
         .sailor-stage-inner.is-flipped {
             transform: rotateY(180deg);
             -webkit-transform: rotateY(180deg);
         }
         @keyframes sailorCardSpinZ {
-            0% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(180deg) scale(1.06); }
-            100% { transform: rotate(360deg) scale(1); }
+            0% { transform: rotateZ(0deg) translateZ(0); }
+            100% { transform: rotateZ(360deg) translateZ(0); }
         }
         .sailor-stage-inner.is-spinning {
-            animation: sailorCardSpinZ 0.85s linear infinite !important;
-            box-shadow: 0 0 35px rgba(244, 114, 182, 0.95), 0 0 65px rgba(253, 224, 71, 0.85) !important;
+            animation: sailorCardSpinZ 0.9s linear infinite !important;
+            box-shadow: 0 0 22px rgba(244, 114, 182, 0.75) !important;
         }
         .sailor-stage-inner.is-glowing {
             box-shadow: 0 0 28px rgba(244, 114, 182, 0.9), 0 0 55px rgba(253, 224, 71, 0.75);
@@ -1192,8 +1194,8 @@
                 </button>
             </div>
 
-            <!-- MỤC: THẺ MÀU MAY MẮN (DÀNH RIÊNG CHỦ WEB TEST) -->
-            <div id="ownerOnlySailorSection" class="hidden w-full relative">
+            <!-- MỤC: THẺ MÀU MAY MẮN -->
+            <div id="ownerOnlySailorSection" class="w-full relative">
                 <button onclick="openSailorCardModal()" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500/25 via-purple-500/20 to-amber-400/20 border-2 border-pink-300/50 hover:border-amber-200 p-4 rounded-3xl flex items-center gap-4 transition shadow-[0_0_25px_rgba(232,121,249,0.22)] text-left">
                     <div id="iconBox-sailor" onclick="handleMenuIconClick(event, 'sailor')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-fuchsia-400/30 to-amber-300/20 border border-pink-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-sailor" class="w-full h-full flex items-center justify-center">
@@ -2290,7 +2292,7 @@
     </div>
 
     <!-- SÂN KHẤU HIỆU ỨNG BAY VÀO GIỮA, PHÓNG TO, PHÁT SÁNG & LẬT THẺ -->
-    <div id="sailorCardStageOverlay" onclick="handleStageOverlayClick()" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[90] hidden">
+    <div id="sailorCardStageOverlay" onpointerdown="handleStageSpinSkipTap(event)" onclick="handleStageOverlayClick()" class="fixed inset-0 bg-black/92 z-[90] hidden">
         <!-- Chữ Pastel xanh lá nhạt tách hẳn lên sát mép trên để thẻ xoay không bị dính chữ -->
         <div id="sailorTransformingBanner" style="top: max(18px, env(safe-area-inset-top, 18px));" class="hidden fixed left-1/2 -translate-x-1/2 z-[96] pointer-events-none text-center w-[92%] max-w-sm">
             <div class="inline-flex items-center gap-1.5 bg-black/85 border border-emerald-300/70 px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(110,231,183,0.55)]">
@@ -2318,7 +2320,7 @@
 
     <!-- MODAL QUẢN TRỊ KHO THẺ BÀI (DÀNH CHO CHỦ WEB BIBI 0304) -->
     <div id="sailorAdminModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[80] hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-        <div class="bg-[#121c38] border-2 border-amber-300/70 p-4 sm:p-5 rounded-3xl max-w-md w-full text-left shadow-[0_0_40px_rgba(251,191,36,0.35)] max-h-[90vh] custom-scroll space-y-3 my-auto">
+        <div id="sailorAdminModalContent" class="bg-[#121c38] border-2 border-amber-300/70 p-4 sm:p-5 rounded-3xl max-w-md w-full text-left shadow-[0_0_40px_rgba(251,191,36,0.35)] max-h-[90vh] custom-scroll space-y-3 my-auto">
             <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
                 <div class="flex items-center gap-2 min-w-0">
                     <!-- Icon lấp lánh bằng code SVG -->
@@ -2415,6 +2417,16 @@
                     </div>
                 </div>
 
+                <!-- Đổi loại thẻ (Chỉ hiện khi đang bấm sửa 1 lá bài) -->
+                <div id="sailorEditCategoryBox" class="hidden bg-purple-500/15 border border-purple-300/40 rounded-xl p-2 flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-bold text-purple-200">Loại thẻ bài:</span>
+                    <select id="sailorEditCategorySelect" onchange="handleSailorEditCategoryChange(this.value)" class="bg-black/60 border border-white/20 rounded-xl px-2.5 py-1 text-[11px] font-bold text-white focus:outline-none focus:border-pink-400">
+                        <option value="meme">Meme (Trừ chì)</option>
+                        <option value="sailor">Thẻ Vàng (Cộng chì)</option>
+                        <option value="secret">Secret (x2 chì)</option>
+                    </select>
+                </div>
+
                 <!-- Tùy chọn trừ chì (chỉ cho Meme - điền số giống bên Thẻ Vàng) -->
                 <div id="sailorMemePenaltyBox" class="bg-rose-500/10 border border-rose-300/30 rounded-xl p-2 flex items-center justify-between gap-2">
                     <span class="text-[11px] font-bold text-rose-200">Số Bút Chì bị trừ:</span>
@@ -2433,15 +2445,20 @@
                     <textarea id="sailorCustomMessageInput" rows="2" placeholder="VD: Chúc mừng bạn đã được Thủy Thủ Mặt Trăng tặng quà!..." class="w-full bg-black/50 border border-white/20 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-pink-400 resize-none"></textarea>
                 </div>
 
-                <button type="button" id="sailorAdminSaveBtn" onclick="saveSailorCardEntry()" class="jelly-btn w-full bg-gradient-to-r from-amber-400 to-pink-500 text-black font-black py-2 rounded-xl text-xs shadow-lg active:scale-95 transition">
-                    + Lưu Thẻ Bài Vào Kho
-                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="sailorAdminSaveBtn" onclick="saveSailorCardEntry()" class="jelly-btn flex-1 bg-gradient-to-r from-amber-400 to-pink-500 text-black font-black py-2 rounded-xl text-xs shadow-lg active:scale-95 transition">
+                        + Lưu Thẻ Bài Vào Kho
+                    </button>
+                    <button type="button" id="sailorAdminCancelEditBtn" onclick="cancelSailorCardEdit()" class="hidden bg-white/10 hover:bg-white/20 border border-white/20 text-sky-100 font-bold py-2 px-3 rounded-xl text-xs active:scale-95 transition shrink-0">
+                        Hủy sửa
+                    </button>
+                </div>
             </div>
 
             <!-- DANH SÁCH THẺ HIỆN CÓ TRONG MỤC ĐANG CHỌN -->
             <div class="border-t border-white/10 pt-2.5">
                 <div class="flex items-center justify-between mb-2 text-xs">
-                    <span class="font-bold text-sky-200">Danh sách ảnh trong mục này:</span>
+                    <span class="font-bold text-sky-200">Danh sách ảnh (Chạm vào ảnh để fix):</span>
                     <span id="sailorCurrentTabCount" class="text-[10px] text-amber-300 font-bold">0 ảnh</span>
                 </div>
                 <div id="sailorAdminListGrid" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto custom-scroll pr-1"></div>
@@ -4739,7 +4756,7 @@
                 const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
                 return `
                     <div onclick="selectRedeemSuggestion('${c.id}')" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition select-none">
-                        <img src="${c.image}" class="w-7 h-7 rounded-lg object-cover shrink-0 border border-white/10">
+                        <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-7 h-7 rounded-lg object-cover shrink-0 border border-white/10">
                         <span class="text-xs font-bold text-pink-200 truncate flex-1 text-left">${c.name}</span>
                         ${isUnlocked ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-300/30 px-1.5 py-0.5 rounded-full font-bold">Đã mở</span>' : ''}
                     </div>
@@ -5546,10 +5563,11 @@
                     const newActs = memberActivities.filter(a => !prevIds.has(a.id));
                     newActs.forEach(act => {
                         const cat = getActivityCategory(act);
+                        const isCardPickAct = (act.title || '').toLowerCase().includes('thẻ') || (act.title || '').toLowerCase().includes('bốc');
                         const prefixIcon = cat === 'fail' ? '❌ Lỗi ảnh'
                             : cat === 'comment' ? '💬 Cmt mới'
                             : cat === 'link' ? '🔓 Mở link'
-                            : cat === 'wheel' ? '🎡 Vòng xoay'
+                            : cat === 'wheel' ? (isCardPickAct ? '🃏 Bốc bài' : '🎡 Vòng xoay')
                             : '✨ Hoạt động mới';
                         const toastTitle = `${prefixIcon}: ${act.username}`;
                         showInAppNotifyToast(toastTitle, `${act.title}${act.details ? ` · ${act.details}` : ''}`);
@@ -5610,9 +5628,6 @@
         function updateFaqButtonVisibility() {
             const faqBtn = document.getElementById('faqHeaderBtn');
             const ownerBtn = document.getElementById('ownerOnlyUsersBtn');
-            const sailorSection = document.getElementById('ownerOnlySailorSection');
-            const isOwner = Boolean(checkIsOwnerAccount());
-            if (sailorSection) sailorSection.classList.toggle('hidden', !isOwner);
             if (!faqBtn) return;
 
             if (currentUser && currentUser.isOwner) {
@@ -6511,7 +6526,7 @@
             if (t.includes('thất bại') || t.includes('từ chối')) return 'fail';
             if (t.includes('mở khóa') || t.includes('đổi 10 chì') || t.includes('link') || t.includes('lấy link')) return 'link';
             if (t.includes('bình luận') || t.includes('trả lời') || t.includes('cmt') || t.includes('feedback')) return 'comment';
-            if (t.includes('vòng xoay') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống')) return 'wheel';
+            if (t.includes('vòng xoay') || t.includes('thẻ màu may mắn') || t.includes('bốc bài') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống')) return 'wheel';
             return 'other';
         }
 
@@ -6762,7 +6777,7 @@
                     } else {
                         favCharsHtml = favChars.map(c => `
                             <div class="inline-flex items-center gap-1.5 bg-black/40 border border-pink-300/30 px-2 py-1 rounded-xl">
-                                <img src="${c.image}" class="w-5 h-5 rounded-lg object-cover">
+                                <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-5 h-5 rounded-lg object-cover">
                                 <span class="text-[11px] font-bold text-pink-200">${c.name}</span>
                             </div>
                         `).join('');
@@ -6839,7 +6854,7 @@
                         💬 Cmt (${cmtCount})
                     </button>
                     <button type="button" onclick="setActivitySubFilter('wheel')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'wheel' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow' : 'bg-white/5 text-sky-200/70 hover:bg-white/10'}">
-                        🎡 Vòng Xoay (${wheelCount})
+                        🎡 Vòng Xoay &amp; Bốc Bài (${wheelCount})
                     </button>
                     <button type="button" onclick="setActivitySubFilter('fail')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'fail' ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow' : 'bg-white/5 text-red-200/80 hover:bg-white/10'}">
                         ❌ Thất Bại (${failCount})
@@ -6888,7 +6903,10 @@
                         badgeHtml = '<span class="text-[9px] bg-pink-500/25 text-pink-300 border border-pink-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">💬 Cmt</span>';
                         borderClass = 'border-pink-300/30 bg-pink-500/10';
                     } else if (cat === 'wheel') {
-                        badgeHtml = '<span class="text-[9px] bg-amber-500/25 text-amber-300 border border-amber-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🎡 Vòng Xoay</span>';
+                        const isCardPick = (act.title || '').toLowerCase().includes('thẻ') || (act.title || '').toLowerCase().includes('bốc');
+                        badgeHtml = isCardPick
+                            ? '<span class="text-[9px] bg-fuchsia-500/25 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🃏 Bốc Bài</span>'
+                            : '<span class="text-[9px] bg-amber-500/25 text-amber-300 border border-amber-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🎡 Vòng Xoay</span>';
                         borderClass = 'border-amber-300/30 bg-amber-500/10';
                     } else if (cat === 'fail') {
                         badgeHtml = '<span class="text-[9px] bg-red-500/25 text-red-300 border border-red-400/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">❌ Thất Bại</span>';
@@ -6975,7 +6993,7 @@
             const labels = {
                 link: "Mở Link",
                 comment: "Cmt",
-                wheel: "Vòng Xoay",
+                wheel: "Vòng Xoay & Bốc Bài",
                 fail: "Thất Bại"
             };
             const targetActs = memberActivities.filter(a => getActivityCategory(a) === category);
@@ -7080,13 +7098,22 @@
                 try {
                     const parsed = new URL(u);
                     const inner = parsed.searchParams.get('url');
-                    if (inner) return inner;
+                    if (inner) u = inner;
                 } catch (_) {}
+            } else if (/^https?:\/\/i\d\.wp\.com\//i.test(u)) {
+                u = 'https://' + u.replace(/^https?:\/\/i\d\.wp\.com\//i, '');
             }
             u = u.replace(/^https?:\/\/(?:www\.)?catbox\.moe\//i, 'https://files.catbox.moe/');
+            if (/github\.com\/[^/]+\/[^/]+\/(?:blob|raw)\//i.test(u)) {
+                u = u.replace(/^https?:\/\/(?:www\.)?github\.com\//i, 'https://raw.githubusercontent.com/')
+                     .replace(/\/(?:blob|raw)\//i, '/')
+                     .replace(/([?&])raw=true\b/i, '$1')
+                     .replace(/[?&]$/, '');
+            }
             if (u.startsWith('//')) u = 'https:' + u;
             else if (!u.startsWith('http://') && !u.startsWith('https://')) u = 'https://' + u;
             u = u.replace(/^http:\/\//i, 'https://');
+            u = u.replace(/\s+/g, '%20');
             return u;
         }
 
@@ -7095,7 +7122,7 @@
             let u = String(url).trim().replace(/^["']|["']$/g, '');
             if (!u) return '';
             if (u.startsWith('data:') || u.startsWith('blob:')) return u;
-            if (u.includes('images.weserv.nl') || u.includes('wsrv.nl')) return u;
+            if (u.includes('images.weserv.nl') || u.includes('wsrv.nl') || /^https?:\/\/i\d\.wp\.com\//i.test(u)) return u;
             u = getRawCatboxUrl(u);
             if (/catbox\.moe/i.test(u)) {
                 const isGif = /\.gif(\?.*)?$/i.test(u);
@@ -7110,12 +7137,19 @@
             const cleanRaw = getRawCatboxUrl(rawSrc || imgEl.src);
             if (!cleanRaw || cleanRaw.startsWith('data:')) return;
             const isGif = /\.gif(\?.*)?$/i.test(cleanRaw);
+            const wpProxy = `https://i0.wp.com/${cleanRaw.replace(/^https?:\/\//i, '')}`;
+            const wsrvProxy = `https://wsrv.nl/?url=${encodeURIComponent(cleanRaw)}${isGif ? '&n=-1' : ''}`;
             if (step === 0) {
                 imgEl.dataset.cbStep = '1';
-                imgEl.src = `https://wsrv.nl/?url=${encodeURIComponent(cleanRaw)}${isGif ? '&n=-1' : ''}`;
+                imgEl.src = wpProxy;
             } else if (step === 1) {
                 imgEl.dataset.cbStep = '2';
+                imgEl.src = wsrvProxy;
+            } else if (step === 2) {
+                imgEl.dataset.cbStep = '3';
                 imgEl.src = cleanRaw;
+            } else {
+                imgEl.onerror = null;
             }
         }
 
@@ -7471,13 +7505,10 @@
             if (manageAvatarBtn) manageAvatarBtn.classList.toggle('hidden', !isOwner);
 
             const adminSection = document.getElementById('adminSection');
-            const sailorSection = document.getElementById('ownerOnlySailorSection');
             if (isOwner) {
                 adminSection.classList.remove('hidden');
-                if (sailorSection) sailorSection.classList.remove('hidden');
             } else {
                 adminSection.classList.add('hidden');
-                if (sailorSection) sailorSection.classList.add('hidden');
             }
 
             appliedVisualEffects = getUserVisualEffects();
@@ -10363,7 +10394,7 @@
                     };
                     item.innerHTML = `
                         <div class="flex items-center gap-3">
-                            <img src="${c.image}" class="w-10 h-10 rounded-xl object-cover">
+                            <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-10 h-10 rounded-xl object-cover">
                             <div>
                                 <h4 class="text-xs font-bold text-pink-200">${c.name}</h4>
                                 <span class="text-[10px] text-pink-300">❤️ ${charLikesData[c.id]?.length || 0} người đã lưu</span>
@@ -11487,7 +11518,7 @@
                         playJoyfulWinSound();
                         createPencilSparkles();
                         if (resultMsg) resultMsg.innerHTML = `<span class="text-emerald-300 font-black">Chúc mừng! Bạn quay trúng +${addAmt} Bút Chì Màu!</span>`;
-                        logMemberActivity("Vòng xoay may mắn", `Trúng +${addAmt} Bút Chì Màu`);
+                        logMemberActivity("Vòng xoay may mắn", `Trúng +${addAmt} Bút Chì Màu`, "wheel");
                     } else if (winningSlice.type === "sub") {
                         const deductAmount = Math.min(winningSlice.value, curPencils);
                         const remainingPencils = curPencils - deductAmount;
@@ -11499,12 +11530,12 @@
                         }
                         playSadDeflateSound();
                         if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ ${deductAmount} Bút Chì Màu!</span>`;
-                        logMemberActivity("Vòng xoay may mắn", `Trúng ô Xui xẻo -${winningSlice.value} Bút Chì Màu`);
+                        logMemberActivity("Vòng xoay may mắn", `Trúng ô Xui xẻo -${winningSlice.value} Bút Chì Màu`, "wheel");
                         triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo nhưng túi hiện có 0 chì.");
                     } else {
                         playSadDeflateSound();
                         if (resultMsg) resultMsg.innerHTML = `<span class="text-sky-200 font-bold">Ô Trống! Chúc bạn may mắn hơn ở lần quay tiếp theo nha.</span>`;
-                        logMemberActivity("Vòng xoay may mắn", "Quay trúng Ô Trống");
+                        logMemberActivity("Vòng xoay may mắn", "Quay trúng Ô Trống", "wheel");
                     }
                 } catch (wheelErr) {
                     console.error("Lỗi cập nhật vòng xoay:", wheelErr);
@@ -11529,6 +11560,7 @@
         let activeSailorAdminTab = "meme";
         let currentSailorCropPos = "center";
         let currentSailorPreviewSrc = "";
+        let editingSailorCard = null;
         let isSailorCardFlipping = false;
         let isSailorStageWaitingClose = false;
 
@@ -11651,6 +11683,7 @@
         let activeSailorAudioObj = null;
         let wasBgMusicPlayingBeforeSailor = false;
         let skipCurrentSailorSpinFn = null;
+        let sailorSpinOpenedAt = 0;
 
         function skipSailorCardSpin() {
             if (typeof skipCurrentSailorSpinFn === 'function') {
@@ -11658,6 +11691,13 @@
                 skipCurrentSailorSpinFn = null;
                 fn();
             }
+        }
+
+        function handleStageSpinSkipTap(e) {
+            if (typeof skipCurrentSailorSpinFn !== 'function') return;
+            if (Date.now() - sailorSpinOpenedAt < 250) return;
+            if (e) e.stopPropagation();
+            skipSailorCardSpin();
         }
 
         function playSailorSpinningAudio(rawUrl) {
@@ -11825,6 +11865,7 @@
 
             isSailorCardFlipping = true;
             isSailorStageWaitingClose = true;
+            sailorSpinOpenedAt = Date.now();
 
             const rect = cardEl.getBoundingClientRect();
             const overlay = document.getElementById('sailorCardStageOverlay');
@@ -11833,6 +11874,8 @@
 
             if (resultBox) resultBox.classList.add('hidden');
             mount.innerHTML = '';
+            const fxLayer = document.getElementById('visualEffectsLayer');
+            if (fxLayer) fxLayer.style.display = 'none';
             overlay.classList.remove('hidden');
 
             const posClass = pickedCard.cropPos === 'top' ? 'object-top'
@@ -11841,14 +11884,15 @@
             const stageWrap = document.createElement('div');
             stageWrap.className = 'sailor-stage-card-wrap cursor-pointer';
             const startScale = Math.max(0.25, rect.width / 210);
-            stageWrap.style.left = `${rect.left + rect.width / 2}px`;
-            stageWrap.style.top = `${rect.top + rect.height / 2}px`;
-            stageWrap.style.transform = `translate(-50%, -50%) scale(${startScale})`;
+            const dx = (rect.left + rect.width / 2) - (window.innerWidth / 2);
+            const dy = (rect.top + rect.height / 2) - (window.innerHeight / 2);
+            stageWrap.style.transform = `translate3d(calc(-50% + ${dx}px), calc(-50% + ${dy}px), 0) scale(${startScale})`;
 
-            // Cho phép user chạm thẳng vào thẻ đang xoay để lật luôn không cần chờ xoay xong
+            // Chạm trực tiếp vào thẻ (hoặc nền) là lật ngay tức thì
+            stageWrap.onpointerdown = (e) => handleStageSpinSkipTap(e);
             stageWrap.onclick = (e) => {
                 e.stopPropagation();
-                skipSailorCardSpin();
+                handleStageSpinSkipTap(e);
             };
 
             // Dòng chữ của Chủ Web nằm ngay dưới chân ảnh trên dải bóng đen đậm chống nhòe, chữ màu xanh lá nhạt pastel chuyển động
@@ -11874,12 +11918,10 @@
             mount.appendChild(stageWrap);
             cardEl.style.opacity = '0.2';
 
-            // 1. Thẻ bay mượt vào chính giữa màn hình (48%) để lúc xoay không chạm chữ trên & dưới
+            // 1. Thẻ bay mượt vào chính giữa màn hình bằng GPU (translate3d)
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    stageWrap.style.left = '50%';
-                    stageWrap.style.top = '48%';
-                    stageWrap.style.transform = 'translate(-50%, -50%) scale(1)';
+                    stageWrap.style.transform = 'translate3d(-50%, -52%, 0) scale(1)';
                 });
             });
 
@@ -11890,10 +11932,12 @@
             if (transformingBanner) transformingBanner.classList.remove('hidden');
             if (skipHint) skipHint.classList.remove('hidden');
 
-            // 2. Kích hoạt xoay tròn 2D (giữ nguyên mặt lưng sạch, tuyệt đối không lộ chữ hay hình mặt trước)
+            // 2. Kích hoạt xoay tròn 2D mượt mà
             const spinStartTimer = setTimeout(() => {
-                if (inner && !inner.classList.contains('is-flipped')) inner.classList.add('is-spinning');
-            }, 300);
+                if (inner && !inner.classList.contains('is-flipped') && typeof skipCurrentSailorSpinFn === 'function') {
+                    inner.classList.add('is-spinning');
+                }
+            }, 320);
 
             const cardAudioSource = (sailorCardsConfig && sailorCardsConfig.audioUrl)
                 ? sailorCardsConfig.audioUrl
@@ -11902,13 +11946,14 @@
             await playSailorSpinningAudio(cardAudioSource);
             clearTimeout(spinStartTimer);
 
-            // 3. Dừng xoay, dịch thẻ lên 36% nhường chỗ cho bảng kết quả và bật mặt trước để lật 3D
+            // 3. Dừng xoay, dịch thẻ lên trên nhường chỗ cho bảng kết quả và lật 3D mượt
             if (transformingBanner) transformingBanner.classList.add('hidden');
             if (skipHint) skipHint.classList.add('hidden');
-            stageWrap.style.top = '36%';
+            stageWrap.style.transform = 'translate3d(-50%, calc(-50% - 14vh), 0) scale(1)';
             if (frontFace) frontFace.classList.remove('opacity-0');
             if (inner) {
                 inner.classList.remove('is-spinning');
+                void inner.offsetWidth;
                 inner.classList.add('is-flipped');
             }
             stageWrap.classList.remove('cursor-pointer');
@@ -11941,7 +11986,7 @@
                         ? `Đã nhân đôi Bút Chì Màu - Túi còn ${nextCount} Chì.`
                         : `Túi đang có 0 Bút Chì Màu nên giữ nguyên 0 Chì.`;
                     deltaClass = "text-xs font-extrabold text-amber-300";
-                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ SECRET nhân đôi (${curPencils} ➔ ${nextCount} chì)`);
+                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ SECRET nhân đôi (${curPencils} ➔ ${nextCount} chì)`, "wheel");
                 } else if (actType === 'reward') {
                     const addAmt = Math.max(1, numAmt || 1);
                     await addPencilToUser(username, addAmt, "Thẻ Màu May Mắn", false);
@@ -11950,14 +11995,14 @@
                     statusClass = "text-xs sm:text-sm font-black light-green-pastel-wave leading-relaxed";
                     deltaText = `Đã được cộng ${addAmt} Bút Chì Màu - Túi còn ${curPencils + addAmt} Chì.`;
                     deltaClass = "text-xs font-extrabold text-amber-300";
-                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng Thẻ Vàng (+${addAmt} Chì)`);
+                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng Thẻ Vàng (+${addAmt} Chì)`, "wheel");
                 } else if (actType === 'empty') {
                     playEmptyCardNeutralSound();
                     statusText = "Bạn đã bốc trúng thẻ rỗng!";
                     statusClass = "text-xs sm:text-sm font-black text-sky-200 leading-relaxed";
                     deltaText = `Không cộng hay trừ Bút Chì Màu - Túi còn ${curPencils} Chì.`;
                     deltaClass = "text-xs font-bold text-sky-200/80";
-                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng Thẻ rỗng (0 chì)`);
+                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng Thẻ rỗng (0 chì)`, "wheel");
                 } else {
                     // Penalty (Trừ chì - Thẻ Meme)
                     const penAmt = Math.max(1, numAmt || 1);
@@ -11975,10 +12020,8 @@
                         ? `Đã bị trừ ${actualDeduct} Bút Chì Màu - Túi còn ${remain} Chì.`
                         : `Túi đang có 0 Bút Chì Màu - Không bị trừ thêm Chì.`;
                     deltaClass = "text-xs font-extrabold text-rose-300";
-                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ trừ chì (-${penAmt} Chì)`);
-                    if (actualDeduct > 0) {
-                        triggerNotification("Bị Trừ Bút Chì Màu!", `Thẻ Màu May Mắn: Bạn lật trúng thẻ trừ chì và bị mất ${actualDeduct} Bút Chì Màu! Còn lại: ${remain} chì.`, username);
-                    }
+                    logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ trừ chì (-${penAmt} Chì)`, "wheel");
+                    triggerNotification("Bị Trừ Bút Chì Màu!", actualDeduct > 0 ? `Thẻ Màu May Mắn: Bạn lật trúng thẻ meme và bị trừ ${actualDeduct} Bút Chì Màu! Hiện còn: ${remain} chì.` : "Thẻ Màu May Mắn: Bạn lật trúng thẻ meme nhưng túi hiện có 0 chì.", username);
                 }
             } catch (e) {
                 console.error("Lỗi xử lý thẻ:", e);
@@ -12088,9 +12131,12 @@
                 }
             }
 
-            // Tự động chuyển link GitHub blob thành link raw trực tiếp
-            if (/github\.com\/[^/]+\/[^/]+\/blob\//i.test(u)) {
-                u = u.replace(/^https?:\/\/github\.com\//i, 'https://raw.githubusercontent.com/').replace(/\/blob\//i, '/');
+            // Tự động chuyển link GitHub blob/raw thành link raw trực tiếp
+            if (/github\.com\/[^/]+\/[^/]+\/(?:blob|raw)\//i.test(u)) {
+                u = u.replace(/^https?:\/\/(?:www\.)?github\.com\//i, 'https://raw.githubusercontent.com/')
+                     .replace(/\/(?:blob|raw)\//i, '/')
+                     .replace(/([?&])raw=true\b/i, '$1')
+                     .replace(/[?&]$/, '');
             }
 
             if (u.startsWith("//")) u = "https:" + u;
@@ -12231,8 +12277,44 @@
             }
         }
 
+        function handleSailorEditCategoryChange(targetTab) {
+            const memeBox = document.getElementById('sailorMemePenaltyBox');
+            const rewardBox = document.getElementById('sailorRewardAmountBox');
+            const desc = document.getElementById('sailorTabDesc');
+            if (memeBox) memeBox.classList.toggle('hidden', targetTab !== 'meme');
+            if (rewardBox) rewardBox.classList.toggle('hidden', targetTab !== 'sailor');
+            if (desc && editingSailorCard) {
+                desc.innerText = "✏️ Đang sửa thẻ bài (Chỉnh xong bấm 'Cập Nhật Thẻ Bài' nhé!)";
+                desc.className = "text-[11px] font-bold text-amber-300";
+            }
+        }
+
+        function updateSailorSaveButtonLabel() {
+            const saveBtn = document.getElementById('sailorAdminSaveBtn');
+            const cancelBtn = document.getElementById('sailorAdminCancelEditBtn');
+            const editCatBox = document.getElementById('sailorEditCategoryBox');
+            const isEditing = Boolean(editingSailorCard && activeSailorAdminTab !== 'back');
+
+            if (cancelBtn) cancelBtn.classList.toggle('hidden', !isEditing);
+            if (editCatBox) editCatBox.classList.toggle('hidden', !isEditing);
+
+            if (!saveBtn) return;
+            if (isEditing) {
+                saveBtn.innerText = "✓ Cập Nhật Thẻ Bài";
+            } else if (activeSailorAdminTab === 'meme') {
+                saveBtn.innerText = "+ Lưu Thẻ Meme Vào Kho";
+            } else if (activeSailorAdminTab === 'sailor') {
+                saveBtn.innerText = "+ Lưu Thẻ Vàng Vào Kho";
+            } else if (activeSailorAdminTab === 'secret') {
+                saveBtn.innerText = "+ Lưu Thẻ Secret Vào Kho";
+            } else {
+                saveBtn.innerText = "✓ Đặt Làm Ảnh Lưng Của Thẻ Bài";
+            }
+        }
+
         function switchSailorAdminTab(tab) {
             activeSailorAdminTab = tab;
+            editingSailorCard = null;
             ['meme', 'sailor', 'secret', 'back'].forEach(t => {
                 const btn = document.getElementById(`sailorTab-${t}`);
                 if (!btn) return;
@@ -12247,7 +12329,6 @@
             const memeBox = document.getElementById('sailorMemePenaltyBox');
             const rewardBox = document.getElementById('sailorRewardAmountBox');
             const msgBox = document.getElementById('sailorMessageInputBox');
-            const saveBtn = document.getElementById('sailorAdminSaveBtn');
 
             if (memeBox) memeBox.classList.toggle('hidden', tab !== 'meme');
             if (rewardBox) rewardBox.classList.toggle('hidden', tab !== 'sailor');
@@ -12258,33 +12339,34 @@
                     desc.innerText = "Mục Meme: Nhập số Bút Chì bị trừ khi user lật trúng.";
                     desc.className = "text-[11px] font-bold text-rose-200";
                 }
-                if (saveBtn) saveBtn.innerText = "+ Lưu Thẻ Meme Vào Kho";
             } else if (tab === 'sailor') {
                 if (desc) {
                     desc.innerText = "✨ Mục Thẻ Vàng: Thẻ cộng chì may mắn cho user.";
                     desc.className = "text-[11px] font-bold text-amber-200";
                 }
-                if (saveBtn) saveBtn.innerText = "+ Lưu Thẻ Vàng Vào Kho";
             } else if (tab === 'secret') {
                 if (desc) {
                     desc.innerText = "✨ Mục Secret: Tự động NHÂN ĐÔI số Bút Chì Màu hiện có của user!";
                     desc.className = "text-[11px] font-bold text-amber-200";
                 }
-                if (saveBtn) saveBtn.innerText = "+ Lưu Thẻ Secret Vào Kho";
             } else {
                 if (desc) {
                     desc.innerText = "🎴 Mục Ảnh Lưng: Chọn 1 ảnh làm mặt sau chung cho tất cả thẻ chưa lật.";
                     desc.className = "text-[11px] font-bold text-sky-200";
                 }
-                if (saveBtn) saveBtn.innerText = "✓ Đặt Làm Ảnh Lưng Của Thẻ Bài";
             }
 
             resetSailorAdminInputs();
             if (tab === 'back' && sailorCardsConfig.backImage) {
                 currentSailorPreviewSrc = sailorCardsConfig.backImage;
+                const urlInput = document.getElementById('sailorAdminUrlInput');
+                if (urlInput && !sailorCardsConfig.backImage.startsWith('data:')) {
+                    urlInput.value = getRawCatboxUrl(sailorCardsConfig.backImage);
+                }
                 setSailorCropAlign(sailorCardsConfig.backCropPos || 'center');
                 updateSailorMoldPreview(sailorCardsConfig.backImage);
             }
+            updateSailorSaveButtonLabel();
             renderSailorAdminList();
         }
 
@@ -12292,12 +12374,73 @@
             const f = document.getElementById('sailorAdminFileInput');
             const u = document.getElementById('sailorAdminUrlInput');
             const m = document.getElementById('sailorCustomMessageInput');
+            const p = document.getElementById('sailorMemePenaltyInput');
+            const r = document.getElementById('sailorRewardInput');
             if (f) f.value = '';
             if (u) u.value = '';
             if (m) m.value = '';
+            if (p) p.value = '1';
+            if (r) r.value = '1';
             currentSailorPreviewSrc = '';
             setSailorCropAlign('center');
             updateSailorMoldPreview('');
+        }
+
+        function editSailorCardItem(tab, idx) {
+            if (!checkIsOwnerAccount()) return;
+            if (tab === 'back') {
+                switchSailorAdminTab('back');
+                document.getElementById('sailorAdminModalContent')?.scrollTo({ top: 0, behavior: 'smooth' });
+                playCheerfulClickSound();
+                return;
+            }
+
+            const list = sailorCardsConfig[tab] || [];
+            const item = list[idx];
+            if (!item) return;
+
+            editingSailorCard = { tab: tab, idx: idx, id: item.id || null };
+
+            const f = document.getElementById('sailorAdminFileInput');
+            const u = document.getElementById('sailorAdminUrlInput');
+            const m = document.getElementById('sailorCustomMessageInput');
+            const catSel = document.getElementById('sailorEditCategorySelect');
+            const desc = document.getElementById('sailorTabDesc');
+
+            if (f) f.value = '';
+            if (u) {
+                u.value = (item.src && !item.src.startsWith('data:')) ? getRawCatboxUrl(item.src) : '';
+            }
+            if (m) m.value = item.message || '';
+            if (catSel) catSel.value = tab;
+
+            currentSailorPreviewSrc = item.src || '';
+            setSailorCropAlign(item.cropPos || 'center');
+            updateSailorMoldPreview(item.src || '');
+
+            if (tab === 'meme') {
+                const penInput = document.getElementById('sailorMemePenaltyInput');
+                if (penInput) penInput.value = item.amount || 1;
+            } else if (tab === 'sailor') {
+                const rewInput = document.getElementById('sailorRewardInput');
+                if (rewInput) rewInput.value = item.amount || 1;
+            }
+
+            handleSailorEditCategoryChange(tab);
+            if (desc) {
+                desc.innerText = "✏️ Đang sửa thẻ bài (Chỉnh xong bấm 'Cập Nhật Thẻ Bài' nhé!)";
+                desc.className = "text-[11px] font-bold text-amber-300";
+            }
+
+            updateSailorSaveButtonLabel();
+            renderSailorAdminList();
+            document.getElementById('sailorAdminModalContent')?.scrollTo({ top: 0, behavior: 'smooth' });
+            playCheerfulClickSound();
+        }
+
+        function cancelSailorCardEdit() {
+            editingSailorCard = null;
+            switchSailorAdminTab(activeSailorAdminTab);
         }
 
         function setSailorCropAlign(pos) {
@@ -12323,14 +12466,30 @@
                 const safeSrc = getSafeCatboxImgUrl(src);
                 img.dataset.cbStep = '0';
                 img.setAttribute('referrerpolicy', 'no-referrer');
-                img.onerror = () => handleCatboxImgError(img, rawFallback || src);
+                img.onerror = () => {
+                    const currentStep = parseInt(img.dataset.cbStep || '0', 10);
+                    if (currentStep >= 3) {
+                        img.onerror = null;
+                        img.classList.add('hidden');
+                        empty.innerText = "⚠️ Không tải được link ảnh này";
+                        empty.classList.remove('hidden');
+                        return;
+                    }
+                    handleCatboxImgError(img, rawFallback || src);
+                };
+                img.onload = () => {
+                    img.classList.remove('hidden');
+                    empty.classList.add('hidden');
+                };
                 img.src = safeSrc;
                 img.classList.remove('hidden');
                 empty.classList.add('hidden');
             } else {
                 img.onerror = null;
+                img.onload = null;
                 img.src = '';
                 img.classList.add('hidden');
+                empty.innerText = "Khuôn card 2:3";
                 empty.classList.remove('hidden');
             }
         }
@@ -12338,6 +12497,8 @@
         function handleSailorFilePreview(input) {
             const file = input.files && input.files[0];
             if (!file) return;
+            const urlInput = document.getElementById('sailorAdminUrlInput');
+            if (urlInput) urlInput.value = '';
             const reader = new FileReader();
             reader.onload = (e) => {
                 currentSailorPreviewSrc = e.target.result;
@@ -12348,10 +12509,17 @@
 
         function handleSailorUrlPreview(url) {
             const val = (url || "").trim();
+            const fileInput = document.getElementById('sailorAdminFileInput');
             if (val) {
-                const safeUrl = getSafeCatboxImgUrl(val);
-                currentSailorPreviewSrc = safeUrl;
-                updateSailorMoldPreview(safeUrl, val);
+                if (fileInput) fileInput.value = '';
+                const cleanUrl = getRawCatboxUrl(val);
+                currentSailorPreviewSrc = cleanUrl;
+                if (!/^https?:\/\/[^/\s]+\.[^/\s]+/i.test(cleanUrl)) return;
+                const safeUrl = getSafeCatboxImgUrl(cleanUrl);
+                updateSailorMoldPreview(safeUrl, cleanUrl);
+            } else if (!fileInput?.files?.length) {
+                currentSailorPreviewSrc = '';
+                updateSailorMoldPreview('');
             }
         }
 
@@ -12433,41 +12601,86 @@
             const file = fileInput?.files?.[0];
             const url = (urlInput?.value || "").trim();
             const message = (msgInput?.value || "").trim();
+            const isEditing = Boolean(editingSailorCard && activeSailorAdminTab !== 'back');
 
-            let finalSrc = url ? getSafeCatboxImgUrl(url) : "";
+            let finalSrc = url ? getRawCatboxUrl(url) : "";
             if (file) {
                 if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = "⏳ Đang căn khuôn card..."; }
                 try {
                     finalSrc = await cropFileToCardMold(file, currentSailorCropPos);
                 } catch (err) {
                     alert("Lỗi khi đọc ảnh: " + (err?.message || ""));
-                    if (saveBtn) { saveBtn.disabled = false; switchSailorAdminTab(activeSailorAdminTab); }
+                    if (saveBtn) { saveBtn.disabled = false; updateSailorSaveButtonLabel(); }
                     return;
                 }
+            } else if (isEditing && !finalSrc) {
+                const origList = sailorCardsConfig[editingSailorCard.tab] || [];
+                const origItem = origList.find(x => x.id === editingSailorCard.id) || origList[editingSailorCard.idx];
+                finalSrc = currentSailorPreviewSrc || origItem?.src || "";
             } else if (activeSailorAdminTab === 'back' && !finalSrc && sailorCardsConfig.backImage) {
                 finalSrc = sailorCardsConfig.backImage;
             }
 
             if (!finalSrc) {
                 alert("Vui lòng chọn 1 ảnh từ máy hoặc dán link URL ảnh vào nhé!");
-                if (saveBtn) { saveBtn.disabled = false; switchSailorAdminTab(activeSailorAdminTab); }
+                if (saveBtn) { saveBtn.disabled = false; updateSailorSaveButtonLabel(); }
                 return;
             }
 
             if (activeSailorAdminTab !== 'back' && !message) {
                 alert("Vui lòng nhập lời nhắn/chữ hiện lên khi user lật trúng lá bài này!");
-                if (saveBtn) { saveBtn.disabled = false; switchSailorAdminTab(activeSailorAdminTab); }
+                if (saveBtn) { saveBtn.disabled = false; updateSailorSaveButtonLabel(); }
                 return;
             }
 
             if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = "⏳ Đang tối ưu & lưu..."; }
-            // Lưu bản sao dự phòng để hoàn tác nếu mạng lỗi hoặc vượt giới hạn
             const backupSnapshot = JSON.stringify(sailorCardsConfig);
 
             try {
+                let targetTabAfter = activeSailorAdminTab;
+
                 if (activeSailorAdminTab === 'back') {
                     sailorCardsConfig.backImage = finalSrc;
                     sailorCardsConfig.backCropPos = currentSailorCropPos;
+                } else if (isEditing) {
+                    const fromTab = editingSailorCard.tab;
+                    const toTab = document.getElementById('sailorEditCategorySelect')?.value || fromTab;
+                    targetTabAfter = toTab;
+
+                    const fromList = sailorCardsConfig[fromTab] || [];
+                    let realIdx = editingSailorCard.id ? fromList.findIndex(x => x.id === editingSailorCard.id) : -1;
+                    if (realIdx === -1) realIdx = editingSailorCard.idx;
+                    const oldEntry = fromList[realIdx] || {};
+
+                    const updatedEntry = {
+                        ...oldEntry,
+                        id: oldEntry.id || ('sc-' + Date.now()),
+                        src: finalSrc,
+                        cropPos: currentSailorCropPos,
+                        message: message,
+                        updatedAt: Date.now()
+                    };
+
+                    if (toTab === 'secret') {
+                        updatedEntry.actionType = 'secret';
+                        updatedEntry.amount = 0;
+                    } else if (toTab === 'meme') {
+                        const penVal = parseInt(document.getElementById('sailorMemePenaltyInput')?.value) || 1;
+                        updatedEntry.actionType = 'penalty';
+                        updatedEntry.amount = Math.max(1, penVal);
+                    } else if (toTab === 'sailor') {
+                        const rewVal = parseInt(document.getElementById('sailorRewardInput')?.value) || 1;
+                        updatedEntry.actionType = 'reward';
+                        updatedEntry.amount = Math.max(1, rewVal);
+                    }
+
+                    if (toTab === fromTab && realIdx >= 0 && realIdx < fromList.length) {
+                        fromList[realIdx] = updatedEntry;
+                    } else {
+                        if (realIdx >= 0 && realIdx < fromList.length) fromList.splice(realIdx, 1);
+                        if (!Array.isArray(sailorCardsConfig[toTab])) sailorCardsConfig[toTab] = [];
+                        sailorCardsConfig[toTab].unshift(updatedEntry);
+                    }
                 } else {
                     const entry = {
                         id: 'sc-' + Date.now(),
@@ -12493,7 +12706,6 @@
                     }
                 }
 
-                // Tự động nén gọn các ảnh cũ nếu tổng kho thẻ lớn hơn 350KB (giảm dung lượng gấp 4-5 lần)
                 if (JSON.stringify(sailorCardsConfig).length > 350000) {
                     await compactSailorCardsForFirestore(sailorCardsConfig);
                 }
@@ -12503,10 +12715,11 @@
                 }, { merge: true });
 
                 try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
-                renderSailorAdminList();
+
+                editingSailorCard = null;
+                switchSailorAdminTab(targetTabAfter);
                 renderSailorCardsGrid();
-                if (activeSailorAdminTab !== 'back') resetSailorAdminInputs();
-                alert("✓ Đã lưu thành công vào kho Thẻ Màu May Mắn!");
+                alert(isEditing ? "✓ Đã cập nhật thẻ bài thành công!" : "✓ Đã lưu thành công vào kho Thẻ Màu May Mắn!");
             } catch (err) {
                 console.error("Lỗi lưu thẻ bài:", err);
                 try { sailorCardsConfig = JSON.parse(backupSnapshot); } catch (_) {}
@@ -12519,7 +12732,7 @@
             } finally {
                 if (saveBtn) {
                     saveBtn.disabled = false;
-                    switchSailorAdminTab(activeSailorAdminTab);
+                    updateSailorSaveButtonLabel();
                 }
             }
         }
@@ -12540,9 +12753,10 @@
                     : sailorCardsConfig.backCropPos === 'bottom' ? 'object-bottom' : 'object-center';
                 const safeBackList = getSafeCatboxImgUrl(sailorCardsConfig.backImage);
                 grid.innerHTML = `
-                    <div class="relative aspect-[2/3] rounded-xl overflow-hidden border border-pink-300/50">
+                    <div onclick="editSailorCardItem('back', 0)" class="relative aspect-[2/3] rounded-xl overflow-hidden border border-pink-300/50 cursor-pointer hover:border-amber-300 transition" title="Chạm để sửa ảnh lưng">
                         <img src="${safeBackList}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(sailorCardsConfig.backImage)}')" class="w-full h-full object-cover ${posClass}">
-                        <button type="button" onclick="clearSailorBackImage()" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 hover:bg-red-500 text-white text-xs font-black flex items-center justify-center">✕</button>
+                        <span class="absolute bottom-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded bg-black/80 text-amber-200 border border-white/20">✏️ Sửa</span>
+                        <button type="button" onclick="event.stopPropagation(); clearSailorBackImage()" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 hover:bg-red-500 text-white text-xs font-black flex items-center justify-center">✕</button>
                     </div>
                 `;
                 return;
@@ -12565,13 +12779,24 @@
                     else badgeTxt = `-${item.amount || 1} chì`;
                 }
 
+                const isBeingEdited = Boolean(
+                    editingSailorCard &&
+                    editingSailorCard.tab === activeSailorAdminTab &&
+                    ((editingSailorCard.id && item.id === editingSailorCard.id) || editingSailorCard.idx === idx)
+                );
+
                 const card = document.createElement('div');
-                card.className = "bg-black/40 border border-white/15 rounded-xl p-1.5 flex flex-col gap-1 relative";
+                card.onclick = () => editSailorCardItem(activeSailorAdminTab, idx);
+                card.title = "Chạm vào thẻ để sửa ảnh / chữ / điểm";
+                card.className = isBeingEdited
+                    ? "bg-amber-500/20 border-2 border-amber-300 rounded-xl p-1.5 flex flex-col gap-1 relative cursor-pointer shadow-[0_0_15px_rgba(251,191,36,0.45)] transition"
+                    : "bg-black/40 border border-white/15 hover:border-pink-300/70 rounded-xl p-1.5 flex flex-col gap-1 relative cursor-pointer transition active:scale-95";
                 card.innerHTML = `
                     <div class="relative aspect-[2/3] w-full rounded-lg overflow-hidden">
                         <img src="${getSafeCatboxImgUrl(item.src)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(item.src)}')" class="w-full h-full object-cover ${posClass}">
                         <span class="absolute bottom-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded bg-black/80 text-amber-300 border border-white/20">${badgeTxt}</span>
-                        <button type="button" onclick="deleteSailorCardItem('${activeSailorAdminTab}', ${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/80 hover:bg-red-500 text-white text-[10px] font-black flex items-center justify-center">✕</button>
+                        <span class="absolute bottom-1 right-1 text-[9px] font-black px-1.5 py-0.5 rounded ${isBeingEdited ? 'bg-amber-400 text-black' : 'bg-pink-500/85 text-white'}">${isBeingEdited ? 'Đang sửa' : 'Sửa'}</span>
+                        <button type="button" onclick="event.stopPropagation(); deleteSailorCardItem('${activeSailorAdminTab}', ${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/80 hover:bg-red-500 text-white text-[10px] font-black flex items-center justify-center">✕</button>
                     </div>
                     <p class="text-[9.5px] text-sky-100/80 line-clamp-2 leading-tight">${cmtEsc(item.message || '')}</p>
                 `;
@@ -12582,7 +12807,15 @@
         async function deleteSailorCardItem(tab, idx) {
             if (!checkIsOwnerAccount()) return;
             if (!confirm("Xóa lá bài này khỏi kho?")) return;
+            const deletedItem = sailorCardsConfig[tab]?.[idx];
             sailorCardsConfig[tab].splice(idx, 1);
+
+            if (editingSailorCard && editingSailorCard.tab === tab &&
+                ((editingSailorCard.id && deletedItem?.id === editingSailorCard.id) || editingSailorCard.idx === idx)) {
+                editingSailorCard = null;
+                switchSailorAdminTab(tab);
+            }
+
             await db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true });
             try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
             renderSailorAdminList();
@@ -12595,6 +12828,7 @@
             sailorCardsConfig.backImage = "";
             await db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true });
             try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
+            resetSailorAdminInputs();
             renderSailorAdminList();
             renderSailorCardsGrid();
         }
