@@ -11508,7 +11508,7 @@
                 } catch (_) {}
 
                 // 2. Tự động dùng thẻ <video> nếu là .mp4/.webm/.mov hoặc <audio> nếu là .mp3/.wav/.ogg
-                const isVideo = /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(audioUrl);
+                const isVideo = /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(audioUrl) || /^data:video\//i.test(audioUrl);
                 const elemId = isVideo ? 'sailorCardVideo' : 'sailorCardAudio';
                 let sound = document.getElementById(elemId);
                 if (!sound) {
@@ -11843,21 +11843,69 @@
             if (!url) return "";
             let u = String(url).trim().replace(/^["']|["']$/g, '');
             if (!u) return "";
+            if (u.startsWith("data:") || u.startsWith("blob:")) return u;
+
             // Tự động chuyển link trang catbox.moe thành link file trực tiếp files.catbox.moe
             u = u.replace(/^https?:\/\/(?:www\.)?catbox\.moe\//i, "https://files.catbox.moe/");
+
+            // Tự động chuyển link Dropbox thành link tải/phát trực tiếp (raw=1)
+            if (/dropbox\.com/i.test(u)) {
+                u = u.replace(/[?&]dl=0\b/i, (m) => m[0] + 'raw=1');
+                if (!/[?&]raw=1/i.test(u) && !/[?&]dl=1/i.test(u)) {
+                    u += (u.includes('?') ? '&' : '?') + 'raw=1';
+                }
+            }
+
+            // Tự động chuyển link GitHub blob thành link raw trực tiếp
+            if (/github\.com\/[^/]+\/[^/]+\/blob\//i.test(u)) {
+                u = u.replace(/^https?:\/\/github\.com\//i, 'https://raw.githubusercontent.com/').replace(/\/blob\//i, '/');
+            }
+
             if (u.startsWith("//")) u = "https:" + u;
             else if (!u.startsWith("http://") && !u.startsWith("https://")) u = "https://" + u;
             u = u.replace(/^http:\/\//i, "https://");
             return u;
         }
 
+        async function handleSailorAudioFileUpload(input) {
+            const file = input?.files?.[0];
+            if (!file) return;
+            if (file.size > 260 * 1024) {
+                alert(`File "${file.name}" nặng ${(file.size / 1024).toFixed(0)}KB (vượt quá mức an toàn 250KB).\nBạn hãy nén file âm thanh xuống dưới 250KB (khoảng 10-15 giây MP3) hoặc tải lên Dropbox/GitHub rồi dán link vào ô bên dưới nhé!`);
+                input.value = '';
+                return;
+            }
+            const btn = document.getElementById('sailorTestAudioBtn');
+            const origText = btn ? btn.innerText : '▶ Nghe Thử';
+            if (btn) btn.innerText = '⏳ Đang nạp...';
+            try {
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = () => reject(new Error('Không thể đọc file từ máy!'));
+                    reader.readAsDataURL(file);
+                });
+                sailorCardsConfig.audioUrl = dataUrl;
+                const urlInput = document.getElementById('sailorCustomAudioUrl');
+                if (urlInput) urlInput.value = dataUrl;
+                await db.collection("settings").doc("main").set({ sailorCards: sailorCardsConfig }, { merge: true });
+                try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
+                alert(`✓ Đã nạp và lưu file "${file.name}" (${(file.size / 1024).toFixed(0)}KB) thành công!\nHãy bấm "▶ Nghe Thử" để kiểm tra ngay nhé.`);
+            } catch (err) {
+                alert("Lỗi khi lưu file âm thanh: " + (err?.message || "Có thể tổng dung lượng kho thẻ đã đầy, hãy thử file nhẹ hơn hoặc dùng link Dropbox/GitHub!"));
+            } finally {
+                if (btn) btn.innerText = origText;
+                input.value = '';
+            }
+        }
+
         let testAudioObj = null;
         function testPlaySailorAudio() {
             const input = document.getElementById('sailorCustomAudioUrl');
-            const raw = input ? input.value : "";
+            const raw = (input && input.value.trim()) ? input.value : (sailorCardsConfig?.audioUrl || "");
             const url = cleanAudioUrl(raw);
             if (!url) {
-                alert("Vui lòng dán link nhạc Catbox (đuôi .mp3 hoặc .mp4) vào ô trước khi bấm Nghe Thử!");
+                alert("Vui lòng chọn file từ máy hoặc dán link nhạc (.mp3 / .mp4) trước khi bấm Nghe Thử!");
                 return;
             }
             if (testAudioObj) {
@@ -11870,14 +11918,24 @@
             const btn = document.getElementById('sailorTestAudioBtn');
             if (btn) btn.innerText = "⏳ Đang tải...";
 
-            const isVideo = /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(url);
-            const media = document.createElement(isVideo ? 'video' : 'audio');
+            const isVideo = /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(url) || /^data:video\//i.test(url);
+            const elemId = isVideo ? 'sailorCardVideo' : 'sailorCardAudio';
+            let media = document.getElementById(elemId);
+            if (!media) {
+                media = document.createElement(isVideo ? 'video' : 'audio');
+                media.id = elemId;
+                media.setAttribute('playsinline', '');
+                media.setAttribute('webkit-playsinline', '');
+                media.style.cssText = 'position:fixed;bottom:0;right:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:-10;';
+                document.body.appendChild(media);
+            }
+
             testAudioObj = media;
-            media.setAttribute('playsinline', '');
-            media.setAttribute('webkit-playsinline', '');
+            let testAlertShown = false;
+
+            try { media.pause(); media.currentTime = 0; } catch (_) {}
             media.volume = 1;
             media.muted = false;
-            media.src = url;
 
             media.onloadedmetadata = () => {
                 const sec = Math.round(media.duration || 0);
@@ -11888,14 +11946,31 @@
                 testAudioObj = null;
             };
             media.onerror = () => {
-                alert("❌ Không thể phát file này! Vui lòng kiểm tra lại đường link Catbox nhé.");
+                if (testAlertShown) return;
+                testAlertShown = true;
+                const isCatbox = /catbox\.moe/i.test(url);
+                const errCode = media.error ? media.error.code : 0;
+                alert(
+                    isCatbox
+                        ? `❌ Không tải được link Catbox này (Mã lỗi: ${errCode}).\nNhà mạng WiFi/4G ở Việt Nam thường chặn trực tiếp files.catbox.moe hoặc file .mp4 sai codec!\n\n👉 Cách khắc phục: Hãy bấm nút "📁 Chọn file nhạc/clip từ máy" ở ngay bên trên, hoặc up file lên Dropbox/GitHub nhé!`
+                        : `❌ Không thể phát âm thanh từ link này (Mã lỗi: ${errCode}). Bạn hãy kiểm tra lại định dạng file (.mp3 / .mp4) nhé!`
+                );
                 if (btn) btn.innerText = "▶ Nghe Thử";
                 testAudioObj = null;
             };
+
+            media.src = url;
             const p = media.play();
             if (p !== undefined) {
                 p.catch(err => {
-                    alert("❌ Trình duyệt chặn phát âm thanh: " + (err?.message || ""));
+                    if (testAlertShown) return;
+                    testAlertShown = true;
+                    const isCatbox = /catbox\.moe/i.test(url);
+                    alert(
+                        isCatbox
+                            ? `❌ Không phát được link Catbox (${err?.message || ''}).\nNhà mạng Việt Nam hay chặn files.catbox.moe! Bạn hãy dùng nút "📁 Chọn file nhạc/clip từ máy" hoặc dùng link Dropbox/GitHub thay thế nhé.`
+                            : "❌ Trình duyệt không phát được âm thanh: " + (err?.message || "")
+                    );
                     if (btn) btn.innerText = "▶ Nghe Thử";
                     testAudioObj = null;
                 });
