@@ -3724,6 +3724,7 @@
         ];
 
         let characters = [];
+        let charactersSyncedFromServer = false;
         let charLikesData = {};
         let charComments = {};
         let userUnlockedState = {};
@@ -4867,6 +4868,9 @@
             db.collection("characters").onSnapshot((snapshot) => {
                 characters = [];
                 snapshot.forEach(doc => { characters.push({ id: doc.id, ...doc.data() }); });
+                if (!snapshot.metadata.fromCache) {
+                    charactersSyncedFromServer = true;
+                }
                 if (characters.length > 0) {
                     try { localStorage.setItem('palette_cached_characters', JSON.stringify(characters)); } catch (_) {}
                 }
@@ -7136,7 +7140,9 @@
                         if (now - c.fastStartTime >= duration) {
                             c.fastModeType = 'paused_limit';
                             delete c.fastStartTime;
-                            db.collection("characters").doc(c.id).set(c).catch(() => {});
+                            if (checkIsOwnerAccount() && charactersSyncedFromServer) {
+                                db.collection("characters").doc(c.id).set(c).catch(() => {});
+                            }
                             renderCharacters();
                             renderFastColorCenter();
                             updateFastColorSubtitle();
@@ -8774,17 +8780,13 @@ const dateRegexMatches = [...cleanDc.matchAll(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](
                     characters[idx].tags = adminSelectedTags.length > 0 ? [...adminSelectedTags] : ['Mới'];
                     characters[idx].fbLink = fbLink;
                     characters[idx].aiStudioUrl = aiLink;
-                    const wasLimited = (characters[idx].status === 'unlocked_24h' && characters[idx].fastModeType !== 'paused_limit');
-                    const prevDuration = characters[idx].customDurationMs;
                     characters[idx].status = status;
                     characters[idx].fastModeType = fastModeType;
                     characters[idx].isNew = isNew;
                     characters[idx].unlockWaitMs = unlockWaitMs;
                     if (status === 'unlocked_24h' && fastModeType === 'limited') {
                         characters[idx].customDurationMs = customDurationMs;
-                        if (!wasLimited || !characters[idx].fastStartTime || prevDuration !== customDurationMs) {
-                            characters[idx].fastStartTime = Date.now();
-                        }
+                        characters[idx].fastStartTime = Date.now();
                     } else {
                         characters[idx].customDurationMs = null;
                         characters[idx].fastStartTime = null;
