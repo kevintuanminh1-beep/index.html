@@ -4462,8 +4462,13 @@
             return { checkedToday, completedDays, nextDay };
         }
 
+        function isOwnerUsername(username) {
+            return String(username || "").trim().toLowerCase() === OWNER_USER.toLowerCase();
+        }
+
         function getUserPencilCount(username) {
             if (!username) return 0;
+            if (isOwnerUsername(username)) return 10;
             const key = String(username).trim().toLowerCase();
             return Math.max(0, Number(userPencilsData[key]?.count) || 0);
         }
@@ -4471,6 +4476,13 @@
         async function addPencilToUser(username, amount, reason = "", showSparkles = true) {
             if (!username || !Number.isFinite(amount) || amount <= 0) return;
             const uKey = username.toLowerCase();
+            if (isOwnerUsername(username)) {
+                userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: 10 };
+                db.collection("pencils").doc(uKey).set({ count: 10 }, { merge: true }).catch(() => {});
+                updatePencilUI();
+                if (showSparkles && currentUser?.username.toLowerCase() === uKey) createPencilSparkles();
+                return 10;
+            }
             const pencilRef = db.collection("pencils").doc(uKey);
             try {
                 const snapshot = await pencilRef.get();
@@ -4592,7 +4604,7 @@
                 const oldStreak = Math.max(0, Number(data.checkinStreak) || (prevDate ? 1 : 0));
                 const day = difference === 1 ? (oldStreak >= 7 ? 1 : oldStreak + 1) : 1;
                 const reward = day === 7 ? 2 : 1;
-                const nextCount = (Number(data.count) || 0) + reward;
+                const nextCount = isOwnerUsername(currentUser.username) ? 10 : ((Number(data.count) || 0) + reward);
 
                 const nextData = {
                     ...data,
@@ -4939,10 +4951,11 @@
                 ]);
 
                 const pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
-                const latestCount = Number(pencilData.count) || 0;
+                const isOwnerAcc = isOwnerUsername(currentUser.username);
+                const latestCount = isOwnerAcc ? 10 : (Number(pencilData.count) || 0);
                 const unlockedChars = unlockedSnapshot.exists ? (unlockedSnapshot.data().chars || {}) : {};
 
-                if (latestCount < 10) {
+                if (!isOwnerAcc && latestCount < 10) {
                     alert("Số Bút Chì Màu trong túi hiện chưa đủ 10 để đổi link.");
                     return;
                 }
@@ -4951,7 +4964,7 @@
                     return;
                 }
 
-                const nextCount = latestCount - 10;
+                const nextCount = isOwnerAcc ? 10 : (latestCount - 10);
                 const nextUnlocked = { ...unlockedChars, [targetChar.id]: true };
 
                 await Promise.all([
@@ -5248,7 +5261,7 @@
                 }
                 const pencilSnapshot = await pencilRef.get();
                 const pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
-                const nextCount = (Number(pencilData.count) || 0) + 3;
+                const nextCount = isOwnerUsername(targetUsername) ? 10 : ((Number(pencilData.count) || 0) + 3);
 
                 const batchPromises = [
                     pencilRef.set({ ...pencilData, count: nextCount }, { merge: true }),
@@ -5530,7 +5543,15 @@
             });
 
             pencilsUnsub = db.collection("pencils").doc(uKey).onSnapshot(doc => {
-                userPencilsData[uKey] = doc.exists ? doc.data() : { count: 0 };
+                const rawData = doc.exists ? doc.data() : { count: 0 };
+                if (isOwnerUsername(username)) {
+                    if (!doc.exists || rawData.count !== 10) {
+                        db.collection("pencils").doc(uKey).set({ count: 10 }, { merge: true }).catch(() => {});
+                    }
+                    userPencilsData[uKey] = { ...rawData, count: 10 };
+                } else {
+                    userPencilsData[uKey] = rawData;
+                }
                 updatePencilUI();
                 renderFastColorCenter();
                 const detailBox = document.getElementById('detailCmtRewardBox');
@@ -11475,7 +11496,7 @@
                 const pencilData = pencilSnap.exists ? pencilSnap.data() : {};
                 const prevAmt = !isTestingOwner ? (pencilData.cmtRewarded?.[safeCharId] || (pencilData.cmtRewarded?.[`${safeCharId}__${req.kind}`] ? rewardPoints : 0)) : 0;
                 const alreadyRewarded = Boolean(prevAmt);
-                const nextCount = (Number(pencilData.count) || 0) + (alreadyRewarded ? 0 : rewardPoints);
+                const nextCount = isOwnerUsername(req.username) ? 10 : ((Number(pencilData.count) || 0) + (alreadyRewarded ? 0 : rewardPoints));
 
                 const batch = db.batch();
                 if (!alreadyRewarded) {
@@ -11960,19 +11981,26 @@
                         logMemberActivity("Vòng xoay may mắn", `Trúng +${addAmt} Bút Chì Màu`, "wheel");
                         sendPhonePushToOwner(`🎡 Vòng xoay: ${username}`, `Trúng +${addAmt} Bút Chì Màu`, 3);
                     } else if (winningSlice.type === "sub") {
-                        const deductAmount = Math.min(winningSlice.value, curPencils);
-                        const remainingPencils = curPencils - deductAmount;
-                        if (deductAmount > 0) {
+                        const isOwnerAcc = isOwnerUsername(username);
+                        const deductAmount = isOwnerAcc ? 0 : Math.min(winningSlice.value, curPencils);
+                        const remainingPencils = isOwnerAcc ? 10 : (curPencils - deductAmount);
+                        if (!isOwnerAcc && deductAmount > 0) {
                             const pencilRef = db.collection("pencils").doc(uKey);
                             await pencilRef.set({ count: remainingPencils }, { merge: true });
                             userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: remainingPencils };
                             updatePencilUI();
                         }
                         playSadDeflateSound();
-                        if (resultMsg) resultMsg.innerHTML = `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ ${deductAmount} Bút Chì Màu!</span>`;
+                        if (resultMsg) {
+                            resultMsg.innerHTML = isOwnerAcc
+                                ? `<span class="text-rose-300 font-black">Trúng ô Xui xẻo (-${winningSlice.value}) nhưng Chủ Web vẫn giữ cố định 10 Chì!</span>`
+                                : `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ ${deductAmount} Bút Chì Màu!</span>`;
+                        }
                         logMemberActivity("Vòng xoay may mắn", `Trúng ô Xui xẻo -${winningSlice.value} Bút Chì Màu`, "wheel");
                         sendPhonePushToOwner(`🎡 Vòng xoay: ${username}`, `Trúng ô Xui xẻo (-${winningSlice.value} Chì)`, 3);
-                        triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo nhưng túi hiện có 0 chì.");
+                        if (!isOwnerAcc) {
+                            triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo nhưng túi hiện có 0 chì.");
+                        }
                     } else {
                         playSadDeflateSound();
                         if (resultMsg) resultMsg.innerHTML = `<span class="text-sky-200 font-bold">Ô Trống! Chúc bạn may mắn hơn ở lần quay tiếp theo nha.</span>`;
@@ -12474,10 +12502,11 @@
                 const actType = pickedCard.actionType || (pickedCard.category === 'meme' ? 'penalty' : pickedCard.category === 'secret' ? 'secret' : 'reward');
                 const numAmt = Number(pickedCard.amount) || 0;
 
+                const isOwnerAccCard = isOwnerUsername(username);
                 if (actType === 'secret' || pickedCard.category === 'secret') {
-                    const nextCount = curPencils * 2;
+                    const nextCount = isOwnerAccCard ? 10 : (curPencils * 2);
                     const gain = nextCount - curPencils;
-                    if (gain > 0) {
+                    if (!isOwnerAccCard && gain > 0) {
                         await db.collection("pencils").doc(uKey).set({ count: nextCount }, { merge: true });
                         userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: nextCount };
                         updatePencilUI();
@@ -12486,9 +12515,11 @@
                     playSecretJackpotSound();
                     statusText = "Chúc mừng bạn đã bốc trúng thẻ Secret x2!";
                     statusClass = "text-xs sm:text-sm font-black light-green-pastel-wave leading-relaxed";
-                    deltaText = gain > 0
-                        ? `Đã nhân đôi Bút Chì Màu - Túi còn ${nextCount} Chì.`
-                        : `Túi đang có 0 Bút Chì Màu nên giữ nguyên 0 Chì.`;
+                    deltaText = isOwnerAccCard
+                        ? `Túi Chủ Web cố định 10 Chì (không tăng giảm).`
+                        : (gain > 0
+                            ? `Đã nhân đôi Bút Chì Màu - Túi còn ${nextCount} Chì.`
+                            : `Túi đang có 0 Bút Chì Màu nên giữ nguyên 0 Chì.`);
                     deltaClass = "text-xs font-extrabold text-amber-300";
                     logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ SECRET nhân đôi (${curPencils} ➔ ${nextCount} chì)`, "wheel");
                     sendPhonePushToOwner(`🃏 Bốc bài: ${username}`, `Lật trúng thẻ SECRET x2 (${curPencils} ➔ ${nextCount} chì)`, 4);
@@ -12498,7 +12529,9 @@
                     playJoyfulWinSound();
                     statusText = "Chúc mừng bạn đã bốc trúng Thẻ Vàng!";
                     statusClass = "text-xs sm:text-sm font-black light-green-pastel-wave leading-relaxed";
-                    deltaText = `Đã được cộng ${addAmt} Bút Chì Màu - Túi còn ${curPencils + addAmt} Chì.`;
+                    deltaText = isOwnerAccCard
+                        ? `Túi Chủ Web cố định 10 Chì (không tăng giảm).`
+                        : `Đã được cộng ${addAmt} Bút Chì Màu - Túi còn ${curPencils + addAmt} Chì.`;
                     deltaClass = "text-xs font-extrabold text-amber-300";
                     logMemberActivity("Thẻ Màu May Mắn", `Lật trúng Thẻ Vàng (+${addAmt} Chì)`, "wheel");
                     sendPhonePushToOwner(`🃏 Bốc bài: ${username}`, `Lật trúng Thẻ Vàng (+${addAmt} Chì)`, 3);
@@ -12513,9 +12546,9 @@
                 } else {
                     // Penalty (Trừ chì - Thẻ Meme)
                     const penAmt = Math.max(1, numAmt || 1);
-                    const actualDeduct = Math.min(penAmt, curPencils);
-                    const remain = curPencils - actualDeduct;
-                    if (actualDeduct > 0) {
+                    const actualDeduct = isOwnerAccCard ? 0 : Math.min(penAmt, curPencils);
+                    const remain = isOwnerAccCard ? 10 : (curPencils - actualDeduct);
+                    if (!isOwnerAccCard && actualDeduct > 0) {
                         await db.collection("pencils").doc(uKey).set({ count: remain }, { merge: true });
                         userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: remain };
                         updatePencilUI();
@@ -12523,13 +12556,17 @@
                     playSadDeflateSound();
                     statusText = "Bạn đã bốc trúng thẻ meme, xin chia buồn.";
                     statusClass = "text-xs sm:text-sm font-black light-green-pastel-wave leading-relaxed";
-                    deltaText = actualDeduct > 0
-                        ? `Đã bị trừ ${actualDeduct} Bút Chì Màu - Túi còn ${remain} Chì.`
-                        : `Túi đang có 0 Bút Chì Màu - Không bị trừ thêm Chì.`;
+                    deltaText = isOwnerAccCard
+                        ? `Túi Chủ Web cố định 10 Chì (không bị trừ).`
+                        : (actualDeduct > 0
+                            ? `Đã bị trừ ${actualDeduct} Bút Chì Màu - Túi còn ${remain} Chì.`
+                            : `Túi đang có 0 Bút Chì Màu - Không bị trừ thêm Chì.`);
                     deltaClass = "text-xs font-extrabold text-rose-300";
                     logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ trừ chì (-${penAmt} Chì)`, "wheel");
                     sendPhonePushToOwner(`🃏 Bốc bài: ${username}`, `Lật trúng Thẻ Meme (-${penAmt} Chì)`, 3);
-                    triggerNotification("Bị Trừ Bút Chì Màu!", actualDeduct > 0 ? `Thẻ Màu May Mắn: Bạn lật trúng thẻ meme và bị trừ ${actualDeduct} Bút Chì Màu! Hiện còn: ${remain} chì.` : "Thẻ Màu May Mắn: Bạn lật trúng thẻ meme nhưng túi hiện có 0 chì.", username);
+                    if (!isOwnerAccCard) {
+                        triggerNotification("Bị Trừ Bút Chì Màu!", actualDeduct > 0 ? `Thẻ Màu May Mắn: Bạn lật trúng thẻ meme và bị trừ ${actualDeduct} Bút Chì Màu! Hiện còn: ${remain} chì.` : "Thẻ Màu May Mắn: Bạn lật trúng thẻ meme nhưng túi hiện có 0 chì.", username);
+                    }
                 }
             } catch (e) {
                 console.error("Lỗi xử lý thẻ:", e);
