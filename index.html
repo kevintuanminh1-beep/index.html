@@ -756,12 +756,11 @@
                 <div class="mt-2.5 rounded-xl border border-amber-300/45 bg-gradient-to-r from-amber-500/15 via-pink-500/15 to-purple-500/15 p-2.5 space-y-1">
                     <div class="text-[11px] font-black text-amber-300 uppercase">🌟 Cách đặc biệt (Chỉ có khi Palette ra char mới):</div>
                     <p class="text-[11px] text-sky-100/90 leading-relaxed">
-                        Khi Palette đăng char mới tại <button type="button" onclick="closePencilModal(); openFastColorScreen();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-fuchsia-500/15 border border-fuchsia-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Sắc Màu Nhanh Nhẹn</span></button>, bạn bình luận dưới bài đăng Facebook của char đó rồi vào nút <button type="button" onclick="closePencilModal(); openCmtRewardModal(activeChar && activeChar.status === 'unlocked_24h' ? cmtSafeId(activeChar.id) : '');" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-gradient-to-r from-pink-500/25 via-purple-500/25 to-sky-500/25 border border-pink-300/60 shadow-[0_0_8px_rgba(244,114,182,0.3)] active:scale-95 transition align-baseline"><span>📸</span><span class="pastel-notify-wave font-black underline">Gửi ảnh cmt nhận Chì Màu</span></button> để nộp ảnh cho Palette duyệt:
+                        Khi Palette đăng char mới tại <button type="button" onclick="closePencilModal(); openFastColorScreen();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-fuchsia-500/15 border border-fuchsia-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Sắc Màu Nhanh Nhẹn</span></button>, bạn bình luận dưới bài đăng Facebook của char đó rồi vào nút <button type="button" onclick="closePencilModal(); openCmtRewardModal(activeChar && isFastCharActive(activeChar) ? cmtSafeId(activeChar.id) : '');" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-gradient-to-r from-pink-500/25 via-purple-500/25 to-sky-500/25 border border-pink-300/60 shadow-[0_0_8px_rgba(244,114,182,0.3)] active:scale-95 transition align-baseline"><span>📸</span><span class="pastel-notify-wave font-black underline">Gửi ảnh cmt nhận Chì Màu</span></button> để nộp ảnh cho Palette duyệt:
                     </p>
                     <p class="text-[11px] text-sky-100/90 leading-relaxed">
                         • <b>Feedback / nêu cảm nghĩ về plot/char:</b> <b class="text-amber-300">+10 Bút Chì Màu</b><br>
-                        • <b>Cmt noti:</b> <b class="text-sky-300">+3 Bút Chì Màu</b><br>
-                        <span class="text-[10px] text-pink-200/80 italic">* Nếu char đang ở chế độ <b>Tạm giới hạn</b>, cần gửi đủ <b>2 ảnh (ảnh đã tim bài + ảnh bình luận)</b>.</span>
+                        • <b>Cmt noti:</b> <b class="text-sky-300">+3 Bút Chì Màu</b>
                     </p>
                 </div>
             </div>
@@ -1474,13 +1473,7 @@
                     </button>
                 </div>
 
-                <div id="aiPausedRequirementPrompt" class="hidden text-xs text-sky-100/90 mb-3 flex items-center gap-1 flex-wrap leading-relaxed">
-                    <span>Lấy link tự động 24h đã đóng, bạn có thể</span>
-                    <button type="button" onclick="openMiniRedeemModal(activeChar)" class="bg-purple-500/20 border border-purple-300/60 px-2.5 py-0.5 rounded-lg font-black text-xs shadow-[0_0_12px_rgba(192,132,252,0.38)] active:scale-95 transition">
-                        <span class="purple-pastel-wave underline">Đổi 10 Chì Màu</span>
-                    </button>
-                    <span>để lấy link nhé.</span>
-                </div>
+                 
 
                 <button id="aiStudioLinkBtn" onclick="handleAIStudioClick()" class="w-full inline-flex items-center justify-center gap-2 bg-white/10 text-white/50 border border-white/20 font-bold text-xs py-3 px-4 rounded-xl transition">
                     <svg id="aiLockIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -1776,21 +1769,7 @@
                 </label>
             </div>
 
-            <div id="cmtRewardPausedNotice" class="hidden bg-amber-500/15 border border-amber-300/40 rounded-2xl p-2.5 text-[11px] text-amber-200 font-bold mb-3 leading-relaxed">
-                ⚠️ Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu. Ở chế độ này, bạn chỉ cần gửi 2 ảnh (ảnh đã thả tim + ảnh cmt: noti hoặc nội dung gì đó bạn muốn nói). Đợi có chì trong vòng trễ nhất một ngày nhé!
-            </div>
-
-            <div id="cmtHeartImgBox" class="hidden bg-black/25 p-3 rounded-2xl border border-rose-300/30 text-xs mb-3">
-                <label class="block font-bold text-rose-200 mb-1.5">1. Ảnh tim (❤️ bài viết Facebook):</label>
-                <div class="flex items-center gap-2">
-                    <label class="bg-rose-500/30 hover:bg-rose-500/50 border border-rose-300/50 text-rose-200 font-bold px-3 py-1.5 rounded-xl text-xs active:scale-95 transition cursor-pointer shrink-0 inline-flex items-center gap-1">
-                        ❤️ Chọn ảnh tim
-                        <input id="cmtRewardHeartImg" type="file" accept="image/*" class="hidden" onchange="handleCmtHeartFileChange(this)">
-                    </label>
-                    <span id="cmtRewardHeartImgName" class="text-[11px] text-sky-200/70 truncate flex-1">Chưa chọn ảnh tim</span>
-                </div>
-                <div id="cmtRewardHeartPreview" class="hidden mt-2.5 flex flex-wrap gap-2"></div>
-            </div>
+             
 
             <div class="bg-black/25 p-3 rounded-2xl border border-white/10 text-xs mb-3">
                 <label id="cmtRewardImgsLabel" class="block font-bold text-sky-200 mb-1.5">Ảnh chụp bình luận của bạn (tối đa 3 ảnh):</label>
@@ -1914,20 +1893,9 @@
                     <label class="block font-bold text-pink-300 mb-1">7. Trạng thái link:</label>
                     <select id="formCharStatus" onchange="toggleStatusSettings(this.value)" class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-white font-bold focus:border-yellow-400">
                         <option value="locked">Khóa (Đáp ứng yêu cầu bên Tô Màu mới mở)</option>
-                        <option value="unlocked_24h">Nhanh nhẹn (Mở khóa có hạn giờ / Tạm giới hạn)</option>
+                        <option value="unlocked_24h">Nhanh nhẹn (Mở khóa có hạn giờ)</option>
                         <option value="closed">Đang fix (Tạm đóng để sửa lỗi)</option>
                     </select>
-                    <div id="fastModeChoiceBox" class="hidden mt-2 bg-black/35 border border-fuchsia-300/40 rounded-2xl p-2.5 space-y-1.5">
-                        <div class="text-[11px] font-bold text-fuchsia-300">Chọn chế độ Nhanh Nhẹn:</div>
-                        <label class="flex items-start gap-2 cursor-pointer bg-black/30 p-2 rounded-xl border border-white/10">
-                            <input type="radio" name="formFastModeType" value="limited" checked onchange="toggleFastModeType(this.value)" class="mt-0.5 accent-pink-500">
-                            <span class="text-[11px] text-sky-100"><b class="text-pink-300">Giới hạn</b> (Như cũ: chỉ duyệt ảnh tim, có chọn giờ mở &amp; đếm ngược)</span>
-                        </label>
-                        <label class="flex items-start gap-2 cursor-pointer bg-black/30 p-2 rounded-xl border border-white/10">
-                            <input type="radio" name="formFastModeType" value="paused_limit" onchange="toggleFastModeType(this.value)" class="mt-0.5 accent-amber-400">
-                            <span class="text-[11px] text-sky-100"><b class="text-amber-300">Tạm giới hạn</b> (Chỉ đổi bằng Bút Chì Màu; cmt duyệt 2 ảnh tim + cmt)</span>
-                        </label>
-                    </div>
                 </div>
 
                 <div>
@@ -4059,19 +4027,33 @@
         let characters = [];
         let charactersSyncedFromServer = false;
         let activeFastCharIdsInSession = new Set();
-        function isCharPausedLimit(c) {
-            if (!c || c.status !== 'unlocked_24h') return false;
-            if (c.fastModeType === 'paused_limit') return true;
+        function getFastCharEndMs(c) {
+            if (!c) return 0;
             const endMs = Number(c.fastEndTime) || 0;
-            if (endMs > 0) {
-                return Date.now() >= endMs;
-            }
+            if (endMs > 0) return endMs;
             const startMs = Number(c.fastStartTime) || 0;
             if (startMs > 0) {
                 const duration = Number(c.customDurationMs) || (24 * 60 * 60 * 1000);
-                return (Date.now() - startMs) >= duration;
+                return startMs + duration;
             }
-            return false;
+            return 0;
+        }
+
+        function isFastCharInInstantWindow(c) {
+            if (!c || c.status !== 'unlocked_24h') return false;
+            if (c.fastModeType === 'paused_limit') return false;
+            const endMs = getFastCharEndMs(c);
+            if (endMs > 0) return Date.now() < endMs;
+            return true;
+        }
+
+        function isFastCharInCountdownPhase(c) {
+            if (!c || c.status !== 'unlocked_24h') return false;
+            return !isFastCharInInstantWindow(c);
+        }
+
+        function isFastCharActive(c) {
+            return Boolean(c && c.status === 'unlocked_24h');
         }
         let charLikesData = {};
         let charComments = {};
@@ -5363,7 +5345,7 @@
                         activeChar = updatedActive;
                         const badge24h = document.getElementById('detailChar24hBadge');
                         if (badge24h) {
-                            badge24h.classList.toggle('hidden', !(activeChar.status === 'unlocked_24h' && !isCharPausedLimit(activeChar)));
+                            badge24h.classList.toggle('hidden', !isFastCharInInstantWindow(activeChar));
                         }
                         updateAIStudioButton();
                     }
@@ -5504,7 +5486,7 @@
                 updatePencilUI();
                 renderFastColorCenter();
                 const detailBox = document.getElementById('detailCmtRewardBox');
-                if (detailBox && activeChar && activeChar.status === 'unlocked_24h') {
+                if (detailBox && activeChar && isFastCharActive(activeChar)) {
                     detailBox.innerHTML = getCmtRewardSectionHtml(activeChar);
                 }
             });
@@ -5515,7 +5497,7 @@
                 renderUnlockedCharListInModal();
                 renderFastColorCenter();
                 const detailBox = document.getElementById('detailCmtRewardBox');
-                if (detailBox && activeChar && activeChar.status === 'unlocked_24h') {
+                if (detailBox && activeChar && isFastCharActive(activeChar)) {
                     detailBox.innerHTML = getCmtRewardSectionHtml(activeChar);
                 }
             });
@@ -5822,23 +5804,19 @@
         function updateGuide24hText() {
             const descEl = document.getElementById('guide24hDescription');
             if (!descEl) return;
-            const fastChar = characters.find(c => c.status === 'unlocked_24h');
-            const isPaused = (fastChar && isCharPausedLimit(fastChar));
+            const fastChar = characters.find(c => isFastCharActive(c));
             let durationStr = "24h";
             if (fastChar && fastChar.customDurationMs) {
-                const totalHours = Math.round(fastChar.customDurationMs / (3600 * 1000));
-                durationStr = `${totalHours} giờ`;
+                const totalMins = Math.round(fastChar.customDurationMs / 60000);
+                durationStr = totalMins >= 60 ? `${Math.round(totalMins / 6) / 10} giờ` : `${totalMins} phút`;
             }
             const waitMs = (fastChar && typeof fastChar.unlockWaitMs === 'number') ? fastChar.unlockWaitMs : 7200000;
-            const waitNote = waitMs <= 0 
-                ? "link sẽ mở khóa ngay lập tức không cần chờ đợi nhé!" 
-                : `bạn cần đợi đếm ngược ${Math.round(waitMs / 3600000 * 10) / 10} tiếng thì link mới mở khóa nhé!`;
+            const waitLabel = waitMs >= 3600000 ? `${Math.round(waitMs / 3600000 * 10) / 10} tiếng` : `${Math.round(waitMs / 60000)} phút`;
+            const afterNote = waitMs <= 0
+                ? "Sau khi hết đợt mở nhanh vẫn tiếp tục mở khóa ngay lập tức khi nộp ảnh Facebook!"
+                : `Sau khi hết ${durationStr} mở nhanh, nhân vật sẽ chuyển sang chế độ đếm ngược ${waitLabel} sau khi duyệt ảnh Facebook để mở link.`;
 
-            if (isPaused) {
-                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới.<br>• <b>Lưu ý:</b> Char mới nhất ở chế độ <b>Tạm giới hạn</b> chỉ có thể đổi bằng <b class="text-amber-300">10 Bút Chì Màu</b>.<br>• <b>Cách đổi link:</b> Tích đủ 10 Bút Chì Màu trong túi hoặc gửi 2 ảnh (ảnh tim + ảnh cmt) tại Sắc Màu Nhanh Nhẹn, đợi có chì trong vòng trễ nhất một ngày để đổi link nhé!`;
-            } else {
-                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt trong ngày khi Palette up plot mới.<br>• <b>Cách lấy:</b> Nhanh tay lấy link ngay trong ngày - Không cần feedback và join discord! Hãy thả tim và nộp ảnh trước khi kết thúc đợt mở sau ${durationStr}.<br>• <b>Thời gian nhận link:</b> Sau khi nộp ảnh Facebook được duyệt thành công, ${waitNote}<br>• <b>Lưu ý:</b> Char mới nhất ở chế độ <b>Tạm giới hạn</b> chỉ có thể đổi bằng <b class="text-amber-300">10 Bút Chì Màu</b>.`;
-            }
+            descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới (không cần feedback hay join Discord).<br>• <b>Trong ${durationStr} đầu:</b> Nộp ảnh Facebook được duyệt thành công sẽ <b>mở khóa link ngay lập tức</b>.<br>• <b>Sau ${durationStr}:</b> ${afterNote}`;
         }
 
         function openUserAccountModal() {
@@ -7912,12 +7890,12 @@
         function updateFastColorSubtitle() {
             const subtitleEl = document.getElementById('fastColorSubtitle');
             if (!subtitleEl) return;
-            const hasLimited = characters.some(c => c.status === 'unlocked_24h' && !isCharPausedLimit(c));
-            const hasPaused = characters.some(c => c.status === 'unlocked_24h' && isCharPausedLimit(c));
-            if (hasLimited) {
-                subtitleEl.innerText = "Hãy thả tim và vẽ đường cho tình yêu chạy trước khi kết thúc duyệt tự động.";
-            } else if (hasPaused) {
-                subtitleEl.innerText = "Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu.";
+            const hasInstant = characters.some(c => isFastCharInInstantWindow(c));
+            const hasCountdownPhase = characters.some(c => isFastCharInCountdownPhase(c));
+            if (hasInstant) {
+                subtitleEl.innerText = "Hãy thả tim và vẽ đường cho tình yêu chạy để lấy link ngay trước khi chuyển sang đếm ngược.";
+            } else if (hasCountdownPhase) {
+                subtitleEl.innerText = "Thả tim và nộp ảnh Facebook để đếm ngược nhận link (không cần Discord).";
             } else {
                 subtitleEl.innerText = "Đang đóng - không có character mới nhất có thể lấy link trong ngày.";
             }
@@ -7926,7 +7904,7 @@
         function renderFastColorCenter() {
             const container = document.getElementById('fastCharCenterBox');
             container.innerHTML = '';
-            const fastChars = characters.filter(c => c.status === 'unlocked_24h');
+            const fastChars = characters.filter(c => isFastCharActive(c));
 
             if (fastChars.length === 0) {
                 container.innerHTML = `
@@ -7943,10 +7921,9 @@
                 const card = document.createElement('div');
                 card.className = "w-full max-w-sm fast-center-card p-6 rounded-3xl flex flex-col items-center mb-6 relative";
                 
-                const isPausedLimit = isCharPausedLimit(c);
                 const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
                 const timerEnd = userUnlockTimers[currentUser?.username]?.[c.id];
-                const isCountingDown = !isPausedLimit && timerEnd && (Date.now() < timerEnd);
+                const isCountingDown = timerEnd && (Date.now() < timerEnd);
                 const curPencilsFast = currentUser ? getUserPencilCount(currentUser.username) : 0;
                 const hasTenPencils = curPencilsFast >= 10;
 
@@ -7957,10 +7934,6 @@
                             🔓 ĐÃ MỞ KHÓA - Mở Link ${c.name} Ngay!
                         </button>
                     `;
-                } else if (isPausedLimit) {
-                    actionButtonHtml = hasTenPencils
-                        ? `<button onclick="redeemTenPencilsBySafeId('${cmtSafeId(c.id)}')" class="jelly-btn w-full bg-gradient-to-r from-emerald-500 via-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay</button>`
-                        : `<button onclick="openMiniRedeemModalBySafeId('${cmtSafeId(c.id)}')" class="jelly-btn w-full bg-gradient-to-r from-amber-500 via-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">✏️ Đổi 10 Bút Chì Màu để mở khóa link</button>`;
                 } else if (isCountingDown) {
                     const isOwner = checkIsOwnerAccount();
                     actionButtonHtml = `
@@ -7984,18 +7957,19 @@
                     `;
                 }
 
-                const noteHtml = isPausedLimit
-                    ? (isUnlocked 
-                        ? "Bạn đã mở khóa nhân vật này rồi! Hãy bấm tim để lưu giữ link vĩnh viễn nhé." 
-                        : "Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu.")
-                    : ((typeof c.unlockWaitMs === 'number' && c.unlockWaitMs <= 0)
-                        ? "Lưu ý: Sau khi duyệt ảnh thành công, link sẽ mở khóa NGAY LẬP TỨC để bạn lấy link nhé!"
-                        : `Lưu ý: Sau khi duyệt ảnh thành công, hệ thống sẽ đếm ngược ${Math.round((c.unlockWaitMs || 7200000) / 3600000 * 10) / 10} tiếng để mở link. Bạn có thể out ra và quay trở lại sau để lấy link nhé.`);
+                const inInstantWindow = isFastCharInInstantWindow(c);
+                const wMs = (typeof c.unlockWaitMs === 'number') ? c.unlockWaitMs : 7200000;
+                const wLabel = wMs >= 3600000 ? `${Math.round(wMs / 3600000 * 10) / 10} tiếng` : `${Math.round(wMs / 60000)} phút`;
+                const noteHtml = inInstantWindow
+                    ? "Lưu ý: Đang trong thời gian mở nhanh! Sau khi duyệt ảnh Facebook thành công, link sẽ mở khóa NGAY LẬP TỨC nhé!"
+                    : (wMs <= 0
+                        ? "Lưu ý: Sau khi duyệt ảnh Facebook thành công, link sẽ mở khóa NGAY LẬP TỨC để bạn lấy link nhé!"
+                        : `Lưu ý: Đã hết thời gian mở ngay! Sau khi duyệt ảnh Facebook thành công, hệ thống sẽ đếm ngược ${wLabel} để mở link. Bạn có thể out ra và quay trở lại sau để lấy link nhé.`);
 
                 card.innerHTML = `
                     <div class="w-full text-center mb-4">
                         <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[10px] px-3.5 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                            ${isPausedLimit ? 'Tạm giới hạn · Đổi bằng Chì Màu' : 'Đang mở khóa có hạn giờ'}
+                            ${inInstantWindow ? 'Đang mở nhanh · Duyệt mở ngay' : 'Chế độ đếm ngược mở link'}
                         </span>
                         <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-1.5 flex-wrap">
                             <span class="char-pastel-0">${c.name}</span>
@@ -8007,7 +7981,7 @@
                         <div class="glowing-pastel-border">
                             <div class="w-60 h-72 rounded-[1.3rem] overflow-hidden relative">
                                 <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-full h-full object-cover">
-                                ${!isPausedLimit ? `<div class="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md border border-fuchsia-300/50 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span id="fastCountdownSmall-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span></div>` : ''}
+                                ${inInstantWindow ? `<div class="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md border border-fuchsia-300/50 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span id="fastCountdownSmall-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span></div>` : ''}
                             </div>
                         </div>
                     </div>
@@ -8030,11 +8004,10 @@
 
                 characters.forEach(c => {
                     if (c.status === 'unlocked_24h') {
-                        if (!isCharPausedLimit(c)) {
+                        if (isFastCharInInstantWindow(c)) {
                             activeFastCharIdsInSession.add(c.id);
                         } else if (activeFastCharIdsInSession.has(c.id)) {
                             activeFastCharIdsInSession.delete(c.id);
-                            c.fastModeType = 'paused_limit';
                             renderCharacters();
                             renderFastColorCenter();
                             updateFastColorSubtitle();
@@ -8067,7 +8040,7 @@
         function updateCountdownDisplayOnly() {
             const now = Date.now();
             characters.forEach(c => {
-                if (c.status === 'unlocked_24h' && !isCharPausedLimit(c) && (c.fastEndTime || c.fastStartTime)) {
+                if (isFastCharInInstantWindow(c) && (c.fastEndTime || c.fastStartTime)) {
                     const endTime = c.fastEndTime || (c.fastStartTime + (c.customDurationMs || (24 * 60 * 60 * 1000)));
                     const remain = Math.max(0, endTime - now);
                     const hours = Math.floor(remain / (1000 * 60 * 60));
@@ -8229,7 +8202,7 @@
 
             // Kiểm tra xem nhân vật MỚI NHẤT đứng đầu bảng có phải là Nhanh Nhẹn hay không
             const newestChar = filtered[0];
-            const isFirstCharFast = (storySortOrder === 'newest' && storyCurrentPage === 1 && newestChar && newestChar.status === 'unlocked_24h');
+            const isFirstCharFast = (storySortOrder === 'newest' && storyCurrentPage === 1 && newestChar && isFastCharActive(newestChar));
 
             paginatedChars.forEach((c, index) => {
                 // CHỈ hiện thẻ to khi đây đúng là nhân vật MỚI NHẤT và đang ở chế độ Mới Nhất
@@ -8237,13 +8210,13 @@
                     const card = document.createElement('div');
                     card.className = "w-full fast-center-card p-5 rounded-3xl flex flex-col items-center mb-5 relative cursor-pointer active:scale-98 transition";
                     card.onclick = () => openCharDetail(c);
-                    const isPaused = isCharPausedLimit(c);
                     const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
+                    const inInstant = isFastCharInInstantWindow(c);
 
                     card.innerHTML = `
                         <div class="w-full text-center mb-3">
                             <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[9.5px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                                ${isPaused ? 'MỚI NHẤT · TẠM GIỚI HẠN' : 'MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ'}
+                                ${inInstant ? 'MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ' : 'MỚI NHẤT · ĐẾM NGƯỢC MỞ LINK'}
                             </span>
                             <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-2 flex-wrap">
                                 <span class="char-pastel-0">${c.name}</span>
@@ -8255,13 +8228,13 @@
                             <div class="glowing-pastel-border">
                                 <div class="w-52 h-64 rounded-[1.3rem] overflow-hidden relative">
                                     <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-full h-full object-cover">
-                                    ${!isPaused ? `<div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md border border-fuchsia-300/60 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span id="storyCountdown-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span></div>` : ''}
+                                    ${inInstant ? `<div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md border border-fuchsia-300/60 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span id="storyCountdown-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span></div>` : ''}
                                 </div>
                             </div>
                         </div>
                         <div class="w-full text-center">
                             <span class="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-black py-2.5 px-4 rounded-xl shadow-md">
-                                ${isUnlocked ? '🔓 Link đã mở khóa (Bấm để xem) ➔' : (isPaused ? '✏️ Tạm giới hạn · Đổi bằng Bút Chì Màu ➔' : 'Nhanh tay lấy link trước khi kết thúc ➔')}
+                                ${isUnlocked ? '🔓 Link đã mở khóa (Bấm để xem) ➔' : (inInstant ? 'Nhanh tay lấy link trước khi kết thúc ➔' : '⏳ Nộp ảnh Facebook để đếm ngược mở link ➔')}
                             </span>
                         </div>
                     `;
@@ -8286,7 +8259,7 @@
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <h3 class="text-base font-extrabold ${getPastelColorClass(index)}">${c.name}</h3>
                                 ${c.isNew ? '<span class="new-char-badge text-[9.5px]"><span class="green-pastel-wave">New</span></span>' : ''}
-                                ${c.status === 'unlocked_24h' && isCharPausedLimit(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full font-bold">Tạm giới hạn</span>' : (c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở có hạn</span>' : '')}
+                                ${isFastCharInInstantWindow(c) ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở có hạn</span>' : (isFastCharInCountdownPhase(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full font-bold">Đếm ngược mở link</span>' : '')}
                                 ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-200 border border-red-300/40 px-1.5 py-0.5 rounded-full font-bold">Đang fix</span>' : ''}
                             </div>
                             <p class="text-xs text-sky-100/80 truncate mt-0.5">${c.subtitle}</p>
@@ -8372,7 +8345,7 @@
             document.getElementById('charFullSubtitle').innerText = char.subtitle || `Tag: ${char.firstTagSubtitle}`;
 
             const badge24h = document.getElementById('detailChar24hBadge');
-            if (char.status === 'unlocked_24h' && !isCharPausedLimit(char)) {
+            if (isFastCharInInstantWindow(char)) {
                 badge24h.classList.remove('hidden');
             } else {
                 badge24h.classList.add('hidden');
@@ -8387,7 +8360,7 @@
 
             const detailCmtRewardBox = document.getElementById('detailCmtRewardBox');
             if (detailCmtRewardBox) {
-                if (char.status === 'unlocked_24h') {
+                if (isFastCharActive(char)) {
                     detailCmtRewardBox.innerHTML = getCmtRewardSectionHtml(char);
                     detailCmtRewardBox.classList.remove('hidden');
                 } else {
@@ -8461,14 +8434,12 @@
             const btn = document.getElementById('aiStudioLinkBtn');
             const text = document.getElementById('aiBtnText');
             const prompt = document.getElementById('aiRequirementPrompt');
-            const pausedPrompt = document.getElementById('aiPausedRequirementPrompt');
             const targetBtn = document.getElementById('guideTargetBtn');
             const closedBox = document.getElementById('closedNoticeSubtextContainer');
             const closedSub = document.getElementById('closedNoticeSubtext');
 
             if (activeChar.status === 'closed') {
                 prompt.classList.add('hidden');
-                if (pausedPrompt) pausedPrompt.classList.add('hidden');
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-red-500/20 text-red-200 border border-red-400/40 font-bold text-xs py-3 px-4 rounded-xl cursor-not-allowed";
                 text.innerText = "🔧 Đang fix (Link tạm đóng để sửa lỗi)";
                 closedBox.classList.remove('hidden');
@@ -8476,18 +8447,11 @@
                 return;
             }
 
-            const isPausedLimit = (activeChar.status === 'unlocked_24h' && isCharPausedLimit(activeChar));
-            if (isPausedLimit) {
-                prompt.classList.add('hidden');
-                if (pausedPrompt) pausedPrompt.classList.remove('hidden');
-                closedBox.classList.add('hidden');
-            } else {
-                prompt.classList.remove('hidden');
-                if (pausedPrompt) pausedPrompt.classList.add('hidden');
-                closedBox.classList.add('hidden');
-            }
+            const isActiveFast = isFastCharActive(activeChar);
+            prompt.classList.remove('hidden');
+            closedBox.classList.add('hidden');
 
-            if (activeChar.status === 'unlocked_24h' && !isPausedLimit) {
+            if (isActiveFast) {
                 targetBtn.className = "bg-transparent font-black underline text-xs pastel-fast-wave";
                 targetBtn.innerText = "Sắc Màu Nhanh Nhẹn";
                 targetBtn.onclick = () => { openFastColorScreen(); };
@@ -8499,7 +8463,7 @@
 
             const timerEnd = userUnlockTimers[currentUser?.username]?.[activeChar.id];
             const now = Date.now();
-            if (!isPausedLimit && timerEnd && now < timerEnd) {
+            if (timerEnd && now < timerEnd) {
                 const remainSec = Math.floor((timerEnd - now) / 1000);
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-amber-500/25 text-amber-200 border border-amber-300/40 font-bold text-xs py-3 px-4 rounded-xl";
                 text.innerText = `Link Google AI Studio (Đếm ngược ${pad(Math.floor(remainSec / 3600))}:${pad(Math.floor((remainSec % 3600) / 60))}:${pad(remainSec % 60)} mở khóa)`;
@@ -8507,7 +8471,7 @@
             }
 
             const curPencilsDetail = currentUser ? getUserPencilCount(currentUser.username) : 0;
-            const canFastRedeem10 = (activeChar.status === 'unlocked_24h' && !isUnlocked && curPencilsDetail >= 10);
+            const canFastRedeem10 = (isActiveFast && !isUnlocked && curPencilsDetail >= 10);
 
             if (isUnlocked) {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg active:scale-95 transition animate-bounce";
@@ -8515,9 +8479,6 @@
             } else if (canFastRedeem10) {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500/35 via-pink-500/35 to-purple-500/35 text-amber-200 border border-amber-300/70 font-black text-xs py-3 px-4 rounded-xl shadow-[0_0_16px_rgba(251,191,36,0.3)] transition active:scale-95";
                 text.innerText = "✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay";
-            } else if (isPausedLimit) {
-                btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500/30 to-pink-500/30 text-amber-200 border border-amber-300/60 font-extrabold text-xs py-3 px-4 rounded-xl transition active:scale-95";
-                text.innerText = "✏️ Đổi 10 Bút Chì Màu để mở khóa link";
             } else {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-white/10 text-white/50 border border-white/20 font-bold text-xs py-3 px-4 rounded-xl transition";
                 text.innerText = "Link Google AI Studio (Chưa mở khóa)";
@@ -8744,7 +8705,7 @@
             }
 
             const timerEnd = userUnlockTimers[currentUser?.username]?.[activeChar.id];
-            if (activeChar.fastModeType !== 'paused_limit' && timerEnd && Date.now() < timerEnd) {
+            if (timerEnd && Date.now() < timerEnd) {
                 if (checkIsOwnerAccount()) {
                     if (confirm(`👑 Quyền Chủ Web (Bibi 0304):\nBạn có muốn MỞ KHÓA LINK NGAY LẬP TỨC cho "${activeChar.name}" (bỏ qua đếm ngược) không?`)) {
                         ownerForceUnlockForUser(currentUser.username, activeChar.id);
@@ -8755,29 +8716,18 @@
                 return;
             }
 
-            if (activeChar.status === 'unlocked_24h') {
+            const isActiveFast = isFastCharActive(activeChar);
+            if (isActiveFast) {
                 const curPencilsClick = currentUser ? getUserPencilCount(currentUser.username) : 0;
                 if (curPencilsClick >= 10) {
                     redeemTenPencilsForChar(activeChar.id);
                     return;
                 }
-                if (isCharPausedLimit(activeChar)) {
-                    openMiniRedeemModal(activeChar);
-                    return;
-                }
-            }
-
-            const isUnlocked = isUnlockedNow;
-            if (!isUnlocked) {
-                if (activeChar.status === 'unlocked_24h') {
-                    alert(`Khóa! Vui lòng nộp proof tại mục Sắc Màu Nhanh Nhẹn để mở khóa link ${activeChar.name}!`);
-                    openFastColorScreen();
-                } else {
-                    alert(`Khóa! Bạn chưa hoàn thành Vẽ Đường Cho Tình Yêu Chạy cho ${activeChar.name}. Vui lòng bấm vào 'Tô Màu' hoặc dùng 10 Chì Màu để đổi nhé!`);
-                    openColorGuide(false);
-                }
+                alert(`Khóa! Vui lòng nộp proof tại mục Sắc Màu Nhanh Nhẹn để mở khóa link ${activeChar.name}!`);
+                openFastColorScreen();
             } else {
-                window.open(activeChar.aiStudioUrl, '_blank');
+                alert(`Khóa! Bạn chưa hoàn thành Vẽ Đường Cho Tình Yêu Chạy cho ${activeChar.name}. Vui lòng bấm vào 'Tô Màu' hoặc dùng 10 Chì Màu để đổi nhé!`);
+                openColorGuide(false);
             }
         }
 
@@ -9361,7 +9311,7 @@
 
             try {
                 if (!fastTargetChar) {
-                    fastTargetChar = characters.find(c => c.status === 'unlocked_24h') || activeChar;
+                    fastTargetChar = characters.find(c => isFastCharActive(c)) || activeChar;
                 }
                 if (!fastTargetChar) {
                     throw new Error("Không tìm thấy dữ liệu nhân vật để đối soát!");
@@ -9423,8 +9373,11 @@
                 const uName = currentUser.username;
                 const uKey = uName.toLowerCase();
 
-                // Lấy thời gian chờ đếm ngược mà chủ web đã cài đặt cho nhân vật này (mặc định 2 tiếng nếu chưa chỉnh)
-                const waitMs = (typeof fastTargetChar.unlockWaitMs === 'number') ? fastTargetChar.unlockWaitMs : (2 * 3600 * 1000);
+                // Trong N giờ đầu (theo thời gian đã set) -> mở ngay lập tức; hết N giờ -> chuyển sang đếm ngược đã set (không khóa)
+                const inInstantWindow = isFastCharInInstantWindow(fastTargetChar);
+                const waitMs = inInstantWindow
+                    ? 0
+                    : ((typeof fastTargetChar.unlockWaitMs === 'number') ? fastTargetChar.unlockWaitMs : (2 * 3600 * 1000));
 
                 if (waitMs <= 0) {
                     // ================= TRƯỜNG HỢP 1: MỞ LUÔN LẬP TỨC (0 ĐẾM NGƯỢC) =================
@@ -9542,17 +9495,14 @@
         }
 
         // ================= ADMIN: FORM & QUẢN TRỊ =================
-        let _isLoadingCharEdit = false;
-
-        function toggleFastModeType(mode) {
-            const status = document.getElementById('formCharStatus')?.value;
+        function toggleStatusSettings(val) {
             const openTimeBox = document.getElementById('unlockedTimeSettingsBox');
+            const closedBox = document.getElementById('closedSettingsBox');
             const waitSection = document.getElementById('unlockWaitSettingsSection');
-            if (status !== 'unlocked_24h') return;
-            const isPaused = (mode === 'paused_limit');
-            if (openTimeBox) openTimeBox.classList.toggle('hidden', isPaused);
-            if (waitSection) waitSection.classList.toggle('hidden', isPaused);
-            if (!isPaused) {
+            if (val === 'unlocked_24h') {
+                openTimeBox.classList.remove('hidden');
+                closedBox.classList.add('hidden');
+                if (waitSection) waitSection.classList.remove('hidden');
                 const hEl = document.getElementById('formOpenHours');
                 const mEl = document.getElementById('formOpenMinutes');
                 const sEl = document.getElementById('formOpenSeconds');
@@ -9562,32 +9512,11 @@
                     mEl.value = '0';
                     sEl.value = '0';
                 }
-            }
-        }
-
-        function toggleStatusSettings(val) {
-            const openTimeBox = document.getElementById('unlockedTimeSettingsBox');
-            const closedBox = document.getElementById('closedSettingsBox');
-            const fastChoiceBox = document.getElementById('fastModeChoiceBox');
-            const waitSection = document.getElementById('unlockWaitSettingsSection');
-            if (val === 'unlocked_24h') {
-                if (fastChoiceBox) fastChoiceBox.classList.remove('hidden');
-                closedBox.classList.add('hidden');
-                if (!_isLoadingCharEdit) {
-                    const limitedRadio = document.querySelector('input[name="formFastModeType"][value="limited"]');
-                    if (limitedRadio && !document.querySelector('input[name="formFastModeType"]:checked')) {
-                        limitedRadio.checked = true;
-                    }
-                }
-                const mode = document.querySelector('input[name="formFastModeType"]:checked')?.value || 'limited';
-                toggleFastModeType(mode);
             } else if (val === 'closed') {
-                if (fastChoiceBox) fastChoiceBox.classList.add('hidden');
                 openTimeBox.classList.add('hidden');
                 closedBox.classList.remove('hidden');
                 if (waitSection) waitSection.classList.add('hidden');
             } else {
-                if (fastChoiceBox) fastChoiceBox.classList.add('hidden');
                 openTimeBox.classList.add('hidden');
                 closedBox.classList.add('hidden');
                 if (waitSection) waitSection.classList.remove('hidden');
@@ -9648,12 +9577,8 @@
             document.getElementById('formCharFileName').innerText = "Chưa có file";
             document.getElementById('unlockedTimeSettingsBox').classList.add('hidden');
             document.getElementById('closedSettingsBox').classList.add('hidden');
-            const fastChoiceBox = document.getElementById('fastModeChoiceBox');
-            if (fastChoiceBox) fastChoiceBox.classList.add('hidden');
             const waitSection = document.getElementById('unlockWaitSettingsSection');
             if (waitSection) waitSection.classList.remove('hidden');
-            const limitedRadio = document.querySelector('input[name="formFastModeType"][value="limited"]');
-            if (limitedRadio) limitedRadio.checked = true;
             setFormCharNewState(false);
 
             // Mặc định cài đếm ngược 2 tiếng
@@ -9757,18 +9682,16 @@
             const status = document.getElementById('formCharStatus').value;
             const isNew = document.getElementById('formCharIsNew')?.value === 'true';
 
-            const fastModeType = (status === 'unlocked_24h')
-                ? (document.querySelector('input[name="formFastModeType"]:checked')?.value || 'limited')
-                : null;
+            const fastModeType = null;
             const openH = parseInt(document.getElementById('formOpenHours').value) || 0;
             const openM = parseInt(document.getElementById('formOpenMinutes').value) || 0;
             const openS = parseInt(document.getElementById('formOpenSeconds').value) || 0;
             const customDurationMs = (openH * 3600 + openM * 60 + openS) * 1000 || (24 * 3600 * 1000);
 
-            // Đọc cài đặt đếm ngược mở link (không dùng khi Đang fix hoặc Tạm giới hạn)
+            // Đọc cài đặt đếm ngược mở link (không dùng khi Đang fix)
             const waitType = document.querySelector('input[name="formUnlockWaitType"]:checked')?.value || 'countdown';
             let unlockWaitMs = 0;
-            if (status !== 'closed' && fastModeType !== 'paused_limit' && waitType === 'countdown') {
+            if (status !== 'closed' && waitType === 'countdown') {
                 const waitH = parseInt(document.getElementById('formWaitHours').value) || 0;
                 const waitM = parseInt(document.getElementById('formWaitMinutes').value) || 0;
                 unlockWaitMs = (waitH * 3600 + waitM * 60) * 1000;
@@ -9803,7 +9726,7 @@
                     characters[idx].fastModeType = fastModeType;
                     characters[idx].isNew = isNew;
                     characters[idx].unlockWaitMs = unlockWaitMs;
-                    if (status === 'unlocked_24h' && fastModeType === 'limited') {
+                    if (status === 'unlocked_24h') {
                         const nowMs = Date.now();
                         characters[idx].customDurationMs = customDurationMs;
                         characters[idx].fastStartTime = nowMs;
@@ -9843,9 +9766,9 @@
                     fastModeType,
                     isNew,
                     unlockWaitMs,
-                    customDurationMs: (status === 'unlocked_24h' && fastModeType === 'limited') ? customDurationMs : null,
-                    fastStartTime: (status === 'unlocked_24h' && fastModeType === 'limited') ? Date.now() : null,
-                    fastEndTime: (status === 'unlocked_24h' && fastModeType === 'limited') ? (Date.now() + customDurationMs) : null,
+                    customDurationMs: (status === 'unlocked_24h') ? customDurationMs : null,
+                    fastStartTime: (status === 'unlocked_24h') ? Date.now() : null,
+                    fastEndTime: (status === 'unlocked_24h') ? (Date.now() + customDurationMs) : null,
                     reopenTimestamp: null
                 };
                 try {
@@ -9892,7 +9815,7 @@
                         <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-8 h-8 rounded-lg object-cover">
                         <span class="font-bold text-pink-200 truncate">${c.name}</span>
                         ${c.isNew ? '<span class="new-char-badge text-[9px]"><span class="green-pastel-wave">New</span></span>' : ''}
-                        ${c.status === 'unlocked_24h' && isCharPausedLimit(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded">Tạm giới hạn</span>' : (c.status === 'unlocked_24h' ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Giới hạn</span>' : '')}
+                        ${isFastCharInInstantWindow(c) ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Mở có hạn</span>' : (isFastCharInCountdownPhase(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded">Đếm ngược</span>' : '')}
                         ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-300 px-1 rounded">Đang fix</span>' : ''}
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
@@ -9916,7 +9839,8 @@
             document.getElementById('formCharSubtitle').value = c.subtitle;
             document.getElementById('formCharFbLink').value = c.fbLink;
             document.getElementById('formCharAiLink').value = c.aiStudioUrl;
-            document.getElementById('formCharStatus').value = c.status || 'locked';
+            const effectiveStatus = (c.status === 'unlocked_24h' && !isFastCharActive(c)) ? 'locked' : (c.status || 'locked');
+            document.getElementById('formCharStatus').value = effectiveStatus;
             setFormCharNewState(Boolean(c.isNew));
 
             // Đổ dữ liệu cài đặt đếm ngược
@@ -9936,13 +9860,9 @@
                 document.getElementById('formWaitMinutes').value = totalMins % 60;
             }
 
-            const fastModeVal = isCharPausedLimit(c) ? 'paused_limit' : 'limited';
-            const fastRadio = document.querySelector(`input[name="formFastModeType"][value="${fastModeVal}"]`);
-            if (fastRadio) fastRadio.checked = true;
+            toggleStatusSettings(effectiveStatus);
 
-            toggleStatusSettings(c.status);
-
-            if (c.status === 'unlocked_24h' && fastModeVal === 'limited' && c.customDurationMs) {
+            if (effectiveStatus === 'unlocked_24h' && c.customDurationMs) {
                 const totalSec = Math.floor(c.customDurationMs / 1000);
                 document.getElementById('formOpenHours').value = Math.floor(totalSec / 3600);
                 document.getElementById('formOpenMinutes').value = Math.floor((totalSec % 3600) / 60);
@@ -10682,15 +10602,10 @@
             let target = characters.find(c => c.id === charId);
             if (!target && activeChar) target = activeChar;
             if (!target) {
-                target = characters.find(c => c.status === 'unlocked_24h');
+                target = characters.find(c => isFastCharActive(c));
             }
             if (!target) {
                 alert("Không tìm thấy thông tin nhân vật đang mở đợt!");
-                return;
-            }
-            if (isCharPausedLimit(target)) {
-                alert("Mở khóa lấy link tự động 24h đã kết thúc, hiện tại chỉ có thể đổi bằng bút chì màu.");
-                openMiniRedeemModal(target);
                 return;
             }
             fastTargetChar = target;
@@ -10900,7 +10815,6 @@
         let isSubmittingCmtReward = false;
         let isProcessingCmtRewardImg = false;
         let cmtRewardSelectedImages = [];
-        let cmtRewardHeartImages = [];
         const CMT_REWARD_TYPES = {
             feedback: { reward: 10, label: "Feedback / cảm nghĩ về plot/char" },
             noti: { reward: 3, label: "Cmt noti" }
@@ -10928,9 +10842,6 @@
 
         // Khối hiển thị ngay dưới nút thủ tục lấy link ở thẻ Sắc Màu Nhanh Nhẹn
         function getCmtRewardSectionHtml(c) {
-            const isUnlocked = Boolean(currentUser && userUnlockedState[currentUser.username]?.[c.id] === true);
-            // Chỉ xem là tạm giới hạn (bắt 2 ảnh để lấy 10 chì) đối với người CHƯA CÓ LINK
-            const isPaused = (isCharPausedLimit(c) && !isUnlocked);
             const uKey = currentUser ? currentUser.username.toLowerCase() : "";
             const rewardedAmt = (!currentUser?.isOwner && uKey) ? getRewardedPencilInfoForChar(uKey, c.id) : 0;
 
@@ -10944,18 +10855,14 @@
                 `;
             }
 
-            const guideText = isPaused
-                ? `Gửi đủ 2 ảnh (ảnh tim + ảnh cmt: noti/bất kỳ) để mở khóa link nhé!`
-                : `Feedback / nêu cảm nghĩ về plot/char: <b class="text-amber-300">+10 Chì</b> · Cmt noti: <b class="text-amber-300">+3 Chì</b>`;
-
             return `
                 <div class="w-full mt-3 rounded-2xl border border-pink-300/30 bg-pink-400/10 p-3 text-center">
-                    <p class="text-[11px] text-pink-100 font-extrabold leading-relaxed">${isPaused ? `💬❤️ Đã tim bài &amp; cmt ở post ${cmtEsc(c.name)}? Gửi 2 ảnh (ảnh tim + ảnh cmt) để nhận Bút Chì Màu mở khóa nhé!` : `💬 Đã cmt ở post ${cmtEsc(c.name)}? Gửi ảnh để nhận Bút Chì Màu nhé!`}</p>
-                    <p class="text-[10px] text-sky-200/80 mt-0.5 leading-relaxed">${guideText}</p>
+                    <p class="text-[11px] text-pink-100 font-extrabold leading-relaxed">💬 Đã cmt ở post ${cmtEsc(c.name)}? Gửi ảnh để nhận Bút Chì Màu nhé!</p>
+                    <p class="text-[10px] text-sky-200/80 mt-0.5 leading-relaxed">Feedback / nêu cảm nghĩ về plot/char: <b class="text-amber-300">+10 Chì</b> · Cmt noti: <b class="text-amber-300">+3 Chì</b></p>
                     <button type="button" onclick="openCmtRewardModal('${cmtSafeId(c.id)}')" class="jelly-btn mt-2 w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-2.5 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
-                        ${isPaused ? '📸 Gửi ảnh tim &amp; cmt nhận Chì Màu' : '📸 Gửi ảnh cmt nhận Chì Màu'}
+                        📸 Gửi ảnh cmt nhận Chì Màu
                     </button>
-                    <p class="text-[10px] text-sky-200/60 italic mt-1.5">${isPaused ? 'Đợi có chì trong vòng trễ nhất một ngày.' : 'Palette sẽ duyệt trong vòng 1 ngày.'}</p>
+                    <p class="text-[10px] text-sky-200/60 italic mt-1.5">Palette sẽ duyệt trong vòng 1 ngày.</p>
                 </div>
             `;
         }
@@ -10991,69 +10898,6 @@
         function removeCmtRewardImage(idx) {
             cmtRewardSelectedImages.splice(idx, 1);
             renderCmtRewardPreview();
-        }
-
-        function renderCmtHeartPreview() {
-            const span = document.getElementById('cmtRewardHeartImgName');
-            const preview = document.getElementById('cmtRewardHeartPreview');
-            if (span) {
-                if (cmtRewardHeartImages.length === 0) {
-                    span.innerText = 'Chưa chọn ảnh tim';
-                    span.className = 'text-[11px] text-sky-200/70 truncate flex-1';
-                } else {
-                    span.innerText = `✓ Đã chọn ${cmtRewardHeartImages.length}/2 ảnh tim`;
-                    span.className = 'text-[11px] text-emerald-300 font-extrabold truncate flex-1';
-                }
-            }
-            if (preview) {
-                if (cmtRewardHeartImages.length === 0) {
-                    preview.innerHTML = '';
-                    preview.classList.add('hidden');
-                } else {
-                    preview.classList.remove('hidden');
-                    preview.innerHTML = cmtRewardHeartImages.map((src, idx) => `
-                        <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-rose-300/50 bg-black/40 shrink-0">
-                            <img src="${src}" alt="Ảnh tim ${idx + 1}" class="w-full h-full object-cover">
-                            <button type="button" onclick="removeCmtHeartImage(${idx})" class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/80 hover:bg-red-500 text-white text-[10px] font-black flex items-center justify-center border border-white/30" title="Xóa ảnh">✕</button>
-                        </div>
-                    `).join('');
-                }
-            }
-        }
-
-        function removeCmtHeartImage(idx) {
-            cmtRewardHeartImages.splice(idx, 1);
-            renderCmtHeartPreview();
-        }
-
-        async function handleCmtHeartFileChange(input) {
-            const files = Array.from(input?.files || []);
-            if (files.length === 0) return;
-
-            const emptyFile = files.find(f => f.size === 0);
-            if (emptyFile) {
-                alert("Ảnh tim bạn vừa chọn đang lưu trên iCloud chưa tải về máy. Bạn hãy chụp lại màn hình rồi chọn lại nhé!");
-                if (input) input.value = '';
-                return;
-            }
-            const span = document.getElementById('cmtRewardHeartImgName');
-            const btn = document.getElementById('cmtRewardSubmitBtn');
-            isProcessingCmtRewardImg = true;
-            if (btn) { btn.disabled = true; btn.innerText = "Đang xử lý ảnh..."; }
-            if (span) { span.innerText = '⏳ Đang xử lý ảnh tim...'; span.className = 'text-[11px] text-amber-300 font-bold truncate flex-1'; }
-            try {
-                for (const file of files) {
-                    if (cmtRewardHeartImages.length >= 2) { alert("Chỉ cần tối đa 2 ảnh tim thôi nhé!"); break; }
-                    const small = await compressCmtImage(file);
-                    if (!small) { alert("Không xử lý được ảnh tim này, thử ảnh JPG/PNG khác nhé!"); continue; }
-                    cmtRewardHeartImages.push(small);
-                }
-            } finally {
-                isProcessingCmtRewardImg = false;
-                if (btn) { btn.disabled = false; btn.innerText = btn.dataset.defaultLabel || "Gửi cho Palette duyệt"; }
-                if (input) input.value = '';
-                renderCmtHeartPreview();
-            }
         }
 
         async function compressCmtImage(file) {
@@ -11149,42 +10993,26 @@
                 return;
             }
             let target = characters.find(c => cmtSafeId(c.id) === charId);
-            if (!target) target = characters.find(c => c.status === 'unlocked_24h');
+            if (!target) target = characters.find(c => isFastCharActive(c));
             if (!target) {
                 alert("Không tìm thấy nhân vật đang mở đợt Nhanh Nhẹn!");
                 return;
             }
             cmtRewardTargetChar = target;
             cmtRewardSelectedImages = [];
-            cmtRewardHeartImages = [];
-            const isUnlocked = Boolean(currentUser && userUnlockedState[currentUser.username]?.[target.id] === true);
-            // Người đã có link thì xem như chế độ bình thường (chọn 10 hoặc 3 chì)
-            const isPaused = (isCharPausedLimit(target) && !isUnlocked);
 
             const sub = document.getElementById('cmtRewardSubtitle');
-            if (sub) sub.innerHTML = isPaused
-                ? `Gửi <b>hai ảnh: một tim và một cmt</b>. Đợi có chì trong vòng trễ nhất một ngày nhé.`
-                : `Gửi ảnh bình luận của bạn ở <b class="text-pink-300">[${cmtEsc(target.name)}]</b> để Palette xét duyệt nhé:`;
+            if (sub) sub.innerHTML = `Gửi ảnh bình luận của bạn ở <b class="text-pink-300">[${cmtEsc(target.name)}]</b> để Palette xét duyệt nhé:`;
             const footerNote = document.getElementById('cmtRewardFooterNote');
-            if (footerNote) footerNote.innerText = isPaused
-                ? "* Đợi có chì trong vòng trễ nhất một ngày nhé."
-                : "* Palette sẽ duyệt trong vòng 1 ngày, duyệt xong Chì Màu được cộng thẳng vào túi của bạn.";
-            const pausedNotice = document.getElementById('cmtRewardPausedNotice');
-            const heartBox = document.getElementById('cmtHeartImgBox');
+            if (footerNote) footerNote.innerText = "* Palette sẽ duyệt trong vòng 1 ngày, duyệt xong Chì Màu được cộng thẳng vào túi của bạn.";
             const kindBox = document.getElementById('cmtRewardKindBox');
             const imgsLabel = document.getElementById('cmtRewardImgsLabel');
+            if (kindBox) kindBox.classList.remove('hidden');
+            if (imgsLabel) imgsLabel.innerText = "Ảnh chụp bình luận của bạn (tối đa 3 ảnh):";
 
-            if (pausedNotice) pausedNotice.classList.toggle('hidden', !isPaused);
-            if (heartBox) heartBox.classList.toggle('hidden', !isPaused);
-            // Chưa có link thì ẩn ô chọn loại (mặc định lấy 10 chì), đã có link thì hiện lại ô chọn 10 hoặc 3 chì
-            if (kindBox) kindBox.classList.toggle('hidden', isPaused);
-            if (imgsLabel) imgsLabel.innerText = isPaused ? "2. Ảnh cmt (tối đa 3 ảnh):" : "Ảnh chụp bình luận của bạn (tối đa 3 ảnh):";
             const fileInput = document.getElementById('cmtRewardImgs');
             if (fileInput) fileInput.value = '';
-            const heartInput = document.getElementById('cmtRewardHeartImg');
-            if (heartInput) heartInput.value = '';
             renderCmtRewardPreview();
-            renderCmtHeartPreview();
             const note = document.getElementById('cmtRewardNote');
             if (note) note.value = '';
             const uKeyModal = currentUser.username.toLowerCase();
@@ -11211,10 +11039,9 @@
 
             const btn = document.getElementById('cmtRewardSubmitBtn');
             if (btn) {
-                const btnLabel = isPaused ? "Gửi ảnh" : "Gửi cho Palette duyệt";
                 btn.disabled = false;
-                btn.dataset.defaultLabel = btnLabel;
-                btn.innerText = btnLabel;
+                btn.dataset.defaultLabel = "Gửi cho Palette duyệt";
+                btn.innerText = "Gửi cho Palette duyệt";
             }
             const modal = document.getElementById('cmtRewardModal');
             if (modal) modal.classList.remove('hidden');
@@ -11245,18 +11072,8 @@
                 return;
             }
 
-            const isUnlocked = Boolean(currentUser && userUnlockedState[currentUser.username]?.[targetChar.id] === true);
-            // Chỉ yêu cầu 2 ảnh (tim + cmt) khi nhân vật đang tạm giới hạn (hoặc hết hạn 24h) và người đó CHƯA MỞ KHÓA
-            const isPausedLimitReq = (isCharPausedLimit(targetChar) && !isUnlocked);
-
-            if (isPausedLimitReq && cmtRewardHeartImages.length === 0) {
-                alert("Chế độ Tạm giới hạn yêu cầu 2 ảnh: Bạn chưa chọn ảnh chụp đã thả tim bài viết!");
-                return;
-            }
-
             const kindEl = document.querySelector('input[name="cmtRewardKind"]:checked');
-            // Chưa có link thì gán mặc định là feedback (+10 chì để mở link), đã có link thì lấy theo lựa chọn (10 hoặc 3 chì)
-            const kind = isPausedLimitReq ? 'feedback' : (kindEl ? kindEl.value : 'feedback');
+            const kind = kindEl ? kindEl.value : 'feedback';
             if (!CMT_REWARD_TYPES[kind]) return;
             if (cmtRewardSelectedImages.length === 0) {
                 alert("Bạn chưa chọn ảnh bình luận nào cả!");
@@ -11283,38 +11100,30 @@
                     return;
                 }
                 const images = [...cmtRewardSelectedImages];
-                const heartImages = isPausedLimitReq ? [...cmtRewardHeartImages] : [];
-                const totalBytes = [...images, ...heartImages].reduce((s, x) => s + x.length, 0);
+                const totalBytes = images.reduce((s, x) => s + x.length, 0);
                 if (totalBytes > 880000) throw new Error("Ảnh quá nặng, hãy chọn ít ảnh hơn hoặc ảnh nhẹ hơn nhé!");
                 const note = (document.getElementById('cmtRewardNote')?.value || "").trim().slice(0, 200);
                 await Promise.race([
                     reqRef.set({
                         username, charId: targetChar.id, charName: targetChar.name,
-                        kind, reward: CMT_REWARD_TYPES[kind].reward, images, heartImages,
-                        requireHeartAndCmt: isPausedLimitReq, rewardedKey, note,
+                        kind, reward: CMT_REWARD_TYPES[kind].reward, images,
+                        rewardedKey, note,
                         createdAt: Date.now(), timestamp: new Date().toLocaleString('vi-VN')
                     }),
                     new Promise((_, rej) => setTimeout(() => rej(new Error("Mạng chậm quá, thử lại nhé!")), 30000))
                 ]);
-                try { logMemberActivity("Gửi ảnh cmt nhận chì", `${CMT_REWARD_TYPES[kind].label} tại ${targetChar.name}${isPausedLimitReq ? ' (2 ảnh: tim + cmt)' : ''}`); } catch (_) {}
+                try { logMemberActivity("Gửi ảnh cmt nhận chì", `${CMT_REWARD_TYPES[kind].label} tại ${targetChar.name}`); } catch (_) {}
                 triggerNotification(
                     "Đã gửi ảnh cmt!",
-                    isPausedLimitReq
-                        ? "Đã gửi ảnh thành công! Đợi có chì trong vòng trễ nhất một ngày nhé!"
-                        : `Vui lòng đợi Palette duyệt ảnh ${CMT_REWARD_TYPES[kind].label} trong vòng 1 ngày để nhận +${CMT_REWARD_TYPES[kind].reward} Chì nhé!`,
+                    `Vui lòng đợi Palette duyệt ảnh ${CMT_REWARD_TYPES[kind].label} trong vòng 1 ngày để nhận +${CMT_REWARD_TYPES[kind].reward} Chì nhé!`,
                     username
                 );
-                triggerNotification("📸 Có ảnh cmt mới chờ duyệt!", `${username} vừa gửi ${isPausedLimitReq ? '2 ảnh (tim + cmt) ' : ''}${CMT_REWARD_TYPES[kind].label} cho "${targetChar.name}". Mở Cửa Hàng Bút Chì để duyệt (+${CMT_REWARD_TYPES[kind].reward} Chì) nhé!`, OWNER_USER);
+                triggerNotification("📸 Có ảnh cmt mới chờ duyệt!", `${username} vừa gửi ${CMT_REWARD_TYPES[kind].label} cho "${targetChar.name}". Mở Cửa Hàng Bút Chì để duyệt (+${CMT_REWARD_TYPES[kind].reward} Chì) nhé!`, OWNER_USER);
                 sendPhonePushToOwner(`📸 Duyệt ảnh cmt: ${username}`, `${CMT_REWARD_TYPES[kind].label} tại ${targetChar.name} (+${CMT_REWARD_TYPES[kind].reward} Chì)`, 4);
                 cmtRewardSelectedImages = [];
-                cmtRewardHeartImages = [];
                 isSubmittingCmtReward = false;
                 closeCmtRewardModal();
-                alert(
-                    isPausedLimitReq
-                        ? "⏳ Đã gửi ảnh thành công! Đợi có chì trong vòng trễ nhất một ngày nhé 💖"
-                        : `⏳ Đã gửi ảnh cho Palette! Vui lòng đợi Palette xét duyệt (trong vòng 1 ngày) để nhận +${CMT_REWARD_TYPES[kind].reward} Chì Màu nhé 💖`
-                );
+                alert(`⏳ Đã gửi ảnh cho Palette! Vui lòng đợi Palette xét duyệt (trong vòng 1 ngày) để nhận +${CMT_REWARD_TYPES[kind].reward} Chì Màu nhé 💖`);
             } catch (err) {
                 console.error("Lỗi gửi ảnh cmt:", err);
                 alert(err?.code === 'permission-denied' ? "Chủ Web chưa mở quyền cmt_reward_requests trong Firestore Rules!" : (err?.message || "Chưa gửi được ảnh, thử lại nhé!"));
@@ -11339,24 +11148,20 @@
                 const info = CMT_REWARD_TYPES[req.kind] || CMT_REWARD_TYPES.noti;
                 const item = document.createElement('div');
                 item.className = "bg-white/5 border border-pink-300/30 rounded-2xl p-3 space-y-2";
-                const heartThumbs = (req.heartImages || []).map((src, i) =>
-                    `<img src="${src}" alt="Tim" onclick="openCmtRewardImage('${cmtSafeId(req.id)}', ${i}, 'heart')" class="w-16 h-16 object-cover rounded-xl border border-rose-400/60 cursor-pointer shrink-0">`
-                ).join('');
                 const thumbs = (req.images || []).map((src, i) =>
-                    `<img src="${src}" alt="Cmt" onclick="openCmtRewardImage('${cmtSafeId(req.id)}', ${i}, 'cmt')" class="w-16 h-16 object-cover rounded-xl border border-pink-300/40 cursor-pointer shrink-0">`
+                    `<img src="${src}" alt="Cmt" onclick="openCmtRewardImage('${cmtSafeId(req.id)}', ${i})" class="w-16 h-16 object-cover rounded-xl border border-pink-300/40 cursor-pointer shrink-0">`
                 ).join('');
                 item.innerHTML = `
                     <div class="flex items-center justify-between gap-2">
                         <div class="min-w-0">
-                            <div class="font-extrabold text-pink-200 truncate">${cmtEsc(req.username)} ${heartThumbs ? '<span class="text-[9px] bg-amber-500/25 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full ml-1">2 ảnh</span>' : ''}</div>
+                            <div class="font-extrabold text-pink-200 truncate">${cmtEsc(req.username)}</div>
                             <div class="text-[10px] text-sky-200/60">${cmtEsc(req.charName || 'Nhân vật')} · ${cmtEsc(req.timestamp || '')}</div>
                         </div>
                         <span class="text-[10px] ${req.kind === 'feedback' ? 'bg-pink-500/30 text-pink-200 border-pink-300/40' : 'bg-sky-500/30 text-sky-200 border-sky-300/40'} border px-2 py-0.5 rounded-full font-bold shrink-0">
                             Yêu cầu: +${req.reward || info.reward} Chì
                         </span>
                     </div>
-                    ${heartThumbs ? `<div class="space-y-1"><div class="text-[10px] text-rose-300 font-bold">❤️ Ảnh đã tim bài:</div><div class="flex gap-2 overflow-x-auto">${heartThumbs}</div></div>` : ''}
-                    <div class="space-y-1">${heartThumbs ? '<div class="text-[10px] text-pink-200 font-bold">💬 Ảnh bình luận:</div>' : ''}<div class="flex gap-2 overflow-x-auto">${thumbs}</div></div>
+                    <div class="flex gap-2 overflow-x-auto">${thumbs}</div>
                     ${req.note ? `<p class="text-[11px] text-sky-100/80 italic bg-black/30 p-2 rounded-xl border border-white/5">"${cmtEsc(req.note)}"</p>` : ''}
                     <div class="flex items-center gap-1.5 pt-1">
                         <button type="button" onclick="approveCmtReward('${cmtSafeId(req.id)}', 10)" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
@@ -11372,9 +11177,9 @@
             });
         }
 
-        function openCmtRewardImage(reqId, idx, type = 'cmt') {
+        function openCmtRewardImage(reqId, idx) {
             const req = pendingCmtRewards.find(r => cmtSafeId(r.id) === reqId);
-            const src = (type === 'heart') ? req?.heartImages?.[idx] : req?.images?.[idx];
+            const src = req?.images?.[idx];
             if (!src) return;
             const overlay = document.createElement('div');
             overlay.className = "fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-3";
