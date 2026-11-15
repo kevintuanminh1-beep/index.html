@@ -5402,14 +5402,25 @@
                 } catch (_) {}
             };
 
-            // 1. Tải nhân vật kèm bộ đệm lưu trữ dự phòng
+            window.recentCharStatusOverrides = window.recentCharStatusOverrides || {};
+
+            // 1. Tải nhân vật kèm bảo vệ chống cache cũ ghi đè trạng thái vừa sửa
             db.collection("characters").onSnapshot((snapshot) => {
+                if (snapshot.metadata.fromCache && charactersSyncedFromServer) return;
+                const nowMs = Date.now();
                 characters = [];
-                snapshot.forEach(doc => { characters.push({ id: doc.id, ...doc.data() }); });
+                snapshot.forEach(doc => {
+                    const data = { id: doc.id, ...doc.data() };
+                    const ov = window.recentCharStatusOverrides[doc.id];
+                    if (ov && (nowMs - ov.savedAt) < 15000) {
+                        data.status = ov.status;
+                    }
+                    characters.push(data);
+                });
                 if (!snapshot.metadata.fromCache) {
                     charactersSyncedFromServer = true;
+                    window.saveCharactersCacheSafely(characters);
                 }
-                window.saveCharactersCacheSafely(characters);
                 if (activeChar) {
                     const updatedActive = characters.find(c => c.id === activeChar.id);
                     if (updatedActive) {
@@ -10165,12 +10176,16 @@
                         activeFastCharIdsInSession.delete(editId);
                     }
                     characters[idx].reopenTimestamp = null;
+                    characters[idx].statusUpdatedAt = Date.now();
                     savedChar = JSON.parse(JSON.stringify(characters[idx]));
                     characters[idx] = savedChar;
+                    window.recentCharStatusOverrides = window.recentCharStatusOverrides || {};
+                    window.recentCharStatusOverrides[editId] = { status: savedChar.status, savedAt: Date.now() };
                     try {
                         await db.collection("characters").doc(editId).set(savedChar);
                         if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
                     } catch (saveErr) {
+                        delete window.recentCharStatusOverrides[editId];
                         characters[idx] = oldCharBackup;
                         console.error("Lỗi cập nhật Firebase:", saveErr);
                         alert("Không thể lưu lên máy chủ (có thể ảnh quá dung lượng 1MB hoặc mạng yếu). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
@@ -10233,17 +10248,22 @@
             }
         }
 
+        let fixingCharIdsInFlight = new Set();
         async function quickToggleCharFixStatus(charId) {
-            if (!checkIsOwnerAccount()) return;
+            if (!checkIsOwnerAccount() || fixingCharIdsInFlight.has(charId)) return;
             const idx = characters.findIndex(c => c.id === charId);
             if (idx === -1) return;
             const c = characters[idx];
             const isClosedNow = (c.status === 'closed');
             const nextStatus = isClosedNow ? 'locked' : 'closed';
 
+            fixingCharIdsInFlight.add(charId);
+            window.recentCharStatusOverrides = window.recentCharStatusOverrides || {};
+            window.recentCharStatusOverrides[charId] = { status: nextStatus, savedAt: Date.now() };
             try {
                 await db.collection("characters").doc(charId).set({
                     status: nextStatus,
+                    statusUpdatedAt: Date.now(),
                     customDurationMs: null,
                     fastStartTime: null,
                     fastEndTime: null,
@@ -10270,8 +10290,11 @@
                 updateFastColorSubtitle();
                 playPaletteTingSound();
             } catch (err) {
+                delete window.recentCharStatusOverrides[charId];
                 console.error("Lỗi đổi trạng thái Đang fix:", err);
                 alert("Chưa thể cập nhật trạng thái lên máy chủ: " + (err?.message || "Vui lòng thử lại!"));
+            } finally {
+                fixingCharIdsInFlight.delete(charId);
             }
         }
 
