@@ -1846,7 +1846,7 @@
                 <button onclick="closeAdminModal()" class="text-sky-200 text-lg p-1">✕</button>
             </div>
 
-            <form id="adminCharForm" onsubmit="handleSaveCharacter(event)" class="space-y-3 text-xs mb-5">
+            <form id="adminCharForm" autocomplete="off" onsubmit="handleSaveCharacter(event)" class="space-y-3 text-xs mb-5">
                 <input type="hidden" id="editCharId" value="">
 
                 <div>
@@ -1897,12 +1897,19 @@
                 </div>
 
                 <div>
-                    <label class="block font-bold text-pink-300 mb-1">7. Trạng thái link:</label>
-                    <select id="formCharStatus" onchange="toggleStatusSettings(this.value)" class="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-white font-bold focus:border-yellow-400">
-                        <option value="locked">Khóa (Đáp ứng yêu cầu bên Tô Màu mới mở)</option>
-                        <option value="unlocked_24h">Nhanh nhẹn (Mở khóa có hạn giờ)</option>
-                        <option value="closed">Đang fix (Tạm đóng để sửa lỗi)</option>
-                    </select>
+                    <label class="block font-bold text-pink-300 mb-1.5">7. Trạng thái link (Chạm để chọn):</label>
+                    <input type="hidden" id="formCharStatus" value="locked">
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button type="button" id="statusPill-locked" onclick="toggleStatusSettings('locked')" class="py-2 px-2 rounded-xl text-xs font-black bg-amber-500/35 text-amber-200 border-2 border-amber-300 transition active:scale-95">
+                            🔒 Khóa
+                        </button>
+                        <button type="button" id="statusPill-unlocked_24h" onclick="toggleStatusSettings('unlocked_24h')" class="py-2 px-2 rounded-xl text-xs font-bold bg-black/40 text-sky-200/70 border border-white/15 hover:bg-white/10 transition active:scale-95">
+                            ⚡ Nhanh nhẹn
+                        </button>
+                        <button type="button" id="statusPill-closed" onclick="toggleStatusSettings('closed')" class="py-2 px-2 rounded-xl text-xs font-bold bg-black/40 text-sky-200/70 border border-white/15 hover:bg-white/10 transition active:scale-95">
+                            🔧 Đang fix
+                        </button>
+                    </div>
                 </div>
 
                 <div>
@@ -5355,9 +5362,10 @@
 
         // ================= FIRESTORE LISTENERS (CÓ CHỐNG TRẮNG WEB & TỰ ĐỘNG KHÓA KHI ĐẦY) =================
         function initFirebaseListeners() {
-            // Lưu cache nhân vật an toàn (tránh tràn bộ nhớ localStorage làm lưu đọng trạng thái cũ)
+            // Lưu cache nhân vật an toàn (luôn xóa cache cũ trước để không bao giờ kẹt trạng thái cũ)
             window.saveCharactersCacheSafely = function(list) {
                 if (!Array.isArray(list) || list.length === 0) return;
+                try { localStorage.removeItem('palette_cached_characters'); } catch (_) {}
                 try {
                     localStorage.setItem('palette_cached_characters', JSON.stringify(list));
                     return;
@@ -5369,9 +5377,23 @@
                 } catch (_) {}
                 try {
                     const ultraSlim = list.map(ch => ({
-                        ...ch,
+                        id: ch.id,
+                        name: ch.name,
+                        status: ch.status,
+                        fastChoiceMode: ch.fastChoiceMode || null,
+                        fastStartTime: ch.fastStartTime || null,
+                        fastEndTime: ch.fastEndTime || null,
+                        customDurationMs: ch.customDurationMs || null,
+                        unlockWaitMs: ch.unlockWaitMs || 0,
+                        subtitle: ch.subtitle || '',
+                        firstTagSubtitle: ch.firstTagSubtitle || '',
+                        firstTag: ch.firstTag || '',
+                        tags: ch.tags || [],
+                        fbLink: ch.fbLink || '',
+                        aiStudioUrl: ch.aiStudioUrl || '',
+                        isNew: Boolean(ch.isNew),
                         galleryImages: [],
-                        image: (typeof ch.image === 'string' && ch.image.startsWith('data:') && ch.image.length > 30000) ? '' : ch.image
+                        image: (typeof ch.image === 'string' && !ch.image.startsWith('data:')) ? ch.image : ''
                     }));
                     localStorage.setItem('palette_cached_characters', JSON.stringify(ultraSlim));
                 } catch (_) {}
@@ -9745,12 +9767,35 @@
         }
 
         function toggleStatusSettings(val) {
+            const safeVal = (val === 'unlocked_24h' || val === 'closed') ? val : 'locked';
+            const statusInput = document.getElementById('formCharStatus');
+            if (statusInput) statusInput.value = safeVal;
+
+            const btnLocked = document.getElementById('statusPill-locked');
+            const btnFast = document.getElementById('statusPill-unlocked_24h');
+            const btnClosed = document.getElementById('statusPill-closed');
+            if (btnLocked) {
+                btnLocked.className = safeVal === 'locked'
+                    ? "py-2 px-2 rounded-xl text-xs font-black bg-amber-500/35 text-amber-200 border-2 border-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.35)] transition active:scale-95"
+                    : "py-2 px-2 rounded-xl text-xs font-bold bg-black/40 text-sky-200/70 border border-white/15 hover:bg-white/10 transition active:scale-95";
+            }
+            if (btnFast) {
+                btnFast.className = safeVal === 'unlocked_24h'
+                    ? "py-2 px-2 rounded-xl text-xs font-black bg-fuchsia-500/35 text-fuchsia-200 border-2 border-fuchsia-300 shadow-[0_0_12px_rgba(232,121,249,0.4)] transition active:scale-95"
+                    : "py-2 px-2 rounded-xl text-xs font-bold bg-black/40 text-sky-200/70 border border-white/15 hover:bg-white/10 transition active:scale-95";
+            }
+            if (btnClosed) {
+                btnClosed.className = safeVal === 'closed'
+                    ? "py-2 px-2 rounded-xl text-xs font-black bg-red-500/40 text-red-200 border-2 border-red-400 shadow-[0_0_12px_rgba(248,113,113,0.45)] transition active:scale-95"
+                    : "py-2 px-2 rounded-xl text-xs font-bold bg-black/40 text-sky-200/70 border border-white/15 hover:bg-white/10 transition active:scale-95";
+            }
+
             const openTimeBox = document.getElementById('unlockedTimeSettingsBox');
             const closedBox = document.getElementById('closedSettingsBox');
-            if (val === 'unlocked_24h') {
+            if (safeVal === 'unlocked_24h') {
                 if (openTimeBox) openTimeBox.classList.remove('hidden');
                 if (closedBox) closedBox.classList.add('hidden');
-            } else if (val === 'closed') {
+            } else if (safeVal === 'closed') {
                 if (openTimeBox) openTimeBox.classList.add('hidden');
                 if (closedBox) closedBox.classList.remove('hidden');
             } else {
@@ -9812,8 +9857,7 @@
             document.getElementById('adminModalTitle').innerText = "Bổ Sung Sắc Màu";
             document.getElementById('saveCharBtn').innerText = "Xác nhận tải nhân vật lên";
             document.getElementById('formCharFileName').innerText = "Chưa có file";
-            document.getElementById('unlockedTimeSettingsBox').classList.add('hidden');
-            document.getElementById('closedSettingsBox').classList.add('hidden');
+            toggleStatusSettings('locked');
             setFormCharNewState(false);
 
             const choice1 = document.querySelector('input[name="formFastChoice"][value="event_countdown"]');
@@ -9844,7 +9888,7 @@
             characters.forEach(ch => {
                 if (ch.tags && ch.tags.includes(catName)) {
                     ch.tags = ch.tags.filter(t => t !== catName);
-                    db.collection("characters").doc(ch.id).set(ch);
+                    db.collection("characters").doc(ch.id).set({ tags: ch.tags }, { merge: true });
                 }
             });
 
@@ -9948,6 +9992,7 @@
             if (editId) {
                 const idx = characters.findIndex(c => c.id === editId);
                 if (idx !== -1) {
+                    const oldCharBackup = JSON.parse(JSON.stringify(characters[idx]));
                     characters[idx].name = name;
                     characters[idx].image = imageSrc;
                     if (uploadedImages.length) characters[idx].galleryImages = uploadedImages;
@@ -9991,6 +10036,7 @@
                         await db.collection("characters").doc(editId).set(savedChar);
                         if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
                     } catch (saveErr) {
+                        characters[idx] = oldCharBackup;
                         console.error("Lỗi cập nhật Firebase:", saveErr);
                         alert("Không thể lưu lên máy chủ (có thể ảnh quá dung lượng 1MB hoặc mạng yếu). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
                         return;
@@ -10052,10 +10098,53 @@
             }
         }
 
+        async function quickToggleCharFixStatus(charId) {
+            if (!checkIsOwnerAccount()) return;
+            const idx = characters.findIndex(c => c.id === charId);
+            if (idx === -1) return;
+            const c = characters[idx];
+            const isClosedNow = (c.status === 'closed');
+            const nextStatus = isClosedNow ? 'locked' : 'closed';
+
+            try {
+                await db.collection("characters").doc(charId).set({
+                    status: nextStatus,
+                    customDurationMs: null,
+                    fastStartTime: null,
+                    fastEndTime: null,
+                    reopenTimestamp: null
+                }, { merge: true });
+
+                c.status = nextStatus;
+                c.customDurationMs = null;
+                c.fastStartTime = null;
+                c.fastEndTime = null;
+                activeFastCharIdsInSession.delete(charId);
+
+                if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
+                if (activeChar && activeChar.id === charId) {
+                    activeChar.status = nextStatus;
+                    updateAIStudioButton();
+                }
+                if (document.getElementById('editCharId')?.value === charId) {
+                    toggleStatusSettings(nextStatus);
+                }
+                renderAdminExistingChars();
+                renderCharacters();
+                renderFastColorCenter();
+                updateFastColorSubtitle();
+                playPaletteTingSound();
+            } catch (err) {
+                console.error("Lỗi đổi trạng thái Đang fix:", err);
+                alert("Chưa thể cập nhật trạng thái lên máy chủ: " + (err?.message || "Vui lòng thử lại!"));
+            }
+        }
+
         function renderAdminExistingChars() {
             const list = document.getElementById('adminExistingCharList');
             list.innerHTML = '';
             characters.forEach(c => {
+                const isClosed = (c.status === 'closed');
                 const item = document.createElement('div');
                 item.className = "flex items-center justify-between bg-black/40 p-2 rounded-xl border border-white/10 text-xs";
                 item.innerHTML = `
@@ -10064,9 +10153,10 @@
                         <span class="font-bold text-pink-200 truncate">${c.name}</span>
                         ${c.isNew ? '<span class="new-char-badge text-[9px]"><span class="green-pastel-wave">New</span></span>' : ''}
                         ${isFastCharOpensImmediately(c) ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Mở nhanh</span>' : (isFastCharInCountdownPhase(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded">Đếm ngược</span>' : '')}
-                        ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-300 px-1 rounded">Đang fix</span>' : ''}
+                        ${isClosed ? '<span class="text-[9px] bg-red-500/30 text-red-300 px-1 rounded">Đang fix</span>' : ''}
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="quickToggleCharFixStatus('${c.id}')" class="${isClosed ? 'bg-red-500/30 text-red-200 border-red-400/50' : 'bg-white/10 text-sky-200 border-white/20'} px-2 py-0.5 rounded-lg font-bold border transition active:scale-95" title="Bấm để bật/tắt nhanh Đang fix">${isClosed ? '🔧 Đang fix' : '🔧 Fix'}</button>
                         <button type="button" onclick="loadCharToEdit('${c.id}')" class="bg-yellow-400/20 text-yellow-300 px-2 py-0.5 rounded-lg font-bold border border-yellow-300/40">Sửa</button>
                         <button type="button" onclick="deleteChar('${c.id}')" class="bg-red-500/20 text-red-300 px-2 py-0.5 rounded-lg font-bold border border-red-400/40">Xóa</button>
                     </div>
@@ -10087,8 +10177,8 @@
             document.getElementById('formCharSubtitle').value = c.subtitle;
             document.getElementById('formCharFbLink').value = c.fbLink;
             document.getElementById('formCharAiLink').value = c.aiStudioUrl;
-            const effectiveStatus = (c.status === 'unlocked_24h' && !isFastCharActive(c)) ? 'locked' : (c.status || 'locked');
-            document.getElementById('formCharStatus').value = effectiveStatus;
+            const effectiveStatus = (c.status === 'unlocked_24h') ? 'unlocked_24h' : (c.status === 'closed' ? 'closed' : 'locked');
+            toggleStatusSettings(effectiveStatus);
             setFormCharNewState(Boolean(c.isNew));
 
             // Đổ dữ liệu số giờ chờ
