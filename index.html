@@ -6592,25 +6592,6 @@
                     return;
                 }
 
-                if (ctx.actionMode === 'reject_cmt') {
-                    if (ctx.cmtReqDocId) {
-                        await db.collection("cmt_reward_requests").doc(ctx.cmtReqDocId).delete();
-                    }
-                    if (withReason) {
-                        triggerNotification(
-                            "Ảnh cmt chưa được duyệt ❌",
-                            `Ảnh ${ctx.cmtKindLabel || "cmt"} của bạn tại "${charName}" chưa được duyệt. 💡 Lý do: ${reasonText}`,
-                            targetUsername
-                        );
-                    }
-                    closeApproveReasonModal();
-                    renderAdminCmtRewards();
-                    alert(withReason
-                        ? `✓ Đã từ chối ảnh cmt và gửi lý do tới "${targetUsername}"!`
-                        : `✓ Đã xóa yêu cầu ảnh cmt của "${targetUsername}"!`);
-                    return;
-                }
-
                 if (isRejectMode) {
                     // CHẾ ĐỘ TỪ CHỐI / BÁO LỖI CHO USER
                     if (ctx.reqId) {
@@ -8621,43 +8602,42 @@
                 if (!currentUser || !userUnlockTimers[currentUser.username]) return;
                 const now = Date.now();
 
-                for (let charId in userUnlockTimers[currentUser.username]) {
-                    const endTime = userUnlockTimers[currentUser.username][charId];
-                    if (endTime) {
-                        if (now >= endTime) {
-                            delete userUnlockTimers[currentUser.username][charId];
-                            localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
+                const userTimers = userUnlockTimers[currentUser.username] || {};
+                Object.keys(userTimers).forEach(charId => {
+                    const endTime = userTimers[charId];
+                    if (endTime && now >= endTime) {
+                        delete userTimers[charId];
+                        localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
 
-                            // Xóa timer trên Firebase khi đã hoàn thành
-                            db.collection("unlock_timers").doc(currentUser.username.toLowerCase()).set({
-                                [charId]: firebase.firestore.FieldValue.delete()
-                            }, { merge: true }).catch(() => {});
+                        // Xóa timer trên Firebase khi đã hoàn thành
+                        db.collection("unlock_timers").doc(currentUser.username.toLowerCase()).set({
+                            [charId]: firebase.firestore.FieldValue.delete()
+                        }, { merge: true }).catch(() => {});
 
-                            if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
-                            userUnlockedState[currentUser.username][charId] = true;
-                            db.collection("unlocked").doc(currentUser.username).set({
-                                chars: userUnlockedState[currentUser.username]
-                            });
+                        if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
+                        userUnlockedState[currentUser.username][charId] = true;
+                        db.collection("unlocked").doc(currentUser.username).set({
+                            chars: userUnlockedState[currentUser.username]
+                        });
 
-                            renderFastColorCenter();
+                        renderFastColorCenter();
 
-                            // Thưởng 2 Chì Màu cho link mở có hạn giờ
-                            addPencilToUser(currentUser.username, 2, "Mở khóa Link mở trong ngày thành công");
+                        // Thưởng 2 Chì Màu cho link mở có hạn giờ
+                        addPencilToUser(currentUser.username, 2, "Mở khóa Link mở trong ngày thành công");
 
-                            if (!userUnlockTimestamps[currentUser.username]) userUnlockTimestamps[currentUser.username] = {};
-                            userUnlockTimestamps[currentUser.username][charId] = Date.now();
-                            localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+                        if (!userUnlockTimestamps[currentUser.username]) userUnlockTimestamps[currentUser.username] = {};
+                        userUnlockTimestamps[currentUser.username][charId] = Date.now();
+                        localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
 
-                            const targetC = characters.find(c => c.id === charId);
-                            logMemberActivity("Mở khóa link thành công 🔓", `Nhân vật: ${targetC?.name || 'Nhân vật'} (Hết giờ đếm ngược)`, "link", {
-                                charId: charId,
-                                charName: targetC?.name || 'Nhân vật'
-                            });
-                            sendPhonePushToOwner(`🔓 Mở link (Hết đếm ngược): ${currentUser.username}`, `Nhân vật: ${targetC?.name || 'Nhân vật'}`, 4);
-                            triggerNotification("Link Đã Mở Khóa!", `Chúc mừng bạn! Link Google AI Studio của "${targetC?.name || 'Nhân vật'}" đã mở khóa (+2 Chì Màu)! Hãy bấm tim lưu giữ, nếu quên sau 1 ngày sẽ phải làm lại thủ tục để lấy lại link nhé!`);
-                        }
+                        const targetC = characters.find(c => c.id === charId);
+                        logMemberActivity("Mở khóa link thành công 🔓", `Nhân vật: ${targetC?.name || 'Nhân vật'} (Hết giờ đếm ngược)`, "link", {
+                            charId: charId,
+                            charName: targetC?.name || 'Nhân vật'
+                        });
+                        sendPhonePushToOwner(`🔓 Mở link (Hết đếm ngược): ${currentUser.username}`, `Nhân vật: ${targetC?.name || 'Nhân vật'}`, 4);
+                        triggerNotification("Link Đã Mở Khóa!", `Chúc mừng bạn! Link Google AI Studio của "${targetC?.name || 'Nhân vật'}" đã mở khóa (+2 Chì Màu)! Hãy bấm tim lưu giữ, nếu quên sau 1 ngày sẽ phải làm lại thủ tục để lấy lại link nhé!`);
                     }
-                }
+                });
 
                 if (activeChar) updateAIStudioButton();
             }, 1000);
@@ -8985,30 +8965,96 @@
             return dp[a.length][b.length];
         }
 
-        // Cho phép sai lệch nhẹ ký tự do font chữ kiểu nhưng vẫn chặn chuẩn ảnh sai nội dung
-        function fuzzyMatchText(ocrText, targetPhrase, minWordRatio = 0.72) {
-            const targetNorm = normalizeFuzzyOcr(targetPhrase);
-            if (!targetNorm) return true;
-            const ocrNorm = normalizeFuzzyOcr(ocrText);
-            if (ocrNorm.includes(targetNorm)) return true;
+        // Kiểm tra từ đơn (từ ngắn <= 3 ký tự bắt buộc chuẩn 100%, từ dài cho phép sai lệch nhẹ font chữ)
+        function isFuzzyWordMatch(w1, w2) {
+            if (w1 === w2) return true;
+            const maxLen = Math.max(w1.length, w2.length);
+            if (Math.abs(w1.length - w2.length) > 2) return false;
+            if (maxLen <= 3) return w1 === w2;
+            if (maxLen <= 5) return levenshteinDist(w1, w2) <= 1;
+            return levenshteinDist(w1, w2) <= 2;
+        }
 
-            const targetWords = targetNorm.split(' ').filter(w => w.length >= 2);
-            if (targetWords.length === 0) return ocrNorm.includes(targetNorm);
-            const ocrWords = ocrNorm.split(' ').filter(Boolean);
-            const ocrCompact = ocrNorm.replace(/\s+/g, '');
+        // Siết chặt: BẮT BUỘC cụm từ Tag phải xuất hiện ĐI LIỀN NHAU (không chấp nhận từ rải rác)
+        function checkExactTagMatch(ocrText, tagPhrase) {
+            if (!tagPhrase || !tagPhrase.trim()) return false;
+            const rawTag = tagPhrase.trim();
+            const rawOcr = (ocrText || "");
 
-            let matchedCount = 0;
-            for (const tw of targetWords) {
-                if (ocrCompact.includes(tw)) {
-                    matchedCount++;
-                    continue;
-                }
-                const maxErr = tw.length >= 5 ? 2 : (tw.length >= 3 ? 1 : 0);
-                if (maxErr > 0 && ocrWords.some(ow => Math.abs(ow.length - tw.length) <= maxErr && levenshteinDist(ow, tw) <= maxErr)) {
-                    matchedCount++;
+            // 1. Khớp trực tiếp nguyên vẹn (bỏ qua hoa/thường)
+            if (rawOcr.toLowerCase().includes(rawTag.toLowerCase())) return true;
+
+            // 2. Khớp sau khi bỏ dấu tiếng Việt và chuẩn hóa khoảng trắng
+            const normTag = normalizeFuzzyOcr(rawTag);
+            const normOcr = normalizeFuzzyOcr(rawOcr);
+            if (!normTag || !normOcr) return false;
+            if (normOcr.includes(normTag)) return true;
+
+            // 3. Khớp chuỗi liền (bỏ hết khoảng trắng, gạch dưới, ngoặc vuông, hashtag...)
+            // Đảm bảo bài viết trên Facebook dù có viết #tag_gach_duoi, [tag] hay dính chữ đều nhận diện chính xác
+            const compactTag = normTag.replace(/[\s\W_]+/g, '');
+            const compactOcr = normOcr.replace(/[\s\W_]+/g, '');
+            if (compactTag && compactOcr.includes(compactTag)) return true;
+
+            // 4. Cho phép sai lệch nhẹ 1-2 ký tự nếu font chữ kiểu hoặc OCR đọc mờ vài nét
+            if (compactTag.length >= 6) {
+                const len = compactTag.length;
+                const maxDist = Math.max(1, Math.min(3, Math.floor(len * 0.15)));
+                for (let i = 0; i <= compactOcr.length - len; i++) {
+                    const sub = compactOcr.slice(i, i + len);
+                    if (levenshteinDist(sub, compactTag) <= maxDist) return true;
                 }
             }
-            return (matchedCount / targetWords.length) >= minWordRatio;
+
+            return fuzzyMatchText(rawOcr, rawTag, 0.75);
+        }
+
+        function fuzzyMatchText(ocrText, targetPhrase, minWordRatio = 0.75) {
+            const targetNorm = normalizeFuzzyOcr(targetPhrase);
+            if (!targetNorm) return false;
+            const ocrNorm = normalizeFuzzyOcr(ocrText);
+            if (!ocrNorm) return false;
+
+            if (ocrNorm.includes(targetNorm)) return true;
+
+            const targetWords = targetNorm.split(' ').filter(w => w.length > 0);
+            if (targetWords.length === 0) return false;
+
+            const ocrWords = ocrNorm.split(' ').filter(w => w.length > 0);
+            if (ocrWords.length === 0) return false;
+
+            if (targetWords.length === 1) {
+                const tw = targetWords[0];
+                return ocrWords.some(ow => isFuzzyWordMatch(ow, tw));
+            }
+
+            const tLen = targetWords.length;
+            const requiredMatches = Math.max(2, Math.ceil(tLen * minWordRatio));
+
+            for (let i = 0; i <= ocrWords.length - Math.min(2, tLen); i++) {
+                const maxWindow = Math.min(tLen + 2, ocrWords.length - i);
+                for (let wLen = Math.max(2, tLen - 1); wLen <= maxWindow; wLen++) {
+                    const windowSlice = ocrWords.slice(i, i + wLen);
+                    let matchCount = 0;
+                    let tIdx = 0;
+
+                    for (let wIdx = 0; wIdx < windowSlice.length && tIdx < tLen; wIdx++) {
+                        if (isFuzzyWordMatch(windowSlice[wIdx], targetWords[tIdx])) {
+                            matchCount++;
+                            tIdx++;
+                        } else if (tIdx + 1 < tLen && isFuzzyWordMatch(windowSlice[wIdx], targetWords[tIdx + 1])) {
+                            matchCount++;
+                            tIdx += 2;
+                        }
+                    }
+
+                    if (matchCount >= requiredMatches) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         // ================= DUYỆT BẰNG CHỨNG (OCR AI) =================
@@ -9099,10 +9145,15 @@
 
                 const isOwnerTesting = (currentUser?.isOwner || currentUser?.username?.toLowerCase() === "bibi 0304");
 
-                if (!isOwnerTesting) {
-                    const targetTag = (activeChar.firstTagKeyword || activeChar.firstTagSubtitle || "").trim();
-                    const hasTag = !targetTag || fuzzyMatchText(fbRaw, targetTag, 0.7);
-                    if (!hasTag) throw new Error("Ảnh Facebook chụp sai tag hoặc chưa dính tag bài viết! Vui lòng chụp rõ đúng tag nhé.");
+                // Bắt buộc ảnh Facebook phải có đúng dòng Tag đã điền trong Bổ Sung Sắc Màu
+                const targetTag = (activeChar.firstTagSubtitle || activeChar.firstTag || activeChar.firstTagKeyword || "").trim();
+                if (!targetTag) {
+                    throw new Error("Nhân vật này chưa được điền tag trong Bổ Sung Sắc Màu! Vui lòng vào Bổ Sung Sắc Màu điền tag trước nhé.");
+                }
+
+                const hasTag = checkExactTagMatch(fbRaw, targetTag);
+                if (!hasTag) {
+                    throw new Error("Ảnh thiếu tag nhân vật!");
                 }
 
                 // 2. Quét Discord (Chuyển ảnh nền tối -> chữ đen nền trắng sắc nét để không bị rớt chữ & giờ)
@@ -9521,10 +9572,16 @@
                 const hasPage = clean.includes("palette") || fuzzyMatchText(combinedFastText, "palette", 1);
                 if (!hasPage) throw new Error("Ảnh chưa nhìn thấy rõ tên Page 'Palette Số Hóa'!");
 
-                // 2. Kiểm tra đúng Tag nhân vật (chịu lỗi nhẹ do font kiểu)
-                const targetTag = (fastTargetChar.firstTagKeyword || fastTargetChar.firstTagSubtitle || "").trim();
-                const hasTag = !targetTag || fuzzyMatchText(combinedFastText, targetTag, 0.7);
-                if (!hasTag) throw new Error("Ảnh Facebook chụp sai tag hoặc chưa dính tag bài viết! Vui lòng chụp rõ đúng tag nhé.");
+                // 2. Bắt buộc ảnh Facebook phải có đúng dòng Tag đã điền trong Bổ Sung Sắc Màu
+                const targetTag = (fastTargetChar.firstTagSubtitle || fastTargetChar.firstTag || fastTargetChar.firstTagKeyword || "").trim();
+                if (!targetTag) {
+                    throw new Error("Nhân vật này chưa được điền tag trong Bổ Sung Sắc Màu! Vui lòng vào Bổ Sung Sắc Màu điền tag trước nhé.");
+                }
+
+                const hasTag = checkExactTagMatch(combinedFastText, targetTag);
+                if (!hasTag) {
+                    throw new Error("Ảnh thiếu tag nhân vật!");
+                }
 
                 // 3. Kiểm tra nút cảm xúc (Tim / Thích / Thương thương)
                 const hasReact = await checkFacebookReact(fastFbDataUrl, fastFbOcrData);
@@ -9919,6 +9976,7 @@
                     if (uploadedImages.length) characters[idx].galleryImages = uploadedImages;
                     characters[idx].firstTagSubtitle = firstTag;
                     characters[idx].firstTagKeyword = firstTag.toLowerCase();
+                    characters[idx].firstTag = firstTag;
                     characters[idx].subtitle = subtitle || `Tag: ${firstTag}.`;
                     characters[idx].tags = adminSelectedTags.length > 0 ? [...adminSelectedTags] : ['Mới'];
                     characters[idx].fbLink = fbLink;
@@ -9931,8 +9989,10 @@
                     if (status === 'unlocked_24h') {
                         const nowMs = Date.now();
                         characters[idx].customDurationMs = customDurationMs;
-                        characters[idx].fastStartTime = nowMs;
-                        characters[idx].fastEndTime = nowMs + customDurationMs;
+                        if (!characters[idx].fastStartTime || characters[idx].status !== 'unlocked_24h') {
+                            characters[idx].fastStartTime = nowMs;
+                            characters[idx].fastEndTime = nowMs + customDurationMs;
+                        }
                         activeFastCharIdsInSession.add(editId);
                     } else {
                         characters[idx].customDurationMs = null;
@@ -9960,6 +10020,7 @@
                     galleryImages: uploadedImages,
                     firstTagSubtitle: firstTag,
                     firstTagKeyword: firstTag.toLowerCase(),
+                    firstTag: firstTag,
                     subtitle: subtitle || `Tag: ${firstTag}.`,
                     tags: adminSelectedTags.length > 0 ? [...adminSelectedTags] : ['Mới'],
                     fbLink,
@@ -10038,7 +10099,7 @@
             document.getElementById('formCharName').value = c.name;
             document.getElementById('formCharImgUrl').value = c.image.startsWith('data:') ? '' : c.image;
             document.getElementById('formCharFileName').innerText = c.image.startsWith('data:') ? 'Ảnh đã lưu' : 'Chưa có file';
-            document.getElementById('formCharFirstTag').value = c.firstTagSubtitle;
+            document.getElementById('formCharFirstTag').value = c.firstTagSubtitle || c.firstTag || c.firstTagKeyword || '';
             document.getElementById('formCharSubtitle').value = c.subtitle;
             document.getElementById('formCharFbLink').value = c.fbLink;
             document.getElementById('formCharAiLink').value = c.aiStudioUrl;
