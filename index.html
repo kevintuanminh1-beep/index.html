@@ -6406,14 +6406,23 @@
             { label: "+ Ảnh mờ", text: "Ảnh hơi mờ nên hệ thống không đọc được chữ, lần sau chụp nét hơn chút nhé!" },
             { label: "+ Font khó đọc", text: "Do bạn dùng font chữ kiểu nên máy chưa đọc được rõ, lần sau chụp nét hoặc bấm Help nha!" }
         ];
+        const CMT_REJECT_REASON_CHIPS = [
+            { label: "+ Ảnh mờ / bị cắt", text: "Ảnh chụp bình luận hơi mờ hoặc bị cắt mất nội dung, bạn chụp rõ lại giúp Palette nhé!" },
+            { label: "+ Sai bài / sai char", text: "Bình luận chưa đúng bài viết của nhân vật trong đợt này, bạn kiểm tra lại giúp Palette nha!" },
+            { label: "+ Chưa đủ cảm nghĩ", text: "Ảnh chọn mục Feedback nhưng bình luận chưa nêu cảm nghĩ về plot/char, bạn bổ sung hoặc chọn lại mục Cmt noti nhé!" },
+            { label: "+ Thiếu tên / chưa rõ cmt", text: "Ảnh chưa thấy rõ nội dung bình luận hoặc tên tài khoản của bạn trên Facebook, bạn chụp lại rõ hơn nhé!" }
+        ];
         let customOwnerReasonChips = safeParseLocalJson('palette_custom_reason_chips', []);
 
-        function renderApproveReasonChips() {
+        function renderApproveReasonChips(chipMode = null) {
             const box = document.getElementById('approveReasonChipsBox');
             if (!box) return;
             box.innerHTML = '';
 
-            DEFAULT_REASON_CHIPS.forEach(chip => {
+            const mode = chipMode || (pendingOwnerApproveContext?.actionMode === 'reject_cmt' ? 'cmt' : 'link');
+            const presetChips = (mode === 'cmt') ? CMT_REJECT_REASON_CHIPS : DEFAULT_REASON_CHIPS;
+
+            presetChips.forEach(chip => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = "text-[10px] bg-white/10 hover:bg-pink-500/30 border border-white/15 px-2 py-1 rounded-lg text-sky-100 transition active:scale-95";
@@ -6473,7 +6482,8 @@
         function openApproveReasonModal(ctx) {
             if (!checkIsOwnerAccount() || !ctx) return;
             pendingOwnerApproveContext = ctx;
-            const isRejectMode = (ctx.actionMode === 'reject');
+            const isCmtReject = (ctx.actionMode === 'reject_cmt');
+            const isRejectMode = (ctx.actionMode === 'reject' || isCmtReject);
             const titleEl = document.getElementById('approveReasonModalTitle');
             const subEl = document.getElementById('approveReasonModalSub');
             const inputEl = document.getElementById('approveReasonInput');
@@ -6481,14 +6491,20 @@
             const btn2 = document.getElementById('confirmApproveNoReasonBtn');
 
             if (titleEl) {
-                titleEl.innerText = isRejectMode
-                    ? `✕ Từ chối & Báo lỗi cho ${ctx.targetUsername}`
-                    : `✓ Duyệt mở link cho ${ctx.targetUsername}`;
+                titleEl.innerText = isCmtReject
+                    ? `✕ Từ chối ảnh cmt của ${ctx.targetUsername}`
+                    : (isRejectMode
+                        ? `✕ Từ chối & Báo lỗi cho ${ctx.targetUsername}`
+                        : `✓ Duyệt mở link cho ${ctx.targetUsername}`);
                 titleEl.className = isRejectMode
                     ? "text-sm font-extrabold text-red-300 truncate"
                     : "text-sm font-extrabold text-emerald-300 truncate";
             }
-            if (subEl) subEl.innerText = `Nhân vật: ${ctx.charName}${ctx.failReason ? ` · Máy báo: ${ctx.failReason}` : ''}`;
+            if (subEl) {
+                subEl.innerText = isCmtReject
+                    ? `Nhân vật: ${ctx.charName}${ctx.cmtKindLabel ? ` · ${ctx.cmtKindLabel}` : ''}`
+                    : `Nhân vật: ${ctx.charName}${ctx.failReason ? ` · Máy báo: ${ctx.failReason}` : ''}`;
+            }
             if (inputEl) inputEl.value = '';
 
             if (btn1) {
@@ -6556,6 +6572,44 @@
                 const uKey = targetUsername.toLowerCase();
                 const charId = ctx.charId;
                 const charName = ctx.charName || "Nhân vật";
+
+                if (ctx.actionMode === 'reject_cmt') {
+                    if (ctx.cmtReqDocId) {
+                        await db.collection("cmt_reward_requests").doc(ctx.cmtReqDocId).delete();
+                    }
+                    if (withReason) {
+                        triggerNotification(
+                            "Ảnh cmt chưa được duyệt ❌",
+                            `Ảnh ${ctx.cmtKindLabel || "cmt"} của bạn tại "${charName}" chưa được duyệt. 💡 Lý do: ${reasonText}`,
+                            targetUsername
+                        );
+                    }
+                    closeApproveReasonModal();
+                    renderAdminCmtRewards();
+                    alert(withReason
+                        ? `✓ Đã từ chối ảnh cmt và gửi lý do tới "${targetUsername}"!`
+                        : `✓ Đã xóa yêu cầu ảnh cmt của "${targetUsername}"!`);
+                    return;
+                }
+
+                if (ctx.actionMode === 'reject_cmt') {
+                    if (ctx.cmtReqDocId) {
+                        await db.collection("cmt_reward_requests").doc(ctx.cmtReqDocId).delete();
+                    }
+                    if (withReason) {
+                        triggerNotification(
+                            "Ảnh cmt chưa được duyệt ❌",
+                            `Ảnh ${ctx.cmtKindLabel || "cmt"} của bạn tại "${charName}" chưa được duyệt. 💡 Lý do: ${reasonText}`,
+                            targetUsername
+                        );
+                    }
+                    closeApproveReasonModal();
+                    renderAdminCmtRewards();
+                    alert(withReason
+                        ? `✓ Đã từ chối ảnh cmt và gửi lý do tới "${targetUsername}"!`
+                        : `✓ Đã xóa yêu cầu ảnh cmt của "${targetUsername}"!`);
+                    return;
+                }
 
                 if (isRejectMode) {
                     // CHẾ ĐỘ TỪ CHỐI / BÁO LỖI CHO USER
@@ -11504,7 +11558,7 @@
                         <button type="button" onclick="approveCmtReward('${cmtSafeId(req.id)}', 3)" class="flex-1 bg-gradient-to-r from-sky-500 to-indigo-600 hover:brightness-110 text-white font-black py-1.5 rounded-xl text-xs active:scale-95 transition shadow">
                             Tặng 3 Chì
                         </button>
-                        <button type="button" onclick="rejectCmtReward('${cmtSafeId(req.id)}')" class="px-2.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 font-bold text-xs active:scale-95 transition" title="Từ chối">✕</button>
+                        <button type="button" onclick="rejectCmtReward('${cmtSafeId(req.id)}')" class="px-2.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 font-bold text-xs active:scale-95 transition" title="Từ chối kèm lý do">Từ chối</button>
                     </div>
                 `;
                 container.appendChild(item);
@@ -11588,19 +11642,19 @@
             }
         }
 
-        async function rejectCmtReward(reqId) {
+        function rejectCmtReward(reqId) {
             if (!currentUser?.isOwner) return;
             const req = pendingCmtRewards.find(r => cmtSafeId(r.id) === reqId);
             if (!req) return;
-            if (!confirm(`Từ chối ảnh cmt của "${req.username}"?`)) return;
-            try {
-                await db.collection("cmt_reward_requests").doc(req.id).delete();
-                triggerNotification("Ảnh cmt chưa được duyệt", `Ảnh ${(CMT_REWARD_TYPES[req.kind] || {}).label || "cmt"} của bạn tại ${req.charName || "nhân vật"} chưa phù hợp. Bạn có thể gửi lại ảnh rõ hơn nhé!`, req.username);
-                renderAdminCmtRewards();
-            } catch (error) {
-                console.error("Lỗi từ chối ảnh cmt:", error);
-                alert("Chưa thể từ chối lúc này, thử lại nhé!");
-            }
+            const info = CMT_REWARD_TYPES[req.kind] || CMT_REWARD_TYPES.noti;
+            openApproveReasonModal({
+                actionMode: 'reject_cmt',
+                cmtReqDocId: req.id,
+                targetUsername: req.username,
+                charId: req.charId,
+                charName: req.charName || "Nhân vật",
+                cmtKindLabel: info.label
+            });
         }
 
     // ================= HỆ THỐNG VÒNG XOAY MAY MẮN (SẮC MÀU VẬN MAY) =================
