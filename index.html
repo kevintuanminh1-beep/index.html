@@ -4364,7 +4364,7 @@
             return "";
         }
 
-        function enhanceDiscordBottomForTimeOCR(dataUrl) {
+        function enhanceDiscordStripForOCR(dataUrl, yStartRatio = 0, yEndRatio = 1, maxOutWidth = 1800) {
             return new Promise(resolve => {
                 if (!dataUrl) return resolve("");
                 const img = new Image();
@@ -4373,9 +4373,10 @@
                         const w = img.naturalWidth || img.width;
                         const h = img.naturalHeight || img.height;
                         if (!w || !h) return resolve("");
-                        const startY = Math.round(h * 0.42);
-                        const cropH = Math.max(1, h - startY);
-                        const scale = Math.min(1.6, 1800 / w);
+                        const startY = Math.max(0, Math.round(h * yStartRatio));
+                        const endY = Math.min(h, Math.round(h * yEndRatio));
+                        const cropH = Math.max(1, endY - startY);
+                        const scale = Math.min(2.0, Math.max(1.0, maxOutWidth / w));
                         const outW = Math.max(1, Math.round(w * scale));
                         const outH = Math.max(1, Math.round(cropH * scale));
                         const canvas = document.createElement('canvas');
@@ -4398,9 +4399,9 @@
                             let gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
                             if (isDarkMode) {
                                 gray = 255 - gray;
-                                gray = Math.max(0, Math.min(255, Math.round((gray - 100) * 2.5)));
+                                gray = Math.max(0, Math.min(255, Math.round((gray - 85) * 2.3)));
                             } else {
-                                gray = Math.max(0, Math.min(255, Math.round((gray - 125) * 2.5)));
+                                gray = Math.max(0, Math.min(255, Math.round((gray - 115) * 2.2)));
                             }
                             d[i] = d[i + 1] = d[i + 2] = gray;
                         }
@@ -9050,14 +9051,16 @@
                     if (!hasTag) throw new Error("Ảnh Facebook chụp sai tag hoặc chưa dính tag bài viết! Vui lòng chụp rõ đúng tag nhé.");
                 }
 
-                // 2. Quét Discord
-                setProgressUI(55, "Đang đọc ảnh Discord...");
+                // 2. Quét Discord (Chuyển ảnh nền tối -> chữ đen nền trắng sắc nét để không bị rớt chữ & giờ)
+                setProgressUI(55, "Đang tối ưu & đọc ảnh Discord...");
                 let combinedDcText = "";
                 for (let i = 0; i < cachedDcDataUrls.length; i++) {
-                    const { data: { text: dcRaw } } = await Tesseract.recognize(cachedDcDataUrls[i], 'vie', {
+                    const enhancedFull = await enhanceDiscordStripForOCR(cachedDcDataUrls[i], 0, 0.96, 1700);
+                    const imgForOcr = enhancedFull || cachedDcDataUrls[i];
+                    const { data: { text: dcRaw } } = await Tesseract.recognize(imgForOcr, 'vie', {
                         logger: m => {
                             if (m.status === 'recognizing text') {
-                                const p = Math.min(94, Math.round(55 + (m.progress || 0) * 38));
+                                const p = Math.min(88, Math.round(55 + (m.progress || 0) * 32));
                                 setProgressUI(p, `Đang đọc ảnh Discord (${i + 1}/${cachedDcDataUrls.length})...`);
                             }
                         }
@@ -9065,23 +9068,51 @@
                     combinedDcText += " " + dcRaw.toLowerCase();
                 }
 
-                // KIỂM TRA BẮT BUỘC PHẢI THẤY RÕ TÊN KÊNH DISCORD
+                // KIỂM TRA TÊN KÊNH DISCORD (Chịu được dấu ★ dính liền chữ như hổ★sơ★gạo★cội / hồ★sơ★tân★thủ)
+                const checkDcChannelMatch = (rawText) => {
+                    const clean = (rawText || "").toLowerCase();
+                    const unacc = clean.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+                    const fuzzy = unacc.replace(/0/g, 'o').replace(/4/g, 'a').replace(/6/g, 'o').replace(/[1|]/g, 'i');
+                    const noPunct = fuzzy.replace(/[^a-z0-9]/g, ' ');
+                    const compact = fuzzy.replace(/\s+/g, '');
+
+                    if (activeProofType === 'Sắc màu gạo cội') {
+                        const hasHoSo = (noPunct.includes('ho') && noPunct.includes('so')) || clean.includes('hồ sơ') || unacc.includes('ho so');
+                        const hasGaoCoi = (noPunct.includes('gao') && noPunct.includes('coi')) || clean.includes('gạo cội') || unacc.includes('gao coi') || /[gq][a4][o0].{0,4}c[o0][il1t]/.test(compact);
+                        const hasCompact = /h[o06].{0,4}s[o0].{0,4}[gq][a4][o0].{0,4}c[o0][il1t]/.test(compact);
+                        return hasCompact || (hasHoSo && hasGaoCoi) || hasGaoCoi;
+                    } else {
+                        const hasHoSo = (noPunct.includes('ho') && noPunct.includes('so')) || clean.includes('hồ sơ') || unacc.includes('ho so');
+                        const hasTanThu = (noPunct.includes('tan') && noPunct.includes('thu')) || clean.includes('tân thủ') || unacc.includes('tan thu') || /t[a4]n.{0,4}th[u]/.test(compact);
+                        const hasCompact = /h[o06].{0,4}s[o0].{0,4}t[a4]n.{0,4}th[u]/.test(compact);
+                        return hasCompact || (hasHoSo && hasTanThu) || hasTanThu;
+                    }
+                };
+
+                let hasChannelName = checkDcChannelMatch(combinedDcText);
+                // Nếu lần 1 vẫn sót tên kênh nhỏ ở góc trên, zoom 2x phần Header trên cùng để đọc lại
+                if (!hasChannelName && cachedDcDataUrls[0]) {
+                    try {
+                        setProgressUI(89, "Đang đọc rõ hơn tên kênh Discord...");
+                        const topStripUrl = await enhanceDiscordStripForOCR(cachedDcDataUrls[0], 0, 0.25, 2200);
+                        if (topStripUrl) {
+                            const { data: { text: topRaw } } = await Tesseract.recognize(topStripUrl, 'vie');
+                            if (checkDcChannelMatch(topRaw)) {
+                                hasChannelName = true;
+                                combinedDcText += " " + topRaw.toLowerCase();
+                            }
+                        }
+                    } catch (_) {}
+                }
+
+                if (!hasChannelName) {
+                    throw new Error(activeProofType === 'Sắc màu gạo cội'
+                        ? "Bạn chụp thiếu tên chủ đề kênh 'hồ * sơ * gạo * cội'! Vui lòng không cắt ảnh để thấy rõ tên kênh nhé."
+                        : "Bạn chụp thiếu tên chủ đề kênh 'hồ * sơ * tân * thủ'! Vui lòng không cắt ảnh để thấy rõ tên kênh nhé.");
+                }
+
                 const cleanDc = combinedDcText.toLowerCase();
                 const unaccentedDc = cleanDc.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                const noPunctDc = unaccentedDc.replace(/[^a-z0-9]/g, ' ');
-
-                let hasChannelName = false;
-                if (activeProofType === 'Sắc màu gạo cội') {
-                    const hasHoSo = (noPunctDc.includes('ho') && noPunctDc.includes('so')) || cleanDc.includes('hồ sơ') || unaccentedDc.includes('ho so');
-                    const hasGaoCoi = (noPunctDc.includes('gao') && noPunctDc.includes('coi')) || cleanDc.includes('gạo cội') || unaccentedDc.includes('gao coi');
-                    hasChannelName = hasHoSo && hasGaoCoi;
-                    if (!hasChannelName) throw new Error("Bạn chụp thiếu tên chủ đề kênh 'hồ * sơ * gạo * cội'! Vui lòng không cắt ảnh để thấy rõ tên kênh nhé.");
-                } else {
-                    const hasHoSo = (noPunctDc.includes('ho') && noPunctDc.includes('so')) || cleanDc.includes('hồ sơ') || unaccentedDc.includes('ho so');
-                    const hasTanThu = (noPunctDc.includes('tan') && noPunctDc.includes('thu')) || cleanDc.includes('tân thủ') || unaccentedDc.includes('tan thu');
-                    hasChannelName = hasTanThu && hasHoSo;
-                    if (!hasChannelName) throw new Error("Bạn chụp thiếu tên chủ đề kênh 'hồ * sơ * tân * thủ'! Vui lòng không cắt ảnh để thấy rõ tên kênh nhé.");
-                }
 
                 // KIỂM TRA ĐÃ GỬI CHÍNH THỨC
                 const isDrafting = combinedDcText.includes("gửi tin nhắn tới") || combinedDcText.includes("nhập tin nhắn");
@@ -9097,30 +9128,43 @@
                     const curTotal = curHour * 60 + curMin;
                     const maxAllowedMinutes = 10;
                     const enMonths = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+                    const enMonthsShort = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
                     const curEnMonth = enMonths[curMonthNum - 1];
+                    const curEnMonthShort = enMonthsShort[curMonthNum - 1];
 
                     const isMatchTodayDate = (n1, n2) =>
                         (n1 === curDayNum && n2 === curMonthNum) || (n1 === curMonthNum && n2 === curDayNum);
 
-                    // Bỏ qua phần thanh trạng thái điện thoại phía trên tên kênh Discord
-                    let dcScan = unaccentedDc.replace(/đ/g, 'd');
-                    const hdrMatch = dcScan.match(/(gao\s*coi|tan\s*thu)/);
-                    if (hdrMatch && hdrMatch.index < dcScan.length * 0.45) {
-                        dcScan = dcScan.slice(hdrMatch.index + hdrMatch[0].length);
-                    }
+                    const sliceToActualMessageArea = (rawStr) => {
+                        let s = (rawStr || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+                        // 1. Bỏ qua thanh trạng thái điện thoại & tiêu đề kênh phía trên
+                        const hdrMatch = s.match(/(?:[gq][a4][o0].{0,4}c[o0][il1t]|t[a4]n.{0,4}th[u])/);
+                        if (hdrMatch && hdrMatch.index < s.length * 0.45) {
+                            s = s.slice(hdrMatch.index + hdrMatch[0].length);
+                        }
+                        // 2. Bỏ qua tin nhắn ghim cũ của bot (13/11/26, 18:27 ...) nếu có
+                        const pinnedMatches = [...s.matchAll(/(?:tu\s*dong\s*xoa\s*tin\s*nhan|xoa\s*tin\s*nhan|pha.{0,5}mau.{0,5}hoi\s*nha|goc.{0,5}pha.{0,5}mau)/g)];
+                        if (pinnedMatches.length > 0) {
+                            const lastPin = pinnedMatches[pinnedMatches.length - 1];
+                            if (lastPin.index < s.length * 0.75) {
+                                s = s.slice(lastPin.index + lastPin[0].length);
+                            }
+                        }
+                        // 3. Nếu thấy mốc ngày hôm nay (VD: "15 November 2026", "November 15", "15 tháng 11", "Hôm nay", "Today") thì cắt từ đó trở xuống
+                        const todayMarkerRegex = new RegExp(
+                            `(\\b0?${curDayNum}\\s*thang\\s*0?${curMonthNum}\\b|\\b${curEnMonth}\\s+0?${curDayNum}\\b|\\b0?${curDayNum}\\s+${curEnMonth}\\b|\\b${curEnMonthShort}\\s+0?${curDayNum}\\b|\\b0?${curDayNum}\\s+${curEnMonthShort}\\b|\\b0?${curDayNum}[\\/\\-]0?${curMonthNum}[\\/\\-]20\\d{2}\\b|\\b0?${curMonthNum}[\\/\\-]0?${curDayNum}[\\/\\-]20\\d{2}\\b|\\bhom\\s*nay\\b|\\btoday\\b)`,
+                            'g'
+                        );
+                        const todayMarkers = [...s.matchAll(todayMarkerRegex)];
+                        if (todayMarkers.length > 0) {
+                            const lastTodayMarker = todayMarkers[todayMarkers.length - 1];
+                            s = s.slice(lastTodayMarker.index);
+                        }
+                        return s;
+                    };
 
-                    // Nếu có mốc chia ngày hôm nay (VD: "14 tháng 11 năm 2026" / "November 14, 2026" / "Hôm nay lúc") thì bỏ qua tin nhắn ghim cũ phía trên
-                    const todayMarkerRegex = new RegExp(
-                        `(\\b0?${curDayNum}\\s*thang\\s*0?${curMonthNum}\\b|\\b${curEnMonth}\\s+0?${curDayNum}\\b|\\b0?${curDayNum}[\\/\\-]0?${curMonthNum}[\\/\\-]20\\d{2}\\b|\\b0?${curMonthNum}[\\/\\-]0?${curDayNum}[\\/\\-]20\\d{2}\\b|\\bhom\\s*nay\\s*luc\\b|\\btoday\\s*at\\b)`,
-                        'g'
-                    );
-                    const todayMarkers = [...dcScan.matchAll(todayMarkerRegex)];
-                    if (todayMarkers.length > 0) {
-                        const lastTodayMarker = todayMarkers[todayMarkers.length - 1];
-                        dcScan = dcScan.slice(lastTodayMarker.index);
-                    }
-
-                    const timeRegex = /\b([01]?[0-9]|2[0-3])\s*[:;h]\s*([0-5][0-9])(?:\s*(am|pm))?\b/g;
+                    const dcScan = sliceToActualMessageArea(combinedDcText);
+                    const timeRegex = /\b([01OlI|]?[0-9OlI|]|2[0-3])\s*[:;h.]\s*([0-5OlI|][0-9OlI|])(?:\s*(am|pm))?\b/g;
 
                     const checkTimeMatchesInText = (textToScan) => {
                         const matches = [...textToScan.matchAll(timeRegex)];
@@ -9129,8 +9173,10 @@
                         let oldDatePrefix = false;
 
                         for (const m of matches) {
-                            const rawH = parseInt(m[1], 10);
-                            const rawM = parseInt(m[2], 10);
+                            const normDigits = (dStr) => dStr.replace(/[oO]/g, '0').replace(/[lI|]/g, '1');
+                            const rawH = parseInt(normDigits(m[1]), 10);
+                            const rawM = parseInt(normDigits(m[2]), 10);
+                            if (isNaN(rawH) || isNaN(rawM) || rawH > 23 || rawM > 59) continue;
                             const meridiem = (m[3] || '').toLowerCase();
 
                             // Chỉ kiểm tra trên cùng 1 dòng ngay trước mốc giờ (không lấn sang tin nhắn phía trên)
@@ -9164,7 +9210,7 @@
                                 let diff = curTotal - (ch * 60 + rawM);
                                 if (diff < -720) diff += 1440;
                                 if (diff > 720) diff -= 1440;
-                                if (diff >= -3 && diff <= maxAllowedMinutes) {
+                                if (diff >= -5 && diff <= maxAllowedMinutes) {
                                     matchedThisToken = true;
                                     break;
                                 }
@@ -9174,7 +9220,7 @@
                                 hasValid = true;
                                 break;
                             } else {
-                                oldTime = m[0];
+                                oldTime = `${rawH}:${pad(rawM)}${meridiem ? ' ' + meridiem : ''}`;
                             }
                         }
                         return { matches, hasValid, oldTime, oldDatePrefix };
@@ -9182,15 +9228,15 @@
 
                     let timeCheck = checkTimeMatchesInText(dcScan);
 
-                    // Nếu lần 1 sót giờ do chữ giờ xám nhạt quá nhỏ, tăng độ tương phản nửa dưới ảnh để đọc lại
+                    // Nếu lần 1 sót giờ, quét kỹ vùng tin nhắn (14%..85% chiều cao, bao gồm cả khi bật bàn phím) ở độ nét 2x
                     if (!timeCheck.hasValid && cachedDcDataUrls[0]) {
                         try {
-                            setProgressUI(88, "Đang đọc rõ hơn mốc giờ Discord...");
-                            const enhancedUrl = await enhanceDiscordBottomForTimeOCR(cachedDcDataUrls[0]);
+                            setProgressUI(92, "Đang đọc rõ hơn mốc giờ Discord...");
+                            const enhancedUrl = await enhanceDiscordStripForOCR(cachedDcDataUrls[0], 0.14, 0.85, 2200);
                             if (enhancedUrl) {
                                 const { data: { text: retryRaw } } = await Tesseract.recognize(enhancedUrl, 'eng');
-                                const retryClean = (retryRaw || "").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-                                const retryCheck = checkTimeMatchesInText(retryClean);
+                                const retryArea = sliceToActualMessageArea(retryRaw);
+                                const retryCheck = checkTimeMatchesInText(retryArea);
                                 if (retryCheck.hasValid) {
                                     timeCheck = retryCheck;
                                 }
