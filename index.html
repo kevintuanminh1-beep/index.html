@@ -9285,7 +9285,7 @@
                 setProgressUI(55, "Đang tối ưu & đọc ảnh Discord...");
                 let combinedDcText = "";
                 for (let i = 0; i < cachedDcDataUrls.length; i++) {
-                    const enhancedFull = await enhanceDiscordStripForOCR(cachedDcDataUrls[i], 0, 0.96, 1700);
+                    const enhancedFull = await enhanceDiscordStripForOCR(cachedDcDataUrls[i], 0, 1, 1800);
                     const imgForOcr = enhancedFull || cachedDcDataUrls[i];
                     const { data: { text: dcRaw } } = await Tesseract.recognize(imgForOcr, 'vie', {
                         logger: m => {
@@ -9504,19 +9504,64 @@
                     }
                 }
 
-                // DÀN THEO 3 MỤC MẪU (CHỈ CẦN ĐỦ 3 ĐẦU MỤC THEO MẪU, KHÔNG ÉP BUỘC CHỮ PHÍA SAU)
-                let hasM1 = false, hasM2 = false, hasM3 = false;
-                if (activeProofType === 'Sắc màu gạo cội') {
-                    hasM1 = unaccentedDc.includes("ten char") || cleanDc.includes("tên char");
-                    hasM2 = unaccentedDc.includes("feedback") || cleanDc.includes("feedback") || unaccentedDc.includes("cam nhan") || cleanDc.includes("cảm nhận") || unaccentedDc.includes("feed back");
-                    hasM3 = unaccentedDc.includes("muon choi") || cleanDc.includes("muốn chơi") || unaccentedDc.includes("choi thu") || cleanDc.includes("chơi thử");
-                } else {
-                    hasM1 = unaccentedDc.includes("the loai") || cleanDc.includes("thể loại") || unaccentedDc.includes("gu");
-                    hasM2 = unaccentedDc.includes("choi thu") || cleanDc.includes("chơi thử") || unaccentedDc.includes("muon choi") || cleanDc.includes("muốn chơi") || unaccentedDc.includes("palette");
-                    hasM3 = unaccentedDc.includes("huong noi") || unaccentedDc.includes("huong ngoai") || cleanDc.includes("hướng nội") || cleanDc.includes("hướng ngoại");
+                // DÀN THEO 3 MỤC MẪU (HỖ TRỢ ĐỌC MỜ / SAI VÀI NÉT CHỮ TRÊN DISCORD)
+                const checkDcTemplateSections = (rawText) => {
+                    const low = (rawText || "").toLowerCase();
+                    const unacc = low.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+                    const fuzzy = unacc.replace(/0/g, 'o').replace(/6/g, 'o').replace(/4/g, 'a').replace(/[1|]/g, 'i').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ');
+                    const compact = fuzzy.replace(/\s+/g, '');
+
+                    if (activeProofType === 'Sắc màu gạo cội') {
+                        const m1 = unacc.includes("ten char") || low.includes("tên char")
+                            || /t[e3]n\s*[ce]h?[a4]r/.test(fuzzy) || compact.includes("tenchar")
+                            || fuzzyMatchText(rawText, "ten char", 0.7);
+                        const m2 = unacc.includes("feedback") || unacc.includes("feed back") || unacc.includes("cam nhan") || unacc.includes("cam nghi")
+                            || /f[e3]{1,2}d\s*b[a4][ce]k|ve\s*[ce]h[a4]r/.test(fuzzy)
+                            || fuzzyMatchText(rawText, "feedback", 0.75)
+                            || fuzzyMatchText(rawText, "feedback ve char", 0.65);
+                        const m3 = unacc.includes("muon choi") || low.includes("muốn chơi") || unacc.includes("choi thu")
+                            || /mu[o0u]n\s*[ce]h[o0a][il]|ten\s*[ce]h[a4]r\s*mu[o0u]n/.test(fuzzy)
+                            || compact.includes("muonchoi")
+                            || fuzzyMatchText(rawText, "muon choi", 0.7)
+                            || fuzzyMatchText(rawText, "ten char muon choi", 0.65);
+                        return m1 && m2 && m3;
+                    } else {
+                        const m1 = unacc.includes("the loai") || low.includes("thể loại") || unacc.includes("yeu thich") || /\bgu\b/.test(fuzzy)
+                            || fuzzyMatchText(rawText, "the loai", 0.75)
+                            || fuzzyMatchText(rawText, "yeu thich", 0.75);
+                        const m2 = unacc.includes("choi thu") || unacc.includes("muon choi") || unacc.includes("palette")
+                            || /[ce]h[o0][il]\s*th[u]|mu[o0u]n\s*[ce]h[o0a][il]/.test(fuzzy)
+                            || fuzzyMatchText(rawText, "choi thu", 0.75)
+                            || fuzzyMatchText(rawText, "muon choi", 0.7);
+                        const m3 = unacc.includes("huong noi") || unacc.includes("huong ngoai")
+                            || /hu[o0]ng\s*(n[o0][il]|ng[o0][a4][il])/.test(fuzzy)
+                            || fuzzyMatchText(rawText, "huong noi", 0.7)
+                            || fuzzyMatchText(rawText, "huong ngoai", 0.7);
+                        return m1 && m2 && m3;
+                    }
+                };
+
+                let hasAllTemplateSections = checkDcTemplateSections(combinedDcText);
+
+                // Nếu lần đầu đọc sót dòng ở nửa dưới (như dòng "Tên char muốn chơi"), tự zoom 2x phần dưới ảnh để quét lại
+                if (!hasAllTemplateSections && cachedDcDataUrls[0]) {
+                    try {
+                        setProgressUI(95, "Đang đọc kỹ hơn 3 mục mẫu Discord...");
+                        const bottomStripUrl = await enhanceDiscordStripForOCR(cachedDcDataUrls[0], 0.45, 1, 2200);
+                        if (bottomStripUrl) {
+                            const { data: { text: bottomRaw } } = await Tesseract.recognize(bottomStripUrl, 'vie');
+                            combinedDcText += " " + bottomRaw.toLowerCase();
+                            hasAllTemplateSections = checkDcTemplateSections(combinedDcText);
+                        }
+                        if (!hasAllTemplateSections) {
+                            const { data: { text: origRaw } } = await Tesseract.recognize(cachedDcDataUrls[0], 'vie');
+                            combinedDcText += " " + origRaw.toLowerCase();
+                            hasAllTemplateSections = checkDcTemplateSections(combinedDcText);
+                        }
+                    } catch (_) {}
                 }
 
-                if (!hasM1 || !hasM2 || !hasM3) {
+                if (!hasAllTemplateSections) {
                     throw new Error("Bài viết chưa điền đầy đủ dàn 3 mục theo mẫu đã quy định!");
                 }
 
