@@ -10151,8 +10151,8 @@
                     isNew,
                     unlockWaitMs,
                     customDurationMs: (status === 'unlocked_24h') ? customDurationMs : null,
-                    fastStartTime: (status === 'unlocked_24h' && fastChoice === 'event_countdown') ? Date.now() : 0,
-                    fastEndTime: (status === 'unlocked_24h' && fastChoice === 'event_countdown') ? (Date.now() + customDurationMs) : 0,
+                    fastStartTime: (status === 'unlocked_24h') ? (fastChoice === 'event_countdown' ? Date.now() : 0) : null,
+                    fastEndTime: (status === 'unlocked_24h') ? (fastChoice === 'event_countdown' ? (Date.now() + customDurationMs) : 0) : null,
                     reopenTimestamp: null
                 };
                 try {
@@ -10259,16 +10259,16 @@
             const c = characters.find(ch => ch.id === charId);
             if (!c) return;
 
+            const imgStr = String(c.image || '');
             document.getElementById('editCharId').value = c.id;
-            document.getElementById('formCharName').value = c.name;
-            document.getElementById('formCharImgUrl').value = c.image.startsWith('data:') ? '' : c.image;
-            document.getElementById('formCharFileName').innerText = c.image.startsWith('data:') ? 'Ảnh đã lưu' : 'Chưa có file';
+            document.getElementById('formCharName').value = c.name || '';
+            document.getElementById('formCharImgUrl').value = imgStr.startsWith('data:') ? '' : imgStr;
+            document.getElementById('formCharFileName').innerText = imgStr.startsWith('data:') ? 'Ảnh đã lưu' : 'Chưa có file';
             document.getElementById('formCharFirstTag').value = c.firstTagSubtitle || c.firstTag || c.firstTagKeyword || '';
-            document.getElementById('formCharSubtitle').value = c.subtitle;
-            document.getElementById('formCharFbLink').value = c.fbLink;
-            document.getElementById('formCharAiLink').value = c.aiStudioUrl;
+            document.getElementById('formCharSubtitle').value = c.subtitle || '';
+            document.getElementById('formCharFbLink').value = c.fbLink || '';
+            document.getElementById('formCharAiLink').value = c.aiStudioUrl || '';
             const effectiveStatus = (c.status === 'unlocked_24h') ? 'unlocked_24h' : (c.status === 'closed' ? 'closed' : 'locked');
-            toggleStatusSettings(effectiveStatus);
             setFormCharNewState(Boolean(c.isNew));
 
             // Đổ dữ liệu số giờ chờ
@@ -10279,8 +10279,8 @@
             if (wHEl) wHEl.value = Math.floor(totalWaitMins / 60);
             if (wMEl) wMEl.value = totalWaitMins % 60;
 
-            // Đổ lựa chọn Chế độ 1 hoặc Chế độ 2
-            const savedChoice = (c.fastChoiceMode === 'no_event_countdown' || (c.fastEndTime === 0 && c.fastStartTime === 0))
+            // Đổ lựa chọn Chế độ 1 hoặc Chế độ 2 (chỉ xét 0/0 nếu nhân vật đang là Nhanh Nhẹn)
+            const savedChoice = (c.fastChoiceMode === 'no_event_countdown' || (effectiveStatus === 'unlocked_24h' && c.fastEndTime === 0 && c.fastStartTime === 0))
                 ? 'no_event_countdown'
                 : 'event_countdown';
             const choiceRadio = document.querySelector(`input[name="formFastChoice"][value="${savedChoice}"]`);
@@ -10301,6 +10301,7 @@
             renderAdminCategories();
             document.getElementById('adminModalTitle').innerText = `Sửa: ${c.name}`;
             document.getElementById('saveCharBtn').innerText = "Cập nhật nhân vật";
+            document.querySelector('#adminModal .custom-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function openEditForActiveChar() {
