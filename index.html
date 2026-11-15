@@ -4060,13 +4060,15 @@
         let activeFastCharIdsInSession = new Set();
         function isCharPausedLimit(c) {
             if (!c || c.status !== 'unlocked_24h') return false;
-            if (c.fastEndTime) {
-                return Date.now() >= c.fastEndTime;
-            }
             if (c.fastModeType === 'paused_limit') return true;
-            if (c.fastStartTime) {
-                const duration = c.customDurationMs || (24 * 60 * 60 * 1000);
-                return (Date.now() - c.fastStartTime) >= duration;
+            const endMs = Number(c.fastEndTime) || 0;
+            if (endMs > 0) {
+                return Date.now() >= endMs;
+            }
+            const startMs = Number(c.fastStartTime) || 0;
+            if (startMs > 0) {
+                const duration = Number(c.customDurationMs) || (24 * 60 * 60 * 1000);
+                return (Date.now() - startMs) >= duration;
             }
             return false;
         }
@@ -5319,6 +5321,28 @@
 
         // ================= FIRESTORE LISTENERS (CÓ CHỐNG TRẮNG WEB & TỰ ĐỘNG KHÓA KHI ĐẦY) =================
         function initFirebaseListeners() {
+            // Lưu cache nhân vật an toàn (tránh tràn bộ nhớ localStorage làm lưu đọng trạng thái cũ)
+            window.saveCharactersCacheSafely = function(list) {
+                if (!Array.isArray(list) || list.length === 0) return;
+                try {
+                    localStorage.setItem('palette_cached_characters', JSON.stringify(list));
+                    return;
+                } catch (_) {}
+                try {
+                    const slim = list.map(ch => ({ ...ch, galleryImages: [] }));
+                    localStorage.setItem('palette_cached_characters', JSON.stringify(slim));
+                    return;
+                } catch (_) {}
+                try {
+                    const ultraSlim = list.map(ch => ({
+                        ...ch,
+                        galleryImages: [],
+                        image: (typeof ch.image === 'string' && ch.image.startsWith('data:') && ch.image.length > 30000) ? '' : ch.image
+                    }));
+                    localStorage.setItem('palette_cached_characters', JSON.stringify(ultraSlim));
+                } catch (_) {}
+            };
+
             // 1. Tải nhân vật kèm bộ đệm lưu trữ dự phòng
             db.collection("characters").onSnapshot((snapshot) => {
                 characters = [];
@@ -5326,8 +5350,17 @@
                 if (!snapshot.metadata.fromCache) {
                     charactersSyncedFromServer = true;
                 }
-                if (characters.length > 0) {
-                    try { localStorage.setItem('palette_cached_characters', JSON.stringify(characters)); } catch (_) {}
+                window.saveCharactersCacheSafely(characters);
+                if (activeChar) {
+                    const updatedActive = characters.find(c => c.id === activeChar.id);
+                    if (updatedActive) {
+                        activeChar = updatedActive;
+                        const badge24h = document.getElementById('detailChar24hBadge');
+                        if (badge24h) {
+                            badge24h.classList.toggle('hidden', !(activeChar.status === 'unlocked_24h' && !isCharPausedLimit(activeChar)));
+                        }
+                        updateAIStudioButton();
+                    }
                 }
                 renderCharacters();
                 renderFastColorCenter();
@@ -9381,6 +9414,8 @@
         }
 
         // ================= ADMIN: FORM & QUẢN TRỊ =================
+        let _isLoadingCharEdit = false;
+
         function toggleFastModeType(mode) {
             const status = document.getElementById('formCharStatus')?.value;
             const openTimeBox = document.getElementById('unlockedTimeSettingsBox');
@@ -9389,6 +9424,17 @@
             const isPaused = (mode === 'paused_limit');
             if (openTimeBox) openTimeBox.classList.toggle('hidden', isPaused);
             if (waitSection) waitSection.classList.toggle('hidden', isPaused);
+            if (!isPaused) {
+                const hEl = document.getElementById('formOpenHours');
+                const mEl = document.getElementById('formOpenMinutes');
+                const sEl = document.getElementById('formOpenSeconds');
+                const curTotal = (parseInt(hEl?.value) || 0) * 3600 + (parseInt(mEl?.value) || 0) * 60 + (parseInt(sEl?.value) || 0);
+                if (curTotal <= 0 && hEl && mEl && sEl) {
+                    hEl.value = '24';
+                    mEl.value = '0';
+                    sEl.value = '0';
+                }
+            }
         }
 
         function toggleStatusSettings(val) {
@@ -9399,6 +9445,12 @@
             if (val === 'unlocked_24h') {
                 if (fastChoiceBox) fastChoiceBox.classList.remove('hidden');
                 closedBox.classList.add('hidden');
+                if (!_isLoadingCharEdit) {
+                    const limitedRadio = document.querySelector('input[name="formFastModeType"][value="limited"]');
+                    if (limitedRadio && !document.querySelector('input[name="formFastModeType"]:checked')) {
+                        limitedRadio.checked = true;
+                    }
+                }
                 const mode = document.querySelector('input[name="formFastModeType"]:checked')?.value || 'limited';
                 toggleFastModeType(mode);
             } else if (val === 'closed') {
@@ -9636,9 +9688,11 @@
                         activeFastCharIdsInSession.delete(editId);
                     }
                     characters[idx].reopenTimestamp = null;
-                    savedChar = characters[idx];
+                    savedChar = JSON.parse(JSON.stringify(characters[idx]));
+                    characters[idx] = savedChar;
                     try {
                         await db.collection("characters").doc(editId).set(savedChar);
+                        if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
                     } catch (saveErr) {
                         console.error("Lỗi cập nhật Firebase:", saveErr);
                         alert("Không thể lưu lên máy chủ (có thể ảnh quá dung lượng 1MB hoặc mạng yếu). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
@@ -9675,6 +9729,7 @@
                 }
                 characters.push(newChar);
                 savedChar = newChar;
+                if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
 
                 triggerNotification("Nhân Vật Mới Đã Xuất Hiện!", `Palette vừa phác thảo xong "${name}". Hãy vào ngắm nhìn ngay nhé!`);
             }
