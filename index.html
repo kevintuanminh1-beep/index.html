@@ -5383,6 +5383,7 @@
                         id: ch.id,
                         name: ch.name,
                         status: ch.status,
+                        statusUpdatedAt: ch.statusUpdatedAt || 0,
                         fastChoiceMode: ch.fastChoiceMode || null,
                         fastStartTime: ch.fastStartTime || null,
                         fastEndTime: ch.fastEndTime || null,
@@ -5402,21 +5403,71 @@
                 } catch (_) {}
             };
 
-            window.recentCharStatusOverrides = window.recentCharStatusOverrides || {};
+            window.recentCharStatusOverrides = safeParseLocalJson('palette_recent_char_overrides', {});
+            window.saveRecentCharStatusOverride = function(charId, payload) {
+                if (!charId) return;
+                window.recentCharStatusOverrides[charId] = {
+                    ...payload,
+                    savedAt: Date.now()
+                };
+                try {
+                    localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides));
+                } catch (_) {}
+            };
 
             // 1. Tải nhân vật kèm bảo vệ chống cache cũ ghi đè trạng thái vừa sửa
             db.collection("characters").onSnapshot((snapshot) => {
                 if (snapshot.metadata.fromCache && charactersSyncedFromServer) return;
                 const nowMs = Date.now();
-                characters = [];
+                const prevById = {};
+                characters.forEach(c => { if (c && c.id) prevById[c.id] = c; });
+
+                let overridesChanged = false;
+                const nextCharacters = [];
                 snapshot.forEach(doc => {
                     const data = { id: doc.id, ...doc.data() };
                     const ov = window.recentCharStatusOverrides[doc.id];
-                    if (ov && (nowMs - ov.savedAt) < 15000) {
-                        data.status = ov.status;
+
+                    if (ov) {
+                        const serverConfirmed = !snapshot.metadata.fromCache
+                            && !snapshot.metadata.hasPendingWrites
+                            && (Number(data.statusUpdatedAt) || 0) >= (Number(ov.statusUpdatedAt) || 0);
+
+                        if (serverConfirmed || (nowMs - (ov.savedAt || 0)) >= 120000) {
+                            delete window.recentCharStatusOverrides[doc.id];
+                            overridesChanged = true;
+                        } else {
+                            data.status = ov.status;
+                            data.fastChoiceMode = ov.fastChoiceMode ?? data.fastChoiceMode ?? null;
+                            data.fastStartTime = ov.fastStartTime ?? null;
+                            data.fastEndTime = ov.fastEndTime ?? null;
+                            data.customDurationMs = ov.customDurationMs ?? null;
+                            data.unlockWaitMs = ov.unlockWaitMs ?? data.unlockWaitMs;
+                            data.statusUpdatedAt = ov.statusUpdatedAt ?? data.statusUpdatedAt;
+                        }
+                    } else if (snapshot.metadata.fromCache && prevById[doc.id]) {
+                        const prev = prevById[doc.id];
+                        if ((Number(prev.statusUpdatedAt) || 0) > (Number(data.statusUpdatedAt) || 0)) {
+                            data.status = prev.status;
+                            data.fastChoiceMode = prev.fastChoiceMode ?? null;
+                            data.fastStartTime = prev.fastStartTime ?? null;
+                            data.fastEndTime = prev.fastEndTime ?? null;
+                            data.customDurationMs = prev.customDurationMs ?? null;
+                            data.unlockWaitMs = prev.unlockWaitMs ?? data.unlockWaitMs;
+                            data.statusUpdatedAt = prev.statusUpdatedAt;
+                        }
                     }
-                    characters.push(data);
+
+                    nextCharacters.push(data);
                 });
+
+                if (overridesChanged) {
+                    try {
+                        localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides));
+                    } catch (_) {}
+                }
+
+                characters = nextCharacters;
                 if (!snapshot.metadata.fromCache) {
                     charactersSyncedFromServer = true;
                     window.saveCharactersCacheSafely(characters);
@@ -5453,9 +5504,13 @@
                 }
             });
 
+            window.hasLikesSynced = false;
             db.collection("likes").onSnapshot((snapshot) => {
                 charLikesData = {};
                 snapshot.forEach(doc => { charLikesData[doc.id] = doc.data().users || []; });
+                if (!snapshot.metadata.fromCache || snapshot.docs.length > 0) {
+                    window.hasLikesSynced = true;
+                }
                 updateHeartUI();
             }, (error) => {
                 if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
@@ -8262,7 +8317,7 @@
                     }
 
                     // Sau tròn 24 tiếng nếu chưa bấm thả tim thì khóa lại để user làm lại thủ tục lấy link
-                    if (currentUser && userUnlockedState[currentUser.username]?.[c.id] === true) {
+                    if (window.hasLikesSynced && currentUser && userUnlockedState[currentUser.username]?.[c.id] === true) {
                         const likes = charLikesData[c.id] || [];
                         if (!likes.includes(currentUser.username)) {
                             const unlockTime = userUnlockTimestamps[currentUser.username]?.[c.id];
@@ -9998,6 +10053,7 @@
         }
 
         function resetAdminForm() {
+            window._loadedCharFastSnapshot = null;
             document.getElementById('adminCharForm').reset();
             document.getElementById('editCharId').value = '';
             document.getElementById('adminModalTitle').innerText = "Bổ Sung Sắc Màu";
