@@ -1918,63 +1918,55 @@
                     </button>
                 </div>
 
-                <!-- 9. CÀI ĐẶT THỜI GIAN ĐẾM NGƯỢC MỞ LINK SAU KHI DUYỆT -->
-                <div id="unlockWaitSettingsSection">
-                    <label class="block font-bold text-pink-300 mb-1">9. Thời gian chờ mở link sau khi duyệt:</label>
-                    <div class="bg-black/40 border border-white/20 rounded-2xl p-3 space-y-2">
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="flex items-center gap-1.5 cursor-pointer bg-black/30 p-2 rounded-xl border border-white/10 hover:border-pink-300/40">
-                                <input type="radio" name="formUnlockWaitType" value="immediate" onchange="toggleWaitTimeInputs(this.value)" class="text-pink-500 accent-pink-500">
-                                <span class="text-xs font-bold text-emerald-300">⚡ Mở ngay lập tức (0 đếm ngược)</span>
-                            </label>
-                            <label class="flex items-center gap-1.5 cursor-pointer bg-black/30 p-2 rounded-xl border border-white/10 hover:border-pink-300/40">
-                                <input type="radio" name="formUnlockWaitType" value="countdown" checked onchange="toggleWaitTimeInputs(this.value)" class="text-pink-500 accent-pink-500">
-                                <span class="text-xs font-bold text-amber-300">⏳ Có đếm ngược</span>
-                            </label>
-                        </div>
+                <!-- CÀI ĐẶT RIÊNG CHO SẮC MÀU NHANH NHẸN -->
+                <div id="unlockedTimeSettingsBox" class="hidden bg-fuchsia-950/40 p-3.5 rounded-2xl border-2 border-fuchsia-300/60 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-fuchsia-200 uppercase tracking-wide">⚡ Cài đặt Sắc Màu Nhanh Nhẹn:</span>
+                        <span class="text-[10px] bg-fuchsia-500/30 text-fuchsia-200 px-2 py-0.5 rounded-full font-bold">Chọn 1 trong 2</span>
+                    </div>
 
-                        <div id="waitCountdownInputsBox" class="pt-1 border-t border-white/10 grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] text-pink-200 font-bold">Số giờ đếm ngược:</label>
-                                <input id="formWaitHours" type="number" min="0" value="2" class="w-full bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-white text-center font-bold">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-pink-200 font-bold">Số phút đếm ngược:</label>
-                                <input id="formWaitMinutes" type="number" min="0" max="59" value="0" class="w-full bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-white text-center font-bold">
-                            </div>
+                    <!-- LỰA CHỌN 1: CÓ ĐẾM NGƯỢC SỰ KIỆN N GIỜ -->
+                    <label class="block p-2.5 rounded-xl border border-fuchsia-300/30 bg-black/40 cursor-pointer hover:border-fuchsia-300 transition">
+                        <div class="flex items-center gap-2 mb-1">
+                            <input type="radio" name="formFastChoice" value="event_countdown" checked onchange="toggleFastChoiceUI(this.value)" class="accent-fuchsia-400">
+                            <span class="text-xs font-extrabold text-amber-300">1. Có đếm ngược sự kiện (Mở nhanh trong N giờ)</span>
+                        </div>
+                        <p class="text-[10.5px] text-sky-100/80 leading-relaxed pl-5">
+                            • <b>Trước khi gửi proof:</b> Hiện đồng hồ đếm ngược sự kiện.<br>
+                            • <b>Sau khi duyệt xong:</b> Mở link <b>NGAY LẬP TỨC</b> (0 chờ đếm ngược).<br>
+                            • Hết số giờ sự kiện bên dưới sẽ <b>tự động chuyển sang Chế độ 2</b>.
+                        </p>
+                        <div id="fastEventTimeInputs" class="mt-2 pl-5 pt-2 border-t border-white/10 flex items-center gap-2 text-[11px]">
+                            <span class="text-pink-200 font-bold">Thời gian sự kiện:</span>
+                            <input id="formOpenHours" type="number" min="0" value="24" class="w-14 bg-black/60 border border-white/20 rounded-lg px-2 py-1 text-center font-bold text-white"> Giờ
+                            <input id="formOpenMinutes" type="number" min="0" max="59" value="0" class="w-14 bg-black/60 border border-white/20 rounded-lg px-2 py-1 text-center font-bold text-white"> Phút
+                        </div>
+                    </label>
+
+                    <!-- LỰA CHỌN 2: KHÔNG ĐẾM NGƯỢC SỰ KIỆN (BẮT CHỜ SAU DUYỆT) -->
+                    <label class="block p-2.5 rounded-xl border border-amber-300/30 bg-black/40 cursor-pointer hover:border-amber-300 transition">
+                        <div class="flex items-center gap-2 mb-1">
+                            <input type="radio" name="formFastChoice" value="no_event_countdown" onchange="toggleFastChoiceUI(this.value)" class="accent-amber-400">
+                            <span class="text-xs font-extrabold text-sky-200">2. Không đếm ngược sự kiện (Chế độ chờ sau duyệt)</span>
+                        </div>
+                        <p class="text-[10.5px] text-sky-100/80 leading-relaxed pl-5">
+                            • <b>Trước khi gửi proof:</b> <b>KHÔNG HIỆN ĐỒNG HỒ</b> đếm ngược trên ảnh.<br>
+                            • <b>Sau khi duyệt xong:</b> Bắt buộc đếm ngược chờ đủ số giờ bên dưới mới có link (thoát web vẫn đếm tiếp chuẩn xác).
+                        </p>
+                    </label>
+
+                    <!-- SỐ GIỜ CHỜ MỞ LINK SAU KHI DUYỆT (Áp dụng cho Chế độ 2 hoặc sau khi Chế độ 1 hết hạn) -->
+                    <div class="p-2.5 rounded-xl bg-black/50 border border-white/15 flex items-center justify-between gap-2 text-xs">
+                        <span class="font-bold text-amber-200 text-[11px]">⏳ Số giờ bắt chờ mở link sau duyệt:</span>
+                        <div class="flex items-center gap-1.5 text-[11px]">
+                            <input id="formWaitHours" type="number" min="0" value="2" class="w-12 bg-black/70 border border-white/20 rounded-lg px-2 py-1 text-center font-bold text-white"> giờ
+                            <input id="formWaitMinutes" type="number" min="0" max="59" value="0" class="w-12 bg-black/70 border border-white/20 rounded-lg px-2 py-1 text-center font-bold text-white"> phút
                         </div>
                     </div>
                 </div>
 
-                <!-- CÀI ĐẶT THỜI GIAN MỞ CÓ HẠN GIỜ -->
-                <div id="unlockedTimeSettingsBox" class="hidden bg-black/30 p-3 rounded-2xl border border-fuchsia-300/40 space-y-2">
-                    <label class="block font-bold text-fuchsia-300">Cài đặt thời gian mở link:</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <label class="text-[10px] text-sky-200">Giờ:</label>
-                            <input id="formOpenHours" type="number" min="0" value="24" class="w-full bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-white text-center font-bold">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-sky-200">Phút:</label>
-                            <input id="formOpenMinutes" type="number" min="0" max="59" value="0" class="w-full bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-white text-center font-bold">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-sky-200">Giây:</label>
-                            <input id="formOpenSeconds" type="number" min="0" max="59" value="0" class="w-full bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-white text-center font-bold">
-                        </div>
-                    </div>
-                    <div class="pt-2 border-t border-white/10 space-y-1.5">
-                        <label class="block text-[11px] font-bold text-pink-200">Sau khi hết giới hạn nhanh nhẹn trên:</label>
-                        <label class="flex items-start gap-2 cursor-pointer bg-black/35 p-2 rounded-xl border border-white/10 hover:border-pink-300/40">
-                            <input type="radio" name="formAfterFastMode" value="keep" checked onchange="toggleAfterFastMode(this.value)" class="mt-0.5 accent-pink-500">
-                            <span class="text-[11px] text-sky-100 leading-snug"><b class="text-emerald-300">Không add thêm giờ đếm ngược</b> (Vẫn giữ nguyên như vậy, không chuyển sang khóa hay đếm ngược lấy link)</span>
-                        </label>
-                        <label class="flex items-start gap-2 cursor-pointer bg-black/35 p-2 rounded-xl border border-white/10 hover:border-pink-300/40">
-                            <input type="radio" name="formAfterFastMode" value="countdown" onchange="toggleAfterFastMode(this.value)" class="mt-0.5 accent-amber-400">
-                            <span class="text-[11px] text-sky-100 leading-snug"><b class="text-amber-300">Có add thêm giờ đếm ngược</b> (Hết giờ trên sẽ chuyển sang đếm ngược lấy link sau duyệt)</span>
-                        </label>
-                    </div>
-                </div>
+                <!-- 9. CÀI ĐẶT CHO CHAR THƯỜNG (Ẩn khi chọn Nhanh Nhẹn) -->
+                <div id="unlockWaitSettingsSection" class="hidden"></div>
 
                 <!-- CÀI ĐẶT ĐANG FIX -->
                 <div id="closedSettingsBox" class="hidden bg-red-500/10 p-3 rounded-2xl border border-red-300/30 text-[11px] text-red-200">
@@ -4066,18 +4058,25 @@
 
         function isFastCharInInstantWindow(c) {
             if (!c || c.status !== 'unlocked_24h') return false;
-            if (c.fastModeType === 'paused_limit') return false;
+            // Nếu admin chủ động chọn chế độ "Không đếm ngược sự kiện" -> không bao giờ hiện đồng hồ trước proof
+            if (c.fastChoiceMode === 'no_event_countdown') return false;
             const endMs = getFastCharEndMs(c);
+            // Giai đoạn 1: Chỉ hiện đồng hồ và mở ngay khi N giờ sự kiện chưa hết
             if (endMs > 0) return Date.now() < endMs;
-            return true;
+            return false;
         }
 
         function isFastCharOpensImmediately(c) {
             if (!c || c.status !== 'unlocked_24h') return false;
-            if (isFastCharInInstantWindow(c)) return true;
-            if (c.afterFastMode === 'keep') return true;
-            if (typeof c.unlockWaitMs === 'number' && c.unlockWaitMs <= 0) return true;
-            return false;
+            // Nếu đang trong N giờ sự kiện -> Duyệt xong là Mở ngay lập tức (0 chờ đếm ngược)
+            return isFastCharInInstantWindow(c);
+        }
+
+        function toggleFastChoiceUI(val) {
+            const timeBox = document.getElementById('fastEventTimeInputs');
+            if (timeBox) {
+                timeBox.classList.toggle('hidden', val === 'no_event_countdown');
+            }
         }
 
         function isFastCharInCountdownPhase(c) {
@@ -5882,14 +5881,14 @@
                 const totalMins = Math.round(fastChar.customDurationMs / 60000);
                 durationStr = totalMins >= 60 ? `${Math.round(totalMins / 6) / 10} giờ` : `${totalMins} phút`;
             }
-            const hasCountdownAfter = Boolean(fastChar && (isFastCharInCountdownPhase(fastChar) || (fastChar.afterFastMode === 'countdown' && Number(fastChar.unlockWaitMs) > 0)));
-            const waitMs = (fastChar && typeof fastChar.unlockWaitMs === 'number') ? fastChar.unlockWaitMs : 7200000;
+            const isNoEvent = fastChar && !isFastCharInInstantWindow(fastChar);
+            const waitMs = (fastChar && typeof fastChar.unlockWaitMs === 'number' && fastChar.unlockWaitMs > 0) ? fastChar.unlockWaitMs : 7200000;
             const waitLabel = waitMs >= 3600000 ? `${Math.round(waitMs / 3600000 * 10) / 10} tiếng` : `${Math.round(waitMs / 60000)} phút`;
 
-            if (hasCountdownAfter) {
-                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới (không cần feedback hay join Discord).<br>• <b>Trong ${durationStr} đầu:</b> Nộp ảnh Facebook được duyệt thành công sẽ <b>mở khóa link ngay lập tức</b>.<br>• <b>Sau ${durationStr}:</b> Nhân vật sẽ chuyển sang chế độ đếm ngược ${waitLabel} sau khi duyệt ảnh Facebook để mở link.`;
+            if (isNoEvent) {
+                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt tại Sắc Màu Nhanh Nhẹn (không cần feedback hay join Discord).<br>• <b>Cách lấy:</b> Thả tim và nộp ảnh Facebook hợp lệ, sau đó hệ thống sẽ đếm ngược <b>${waitLabel}</b> để mở khóa link (thoát web vẫn đếm tiếp).`;
             } else {
-                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới (không cần feedback hay join Discord).<br>• <b>Cách lấy:</b> Thả tim và nộp ảnh Facebook hợp lệ sẽ được <b>mở khóa link ngay lập tức</b> nhé!`;
+                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới (không cần feedback hay join Discord).<br>• <b>Trong ${durationStr} đầu:</b> Nộp ảnh Facebook được duyệt thành công sẽ <b>mở khóa link ngay lập tức</b>.<br>• <b>Sau ${durationStr}:</b> Nhân vật sẽ tự động chuyển sang chế độ đếm ngược ${waitLabel} sau khi duyệt ảnh Facebook để mở link.`;
             }
         }
 
@@ -8069,16 +8068,16 @@
 
                 const inInstantWindow = isFastCharInInstantWindow(c);
                 const opensImmediately = isFastCharOpensImmediately(c);
-                const wMs = (typeof c.unlockWaitMs === 'number') ? c.unlockWaitMs : 7200000;
+                const wMs = (typeof c.unlockWaitMs === 'number' && c.unlockWaitMs > 0) ? c.unlockWaitMs : 7200000;
                 const wLabel = wMs >= 3600000 ? `${Math.round(wMs / 3600000 * 10) / 10} tiếng` : `${Math.round(wMs / 60000)} phút`;
-                const noteHtml = opensImmediately
-                    ? "Lưu ý: Sau khi duyệt ảnh Facebook thành công, link sẽ mở khóa NGAY LẬP TỨC để bạn lấy link nhé!"
-                    : `Lưu ý: Đã hết thời gian mở ngay! Sau khi duyệt ảnh Facebook thành công, hệ thống sẽ đếm ngược ${wLabel} để mở link. Bạn có thể out ra và quay trở lại sau để lấy link nhé.`;
+                const noteHtml = inInstantWindow
+                    ? "✨ Đang trong đợt mở nhanh: Duyệt ảnh Facebook thành công là mở khóa link NGAY LẬP TỨC không cần chờ!"
+                    : `⏳ Đã hết đợt mở nhanh: Sau khi duyệt ảnh Facebook, hệ thống sẽ đếm ngược ${wLabel} để mở link (thoát web vẫn đếm tiếp chuẩn xác).`;
 
                 card.innerHTML = `
                     <div class="w-full text-center mb-4">
                         <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[10px] px-3.5 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                            ${opensImmediately ? 'Đang mở nhanh · Duyệt mở ngay' : 'Chế độ đếm ngược mở link'}
+                            ${inInstantWindow ? 'Đang mở nhanh · Duyệt mở ngay' : 'Hết giờ mở nhanh · Đếm ngược chờ mở link'}
                         </span>
                         <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-1.5 flex-wrap">
                             <span class="char-pastel-0">${c.name}</span>
@@ -9604,10 +9603,14 @@
                 const uName = currentUser.username;
                 const uKey = uName.toLowerCase();
 
-                // Nếu đang trong N giờ hoặc chọn "Không add thêm giờ đếm ngược" -> mở luôn lập tức; ngược lại -> đếm ngược đã set
-                const waitMs = isFastCharOpensImmediately(fastTargetChar)
-                    ? 0
-                    : ((typeof fastTargetChar.unlockWaitMs === 'number') ? fastTargetChar.unlockWaitMs : (2 * 3600 * 1000));
+                // Giai đoạn 1 (Đang trong N giờ sự kiện): waitMs = 0 (Mở luôn)
+                // Giai đoạn 2 (Hết N giờ hoặc chọn Chế độ 2 Không đếm ngược sự kiện): Bắt buộc đếm ngược chờ mở link
+                let waitMs = 0;
+                if (!isFastCharInInstantWindow(fastTargetChar)) {
+                    waitMs = (typeof fastTargetChar.unlockWaitMs === 'number' && fastTargetChar.unlockWaitMs > 0)
+                        ? fastTargetChar.unlockWaitMs
+                        : (2 * 3600 * 1000);
+                }
 
                 if (waitMs <= 0) {
                     // ================= TRƯỜNG HỢP 1: MỞ LUÔN LẬP TỨC (0 ĐẾM NGƯỢC) =================
@@ -9653,10 +9656,12 @@
                     const unlockEndTime = Date.now() + waitMs;
 
                     if (!userUnlockTimers[uName]) userUnlockTimers[uName] = {};
+                    if (!userUnlockTimers[uKey]) userUnlockTimers[uKey] = {};
                     userUnlockTimers[uName][fastTargetChar.id] = unlockEndTime;
+                    userUnlockTimers[uKey][fastTargetChar.id] = unlockEndTime;
                     localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
 
-                    // Lưu trực tiếp lên Firebase để khi out ra hoặc đổi thiết bị vẫn giữ nguyên đếm ngược
+                    // Bắt buộc lưu vĩnh viễn lên Firebase: user có thoát web, tắt máy vẫn đếm tiếp chuẩn xác
                     await db.collection("unlock_timers").doc(uKey).set({
                         [fastTargetChar.id]: unlockEndTime
                     }, { merge: true });
@@ -9742,29 +9747,15 @@
         function toggleStatusSettings(val) {
             const openTimeBox = document.getElementById('unlockedTimeSettingsBox');
             const closedBox = document.getElementById('closedSettingsBox');
-            const waitSection = document.getElementById('unlockWaitSettingsSection');
             if (val === 'unlocked_24h') {
-                openTimeBox.classList.remove('hidden');
-                closedBox.classList.add('hidden');
-                const hEl = document.getElementById('formOpenHours');
-                const mEl = document.getElementById('formOpenMinutes');
-                const sEl = document.getElementById('formOpenSeconds');
-                const curTotal = (parseInt(hEl?.value) || 0) * 3600 + (parseInt(mEl?.value) || 0) * 60 + (parseInt(sEl?.value) || 0);
-                if (curTotal <= 0 && hEl && mEl && sEl) {
-                    hEl.value = '24';
-                    mEl.value = '0';
-                    sEl.value = '0';
-                }
-                const afterMode = document.querySelector('input[name="formAfterFastMode"]:checked')?.value || 'keep';
-                toggleAfterFastMode(afterMode);
+                if (openTimeBox) openTimeBox.classList.remove('hidden');
+                if (closedBox) closedBox.classList.add('hidden');
             } else if (val === 'closed') {
-                openTimeBox.classList.add('hidden');
-                closedBox.classList.remove('hidden');
-                if (waitSection) waitSection.classList.add('hidden');
+                if (openTimeBox) openTimeBox.classList.add('hidden');
+                if (closedBox) closedBox.classList.remove('hidden');
             } else {
-                openTimeBox.classList.add('hidden');
-                closedBox.classList.add('hidden');
-                if (waitSection) waitSection.classList.remove('hidden');
+                if (openTimeBox) openTimeBox.classList.add('hidden');
+                if (closedBox) closedBox.classList.add('hidden');
             }
         }
 
@@ -9823,18 +9814,20 @@
             document.getElementById('formCharFileName').innerText = "Chưa có file";
             document.getElementById('unlockedTimeSettingsBox').classList.add('hidden');
             document.getElementById('closedSettingsBox').classList.add('hidden');
-            const keepRadio = document.querySelector('input[name="formAfterFastMode"][value="keep"]');
-            if (keepRadio) keepRadio.checked = true;
-            const waitSection = document.getElementById('unlockWaitSettingsSection');
-            if (waitSection) waitSection.classList.remove('hidden');
             setFormCharNewState(false);
 
-            // Mặc định cài đếm ngược 2 tiếng
-            const countdownRadio = document.querySelector('input[name="formUnlockWaitType"][value="countdown"]');
-            if (countdownRadio) countdownRadio.checked = true;
-            toggleWaitTimeInputs('countdown');
-            document.getElementById('formWaitHours').value = '2';
-            document.getElementById('formWaitMinutes').value = '0';
+            const choice1 = document.querySelector('input[name="formFastChoice"][value="event_countdown"]');
+            if (choice1) choice1.checked = true;
+            toggleFastChoiceUI('event_countdown');
+
+            const oH = document.getElementById('formOpenHours');
+            const oM = document.getElementById('formOpenMinutes');
+            const wH = document.getElementById('formWaitHours');
+            const wM = document.getElementById('formWaitMinutes');
+            if (oH) oH.value = '24';
+            if (oM) oM.value = '0';
+            if (wH) wH.value = '2';
+            if (wM) wM.value = '0';
 
             adminSelectedTags = [];
             renderAdminCategories();
@@ -9930,31 +9923,15 @@
             const status = document.getElementById('formCharStatus').value;
             const isNew = document.getElementById('formCharIsNew')?.value === 'true';
 
-            const fastModeType = null;
-            const afterFastMode = (status === 'unlocked_24h')
-                ? (document.querySelector('input[name="formAfterFastMode"]:checked')?.value || 'keep')
-                : null;
-            const openH = parseInt(document.getElementById('formOpenHours').value) || 0;
-            const openM = parseInt(document.getElementById('formOpenMinutes').value) || 0;
-            const openS = parseInt(document.getElementById('formOpenSeconds').value) || 0;
-            const customDurationMs = (openH * 3600 + openM * 60 + openS) * 1000 || (24 * 3600 * 1000);
+            const fastChoice = document.querySelector('input[name="formFastChoice"]:checked')?.value || 'event_countdown';
+            const openH = parseInt(document.getElementById('formOpenHours')?.value) || 0;
+            const openM = parseInt(document.getElementById('formOpenMinutes')?.value) || 0;
+            const customDurationMs = (openH * 3600 + openM * 60) * 1000 || (24 * 3600 * 1000);
 
-            // Đọc cài đặt đếm ngược mở link (nếu ở Nhanh nhẹn chọn "Không add thêm giờ đếm ngược" thì giữ unlockWaitMs = 0)
-            const waitType = document.querySelector('input[name="formUnlockWaitType"]:checked')?.value || 'countdown';
-            let unlockWaitMs = 0;
-            if (status === 'unlocked_24h') {
-                if (afterFastMode === 'countdown' && waitType === 'countdown') {
-                    const waitH = parseInt(document.getElementById('formWaitHours').value) || 0;
-                    const waitM = parseInt(document.getElementById('formWaitMinutes').value) || 0;
-                    unlockWaitMs = (waitH * 3600 + waitM * 60) * 1000;
-                    if (unlockWaitMs <= 0) unlockWaitMs = 2 * 3600 * 1000;
-                }
-            } else if (status !== 'closed' && waitType === 'countdown') {
-                const waitH = parseInt(document.getElementById('formWaitHours').value) || 0;
-                const waitM = parseInt(document.getElementById('formWaitMinutes').value) || 0;
-                unlockWaitMs = (waitH * 3600 + waitM * 60) * 1000;
-                if (unlockWaitMs <= 0) unlockWaitMs = 2 * 3600 * 1000;
-            }
+            const waitH = parseInt(document.getElementById('formWaitHours')?.value) || 0;
+            const waitM = parseInt(document.getElementById('formWaitMinutes')?.value) || 0;
+            let unlockWaitMs = (waitH * 3600 + waitM * 60) * 1000;
+            if (unlockWaitMs <= 0) unlockWaitMs = 2 * 3600 * 1000; // Mặc định 2 tiếng chờ
 
             const uploadedImages = await Promise.all(imageFiles.map(file => compressUploadedImage(file, 1100, 0.7)));
             let imageSrc = uploadedImages[0] || (urlInput ? getSafeCatboxImgUrl(urlInput) : '');
@@ -9981,15 +9958,22 @@
                     characters[idx].tags = adminSelectedTags.length > 0 ? [...adminSelectedTags] : ['Mới'];
                     characters[idx].fbLink = fbLink;
                     characters[idx].aiStudioUrl = aiLink;
+                    const prevDuration = characters[idx].customDurationMs;
+                    const prevEndMs = getFastCharEndMs(characters[idx]);
                     characters[idx].status = status;
-                    characters[idx].fastModeType = fastModeType;
-                    characters[idx].afterFastMode = afterFastMode;
+                    characters[idx].fastChoiceMode = fastChoice;
+                    characters[idx].afterFastMode = null;
                     characters[idx].isNew = isNew;
                     characters[idx].unlockWaitMs = unlockWaitMs;
                     if (status === 'unlocked_24h') {
                         const nowMs = Date.now();
                         characters[idx].customDurationMs = customDurationMs;
-                        if (!characters[idx].fastStartTime || characters[idx].status !== 'unlocked_24h') {
+                        if (fastChoice === 'no_event_countdown') {
+                            // Chế độ 2: Không đếm ngược sự kiện -> đặt endMs = 0 để không hiện đồng hồ trên ảnh
+                            characters[idx].fastStartTime = 0;
+                            characters[idx].fastEndTime = 0;
+                        } else if (!characters[idx].fastStartTime || characters[idx].fastStartTime === 0 || prevDuration !== customDurationMs || nowMs >= prevEndMs) {
+                            // Bắt đầu đếm ngược mới nếu đổi từ Chế độ 2 sang, thay đổi số giờ, hoặc sự kiện cũ đã hết hạn
                             characters[idx].fastStartTime = nowMs;
                             characters[idx].fastEndTime = nowMs + customDurationMs;
                         }
@@ -10026,13 +10010,13 @@
                     fbLink,
                     aiStudioUrl: aiLink,
                     status,
-                    fastModeType,
-                    afterFastMode,
+                    fastChoiceMode: fastChoice,
+                    afterFastMode: null,
                     isNew,
                     unlockWaitMs,
                     customDurationMs: (status === 'unlocked_24h') ? customDurationMs : null,
-                    fastStartTime: (status === 'unlocked_24h') ? Date.now() : null,
-                    fastEndTime: (status === 'unlocked_24h') ? (Date.now() + customDurationMs) : null,
+                    fastStartTime: (status === 'unlocked_24h' && fastChoice === 'event_countdown') ? Date.now() : 0,
+                    fastEndTime: (status === 'unlocked_24h' && fastChoice === 'event_countdown') ? (Date.now() + customDurationMs) : 0,
                     reopenTimestamp: null
                 };
                 try {
@@ -10107,34 +10091,30 @@
             document.getElementById('formCharStatus').value = effectiveStatus;
             setFormCharNewState(Boolean(c.isNew));
 
-            // Đổ dữ liệu cài đặt đếm ngược
-            const waitMs = (typeof c.unlockWaitMs === 'number') ? c.unlockWaitMs : (2 * 3600 * 1000);
-            if (waitMs <= 0) {
-                const immediateRadio = document.querySelector('input[name="formUnlockWaitType"][value="immediate"]');
-                if (immediateRadio) immediateRadio.checked = true;
-                toggleWaitTimeInputs('immediate');
-                document.getElementById('formWaitHours').value = '0';
-                document.getElementById('formWaitMinutes').value = '0';
-            } else {
-                const countdownRadio = document.querySelector('input[name="formUnlockWaitType"][value="countdown"]');
-                if (countdownRadio) countdownRadio.checked = true;
-                toggleWaitTimeInputs('countdown');
-                const totalMins = Math.floor(waitMs / 60000);
-                document.getElementById('formWaitHours').value = Math.floor(totalMins / 60);
-                document.getElementById('formWaitMinutes').value = totalMins % 60;
-            }
+            // Đổ dữ liệu số giờ chờ
+            const waitMs = (typeof c.unlockWaitMs === 'number' && c.unlockWaitMs > 0) ? c.unlockWaitMs : (2 * 3600 * 1000);
+            const totalWaitMins = Math.floor(waitMs / 60000);
+            const wHEl = document.getElementById('formWaitHours');
+            const wMEl = document.getElementById('formWaitMinutes');
+            if (wHEl) wHEl.value = Math.floor(totalWaitMins / 60);
+            if (wMEl) wMEl.value = totalWaitMins % 60;
 
-            const savedAfterMode = (c.afterFastMode === 'countdown' || (!c.afterFastMode && typeof c.unlockWaitMs === 'number' && c.unlockWaitMs > 0)) ? 'countdown' : 'keep';
-            const afterRadio = document.querySelector(`input[name="formAfterFastMode"][value="${savedAfterMode}"]`);
-            if (afterRadio) afterRadio.checked = true;
+            // Đổ lựa chọn Chế độ 1 hoặc Chế độ 2
+            const savedChoice = (c.fastChoiceMode === 'no_event_countdown' || (c.fastEndTime === 0 && c.fastStartTime === 0))
+                ? 'no_event_countdown'
+                : 'event_countdown';
+            const choiceRadio = document.querySelector(`input[name="formFastChoice"][value="${savedChoice}"]`);
+            if (choiceRadio) choiceRadio.checked = true;
+            toggleFastChoiceUI(savedChoice);
 
             toggleStatusSettings(effectiveStatus);
 
             if (effectiveStatus === 'unlocked_24h' && c.customDurationMs) {
-                const totalSec = Math.floor(c.customDurationMs / 1000);
-                document.getElementById('formOpenHours').value = Math.floor(totalSec / 3600);
-                document.getElementById('formOpenMinutes').value = Math.floor((totalSec % 3600) / 60);
-                document.getElementById('formOpenSeconds').value = totalSec % 60;
+                const totalMins = Math.floor(c.customDurationMs / 60000);
+                const oH = document.getElementById('formOpenHours');
+                const oM = document.getElementById('formOpenMinutes');
+                if (oH) oH.value = Math.floor(totalMins / 60);
+                if (oM) oM.value = totalMins % 60;
             }
 
             adminSelectedTags = c.tags ? [...c.tags] : [];
