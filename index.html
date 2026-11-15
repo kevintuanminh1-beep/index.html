@@ -1361,6 +1361,8 @@
             <p class="text-xs text-sky-100/80 mt-1">Nhanh tay lấy link ngay trong ngày khi Palette mở đợt nhé!</p>
         </div>
 
+        <div id="fastScreenSampleContainer" class="w-full max-w-sm px-2 mb-4 hidden text-xs"></div>
+
         <div id="fastCharCenterBox" class="w-full px-2 flex flex-col items-center justify-center"></div>
     </div>
 
@@ -1626,6 +1628,8 @@
                 <span class="pastel-fast-wave font-black">Tô Màu</span>: Dành cho những bạn muốn làm thủ tục để lấy link ngay mà không cần phải sưu tầm Bút Chì Màu.
             </div>
 
+            <div id="guideProofSamplesContainer" class="hidden mb-4 space-y-2 text-xs"></div>
+
             <div class="bg-white/5 border border-white/15 rounded-2xl p-3.5 mb-4 text-xs space-y-2">
                 <h4 class="font-extrabold text-amber-300 uppercase">BƯỚC CHUNG</h4>
                 <p>1. <b>Vào Web</b> ➔ Bấm <b>Đăng nhập bằng Discord</b> (server: <a href="https://discord.gg/N9UyumkewK" target="_blank" class="server-highlight-link font-extrabold underline">Bảng Màu Nhỏ Của Palette</a>).</p>
@@ -1724,6 +1728,7 @@
                         </label>
                         <span id="proofFbImgName" class="text-[11px] text-sky-200/70 truncate flex-1">Chưa chọn ảnh</span>
                     </div>
+                    <div id="normalFbSampleContainer" class="mt-2.5 hidden"></div>
                 </div>
 
                 <div class="bg-black/25 p-3 rounded-2xl border border-white/10">
@@ -1736,6 +1741,7 @@
                         <span id="proofDcImgName" class="text-[11px] text-sky-200/70 truncate flex-1">Chưa chọn ảnh</span>
                         <button type="button" id="clearDcBtn" onclick="clearDcProofSelection()" class="hidden text-[10px] text-red-300 hover:text-white underline shrink-0">Xóa</button>
                     </div>
+                    <div id="normalDcSampleContainer" class="mt-2.5 hidden"></div>
                 </div>
             </div>
 
@@ -1817,6 +1823,7 @@
                 <p class="text-[10px] text-sky-200/60 mt-2 leading-relaxed italic">
                     * Yêu cầu ảnh Facebook: Phải thấy rõ tên Page <b>Palette Số Hóa</b>, đúng tag của nhân vật và nút đã thả tim (hoặc Like).
                 </p>
+                <div id="fastFbSampleContainer" class="mt-2.5 hidden"></div>
             </div>
 
             <button id="fastSubmitBtn" onclick="processFastProofVerification()" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 to-pink-600 font-extrabold text-sm py-2.5 rounded-xl shadow-lg flex items-center justify-center gap-2">
@@ -1956,6 +1963,17 @@
                             <input id="formOpenSeconds" type="number" min="0" max="59" value="0" class="w-full bg-black/50 border border-white/20 rounded-xl px-2.5 py-1.5 text-white text-center font-bold">
                         </div>
                     </div>
+                    <div class="pt-2 border-t border-white/10 space-y-1.5">
+                        <label class="block text-[11px] font-bold text-pink-200">Sau khi hết giới hạn nhanh nhẹn trên:</label>
+                        <label class="flex items-start gap-2 cursor-pointer bg-black/35 p-2 rounded-xl border border-white/10 hover:border-pink-300/40">
+                            <input type="radio" name="formAfterFastMode" value="keep" checked onchange="toggleAfterFastMode(this.value)" class="mt-0.5 accent-pink-500">
+                            <span class="text-[11px] text-sky-100 leading-snug"><b class="text-emerald-300">Không add thêm giờ đếm ngược</b> (Vẫn giữ nguyên như vậy, không chuyển sang khóa hay đếm ngược lấy link)</span>
+                        </label>
+                        <label class="flex items-start gap-2 cursor-pointer bg-black/35 p-2 rounded-xl border border-white/10 hover:border-pink-300/40">
+                            <input type="radio" name="formAfterFastMode" value="countdown" onchange="toggleAfterFastMode(this.value)" class="mt-0.5 accent-amber-400">
+                            <span class="text-[11px] text-sky-100 leading-snug"><b class="text-amber-300">Có add thêm giờ đếm ngược</b> (Hết giờ trên sẽ chuyển sang đếm ngược lấy link sau duyệt)</span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- CÀI ĐẶT ĐANG FIX -->
@@ -1976,6 +1994,13 @@
             <div class="border-t border-white/15 pt-3">
                 <h4 class="text-xs font-bold text-sky-200 mb-2">Danh sách nhân vật (Bấm sửa / xóa):</h4>
                 <div id="adminExistingCharList" class="space-y-2 max-h-44 overflow-y-auto pr-1"></div>
+            </div>
+
+            <div class="border-t border-white/15 pt-3 mt-4 space-y-2">
+                <h4 class="text-xs font-bold text-pink-300 flex items-center gap-1.5">
+                    <span>📸 Ảnh Mẫu Nộp Proof (Để user xem và làm theo):</span>
+                </h4>
+                <div id="adminProofSamplesPanel" class="space-y-2 text-xs"></div>
             </div>
         </div>
     </div>
@@ -4047,9 +4072,17 @@
             return true;
         }
 
+        function isFastCharOpensImmediately(c) {
+            if (!c || c.status !== 'unlocked_24h') return false;
+            if (isFastCharInInstantWindow(c)) return true;
+            if (c.afterFastMode === 'keep') return true;
+            if (typeof c.unlockWaitMs === 'number' && c.unlockWaitMs <= 0) return true;
+            return false;
+        }
+
         function isFastCharInCountdownPhase(c) {
             if (!c || c.status !== 'unlocked_24h') return false;
-            return !isFastCharInInstantWindow(c);
+            return !isFastCharOpensImmediately(c);
         }
 
         function isFastCharActive(c) {
@@ -5397,6 +5430,21 @@
                 }
             }, () => {});
 
+            db.collection("settings").doc("proof_samples").onSnapshot((doc) => {
+                if (doc.exists && doc.data()?.samples) {
+                    const s = doc.data().samples;
+                    proofSamples = {
+                        normalFb: Array.isArray(s.normalFb) ? s.normalFb : [],
+                        normalDcGaoCoi: Array.isArray(s.normalDcGaoCoi) ? s.normalDcGaoCoi : [],
+                        normalDcTanThu: Array.isArray(s.normalDcTanThu) ? s.normalDcTanThu : [],
+                        fastFb: Array.isArray(s.fastFb) ? s.fastFb : []
+                    };
+                    try { localStorage.setItem('palette_proof_samples', JSON.stringify(proofSamples)); } catch (_) {}
+                    renderProofSampleBoxes();
+                    renderAdminProofSamplesPanel();
+                }
+            }, () => {});
+
             db.collection("settings").doc("main").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
@@ -5792,6 +5840,8 @@
             updateFaqButtonVisibility();
 
             customMenuIcons = { ...customMenuIcons, ...safeParseLocalJson('palette_custom_menu_icons', {}) };
+            const cachedSamples = safeParseLocalJson('palette_proof_samples', null);
+            if (cachedSamples) proofSamples = { ...proofSamples, ...cachedSamples };
             updateNotificationUI();
             updateFastColorSubtitle();
             updateRegisteredUsersCountUI();
@@ -5810,13 +5860,15 @@
                 const totalMins = Math.round(fastChar.customDurationMs / 60000);
                 durationStr = totalMins >= 60 ? `${Math.round(totalMins / 6) / 10} giờ` : `${totalMins} phút`;
             }
+            const hasCountdownAfter = Boolean(fastChar && (isFastCharInCountdownPhase(fastChar) || (fastChar.afterFastMode === 'countdown' && Number(fastChar.unlockWaitMs) > 0)));
             const waitMs = (fastChar && typeof fastChar.unlockWaitMs === 'number') ? fastChar.unlockWaitMs : 7200000;
             const waitLabel = waitMs >= 3600000 ? `${Math.round(waitMs / 3600000 * 10) / 10} tiếng` : `${Math.round(waitMs / 60000)} phút`;
-            const afterNote = waitMs <= 0
-                ? "Sau khi hết đợt mở nhanh vẫn tiếp tục mở khóa ngay lập tức khi nộp ảnh Facebook!"
-                : `Sau khi hết ${durationStr} mở nhanh, nhân vật sẽ chuyển sang chế độ đếm ngược ${waitLabel} sau khi duyệt ảnh Facebook để mở link.`;
 
-            descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới (không cần feedback hay join Discord).<br>• <b>Trong ${durationStr} đầu:</b> Nộp ảnh Facebook được duyệt thành công sẽ <b>mở khóa link ngay lập tức</b>.<br>• <b>Sau ${durationStr}:</b> ${afterNote}`;
+            if (hasCountdownAfter) {
+                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới (không cần feedback hay join Discord).<br>• <b>Trong ${durationStr} đầu:</b> Nộp ảnh Facebook được duyệt thành công sẽ <b>mở khóa link ngay lập tức</b>.<br>• <b>Sau ${durationStr}:</b> Nhân vật sẽ chuyển sang chế độ đếm ngược ${waitLabel} sau khi duyệt ảnh Facebook để mở link.`;
+            } else {
+                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới (không cần feedback hay join Discord).<br>• <b>Cách lấy:</b> Thả tim và nộp ảnh Facebook hợp lệ sẽ được <b>mở khóa link ngay lập tức</b> nhé!`;
+            }
         }
 
         function openUserAccountModal() {
@@ -7837,6 +7889,7 @@
             if (isOwner) initOwnerSpecificListeners();
 
             renderComments();
+            renderProofSampleBoxes();
             updateFaqButtonVisibility();
         }
 
@@ -7890,10 +7943,10 @@
         function updateFastColorSubtitle() {
             const subtitleEl = document.getElementById('fastColorSubtitle');
             if (!subtitleEl) return;
-            const hasInstant = characters.some(c => isFastCharInInstantWindow(c));
+            const hasInstantOpen = characters.some(c => isFastCharOpensImmediately(c));
             const hasCountdownPhase = characters.some(c => isFastCharInCountdownPhase(c));
-            if (hasInstant) {
-                subtitleEl.innerText = "Hãy thả tim và vẽ đường cho tình yêu chạy để lấy link ngay trước khi chuyển sang đếm ngược.";
+            if (hasInstantOpen) {
+                subtitleEl.innerText = "Hãy thả tim và vẽ đường cho tình yêu chạy để lấy link ngay (không cần Discord).";
             } else if (hasCountdownPhase) {
                 subtitleEl.innerText = "Thả tim và nộp ảnh Facebook để đếm ngược nhận link (không cần Discord).";
             } else {
@@ -7958,18 +8011,17 @@
                 }
 
                 const inInstantWindow = isFastCharInInstantWindow(c);
+                const opensImmediately = isFastCharOpensImmediately(c);
                 const wMs = (typeof c.unlockWaitMs === 'number') ? c.unlockWaitMs : 7200000;
                 const wLabel = wMs >= 3600000 ? `${Math.round(wMs / 3600000 * 10) / 10} tiếng` : `${Math.round(wMs / 60000)} phút`;
-                const noteHtml = inInstantWindow
-                    ? "Lưu ý: Đang trong thời gian mở nhanh! Sau khi duyệt ảnh Facebook thành công, link sẽ mở khóa NGAY LẬP TỨC nhé!"
-                    : (wMs <= 0
-                        ? "Lưu ý: Sau khi duyệt ảnh Facebook thành công, link sẽ mở khóa NGAY LẬP TỨC để bạn lấy link nhé!"
-                        : `Lưu ý: Đã hết thời gian mở ngay! Sau khi duyệt ảnh Facebook thành công, hệ thống sẽ đếm ngược ${wLabel} để mở link. Bạn có thể out ra và quay trở lại sau để lấy link nhé.`);
+                const noteHtml = opensImmediately
+                    ? "Lưu ý: Sau khi duyệt ảnh Facebook thành công, link sẽ mở khóa NGAY LẬP TỨC để bạn lấy link nhé!"
+                    : `Lưu ý: Đã hết thời gian mở ngay! Sau khi duyệt ảnh Facebook thành công, hệ thống sẽ đếm ngược ${wLabel} để mở link. Bạn có thể out ra và quay trở lại sau để lấy link nhé.`;
 
                 card.innerHTML = `
                     <div class="w-full text-center mb-4">
                         <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[10px] px-3.5 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                            ${inInstantWindow ? 'Đang mở nhanh · Duyệt mở ngay' : 'Chế độ đếm ngược mở link'}
+                            ${opensImmediately ? 'Đang mở nhanh · Duyệt mở ngay' : 'Chế độ đếm ngược mở link'}
                         </span>
                         <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-1.5 flex-wrap">
                             <span class="char-pastel-0">${c.name}</span>
@@ -8212,11 +8264,12 @@
                     card.onclick = () => openCharDetail(c);
                     const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
                     const inInstant = isFastCharInInstantWindow(c);
+                    const opensImmediate = isFastCharOpensImmediately(c);
 
                     card.innerHTML = `
                         <div class="w-full text-center mb-3">
                             <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[9.5px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                                ${inInstant ? 'MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ' : 'MỚI NHẤT · ĐẾM NGƯỢC MỞ LINK'}
+                                ${inInstant ? 'MỚI NHẤT · MỞ KHÓA CÓ HẠN GIỜ' : (opensImmediate ? 'MỚI NHẤT · MỞ KHÓA NHANH' : 'MỚI NHẤT · ĐẾM NGƯỢC MỞ LINK')}
                             </span>
                             <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-2 flex-wrap">
                                 <span class="char-pastel-0">${c.name}</span>
@@ -8234,7 +8287,7 @@
                         </div>
                         <div class="w-full text-center">
                             <span class="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-black py-2.5 px-4 rounded-xl shadow-md">
-                                ${isUnlocked ? '🔓 Link đã mở khóa (Bấm để xem) ➔' : (inInstant ? 'Nhanh tay lấy link trước khi kết thúc ➔' : '⏳ Nộp ảnh Facebook để đếm ngược mở link ➔')}
+                                ${isUnlocked ? '🔓 Link đã mở khóa (Bấm để xem) ➔' : (opensImmediate ? 'Nhanh tay lấy link ngay ➔' : '⏳ Nộp ảnh Facebook để đếm ngược mở link ➔')}
                             </span>
                         </div>
                     `;
@@ -8259,7 +8312,7 @@
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <h3 class="text-base font-extrabold ${getPastelColorClass(index)}">${c.name}</h3>
                                 ${c.isNew ? '<span class="new-char-badge text-[9.5px]"><span class="green-pastel-wave">New</span></span>' : ''}
-                                ${isFastCharInInstantWindow(c) ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở có hạn</span>' : (isFastCharInCountdownPhase(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full font-bold">Đếm ngược mở link</span>' : '')}
+                                ${isFastCharOpensImmediately(c) ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.5 rounded-full font-bold">Mở nhanh</span>' : (isFastCharInCountdownPhase(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 border border-amber-300/40 px-1.5 py-0.5 rounded-full font-bold">Đếm ngược mở link</span>' : '')}
                                 ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-200 border border-red-300/40 px-1.5 py-0.5 rounded-full font-bold">Đang fix</span>' : ''}
                             </div>
                             <p class="text-xs text-sky-100/80 truncate mt-0.5">${c.subtitle}</p>
@@ -9373,9 +9426,8 @@
                 const uName = currentUser.username;
                 const uKey = uName.toLowerCase();
 
-                // Trong N giờ đầu (theo thời gian đã set) -> mở ngay lập tức; hết N giờ -> chuyển sang đếm ngược đã set (không khóa)
-                const inInstantWindow = isFastCharInInstantWindow(fastTargetChar);
-                const waitMs = inInstantWindow
+                // Nếu đang trong N giờ hoặc chọn "Không add thêm giờ đếm ngược" -> mở luôn lập tức; ngược lại -> đếm ngược đã set
+                const waitMs = isFastCharOpensImmediately(fastTargetChar)
                     ? 0
                     : ((typeof fastTargetChar.unlockWaitMs === 'number') ? fastTargetChar.unlockWaitMs : (2 * 3600 * 1000));
 
@@ -9495,6 +9547,20 @@
         }
 
         // ================= ADMIN: FORM & QUẢN TRỊ =================
+        function toggleAfterFastMode(mode) {
+            const status = document.getElementById('formCharStatus')?.value;
+            const waitSection = document.getElementById('unlockWaitSettingsSection');
+            if (status !== 'unlocked_24h') return;
+            if (mode === 'countdown') {
+                if (waitSection) waitSection.classList.remove('hidden');
+                const cdRadio = document.querySelector('input[name="formUnlockWaitType"][value="countdown"]');
+                if (cdRadio) cdRadio.checked = true;
+                toggleWaitTimeInputs('countdown');
+            } else {
+                if (waitSection) waitSection.classList.add('hidden');
+            }
+        }
+
         function toggleStatusSettings(val) {
             const openTimeBox = document.getElementById('unlockedTimeSettingsBox');
             const closedBox = document.getElementById('closedSettingsBox');
@@ -9502,7 +9568,6 @@
             if (val === 'unlocked_24h') {
                 openTimeBox.classList.remove('hidden');
                 closedBox.classList.add('hidden');
-                if (waitSection) waitSection.classList.remove('hidden');
                 const hEl = document.getElementById('formOpenHours');
                 const mEl = document.getElementById('formOpenMinutes');
                 const sEl = document.getElementById('formOpenSeconds');
@@ -9512,6 +9577,8 @@
                     mEl.value = '0';
                     sEl.value = '0';
                 }
+                const afterMode = document.querySelector('input[name="formAfterFastMode"]:checked')?.value || 'keep';
+                toggleAfterFastMode(afterMode);
             } else if (val === 'closed') {
                 openTimeBox.classList.add('hidden');
                 closedBox.classList.remove('hidden');
@@ -9539,6 +9606,7 @@
             resetAdminForm();
             renderAdminCategories();
             renderAdminExistingChars();
+            renderAdminProofSamplesPanel();
             document.getElementById('adminModal').classList.remove('hidden');
         }
 
@@ -9577,6 +9645,8 @@
             document.getElementById('formCharFileName').innerText = "Chưa có file";
             document.getElementById('unlockedTimeSettingsBox').classList.add('hidden');
             document.getElementById('closedSettingsBox').classList.add('hidden');
+            const keepRadio = document.querySelector('input[name="formAfterFastMode"][value="keep"]');
+            if (keepRadio) keepRadio.checked = true;
             const waitSection = document.getElementById('unlockWaitSettingsSection');
             if (waitSection) waitSection.classList.remove('hidden');
             setFormCharNewState(false);
@@ -9683,15 +9753,25 @@
             const isNew = document.getElementById('formCharIsNew')?.value === 'true';
 
             const fastModeType = null;
+            const afterFastMode = (status === 'unlocked_24h')
+                ? (document.querySelector('input[name="formAfterFastMode"]:checked')?.value || 'keep')
+                : null;
             const openH = parseInt(document.getElementById('formOpenHours').value) || 0;
             const openM = parseInt(document.getElementById('formOpenMinutes').value) || 0;
             const openS = parseInt(document.getElementById('formOpenSeconds').value) || 0;
             const customDurationMs = (openH * 3600 + openM * 60 + openS) * 1000 || (24 * 3600 * 1000);
 
-            // Đọc cài đặt đếm ngược mở link (không dùng khi Đang fix)
+            // Đọc cài đặt đếm ngược mở link (nếu ở Nhanh nhẹn chọn "Không add thêm giờ đếm ngược" thì giữ unlockWaitMs = 0)
             const waitType = document.querySelector('input[name="formUnlockWaitType"]:checked')?.value || 'countdown';
             let unlockWaitMs = 0;
-            if (status !== 'closed' && waitType === 'countdown') {
+            if (status === 'unlocked_24h') {
+                if (afterFastMode === 'countdown' && waitType === 'countdown') {
+                    const waitH = parseInt(document.getElementById('formWaitHours').value) || 0;
+                    const waitM = parseInt(document.getElementById('formWaitMinutes').value) || 0;
+                    unlockWaitMs = (waitH * 3600 + waitM * 60) * 1000;
+                    if (unlockWaitMs <= 0) unlockWaitMs = 2 * 3600 * 1000;
+                }
+            } else if (status !== 'closed' && waitType === 'countdown') {
                 const waitH = parseInt(document.getElementById('formWaitHours').value) || 0;
                 const waitM = parseInt(document.getElementById('formWaitMinutes').value) || 0;
                 unlockWaitMs = (waitH * 3600 + waitM * 60) * 1000;
@@ -9724,6 +9804,7 @@
                     characters[idx].aiStudioUrl = aiLink;
                     characters[idx].status = status;
                     characters[idx].fastModeType = fastModeType;
+                    characters[idx].afterFastMode = afterFastMode;
                     characters[idx].isNew = isNew;
                     characters[idx].unlockWaitMs = unlockWaitMs;
                     if (status === 'unlocked_24h') {
@@ -9764,6 +9845,7 @@
                     aiStudioUrl: aiLink,
                     status,
                     fastModeType,
+                    afterFastMode,
                     isNew,
                     unlockWaitMs,
                     customDurationMs: (status === 'unlocked_24h') ? customDurationMs : null,
@@ -9815,7 +9897,7 @@
                         <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-8 h-8 rounded-lg object-cover">
                         <span class="font-bold text-pink-200 truncate">${c.name}</span>
                         ${c.isNew ? '<span class="new-char-badge text-[9px]"><span class="green-pastel-wave">New</span></span>' : ''}
-                        ${isFastCharInInstantWindow(c) ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Mở có hạn</span>' : (isFastCharInCountdownPhase(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded">Đếm ngược</span>' : '')}
+                        ${isFastCharOpensImmediately(c) ? '<span class="text-[9px] bg-fuchsia-500/30 text-fuchsia-300 px-1 rounded">Mở nhanh</span>' : (isFastCharInCountdownPhase(c) ? '<span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded">Đếm ngược</span>' : '')}
                         ${c.status === 'closed' ? '<span class="text-[9px] bg-red-500/30 text-red-300 px-1 rounded">Đang fix</span>' : ''}
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
@@ -9859,6 +9941,10 @@
                 document.getElementById('formWaitHours').value = Math.floor(totalMins / 60);
                 document.getElementById('formWaitMinutes').value = totalMins % 60;
             }
+
+            const savedAfterMode = (c.afterFastMode === 'countdown' || (!c.afterFastMode && typeof c.unlockWaitMs === 'number' && c.unlockWaitMs > 0)) ? 'countdown' : 'keep';
+            const afterRadio = document.querySelector(`input[name="formAfterFastMode"][value="${savedAfterMode}"]`);
+            if (afterRadio) afterRadio.checked = true;
 
             toggleStatusSettings(effectiveStatus);
 
@@ -10522,6 +10608,7 @@
         function openColorGuide(fromHome) {
             isOpenedFromHome = fromHome;
             updateGuide24hText();
+            renderProofSampleBoxes();
             const fastSec = document.getElementById('guideFastSection');
             const pencilSec = document.getElementById('guidePencilSection');
             if (fastSec) fastSec.classList.toggle('hidden', !fromHome);
@@ -10543,6 +10630,7 @@
             closeProofModal();
             activeProofType = userType;
             document.getElementById('proofSubtitle').innerText = `Dành cho ${userType}: Đang duyệt mở khóa cho [${activeChar.name}]. Tải đủ ảnh bên dưới:`;
+            renderProofSampleBoxes();
             document.getElementById('proofPopup').classList.remove('hidden');
         }
 
@@ -10591,6 +10679,183 @@
             if (submitText) submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
         }
 
+        // ================= QUẢN LÝ & HIỂN THỊ ẢNH MẪU NỘP PROOF =================
+        let proofSamples = {
+            normalFb: [],
+            normalDcGaoCoi: [],
+            normalDcTanThu: [],
+            fastFb: []
+        };
+
+        const PROOF_SAMPLE_LABELS = {
+            normalFb: "1. Vẽ Đường - Ảnh mẫu Facebook",
+            normalDcGaoCoi: "2. Vẽ Đường - Discord (Gạo Cội)",
+            normalDcTanThu: "3. Vẽ Đường - Discord (Tân Thủ)",
+            fastFb: "4. Nhanh Nhẹn - Ảnh mẫu Facebook"
+        };
+
+        function buildProofSampleBoxHtml(slotKey, titleLabel) {
+            const isOwner = checkIsOwnerAccount();
+            const list = Array.isArray(proofSamples[slotKey]) ? proofSamples[slotKey] : [];
+            if (!isOwner && list.length === 0) return '';
+
+            const thumbsHtml = list.map((src, idx) => `
+                <div class="relative w-16 h-20 rounded-xl overflow-hidden border border-amber-300/60 bg-black/50 shrink-0 group">
+                    <img src="${getSafeCatboxImgUrl(src)}" alt="Ảnh mẫu" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(src)}')" onclick="openLightboxImage(this.src)" title="Chạm để phóng to ảnh mẫu" class="w-full h-full object-cover cursor-pointer hover:brightness-110 active:scale-95 transition">
+                    <span class="absolute bottom-0 inset-x-0 bg-black/75 text-[8px] font-black text-amber-200 text-center py-0.5 pointer-events-none">Mẫu ${idx + 1}</span>
+                    ${isOwner ? `<button type="button" onclick="event.stopPropagation(); removeProofSample('${slotKey}', ${idx})" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/85 hover:bg-red-500 text-white text-[9px] font-black flex items-center justify-center border border-white/30" title="Xóa ảnh mẫu này">✕</button>` : ''}
+                </div>
+            `).join('');
+
+            const ownerBtnsHtml = isOwner ? `
+                <div class="flex items-center gap-1.5 pt-1 flex-wrap">
+                    <label class="cursor-pointer bg-pink-500/25 hover:bg-pink-500/40 border border-pink-300/50 text-pink-100 font-bold px-2.5 py-1 rounded-lg text-[10px] active:scale-95 transition inline-flex items-center gap-1">
+                        + Thêm ảnh mẫu
+                        <input type="file" accept="image/*" class="hidden" onchange="uploadProofSampleFile(this, '${slotKey}')">
+                    </label>
+                    <button type="button" onclick="addProofSampleByUrl('${slotKey}')" class="bg-sky-500/20 hover:bg-sky-500/35 border border-sky-300/40 text-sky-100 font-bold px-2.5 py-1 rounded-lg text-[10px] active:scale-95 transition">
+                        🔗 Dán link
+                    </button>
+                </div>
+            ` : '';
+
+            return `
+                <div class="rounded-xl border border-amber-300/35 bg-amber-500/10 p-2.5 space-y-1.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[10.5px] font-extrabold text-amber-200 flex items-center gap-1">
+                            <span>📌 ${cmtEsc(titleLabel)}</span>
+                        </span>
+                        ${list.length > 0 ? '<span class="text-[9.5px] text-sky-200/75 italic shrink-0">Chạm để phóng to</span>' : ''}
+                    </div>
+                    ${list.length > 0
+                        ? `<div class="flex flex-wrap gap-2 pt-0.5">${thumbsHtml}</div>`
+                        : `<div class="text-[10px] text-sky-200/55 italic">Chưa có ảnh mẫu (User sẽ chưa thấy khung này).</div>`}
+                    ${ownerBtnsHtml}
+                </div>
+            `;
+        }
+
+        function renderProofSampleBoxes() {
+            const isOwner = checkIsOwnerAccount();
+            const guideBox = document.getElementById('guideProofSamplesContainer');
+            const fastScreenBox = document.getElementById('fastScreenSampleContainer');
+            const normalFbBox = document.getElementById('normalFbSampleContainer');
+            const normalDcBox = document.getElementById('normalDcSampleContainer');
+            const fastFbBox = document.getElementById('fastFbSampleContainer');
+
+            if (guideBox) {
+                const parts = [
+                    buildProofSampleBoxHtml('normalFb', 'Ảnh mẫu Facebook (Tô Màu / Vẽ Đường)'),
+                    buildProofSampleBoxHtml('normalDcGaoCoi', 'Ảnh mẫu Discord - Sắc Màu Gạo Cội'),
+                    buildProofSampleBoxHtml('normalDcTanThu', 'Ảnh mẫu Discord - Sắc Màu Tân Thủ')
+                ].filter(Boolean);
+                const html = parts.join('');
+                guideBox.innerHTML = html;
+                guideBox.classList.toggle('hidden', !html);
+            }
+            if (fastScreenBox) {
+                const html = buildProofSampleBoxHtml('fastFb', 'Ảnh mẫu Facebook - Sắc Màu Nhanh Nhẹn');
+                fastScreenBox.innerHTML = html;
+                fastScreenBox.classList.toggle('hidden', !html);
+            }
+            if (normalFbBox) {
+                const html = buildProofSampleBoxHtml('normalFb', 'Ảnh mẫu Facebook chuẩn (làm theo mẫu này)');
+                normalFbBox.innerHTML = html;
+                normalFbBox.classList.toggle('hidden', !html);
+            }
+            if (normalDcBox) {
+                const dcKey = (activeProofType === 'Sắc màu gạo cội') ? 'normalDcGaoCoi' : 'normalDcTanThu';
+                const dcTitle = `Ảnh mẫu Discord - ${activeProofType} (làm theo mẫu này)`;
+                const html = buildProofSampleBoxHtml(dcKey, dcTitle);
+                normalDcBox.innerHTML = html;
+                normalDcBox.classList.toggle('hidden', !html);
+            }
+            if (fastFbBox) {
+                const html = buildProofSampleBoxHtml('fastFb', 'Ảnh mẫu Facebook chuẩn (làm theo mẫu này)');
+                fastFbBox.innerHTML = html;
+                fastFbBox.classList.toggle('hidden', !html);
+            }
+            if (isOwner) renderAdminProofSamplesPanel();
+        }
+
+        function renderAdminProofSamplesPanel() {
+            const panel = document.getElementById('adminProofSamplesPanel');
+            if (!panel || !checkIsOwnerAccount()) return;
+            panel.innerHTML = Object.keys(PROOF_SAMPLE_LABELS)
+                .map(slotKey => buildProofSampleBoxHtml(slotKey, PROOF_SAMPLE_LABELS[slotKey]))
+                .join('');
+        }
+
+        async function saveProofSamplesToCloud(backupJson) {
+            try {
+                await db.collection("settings").doc("proof_samples").set({ samples: proofSamples }, { merge: true });
+                try { localStorage.setItem('palette_proof_samples', JSON.stringify(proofSamples)); } catch (_) {}
+                renderProofSampleBoxes();
+                renderAdminProofSamplesPanel();
+            } catch (err) {
+                console.error("Lỗi lưu ảnh mẫu:", err);
+                try { proofSamples = JSON.parse(backupJson); } catch (_) {}
+                const msg = String(err?.message || "");
+                if (msg.includes("exceeds the maximum allowed size")) {
+                    alert("❌ Tổng dung lượng ảnh mẫu vượt 1 MB! Hãy xóa bớt ảnh cũ hoặc dùng nút '🔗 Dán link' nhé.");
+                } else {
+                    alert("Chưa thể lưu ảnh mẫu: " + msg);
+                }
+            }
+        }
+
+        async function uploadProofSampleFile(input, slotKey) {
+            if (!checkIsOwnerAccount()) return;
+            const file = input?.files?.[0];
+            if (!file) return;
+            const list = Array.isArray(proofSamples[slotKey]) ? proofSamples[slotKey] : [];
+            if (list.length >= 3) {
+                alert("Mỗi mục tối đa 3 ảnh mẫu để web nhẹ và nhanh nhé!");
+                input.value = '';
+                return;
+            }
+            const backup = JSON.stringify(proofSamples);
+            try {
+                const compressed = await compressUploadedImage(file, 950, 0.72);
+                if (!compressed) throw new Error("Không đọc được ảnh này!");
+                if (!Array.isArray(proofSamples[slotKey])) proofSamples[slotKey] = [];
+                proofSamples[slotKey].push(compressed);
+                await saveProofSamplesToCloud(backup);
+                playPaletteTingSound();
+            } catch (err) {
+                alert("Lỗi tải ảnh mẫu: " + (err?.message || "Thử lại với ảnh JPG/PNG nhé!"));
+            } finally {
+                input.value = '';
+            }
+        }
+
+        async function addProofSampleByUrl(slotKey) {
+            if (!checkIsOwnerAccount()) return;
+            const list = Array.isArray(proofSamples[slotKey]) ? proofSamples[slotKey] : [];
+            if (list.length >= 3) {
+                alert("Mỗi mục tối đa 3 ảnh mẫu nhé!");
+                return;
+            }
+            const rawUrl = prompt("Dán đường link URL ảnh mẫu vào đây (Catbox / GitHub / link ảnh):");
+            if (!rawUrl || !rawUrl.trim()) return;
+            const cleanUrl = getRawCatboxUrl(rawUrl.trim());
+            const backup = JSON.stringify(proofSamples);
+            if (!Array.isArray(proofSamples[slotKey])) proofSamples[slotKey] = [];
+            proofSamples[slotKey].push(cleanUrl);
+            await saveProofSamplesToCloud(backup);
+            playPaletteTingSound();
+        }
+
+        async function removeProofSample(slotKey, idx) {
+            if (!checkIsOwnerAccount()) return;
+            if (!confirm("Xóa ảnh mẫu này?")) return;
+            const backup = JSON.stringify(proofSamples);
+            if (Array.isArray(proofSamples[slotKey])) {
+                proofSamples[slotKey].splice(idx, 1);
+                await saveProofSamplesToCloud(backup);
+            }
+        }
+
         // ================= XỬ LÝ MỞ & ĐÓNG POPUP SẮC MÀU NHANH NHẸN =================
         let fastTargetChar = null;
 
@@ -10629,6 +10894,7 @@
                 feedbackBox.innerHTML = '';
             }
 
+            renderProofSampleBoxes();
             const modal = document.getElementById('fastProofPopup');
             if (modal) modal.classList.remove('hidden');
             playPaletteTingSound();
@@ -10731,6 +10997,7 @@
             document.getElementById('storyScreen').classList.add('hidden');
             document.getElementById('charDetailScreen').classList.add('hidden');
             document.getElementById('fastColorScreen').classList.remove('hidden');
+            renderProofSampleBoxes();
             renderFastColorCenter();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
