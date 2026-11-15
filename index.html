@@ -1514,7 +1514,10 @@
                         <span id="commentCharCounter" class="text-[11px] font-mono text-sky-200/70 font-bold whitespace-nowrap shrink-0 text-right">0/1000 để Ping</span>
                     </div>
 
-                    <textarea id="mainCommentInput" rows="3" oninput="handleCommentInput(this)" placeholder="Cảm nghĩ hoặc bài Feedback trải nghiệm về character... (tối thiểu 1000 ký tự để dùng Ping nhận 3 Chì Màu)" class="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-sky-200/40 focus:outline-none focus:border-pink-400"></textarea>
+                    <textarea id="mainCommentInput" rows="3" oninput="handleCommentInput(this)" placeholder="Cảm nghĩ hoặc bài Feedback trải nghiệm về character... (tối thiểu 1000 ký tự để dùng Ping nhận 3 Chì Màu, không spam ký tự)" class="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-sky-200/40 focus:outline-none focus:border-pink-400"></textarea>
+                    <p class="text-[10.5px] text-amber-200/90 leading-relaxed bg-amber-500/10 border border-amber-300/25 rounded-xl px-2.5 py-1.5">
+                        📝 <b>Ghi chú:</b> Không spam ký tự (gõ lặp chữ, dấu câu hoặc ký tự vô nghĩa) để đủ 1000 ký tự Ping nhé!
+                    </p>
                     
                     <div class="flex items-center justify-between gap-1.5 pt-1">
                         <div class="flex items-center gap-1.5">
@@ -6202,19 +6205,113 @@
             } catch (_) {}
         }
 
-        // User bấm nút Help -> Gửi yêu cầu + ảnh qua mục Duyệt Link của Chủ Web
+        let isSendingHelpRequest = false;
+
+        function getHelpCharKey(charId) {
+            return String(charId || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+        }
+
+        function hasUserUsedHelpForChar(username, charId) {
+            if (!username || !charId) return false;
+            const uKey = username.toLowerCase();
+            const safeCharKey = getHelpCharKey(charId);
+            if (userPencilsData[uKey]?.helpUsedChars?.[safeCharKey] === true) return true;
+            try {
+                const localMap = JSON.parse(localStorage.getItem(`palette_help_used_${uKey}`) || '{}');
+                if (localMap[safeCharKey] === true) return true;
+            } catch (_) {}
+            return false;
+        }
+
+        async function markUserHelpUsedForChar(username, charId) {
+            if (!username || !charId) return;
+            const uKey = username.toLowerCase();
+            const safeCharKey = getHelpCharKey(charId);
+
+            try {
+                const localMap = JSON.parse(localStorage.getItem(`palette_help_used_${uKey}`) || '{}');
+                localMap[safeCharKey] = true;
+                localStorage.setItem(`palette_help_used_${uKey}`, JSON.stringify(localMap));
+            } catch (_) {}
+
+            if (!userPencilsData[uKey]) userPencilsData[uKey] = {};
+            if (!userPencilsData[uKey].helpUsedChars) userPencilsData[uKey].helpUsedChars = {};
+            userPencilsData[uKey].helpUsedChars[safeCharKey] = true;
+
+            try {
+                await db.collection("pencils").doc(uKey).set({
+                    helpUsedChars: { [safeCharKey]: true }
+                }, { merge: true });
+            } catch (_) {}
+        }
+
+        function buildHelpBoxHtml(btnId, charId) {
+            if (hasUserUsedHelpForChar(currentUser?.username, charId)) {
+                return `
+                    <div class="mt-2.5 pt-2.5 border-t border-red-300/30 space-y-1.5">
+                        <button type="button" disabled class="w-full bg-white/10 border border-white/20 text-sky-200/75 font-bold py-2 px-3 rounded-xl text-xs cursor-not-allowed">
+                            ✓ Bạn đã bấm SOS (Help) cho nhân vật này rồi (chỉ được bấm 1 lần)
+                        </button>
+                    </div>
+                `;
+            }
+            return `
+                <div class="mt-2.5 pt-2.5 border-t border-red-300/30 space-y-2">
+                    <p class="text-[11px] text-amber-200 leading-relaxed">
+                        Nếu bạn chắc chắn mình chụp đúng rồi mà hệ thống vẫn báo lỗi, hãy ấn nút <b>Help</b> này để Palette xem xét duyệt link lại cho bạn nhé! <span class="text-pink-200 font-bold">(Mỗi nhân vật chỉ được bấm 1 lần)</span>
+                    </p>
+                    <button type="button" id="${btnId}" onclick="sendManualHelpRequest('${btnId}')" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 px-3 rounded-xl text-xs shadow active:scale-95 transition flex items-center justify-center gap-1.5">
+                        <span>🆘 Help - Nhờ Palette duyệt lại link</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        // User bấm nút Help -> Gửi yêu cầu + ảnh qua mục Duyệt Link của Chủ Web (chỉ được 1 lần/nhân vật)
         async function sendManualHelpRequest(btnId) {
-            if (!currentUser || !lastFailedProofContext) return;
+            if (isSendingHelpRequest || !currentUser || !lastFailedProofContext) return;
+            const ctx = lastFailedProofContext;
             const btn = document.getElementById(btnId);
+
+            if (ctx.charId && hasUserUsedHelpForChar(currentUser.username, ctx.charId)) {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.className = "w-full bg-white/10 border border-white/20 text-sky-200/75 font-bold py-2 px-3 rounded-xl text-xs cursor-not-allowed";
+                    btn.innerText = "✓ Bạn đã bấm SOS (Help) cho nhân vật này rồi (chỉ được bấm 1 lần)";
+                }
+                alert("Bạn đã bấm SOS (Help) cho nhân vật này rồi! Mỗi nhân vật chỉ được bấm 1 lần thôi nhé.");
+                return;
+            }
+
+            isSendingHelpRequest = true;
             if (btn) {
                 btn.disabled = true;
                 btn.innerText = "⏳ Đang gửi ảnh cho Palette...";
             }
 
             try {
+                const uKey = currentUser.username.toLowerCase();
+                const safeCharKey = getHelpCharKey(ctx.charId);
+
+                // Kiểm tra thêm trên Firebase phòng trường hợp user đổi trình duyệt / máy khác
+                if (ctx.charId) {
+                    try {
+                        const pencilSnap = await db.collection("pencils").doc(uKey).get();
+                        if (pencilSnap.exists && pencilSnap.data()?.helpUsedChars?.[safeCharKey] === true) {
+                            await markUserHelpUsedForChar(currentUser.username, ctx.charId);
+                            if (btn) {
+                                btn.disabled = true;
+                                btn.className = "w-full bg-white/10 border border-white/20 text-sky-200/75 font-bold py-2 px-3 rounded-xl text-xs cursor-not-allowed";
+                                btn.innerText = "✓ Bạn đã bấm SOS (Help) cho nhân vật này rồi (chỉ được bấm 1 lần)";
+                            }
+                            alert("Bạn đã bấm SOS (Help) cho nhân vật này rồi! Mỗi nhân vật chỉ được bấm 1 lần thôi nhé.");
+                            return;
+                        }
+                    } catch (_) {}
+                }
+
                 const now = new Date();
                 const timestampStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
-                const ctx = lastFailedProofContext;
 
                 await db.collection("manual_proof_requests").add({
                     username: currentUser.username,
@@ -6228,6 +6325,10 @@
                     createdAt: now.getTime(),
                     timestamp: timestampStr
                 });
+
+                if (ctx.charId) {
+                    await markUserHelpUsedForChar(currentUser.username, ctx.charId);
+                }
 
                 logMemberActivity("Bấm Help nhờ duyệt link 🆘", `Nhân vật: ${ctx.charName} (${ctx.modeLabel})`, "fail", {
                     charId: ctx.charId,
@@ -6249,7 +6350,8 @@
                 );
 
                 if (btn) {
-                    btn.className = "w-full bg-emerald-500/25 border border-emerald-300/50 text-emerald-200 font-extrabold py-2 px-3 rounded-xl text-xs cursor-default";
+                    btn.disabled = true;
+                    btn.className = "w-full bg-emerald-500/25 border border-emerald-300/50 text-emerald-200 font-extrabold py-2 px-3 rounded-xl text-xs cursor-not-allowed";
                     btn.innerText = "✓ Đã gửi cho Palette! Vui lòng đợi thông báo mở link nhé 💖";
                 }
                 playPaletteTingSound();
@@ -6260,6 +6362,8 @@
                     btn.innerText = "🆘 Help - Thử gửi lại";
                 }
                 alert("Chưa thể gửi yêu cầu Help lúc này. Vui lòng thử lại nhé!");
+            } finally {
+                isSendingHelpRequest = false;
             }
         }
 
@@ -9500,14 +9604,7 @@
 
                 feedbackBox.innerHTML = `
                     <div>❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}</div>
-                    <div class="mt-2.5 pt-2.5 border-t border-red-300/30 space-y-2">
-                        <p class="text-[11px] text-amber-200 leading-relaxed">
-                            Nếu bạn chắc chắn mình chụp đúng rồi mà hệ thống vẫn báo lỗi, hãy ấn nút <b>Help</b> này để Palette xem xét duyệt link lại cho bạn nhé!
-                        </p>
-                        <button type="button" id="normalHelpBtn" onclick="sendManualHelpRequest('normalHelpBtn')" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 px-3 rounded-xl text-xs shadow active:scale-95 transition flex items-center justify-center gap-1.5">
-                            <span>🆘 Help - Nhờ Palette duyệt lại link</span>
-                        </button>
-                    </div>
+                    ${buildHelpBoxHtml('normalHelpBtn', activeChar?.id || "")}
                 `;
                 logFailedProofForOwner(`Duyệt Thường - ${activeProofType}`, activeChar, errMsg, proofImagesList);
             }
@@ -9738,14 +9835,7 @@
 
                 feedbackBox.innerHTML = `
                     <div>❌ <b>Kiểm duyệt thất bại:</b> ${errMsg}</div>
-                    <div class="mt-2.5 pt-2.5 border-t border-red-300/30 space-y-2">
-                        <p class="text-[11px] text-amber-200 leading-relaxed">
-                            Nếu bạn chắc chắn mình chụp đúng rồi mà hệ thống vẫn báo lỗi, hãy ấn nút <b>Help</b> này để Palette xem xét duyệt link lại cho bạn nhé!
-                        </p>
-                        <button type="button" id="fastHelpBtn" onclick="sendManualHelpRequest('fastHelpBtn')" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 px-3 rounded-xl text-xs shadow active:scale-95 transition flex items-center justify-center gap-1.5">
-                            <span>🆘 Help - Nhờ Palette duyệt lại link</span>
-                        </button>
-                    </div>
+                    ${buildHelpBoxHtml('fastHelpBtn', fastTargetChar?.id || "")}
                 `;
                 logFailedProofForOwner("Sắc Màu Nhanh Nhẹn", fastTargetChar, errMsg, fastImagesList);
             }
