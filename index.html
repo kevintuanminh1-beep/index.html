@@ -5358,23 +5358,28 @@
         }
 
         function handleQuotaExceededError() {
-            if (checkIsOwnerAccount()) return;
+            if (checkIsOwnerAccount()) {
+                if (!window._ownerQuotaToastShown) {
+                    window._ownerQuotaToastShown = true;
+                    showInAppNotifyToast("⚠️ Firestore hết hạn mức hôm nay", "Hệ thống đang hiển thị tạm từ bộ nhớ đệm, trạng thái mới lưu có thể chưa đồng bộ được lên máy chủ.");
+                }
+                return;
+            }
             const overlay = document.getElementById('quotaLimitOverlay');
             if (overlay) overlay.classList.remove('hidden');
         }
 
         // ================= FIRESTORE LISTENERS (CÓ CHỐNG TRẮNG WEB & TỰ ĐỘNG KHÓA KHI ĐẦY) =================
         function initFirebaseListeners() {
-            // Lưu cache nhân vật an toàn (luôn xóa cache cũ trước để không bao giờ kẹt trạng thái cũ)
+            // Lưu cache nhân vật an toàn (nén gọn, không xóa cache cũ nếu lưu thất bại)
             window.saveCharactersCacheSafely = function(list) {
                 if (!Array.isArray(list) || list.length === 0) return;
-                try { localStorage.removeItem('palette_cached_characters'); } catch (_) {}
+                const slim = list.map(ch => ({
+                    ...ch,
+                    galleryImages: [],
+                    image: (typeof ch.image === 'string' && ch.image.startsWith('data:') && ch.image.length > 60000) ? '' : (ch.image || '')
+                }));
                 try {
-                    localStorage.setItem('palette_cached_characters', JSON.stringify(list));
-                    return;
-                } catch (_) {}
-                try {
-                    const slim = list.map(ch => ({ ...ch, galleryImages: [] }));
                     localStorage.setItem('palette_cached_characters', JSON.stringify(slim));
                     return;
                 } catch (_) {}
@@ -5400,7 +5405,9 @@
                         image: (typeof ch.image === 'string' && !ch.image.startsWith('data:')) ? ch.image : ''
                     }));
                     localStorage.setItem('palette_cached_characters', JSON.stringify(ultraSlim));
-                } catch (_) {}
+                } catch (err) {
+                    console.warn("Không đủ localStorage lưu cache nhân vật:", err);
+                }
             };
 
             window.recentCharStatusOverrides = safeParseLocalJson('palette_recent_char_overrides', {});
@@ -5438,10 +5445,10 @@
                             overridesChanged = true;
                         } else {
                             data.status = ov.status;
-                            data.fastChoiceMode = ov.fastChoiceMode ?? data.fastChoiceMode ?? null;
-                            data.fastStartTime = ov.fastStartTime ?? null;
-                            data.fastEndTime = ov.fastEndTime ?? null;
-                            data.customDurationMs = ov.customDurationMs ?? null;
+                            data.fastChoiceMode = ('fastChoiceMode' in ov) ? ov.fastChoiceMode : (data.fastChoiceMode ?? null);
+                            data.fastStartTime = ('fastStartTime' in ov) ? ov.fastStartTime : (data.fastStartTime ?? null);
+                            data.fastEndTime = ('fastEndTime' in ov) ? ov.fastEndTime : (data.fastEndTime ?? null);
+                            data.customDurationMs = ('customDurationMs' in ov) ? ov.customDurationMs : (data.customDurationMs ?? null);
                             data.unlockWaitMs = ov.unlockWaitMs ?? data.unlockWaitMs;
                             data.statusUpdatedAt = ov.statusUpdatedAt ?? data.statusUpdatedAt;
                         }
@@ -5468,7 +5475,7 @@
                 }
 
                 characters = nextCharacters;
-                if (!snapshot.metadata.fromCache) {
+                if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) {
                     charactersSyncedFromServer = true;
                     window.saveCharactersCacheSafely(characters);
                 }
@@ -5492,6 +5499,8 @@
                 // Nếu vượt quá hạn mức đọc của gói Free
                 if (error && (error.code === 'resource-exhausted' || String(error).includes('Quota exceeded'))) {
                     handleQuotaExceededError();
+                } else if (checkIsOwnerAccount()) {
+                    showInAppNotifyToast("⚠️ Mất kết nối đồng bộ nhân vật", error?.message || "Không thể đọc dữ liệu mới từ Firestore.");
                 }
                 // Tự động lôi bản sao đã lưu ra hiển thị, tuyệt đối không bị trắng web
                 const cached = localStorage.getItem('palette_cached_characters');
@@ -5500,6 +5509,7 @@
                         characters = JSON.parse(cached);
                         renderCharacters();
                         renderFastColorCenter();
+                        renderAdminExistingChars();
                     } catch (_) {}
                 }
             });
@@ -10235,13 +10245,25 @@
                     characters[idx].statusUpdatedAt = Date.now();
                     savedChar = JSON.parse(JSON.stringify(characters[idx]));
                     characters[idx] = savedChar;
-                    window.recentCharStatusOverrides = window.recentCharStatusOverrides || {};
-                    window.recentCharStatusOverrides[editId] = { status: savedChar.status, savedAt: Date.now() };
+                    if (window.saveRecentCharStatusOverride) {
+                        window.saveRecentCharStatusOverride(editId, {
+                            status: savedChar.status,
+                            fastChoiceMode: savedChar.fastChoiceMode,
+                            fastStartTime: savedChar.fastStartTime,
+                            fastEndTime: savedChar.fastEndTime,
+                            customDurationMs: savedChar.customDurationMs,
+                            unlockWaitMs: savedChar.unlockWaitMs,
+                            statusUpdatedAt: savedChar.statusUpdatedAt
+                        });
+                    }
                     try {
                         await db.collection("characters").doc(editId).set(savedChar);
                         if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
                     } catch (saveErr) {
-                        delete window.recentCharStatusOverrides[editId];
+                        if (window.recentCharStatusOverrides) {
+                            delete window.recentCharStatusOverrides[editId];
+                            try { localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides)); } catch (_) {}
+                        }
                         characters[idx] = oldCharBackup;
                         console.error("Lỗi cập nhật Firebase:", saveErr);
                         alert("Không thể lưu lên máy chủ (có thể ảnh quá dung lượng 1MB hoặc mạng yếu). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
@@ -10249,8 +10271,9 @@
                     }
                 }
             } else {
+                const newCharNow = Date.now();
                 const newChar = {
-                    id: 'char-' + Date.now(),
+                    id: 'char-' + newCharNow,
                     name,
                     image: imageSrc,
                     galleryImages: uploadedImages,
@@ -10267,9 +10290,10 @@
                     isNew,
                     unlockWaitMs,
                     customDurationMs: (status === 'unlocked_24h') ? customDurationMs : null,
-                    fastStartTime: (status === 'unlocked_24h') ? (fastChoice === 'event_countdown' ? Date.now() : 0) : null,
-                    fastEndTime: (status === 'unlocked_24h') ? (fastChoice === 'event_countdown' ? (Date.now() + customDurationMs) : 0) : null,
-                    reopenTimestamp: null
+                    fastStartTime: (status === 'unlocked_24h') ? (fastChoice === 'event_countdown' ? newCharNow : 0) : null,
+                    fastEndTime: (status === 'unlocked_24h') ? (fastChoice === 'event_countdown' ? (newCharNow + customDurationMs) : 0) : null,
+                    reopenTimestamp: null,
+                    statusUpdatedAt: newCharNow
                 };
                 try {
                     await db.collection("characters").doc(newChar.id).set(newChar);
@@ -10312,14 +10336,24 @@
             const c = characters[idx];
             const isClosedNow = (c.status === 'closed');
             const nextStatus = isClosedNow ? 'locked' : 'closed';
+            const nowUpdatedAt = Date.now();
 
             fixingCharIdsInFlight.add(charId);
-            window.recentCharStatusOverrides = window.recentCharStatusOverrides || {};
-            window.recentCharStatusOverrides[charId] = { status: nextStatus, savedAt: Date.now() };
+            if (window.saveRecentCharStatusOverride) {
+                window.saveRecentCharStatusOverride(charId, {
+                    status: nextStatus,
+                    fastChoiceMode: null,
+                    fastStartTime: null,
+                    fastEndTime: null,
+                    customDurationMs: null,
+                    unlockWaitMs: c.unlockWaitMs || 0,
+                    statusUpdatedAt: nowUpdatedAt
+                });
+            }
             try {
                 await db.collection("characters").doc(charId).set({
                     status: nextStatus,
-                    statusUpdatedAt: Date.now(),
+                    statusUpdatedAt: nowUpdatedAt,
                     customDurationMs: null,
                     fastStartTime: null,
                     fastEndTime: null,
@@ -10327,6 +10361,7 @@
                 }, { merge: true });
 
                 c.status = nextStatus;
+                c.statusUpdatedAt = nowUpdatedAt;
                 c.customDurationMs = null;
                 c.fastStartTime = null;
                 c.fastEndTime = null;
@@ -10335,6 +10370,7 @@
                 if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
                 if (activeChar && activeChar.id === charId) {
                     activeChar.status = nextStatus;
+                    activeChar.statusUpdatedAt = nowUpdatedAt;
                     updateAIStudioButton();
                 }
                 if (document.getElementById('editCharId')?.value === charId) {
@@ -10346,7 +10382,10 @@
                 updateFastColorSubtitle();
                 playPaletteTingSound();
             } catch (err) {
-                delete window.recentCharStatusOverrides[charId];
+                if (window.recentCharStatusOverrides) {
+                    delete window.recentCharStatusOverrides[charId];
+                    try { localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides)); } catch (_) {}
+                }
                 console.error("Lỗi đổi trạng thái Đang fix:", err);
                 alert("Chưa thể cập nhật trạng thái lên máy chủ: " + (err?.message || "Vui lòng thử lại!"));
             } finally {
