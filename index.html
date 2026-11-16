@@ -8383,6 +8383,13 @@
                     }
                 }
             });
+
+            document.querySelectorAll('.owner-wait-timer[data-unlock-end]').forEach(el => {
+                const endMs = Number(el.getAttribute('data-unlock-end')) || 0;
+                if (endMs > 0) {
+                    el.innerText = formatRemainCountdownText(endMs, now);
+                }
+            });
         }
         function pad(n) { return n < 10 ? '0' + n : n; }
 
@@ -8910,6 +8917,15 @@
             }
         }
 
+        function formatRemainCountdownText(endMs, now = Date.now()) {
+            const remain = Math.max(0, Number(endMs) - now);
+            if (remain <= 0) return "00:00:00 (Sắp mở)";
+            const h = Math.floor(remain / 3600000);
+            const m = Math.floor((remain % 3600000) / 60000);
+            const s = Math.floor((remain % 60000) / 1000);
+            return `${pad(h)}:${pad(m)}:${pad(s)} (${h > 0 ? `${h} giờ ${m} phút` : `${m} phút ${s} giây`})`;
+        }
+
         // Tổng hợp tất cả các bạn đang đếm ngược đưa lên đầu bảng quản trị cho Chủ Web
         function renderAllPendingCountdownsOverview() {
             if (!checkIsOwnerAccount()) return '';
@@ -8924,19 +8940,24 @@
                         totalCount++;
                         const targetChar = characters.find(c => c.id === charId);
                         const charName = targetChar ? targetChar.name : "Nhân vật";
-                        const remainMins = Math.ceil(Math.max(0, timers[charId] - now) / 60000);
-                        const timeText = remainMins > 60 ? `${Math.floor(remainMins/60)}h ${remainMins%60}p` : `${remainMins}p`;
+                        const endMs = timers[charId];
+                        const timeText = formatRemainCountdownText(endMs, now);
                         const originalName = registeredUsers[uKey]?.username || uKey;
 
                         itemsHtml += `
-                            <div class="flex items-center justify-between bg-black/50 border border-amber-300/40 p-2 rounded-xl text-xs">
-                                <div class="truncate mr-2">
-                                    <span class="font-bold text-pink-300">${originalName}</span>
-                                    <span class="text-sky-200"> chờ </span>
-                                    <span class="font-extrabold text-amber-200">${charName}</span>
-                                    <span class="text-[10px] text-sky-200/60 font-mono"> (còn ${timeText})</span>
+                            <div class="flex items-center justify-between gap-2 bg-black/55 border border-amber-300/40 p-2.5 rounded-xl text-xs">
+                                <div class="min-w-0 flex-1 space-y-1">
+                                    <div class="leading-snug break-words">
+                                        <span class="font-bold text-pink-300">${cmtEsc(originalName)}</span>
+                                        <span class="text-sky-200"> chờ </span>
+                                        <span class="font-extrabold text-amber-200">${cmtEsc(charName)}</span>
+                                    </div>
+                                    <div class="inline-flex items-center gap-1 bg-amber-400/15 border border-amber-300/40 px-2 py-0.5 rounded-lg text-[10.5px] font-black text-amber-200 font-mono">
+                                        <span>⏳ Còn:</span>
+                                        <span class="owner-wait-timer" data-unlock-end="${endMs}">${timeText}</span>
+                                    </div>
                                 </div>
-                                <button type="button" onclick="ownerForceUnlockForUser('${originalName}', '${charId}')" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black text-[10px] px-2.5 py-1.5 rounded-lg active:scale-95 transition shadow whitespace-nowrap shrink-0">
+                                <button type="button" onclick="ownerForceUnlockForUser('${cmtEsc(originalName)}', '${charId}')" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black text-[10px] px-2.5 py-1.5 rounded-lg active:scale-95 transition shadow whitespace-nowrap shrink-0">
                                     ⚡ Mở Luôn
                                 </button>
                             </div>
@@ -8955,7 +8976,7 @@
                         </span>
                         <span class="text-[9px] bg-amber-400/30 text-amber-200 px-2 py-0.5 rounded-full font-bold">Cần duyệt</span>
                     </div>
-                    <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    <div class="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                         ${itemsHtml}
                     </div>
                 </div>
@@ -8982,17 +9003,19 @@
             waitingCharIds.forEach(charId => {
                 const targetChar = characters.find(c => c.id === charId);
                 const charName = targetChar ? targetChar.name : "Nhân vật";
-                const remainMs = Math.max(0, timers[charId] - now);
-                const remainMins = Math.ceil(remainMs / 60000);
-                const timeText = remainMins > 60 ? `${Math.floor(remainMins/60)}h ${remainMins%60}p` : `${remainMins} phút`;
+                const endMs = timers[charId];
+                const timeText = formatRemainCountdownText(endMs, now);
 
                 html += `
-                    <div class="flex items-center justify-between bg-black/40 border border-white/10 p-1.5 rounded-lg text-xs">
-                        <div class="truncate mr-2">
-                            <span class="font-bold text-pink-200">${charName}</span>
-                            <span class="text-[10px] text-amber-200/80 font-mono"> (còn ${timeText})</span>
+                    <div class="flex items-center justify-between gap-2 bg-black/45 border border-white/10 p-2 rounded-lg text-xs">
+                        <div class="min-w-0 flex-1 space-y-1">
+                            <div class="font-bold text-pink-200 leading-snug break-words">${cmtEsc(charName)}</div>
+                            <div class="inline-flex items-center gap-1 bg-amber-400/15 border border-amber-300/35 px-2 py-0.5 rounded-md text-[10px] font-black text-amber-200 font-mono">
+                                <span>⏳ Còn:</span>
+                                <span class="owner-wait-timer" data-unlock-end="${endMs}">${timeText}</span>
+                            </div>
                         </div>
-                        <button type="button" onclick="ownerForceUnlockForUser('${username}', '${charId}')" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-[10px] px-2.5 py-1 rounded-lg active:scale-95 transition shadow whitespace-nowrap shrink-0">
+                        <button type="button" onclick="ownerForceUnlockForUser('${cmtEsc(username)}', '${charId}')" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-[10px] px-2.5 py-1.5 rounded-lg active:scale-95 transition shadow whitespace-nowrap shrink-0">
                             ⚡ Mở Link Luôn
                         </button>
                     </div>
