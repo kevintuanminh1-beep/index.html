@@ -697,6 +697,9 @@
                 <p id="checkinCycleText" class="text-[10px] text-pink-100/80 mt-2">Điểm danh đủ 7 ngày để nhận 2 Bút Chì Màu ở ngày cuối nhé!</p>
             </div>
 
+            <!-- Đổi 6 Chì Màu bỏ qua N giờ đếm ngược sau khi đã duyệt -->
+            <div id="countingDownSkipBoxInModal" class="hidden bg-gradient-to-r from-amber-500/15 via-pink-500/15 to-purple-500/15 border border-amber-300/45 p-3.5 rounded-2xl mb-4 space-y-2"></div>
+
             <!-- Nút đổi 10 Chì Màu -->
             <div class="bg-black/30 border border-white/10 p-3.5 rounded-2xl mb-4">
                 <div class="flex items-center justify-between mb-2">
@@ -751,6 +754,10 @@
                     <li class="flex items-start gap-1.5">
                         <span class="text-rose-300 font-bold">✏️</span>
                         <span>Vào mục <button type="button" onclick="closePencilModal(); openLuckyWheelModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-pink-500/15 border border-pink-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Vòng xoay may mắn</span></button> và <button type="button" onclick="closePencilModal(); openSailorCardModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Thẻ màu vận may</span></button> để quay thưởng thử vận may bút chì, reset 3 lần mỗi ngày.</span>
+                    </li>
+                    <li class="flex items-start gap-1.5">
+                        <span class="text-amber-300 font-bold">⚡</span>
+                        <span>Nếu nhân vật đã được duyệt nhưng đang đếm ngược N giờ: Chỉ cần <b class="text-amber-300">6 Bút Chì Màu</b> để bỏ qua đếm ngược và mở link ngay lập tức.</span>
                     </li>
                 </ul>
                 <div class="mt-2.5 rounded-xl border border-amber-300/45 bg-gradient-to-r from-amber-500/15 via-pink-500/15 to-purple-500/15 p-2.5 space-y-1">
@@ -1481,6 +1488,7 @@
                     <svg id="aiLockIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     <span id="aiBtnText">Link Google AI Studio (Chưa mở khóa)</span> ➔
                 </button>
+                <button id="skipCountdownDetailBtn" type="button" onclick="skipCountdownForActiveChar()" class="hidden mt-2 w-full inline-flex items-center justify-center gap-1.5 text-xs py-2.5 px-4 rounded-xl transition active:scale-95"></button>
 
                 <div class="mt-3 rounded-xl border border-pink-300/25 bg-pink-300/10 px-3 py-2 text-center">
                     <p id="pencilUnlockHint" class="text-xs font-bold leading-relaxed flex items-center justify-center gap-1.5 flex-wrap">
@@ -4794,13 +4802,18 @@
                 return;
             }
 
+            const now = Date.now();
             box.innerHTML = matches.map(c => {
                 const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
+                const timerEnd = userUnlockTimers[currentUser?.username]?.[c.id] || userUnlockTimers[currentUser?.username?.toLowerCase()]?.[c.id];
+                const isCountingDown = Boolean(!isUnlocked && timerEnd && now < timerEnd);
                 return `
                     <div onclick="selectRedeemSuggestion('${c.id}')" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition select-none">
                         <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-7 h-7 rounded-lg object-cover shrink-0 border border-white/10">
                         <span class="text-xs font-bold text-pink-200 truncate flex-1 text-left">${c.name}</span>
-                        ${isUnlocked ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-300/30 px-1.5 py-0.5 rounded-full font-bold">Đã mở</span>' : ''}
+                        ${isUnlocked
+                            ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-300/30 px-1.5 py-0.5 rounded-full font-bold">Đã mở</span>'
+                            : (isCountingDown ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-300/30 px-1.5 py-0.5 rounded-full font-bold">Đợi (6 chì)</span>' : '')}
                     </div>
                 `;
             }).join('');
@@ -4850,6 +4863,8 @@
             }
 
             const isUnlocked = userUnlockedState[currentUser?.username]?.[char.id] === true;
+            const timerEnd = userUnlockTimers[currentUser?.username]?.[char.id] || userUnlockTimers[currentUser?.username?.toLowerCase()]?.[char.id];
+            const isCountingDown = Boolean(!isUnlocked && timerEnd && Date.now() < timerEnd);
             if (btn) {
                 if (isUnlocked) {
                     btn.className = "jelly-btn w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg";
@@ -4859,6 +4874,10 @@
                     btn.className = "w-full bg-red-500/20 text-red-200 border border-red-400/40 font-bold text-xs py-2.5 px-3 rounded-xl cursor-not-allowed";
                     btn.innerText = "Link nhân vật hiện đang fix";
                     btn.onclick = null;
+                } else if (isCountingDown) {
+                    btn.className = "jelly-btn w-full bg-gradient-to-r from-pink-500 via-amber-400 to-purple-500 hover:brightness-110 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg active:scale-95 transition";
+                    btn.innerText = "⚡ Dùng 6 Chì Màu Mở Ngay (Đã duyệt)";
+                    btn.onclick = () => skipCountdownWithSixPencils(char.id);
                 } else {
                     btn.className = "jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg active:scale-95 transition";
                     btn.innerText = "Đổi 10 Chì Màu Lấy Link";
@@ -4900,6 +4919,43 @@
         });
 
         function renderUnlockedCharListInModal() {
+            const skipBox = document.getElementById('countingDownSkipBoxInModal');
+            if (skipBox) {
+                const now = Date.now();
+                const timers = currentUser ? (userUnlockTimers[currentUser.username] || userUnlockTimers[currentUser.username.toLowerCase()] || {}) : {};
+                const unlockedMap = currentUser ? (userUnlockedState[currentUser.username] || {}) : {};
+                const countingChars = characters.filter(c => c.status !== 'closed' && !unlockedMap[c.id] && timers[c.id] && now < timers[c.id]);
+
+                if (countingChars.length === 0) {
+                    skipBox.innerHTML = '';
+                    skipBox.classList.add('hidden');
+                } else {
+                    const curPencils = getUserPencilCount(currentUser.username);
+                    const hasSix = curPencils >= 6;
+                    skipBox.classList.remove('hidden');
+                    skipBox.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-amber-300 uppercase">⚡ Đã duyệt - Đổi 6 Chì mở ngay:</span>
+                            <span class="text-[11px] text-pink-200 font-bold">Cần: 6 Chì</span>
+                        </div>
+                        <p class="text-[10.5px] text-sky-100/80">Các nhân vật bên dưới đã duyệt ảnh xong và đang đếm ngược. Dùng 6 Chì Màu để mở link ngay không cần chờ:</p>
+                        <div class="space-y-1.5">
+                            ${countingChars.map(c => `
+                                <div class="flex items-center justify-between gap-2 bg-black/45 border border-white/10 p-2 rounded-xl">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-7 h-7 rounded-lg object-cover shrink-0">
+                                        <span class="text-xs font-bold text-pink-200 truncate">${cmtEsc(c.name)}</span>
+                                    </div>
+                                    <button type="button" onclick="skipCountdownBySafeId('${cmtSafeId(c.id)}')" class="${hasSix ? 'bg-gradient-to-r from-pink-500 to-amber-400 text-black font-black' : 'bg-white/10 text-pink-200/80 border border-pink-300/30 font-bold'} text-[11px] px-2.5 py-1.5 rounded-lg shrink-0 active:scale-95 transition">
+                                        ${hasSix ? '⚡ Mở ngay (-6 chì)' : `Cần 6 chì (${curPencils}/6)`}
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            }
+
             const box = document.getElementById('unlockedCharListInModal');
             box.innerHTML = '';
             
@@ -5436,11 +5492,14 @@
                     const ov = window.recentCharStatusOverrides[doc.id];
 
                     if (ov) {
+                        const serverTs = Number(data.statusUpdatedAt) || 0;
+                        const ovTs = Number(ov.statusUpdatedAt) || 0;
                         const serverConfirmed = !snapshot.metadata.fromCache
                             && !snapshot.metadata.hasPendingWrites
-                            && (Number(data.statusUpdatedAt) || 0) >= (Number(ov.statusUpdatedAt) || 0);
+                            && serverTs >= ovTs;
+                        const isExpiredVeryOld = (nowMs - (ov.savedAt || 0)) >= 86400000;
 
-                        if (serverConfirmed || (nowMs - (ov.savedAt || 0)) >= 120000) {
+                        if (serverConfirmed || isExpiredVeryOld) {
                             delete window.recentCharStatusOverrides[doc.id];
                             overridesChanged = true;
                         } else {
@@ -5452,7 +5511,7 @@
                             data.unlockWaitMs = ov.unlockWaitMs ?? data.unlockWaitMs;
                             data.statusUpdatedAt = ov.statusUpdatedAt ?? data.statusUpdatedAt;
                         }
-                    } else if (snapshot.metadata.fromCache && prevById[doc.id]) {
+                    } else if ((snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) && prevById[doc.id]) {
                         const prev = prevById[doc.id];
                         if ((Number(prev.statusUpdatedAt) || 0) > (Number(data.statusUpdatedAt) || 0)) {
                             data.status = prev.status;
@@ -5987,9 +6046,9 @@
             const waitLabel = waitMs >= 3600000 ? `${Math.round(waitMs / 3600000 * 10) / 10} tiếng` : `${Math.round(waitMs / 60000)} phút`;
 
             if (isNoEvent) {
-                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt tại Sắc Màu Nhanh Nhẹn (không cần feedback hay join Discord).<br>• <b>Cách lấy:</b> Thả tim và nộp ảnh Facebook hợp lệ, sau đó hệ thống sẽ đếm ngược <b>${waitLabel}</b> để mở khóa link (thoát web vẫn đếm tiếp).`;
+                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt tại Sắc Màu Nhanh Nhẹn (không cần feedback hay join Discord).<br>• <b>Cách lấy:</b> Thả tim và nộp ảnh Facebook hợp lệ, sau đó hệ thống sẽ đếm ngược <b>${waitLabel}</b> để mở khóa link (hoặc dùng <b>6 Bút Chì Màu</b> để mở ngay sau khi đã duyệt).`;
             } else {
-                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới (không cần feedback hay join Discord).<br>• <b>Trong ${durationStr} đầu:</b> Nộp ảnh Facebook được duyệt thành công sẽ <b>mở khóa link ngay lập tức</b>.<br>• <b>Sau ${durationStr}:</b> Nhân vật sẽ tự động chuyển sang chế độ đếm ngược ${waitLabel} sau khi duyệt ảnh Facebook để mở link.`;
+                descEl.innerHTML = `• <b>Đặc điểm:</b> Dành cho char đang mở đợt khi Palette up plot mới (không cần feedback hay join Discord).<br>• <b>Trong ${durationStr} đầu:</b> Nộp ảnh Facebook được duyệt thành công sẽ <b>mở khóa link ngay lập tức</b>.<br>• <b>Sau ${durationStr}:</b> Nhân vật sẽ tự động chuyển sang chế độ đếm ngược ${waitLabel} sau khi duyệt ảnh Facebook để mở link (có thể dùng <b>6 Bút Chì Màu</b> để bỏ qua đếm ngược).`;
             }
         }
 
@@ -8212,12 +8271,111 @@
             }
         }
 
+        let fastStackActiveIndex = 0;
+        let lastTopFastCharId = null;
+
+        function setFastStackIndex(idx, total) {
+            if (!total || total <= 0) return;
+            fastStackActiveIndex = ((idx % total) + total) % total;
+            renderFastColorCenter();
+            playCheerfulClickSound();
+        }
+
+        function cycleFastStack(delta, total) {
+            setFastStackIndex(fastStackActiveIndex + delta, total);
+        }
+
+        function buildFastColorCardHtml(c) {
+            const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
+            const timerEnd = userUnlockTimers[currentUser?.username]?.[c.id] || userUnlockTimers[currentUser?.username?.toLowerCase()]?.[c.id];
+            const isCountingDown = Boolean(!isUnlocked && timerEnd && Date.now() < timerEnd);
+            const curPencilsFast = currentUser ? getUserPencilCount(currentUser.username) : 0;
+            const hasTenPencils = curPencilsFast >= 10;
+            const hasSixPencils = curPencilsFast >= 6;
+            const safeCharId = cmtSafeId(c.id);
+
+            let actionButtonHtml = '';
+            if (isUnlocked) {
+                actionButtonHtml = `
+                    <button onclick="window.open('${c.aiStudioUrl}', '_blank')" class="jelly-btn w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition animate-bounce">
+                        🔓 ĐÃ MỞ KHÓA - Mở Link ${c.name} Ngay!
+                    </button>
+                `;
+            } else if (isCountingDown) {
+                const isOwner = checkIsOwnerAccount();
+                actionButtonHtml = `
+                    <div class="w-full space-y-2">
+                        <button onclick="handleFastCountdownClick('${c.id}')" class="w-full bg-amber-500/25 border border-amber-300/50 text-amber-200 font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                            <span>⏳ Đang đếm ngược:</span>
+                            <span id="fastUserTimer-${c.id}" class="font-mono font-black text-sm text-amber-300">--:--:--</span>
+                            <span>mở link</span>
+                        </button>
+                        <button type="button" onclick="skipCountdownBySafeId('${safeCharId}')" class="${hasSixPencils ? 'jelly-btn bg-gradient-to-r from-pink-500 via-amber-400 to-purple-500 hover:brightness-110 text-white font-black text-xs py-2.5 px-4 shadow-[0_0_16px_rgba(244,114,182,0.45)]' : 'bg-pink-500/15 hover:bg-pink-500/25 border border-pink-300/35 text-pink-200 font-bold text-[11px] py-2 px-3'} w-full rounded-xl active:scale-95 transition">
+                            ${hasSixPencils ? '⚡ Dùng 6 Bút Chì Màu để mở link ngay (Không cần đợi)' : `✏️ Dùng 6 Bút Chì Màu để mở link ngay (Bạn có ${curPencilsFast}/6 chì)`}
+                        </button>
+                        ${isOwner ? `<button onclick="ownerForceUnlockForUser('${currentUser.username}', '${c.id}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-[11px] py-1.5 rounded-xl shadow active:scale-95 transition">⚡ Chủ Web: Mở Link Ngay Lập Tức</button>` : ''}
+                    </div>
+                `;
+            } else {
+                actionButtonHtml = `
+                    <div class="w-full space-y-2">
+                        <button onclick="openFastProofModal('${c.id}')" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
+                            Hãy thả tim và vẽ đường cho tình yêu chạy trước khi kết thúc duyệt tự động.
+                        </button>
+                        ${hasTenPencils ? `<button onclick="redeemTenPencilsBySafeId('${safeCharId}')" class="jelly-btn w-full bg-gradient-to-r from-emerald-500 via-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-2.5 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay</button>` : ''}
+                    </div>
+                `;
+            }
+
+            const inInstantWindow = isFastCharInInstantWindow(c);
+            const wMs = (typeof c.unlockWaitMs === 'number' && c.unlockWaitMs > 0) ? c.unlockWaitMs : 7200000;
+            const wLabel = wMs >= 3600000 ? `${Math.round(wMs / 3600000 * 10) / 10} tiếng` : `${Math.round(wMs / 60000)} phút`;
+            const noteHtml = inInstantWindow
+                ? "✨ Đang trong đợt mở nhanh: Duyệt ảnh Facebook thành công là mở khóa link NGAY LẬP TỨC không cần chờ!"
+                : `⏳ Đã hết đợt mở nhanh: Sau khi duyệt ảnh Facebook, hệ thống sẽ đếm ngược ${wLabel} để mở link (hoặc dùng 6 Chì Màu mở ngay sau khi đã duyệt).`;
+
+            return `
+                <div class="w-full text-center mb-4">
+                    <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[10px] px-3.5 py-1 rounded-full font-black tracking-widest uppercase shadow">
+                        ${inInstantWindow ? 'Đang mở nhanh · Duyệt mở ngay' : 'Hết giờ mở nhanh · Đếm ngược chờ mở link'}
+                    </span>
+                    <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-1.5 flex-wrap">
+                        <span class="char-pastel-0">${c.name}</span>
+                        ${c.isNew ? '<span class="new-char-badge text-[10px]"><span class="green-pastel-wave">New</span></span>' : ''}
+                    </h3>
+                    <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
+                </div>
+                <div class="relative mb-3 flex justify-center">
+                    <div class="glowing-pastel-border">
+                        <div class="w-60 h-72 rounded-[1.3rem] overflow-hidden relative">
+                            <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-full h-full object-cover">
+                            ${inInstantWindow ? `<div class="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md border border-fuchsia-300/50 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span id="fastCountdownSmall-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span></div>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <p class="text-[10px] text-amber-200/90 text-center mb-3 italic leading-relaxed bg-amber-500/10 p-2.5 rounded-2xl border border-amber-300/25 max-w-[280px]">${noteHtml}</p>
+                ${actionButtonHtml}
+                ${getCmtRewardSectionHtml(c)}
+            `;
+        }
+
         function renderFastColorCenter() {
             const container = document.getElementById('fastCharCenterBox');
+            if (!container) return;
             container.innerHTML = '';
-            const fastChars = characters.filter(c => isFastCharActive(c));
+
+            // Luôn sắp xếp char mới nhất lên trên cùng
+            const fastChars = characters
+                .filter(c => isFastCharActive(c))
+                .sort((a, b) => {
+                    const diff = getCharTimestamp(b) - getCharTimestamp(a);
+                    if (diff !== 0) return diff;
+                    return (Number(b.statusUpdatedAt) || 0) - (Number(a.statusUpdatedAt) || 0);
+                });
 
             if (fastChars.length === 0) {
+                fastStackActiveIndex = 0;
+                lastTopFastCharId = null;
                 container.innerHTML = `
                     <div class="text-center py-16 bg-white/5 border border-white/10 rounded-3xl p-6 w-full max-w-sm">
                         <svg class="w-10 h-10 mx-auto text-fuchsia-300 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -8228,79 +8386,97 @@
                 return;
             }
 
-            fastChars.forEach(c => {
+            const newestId = fastChars[0].id;
+            if (lastTopFastCharId !== newestId) {
+                fastStackActiveIndex = 0;
+                lastTopFastCharId = newestId;
+            }
+            if (fastStackActiveIndex >= fastChars.length || fastStackActiveIndex < 0) {
+                fastStackActiveIndex = 0;
+            }
+
+            if (fastChars.length === 1) {
                 const card = document.createElement('div');
                 card.className = "w-full max-w-sm fast-center-card p-6 rounded-3xl flex flex-col items-center mb-6 relative";
-                
-                const isUnlocked = userUnlockedState[currentUser?.username]?.[c.id] === true;
-                const timerEnd = userUnlockTimers[currentUser?.username]?.[c.id];
-                const isCountingDown = timerEnd && (Date.now() < timerEnd);
-                const curPencilsFast = currentUser ? getUserPencilCount(currentUser.username) : 0;
-                const hasTenPencils = curPencilsFast >= 10;
-
-                let actionButtonHtml = '';
-                if (isUnlocked) {
-                    actionButtonHtml = `
-                        <button onclick="window.open('${c.aiStudioUrl}', '_blank')" class="jelly-btn w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition animate-bounce">
-                            🔓 ĐÃ MỞ KHÓA - Mở Link ${c.name} Ngay!
-                        </button>
-                    `;
-                } else if (isCountingDown) {
-                    const isOwner = checkIsOwnerAccount();
-                    actionButtonHtml = `
-                        <div class="w-full space-y-1.5">
-                            <button onclick="handleFastCountdownClick('${c.id}')" class="w-full bg-amber-500/25 border border-amber-300/50 text-amber-200 font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                                <span>⏳ Đang đếm ngược:</span>
-                                <span id="fastUserTimer-${c.id}" class="font-mono font-black text-sm text-amber-300">--:--:--</span>
-                                <span>mở link</span>
-                            </button>
-                            ${isOwner ? `<button onclick="ownerForceUnlockForUser('${currentUser.username}', '${c.id}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-[11px] py-1.5 rounded-xl shadow active:scale-95 transition">⚡ Chủ Web: Mở Link Ngay Lập Tức</button>` : ''}
-                        </div>
-                    `;
-                } else {
-                    actionButtonHtml = `
-                        <div class="w-full space-y-2">
-                            <button onclick="openFastProofModal('${c.id}')" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
-                                Hãy thả tim và vẽ đường cho tình yêu chạy trước khi kết thúc duyệt tự động.
-                            </button>
-                            ${hasTenPencils ? `<button onclick="redeemTenPencilsBySafeId('${cmtSafeId(c.id)}')" class="jelly-btn w-full bg-gradient-to-r from-emerald-500 via-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-2.5 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay</button>` : ''}
-                        </div>
-                    `;
-                }
-
-                const inInstantWindow = isFastCharInInstantWindow(c);
-                const opensImmediately = isFastCharOpensImmediately(c);
-                const wMs = (typeof c.unlockWaitMs === 'number' && c.unlockWaitMs > 0) ? c.unlockWaitMs : 7200000;
-                const wLabel = wMs >= 3600000 ? `${Math.round(wMs / 3600000 * 10) / 10} tiếng` : `${Math.round(wMs / 60000)} phút`;
-                const noteHtml = inInstantWindow
-                    ? "✨ Đang trong đợt mở nhanh: Duyệt ảnh Facebook thành công là mở khóa link NGAY LẬP TỨC không cần chờ!"
-                    : `⏳ Đã hết đợt mở nhanh: Sau khi duyệt ảnh Facebook, hệ thống sẽ đếm ngược ${wLabel} để mở link (thoát web vẫn đếm tiếp chuẩn xác).`;
-
-                card.innerHTML = `
-                    <div class="w-full text-center mb-4">
-                        <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[10px] px-3.5 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                            ${inInstantWindow ? 'Đang mở nhanh · Duyệt mở ngay' : 'Hết giờ mở nhanh · Đếm ngược chờ mở link'}
-                        </span>
-                        <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-1.5 flex-wrap">
-                            <span class="char-pastel-0">${c.name}</span>
-                            ${c.isNew ? '<span class="new-char-badge text-[10px]"><span class="green-pastel-wave">New</span></span>' : ''}
-                        </h3>
-                        <p class="text-xs text-sky-100/90 mt-1 line-clamp-2">${c.subtitle}</p>
-                    </div>
-                    <div class="relative mb-3 flex justify-center">
-                        <div class="glowing-pastel-border">
-                            <div class="w-60 h-72 rounded-[1.3rem] overflow-hidden relative">
-                                <img src="${getSafeCatboxImgUrl(c.image)}" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(c.image)}')" class="w-full h-full object-cover">
-                                ${inInstantWindow ? `<div class="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md border border-fuchsia-300/50 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span id="fastCountdownSmall-${c.id}" class="text-[11px] font-black text-amber-300 font-mono tracking-wider">--:--:--</span></div>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-[10px] text-amber-200/90 text-center mb-3 italic leading-relaxed bg-amber-500/10 p-2.5 rounded-2xl border border-amber-300/25 max-w-[280px]">${noteHtml}</p>
-                    ${actionButtonHtml}
-                    ${getCmtRewardSectionHtml(c)}
-                `;
+                card.innerHTML = buildFastColorCardHtml(fastChars[0]);
                 container.appendChild(card);
-            });
+                updateCountdownDisplayOnly();
+                return;
+            }
+
+            // Thanh điều hướng khi có từ 2 char Nhanh Nhẹn trở lên
+            const total = fastChars.length;
+            const navBar = document.createElement('div');
+            navBar.className = "w-full max-w-sm mb-3 bg-black/40 border border-fuchsia-300/35 rounded-2xl p-2 space-y-1.5 backdrop-blur-md";
+            const chipsHtml = fastChars.map((ch, idx) => {
+                const isActive = idx === fastStackActiveIndex;
+                return `<button type="button" onclick="setFastStackIndex(${idx}, ${total})" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${isActive ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow border border-pink-200/60' : 'bg-white/5 text-sky-200/75 border border-white/10 hover:bg-white/15'}">${idx === 0 ? '✨ ' : ''}${cmtEsc(ch.name)}</button>`;
+            }).join('');
+
+            navBar.innerHTML = `
+                <div class="flex items-center justify-between gap-2">
+                    <button type="button" onclick="cycleFastStack(-1, ${total})" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-pink-500/30 border border-white/15 text-pink-200 font-black text-xs flex items-center justify-center active:scale-90 transition" title="Thẻ trước">◀</button>
+                    <div class="text-center min-w-0 flex-1">
+                        <div class="text-[11px] font-black text-pink-200">
+                            Thẻ ${fastStackActiveIndex + 1} / ${total} ${fastStackActiveIndex === 0 ? '<span class="text-amber-300">(Mới nhất)</span>' : ''}
+                        </div>
+                        <div class="text-[9.5px] text-sky-200/65">Vuốt ngang hoặc chạm lớp thẻ bên dưới để đổi</div>
+                    </div>
+                    <button type="button" onclick="cycleFastStack(1, ${total})" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-pink-500/30 border border-white/15 text-pink-200 font-black text-xs flex items-center justify-center active:scale-90 transition" title="Thẻ tiếp theo">▶</button>
+                </div>
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">${chipsHtml}</div>
+            `;
+            container.appendChild(navBar);
+
+            // Khung xếp lớp chồng lên nhau
+            const visibleBackLayers = Math.min(total - 1, 2);
+            const stackWrapper = document.createElement('div');
+            stackWrapper.id = "fastStackContainer";
+            stackWrapper.className = "relative w-full max-w-sm select-none";
+            stackWrapper.style.marginBottom = `${visibleBackLayers * 16 + 24}px`;
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+            stackWrapper.addEventListener('touchstart', (e) => {
+                if (e.touches && e.touches[0]) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }
+            }, { passive: true });
+            stackWrapper.addEventListener('touchend', (e) => {
+                if (!e.changedTouches || !e.changedTouches[0]) return;
+                const dx = e.changedTouches[0].clientX - touchStartX;
+                const dy = e.changedTouches[0].clientY - touchStartY;
+                if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+                    cycleFastStack(dx < 0 ? 1 : -1, total);
+                }
+            }, { passive: true });
+
+            for (let offset = total - 1; offset >= 0; offset--) {
+                const realIdx = (fastStackActiveIndex + offset) % total;
+                const c = fastChars[realIdx];
+                const card = document.createElement('div');
+
+                if (offset === 0) {
+                    card.className = "w-full fast-center-card p-6 rounded-3xl flex flex-col items-center relative z-30 transition-all duration-300";
+                    card.innerHTML = buildFastColorCardHtml(c);
+                } else {
+                    const yShift = offset === 1 ? 15 : (offset === 2 ? 29 : 34);
+                    const scaleVal = offset === 1 ? 0.955 : (offset === 2 ? 0.91 : 0.87);
+                    const opacityVal = offset === 1 ? 0.88 : (offset === 2 ? 0.68 : 0);
+                    const brightnessVal = offset === 1 ? 0.82 : 0.68;
+                    const zVal = offset === 1 ? 20 : (offset === 2 ? 10 : 5);
+
+                    card.className = "fast-center-card p-6 rounded-3xl flex flex-col items-center transition-all duration-300 overflow-hidden";
+                    card.style.cssText = `position:absolute; inset:0; z-index:${zVal}; transform:translateY(${yShift}px) scale(${scaleVal}); opacity:${opacityVal}; filter:brightness(${brightnessVal}); cursor:${offset <= 2 ? 'pointer' : 'default'}; pointer-events:${offset <= 2 ? 'auto' : 'none'};`;
+                    card.title = `Chạm để đưa ${c.name} lên trên`;
+                    card.onclick = () => setFastStackIndex(realIdx, total);
+                    card.innerHTML = `<div class="w-full pointer-events-none">${buildFastColorCardHtml(c)}</div>`;
+                }
+                stackWrapper.appendChild(card);
+            }
+
+            container.appendChild(stackWrapper);
             updateCountdownDisplayOnly();
         }
 
@@ -8755,6 +8931,9 @@
             const targetBtn = document.getElementById('guideTargetBtn');
             const closedBox = document.getElementById('closedNoticeSubtextContainer');
             const closedSub = document.getElementById('closedNoticeSubtext');
+            const skipBtn = document.getElementById('skipCountdownDetailBtn');
+
+            if (skipBtn) skipBtn.classList.add('hidden');
 
             if (activeChar.status === 'closed') {
                 prompt.classList.add('hidden');
@@ -8779,16 +8958,27 @@
                 targetBtn.onclick = () => { openColorGuide(false); };
             }
 
-            const timerEnd = userUnlockTimers[currentUser?.username]?.[activeChar.id];
+            const curPencilsDetail = currentUser ? getUserPencilCount(currentUser.username) : 0;
+            const timerEnd = userUnlockTimers[currentUser?.username]?.[activeChar.id] || userUnlockTimers[currentUser?.username?.toLowerCase()]?.[activeChar.id];
             const now = Date.now();
-            if (timerEnd && now < timerEnd) {
+            if (!isUnlocked && timerEnd && now < timerEnd) {
                 const remainSec = Math.floor((timerEnd - now) / 1000);
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-amber-500/25 text-amber-200 border border-amber-300/40 font-bold text-xs py-3 px-4 rounded-xl";
                 text.innerText = `Link Google AI Studio (Đếm ngược ${pad(Math.floor(remainSec / 3600))}:${pad(Math.floor((remainSec % 3600) / 60))}:${pad(remainSec % 60)} mở khóa)`;
+                if (skipBtn) {
+                    const hasSix = curPencilsDetail >= 6;
+                    const nextCls = hasSix
+                        ? "jelly-btn mt-2 w-full inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-pink-500 via-amber-400 to-purple-500 hover:brightness-110 text-white font-black text-xs py-2.5 px-4 rounded-xl shadow-[0_0_16px_rgba(244,114,182,0.45)] transition active:scale-95"
+                        : "mt-2 w-full inline-flex items-center justify-center gap-1.5 bg-pink-500/15 hover:bg-pink-500/25 border border-pink-300/35 text-pink-200 font-bold text-[11px] py-2 px-3 rounded-xl transition active:scale-95";
+                    const nextTxt = hasSix
+                        ? "⚡ Dùng 6 Bút Chì Màu để mở link ngay (Không cần đợi)"
+                        : `✏️ Dùng 6 Bút Chì Màu để mở link ngay (Hiện có ${curPencilsDetail}/6 chì)`;
+                    if (skipBtn.className !== nextCls) skipBtn.className = nextCls;
+                    if (skipBtn.innerText !== nextTxt) skipBtn.innerText = nextTxt;
+                }
                 return;
             }
 
-            const curPencilsDetail = currentUser ? getUserPencilCount(currentUser.username) : 0;
             const canFastRedeem10 = (isActiveFast && !isUnlocked && curPencilsDetail >= 10);
 
             if (isUnlocked) {
@@ -8800,6 +8990,130 @@
             } else {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-white/10 text-white/50 border border-white/20 font-bold text-xs py-3 px-4 rounded-xl transition";
                 text.innerText = "Link Google AI Studio (Chưa mở khóa)";
+            }
+        }
+
+        let isSkippingCountdownWithPencils = false;
+
+        function skipCountdownBySafeId(safeId) {
+            const target = characters.find(c => cmtSafeId(c.id) === safeId);
+            if (target) skipCountdownWithSixPencils(target.id);
+        }
+
+        function skipCountdownForActiveChar() {
+            if (activeChar) skipCountdownWithSixPencils(activeChar.id);
+        }
+
+        async function skipCountdownWithSixPencils(charId) {
+            if (isSkippingCountdownWithPencils) return;
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập để sử dụng tính năng này nhé!");
+                return;
+            }
+            const targetChar = characters.find(c => c.id === charId);
+            if (!targetChar) return;
+            if (targetChar.status === 'closed') {
+                alert("Nhân vật này hiện đang fix, không thể mở link lúc này!");
+                return;
+            }
+
+            const uName = currentUser.username;
+            const uKey = uName.toLowerCase();
+            if (userUnlockedState[uName]?.[charId] === true) {
+                alert("Nhân vật này đã được mở khóa rồi!");
+                return;
+            }
+
+            const timerEnd = userUnlockTimers[uName]?.[charId] || userUnlockTimers[uKey]?.[charId];
+            if (!timerEnd || Date.now() >= timerEnd) {
+                alert("Bạn cần hoàn thành duyệt ảnh cho nhân vật này trước khi dùng 6 Bút Chì Màu bỏ qua đếm ngược nhé!");
+                return;
+            }
+
+            const currentPencils = getUserPencilCount(uName);
+            if (!isOwnerUsername(uName) && currentPencils < 6) {
+                alert(`Bạn hiện có ${currentPencils} Bút Chì Màu. Cần đủ 6 Bút Chì Màu để bỏ qua thời gian đếm ngược mở link ngay nhé!`);
+                return;
+            }
+
+            if (!confirm(`Bạn có chắc chắn muốn dùng 6 Bút Chì Màu để bỏ qua thời gian đếm ngược và mở khóa link "${targetChar.name}" ngay lập tức không?`)) {
+                return;
+            }
+
+            isSkippingCountdownWithPencils = true;
+            const pencilRef = db.collection("pencils").doc(uKey);
+            const unlockedRef = db.collection("unlocked").doc(uName);
+            const timerRef = db.collection("unlock_timers").doc(uKey);
+
+            try {
+                const [pencilSnapshot, unlockedSnapshot] = await Promise.all([
+                    pencilRef.get(),
+                    unlockedRef.get()
+                ]);
+
+                const pencilData = pencilSnapshot.exists ? pencilSnapshot.data() : {};
+                const isOwnerAcc = isOwnerUsername(uName);
+                const latestCount = isOwnerAcc ? 10 : (Number(pencilData.count) || 0);
+                const unlockedChars = unlockedSnapshot.exists ? (unlockedSnapshot.data().chars || {}) : {};
+
+                if (!isOwnerAcc && latestCount < 6) {
+                    alert("Số Bút Chì Màu trong túi hiện chưa đủ 6 để bỏ qua đếm ngược.");
+                    return;
+                }
+                if (unlockedChars[targetChar.id] === true) {
+                    alert("Nhân vật này đã được mở khóa rồi!");
+                    return;
+                }
+
+                const nextCount = isOwnerAcc ? 10 : (latestCount - 6);
+                const nextUnlocked = { ...unlockedChars, [targetChar.id]: true };
+
+                if (userUnlockTimers[uName]) delete userUnlockTimers[uName][targetChar.id];
+                if (userUnlockTimers[uKey]) delete userUnlockTimers[uKey][targetChar.id];
+                localStorage.setItem('palette_user_unlock_timers', JSON.stringify(userUnlockTimers));
+
+                await Promise.all([
+                    pencilRef.set({ ...pencilData, count: nextCount }, { merge: true }),
+                    unlockedRef.set({ chars: nextUnlocked }, { merge: true }),
+                    timerRef.set({ [targetChar.id]: firebase.firestore.FieldValue.delete() }, { merge: true })
+                ]);
+
+                userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: nextCount };
+                userUnlockedState[uName] = nextUnlocked;
+
+                if (!userUnlockTimestamps[uName]) userUnlockTimestamps[uName] = {};
+                userUnlockTimestamps[uName][targetChar.id] = Date.now();
+                localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+
+                updatePencilUI();
+                renderRedeemSelectOptions();
+                renderUnlockedCharListInModal();
+                updateAIStudioButton();
+                renderCharacters();
+                renderFastColorCenter();
+                createPencilSparkles();
+                playPaletteTingSound();
+
+                if (selectedMiniRedeemChar && selectedMiniRedeemChar.id === targetChar.id) {
+                    openMiniRedeemModal(targetChar);
+                }
+
+                logMemberActivity("Dùng 6 Chì bỏ qua đếm ngược 🔓", `Nhân vật: ${targetChar.name}`, "link", {
+                    charId: targetChar.id,
+                    charName: targetChar.name
+                });
+                sendPhonePushToOwner(`🔓 Dùng 6 chì mở link ngay: ${uName}`, `Nhân vật: ${targetChar.name}`, 4);
+                triggerNotification("Mở Khóa Link Thành Công!", `Bạn đã dùng 6 Bút Chì Màu để bỏ qua đếm ngược và mở link "${targetChar.name}" ngay! Nhớ bấm thả tim lưu giữ để không bị khóa lại sau 1 ngày nhé.`, uName);
+
+                alert(`🎉 Chúc mừng! Bạn đã dùng 6 Bút Chì Màu để mở khóa link "${targetChar.name}" ngay lập tức! Nhớ bấm thả tim để lưu giữ vĩnh viễn nhé.`);
+                if (targetChar.aiStudioUrl) {
+                    window.open(targetChar.aiStudioUrl, '_blank');
+                }
+            } catch (err) {
+                console.error("Lỗi dùng 6 chì bỏ qua đếm ngược:", err);
+                alert("Có lỗi khi kết nối: " + (err?.message || "Vui lòng thử lại"));
+            } finally {
+                isSkippingCountdownWithPencils = false;
             }
         }
 
@@ -8863,7 +9177,12 @@
                     return;
                 }
             }
-            alert("Hệ thống đang đếm ngược thời gian mở khóa, bạn vui lòng đợi nhé! Sau khi hết giờ link sẽ tự động mở.");
+            const curPencils = getUserPencilCount(currentUser.username);
+            if (curPencils >= 6) {
+                skipCountdownWithSixPencils(charId);
+                return;
+            }
+            alert(`Hệ thống đang đếm ngược thời gian mở khóa, bạn vui lòng đợi nhé! (Hoặc dùng 6 Bút Chì Màu để mở link ngay, hiện bạn có ${curPencils}/6 chì).`);
         }
 
         // Hàm Chủ Web mở khóa link ngay lập tức cho bất kỳ ai (hoặc cho chính mình)
@@ -9037,7 +9356,7 @@
                 return;
             }
 
-            const timerEnd = userUnlockTimers[currentUser?.username]?.[activeChar.id];
+            const timerEnd = userUnlockTimers[currentUser?.username]?.[activeChar.id] || userUnlockTimers[currentUser?.username?.toLowerCase()]?.[activeChar.id];
             if (timerEnd && Date.now() < timerEnd) {
                 if (checkIsOwnerAccount()) {
                     if (confirm(`👑 Quyền Chủ Web (Bibi 0304):\nBạn có muốn MỞ KHÓA LINK NGAY LẬP TỨC cho "${activeChar.name}" (bỏ qua đếm ngược) không?`)) {
@@ -9045,7 +9364,12 @@
                         return;
                     }
                 }
-                alert("Hệ thống đang đếm ngược thời gian mở khóa, bạn vui lòng đợi nhé!");
+                const curPencils = getUserPencilCount(currentUser.username);
+                if (curPencils >= 6) {
+                    skipCountdownWithSixPencils(activeChar.id);
+                    return;
+                }
+                alert(`Hệ thống đang đếm ngược thời gian mở khóa, bạn vui lòng đợi nhé! (Hoặc dùng 6 Bút Chì Màu để mở link ngay, hiện bạn có ${curPencils}/6 chì).`);
                 return;
             }
 
@@ -9935,10 +10259,17 @@
                         ? `${Math.round(waitMs / 3600000 * 10) / 10} tiếng`
                         : `${Math.round(waitMs / 60000)} phút`;
 
+                    const curPencilsAfterApprove = getUserPencilCount(uName);
+                    const hasSixAfterApprove = curPencilsAfterApprove >= 6;
                     feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-emerald-500/25 text-emerald-100 border-emerald-400/50";
                     feedbackBox.innerHTML = `
                         <div class="font-extrabold text-sm mb-1 text-emerald-300">🎉 Duyệt thành công!</div>
-                        <div>Hệ thống đang đếm ngược ${waitHoursText} để mở link của "${fastTargetChar.name}". Sau khi mở khóa thành công bạn sẽ nhận được +2 Chì Màu!</div>
+                        <div>Hệ thống đang đếm ngược ${waitHoursText} để mở link của "${fastTargetChar.name}". Nếu không muốn chờ, bạn có thể dùng <b>6 Bút Chì Màu</b> để mở link ngay lập tức!</div>
+                        <div class="mt-2.5">
+                            <button type="button" onclick="skipCountdownBySafeId('${cmtSafeId(fastTargetChar.id)}')" class="${hasSixAfterApprove ? 'jelly-btn bg-gradient-to-r from-pink-500 via-amber-400 to-purple-500 text-white font-black' : 'bg-pink-500/20 border border-pink-300/40 text-pink-100 font-bold'} w-full py-2.5 px-3 rounded-xl text-xs shadow active:scale-95 transition">
+                                ${hasSixAfterApprove ? '⚡ Dùng 6 Bút Chì Màu mở link ngay (Không cần chờ)' : `✏️ Đổi 6 Bút Chì Màu mở ngay (Hiện có ${curPencilsAfterApprove}/6 chì)`}
+                            </button>
+                        </div>
                         <div class="mt-2 text-pink-200 font-bold bg-pink-500/20 p-2 rounded-xl border border-pink-300/30">
                             💖 Nhớ bấm thả tim vào nhân vật để lưu giữ vĩnh viễn, nếu quên sau 1 ngày bạn sẽ phải làm lại thủ tục để lấy lại link nhé!
                         </div>
@@ -10000,8 +10331,11 @@
             }
         }
 
+        let adminFormStatusState = 'locked';
+
         function toggleStatusSettings(val) {
             const safeVal = (val === 'unlocked_24h' || val === 'closed') ? val : 'locked';
+            adminFormStatusState = safeVal;
             const statusInput = document.getElementById('formCharStatus');
             if (statusInput) statusInput.value = safeVal;
 
@@ -10199,7 +10533,10 @@
             const subtitle = document.getElementById('formCharSubtitle').value.trim();
             const fbLink = document.getElementById('formCharFbLink').value.trim();
             const aiLink = document.getElementById('formCharAiLink').value.trim();
-            const status = document.getElementById('formCharStatus').value;
+            const rawFormStatus = document.getElementById('formCharStatus')?.value;
+            const status = (adminFormStatusState === 'unlocked_24h' || adminFormStatusState === 'closed')
+                ? adminFormStatusState
+                : ((rawFormStatus === 'unlocked_24h' || rawFormStatus === 'closed') ? rawFormStatus : 'locked');
             const isNew = document.getElementById('formCharIsNew')?.value === 'true';
 
             const fastChoice = document.querySelector('input[name="formFastChoice"]:checked')?.value || 'event_countdown';
@@ -10318,9 +10655,24 @@
                     reopenTimestamp: null,
                     statusUpdatedAt: newCharNow
                 };
+                if (window.saveRecentCharStatusOverride) {
+                    window.saveRecentCharStatusOverride(newChar.id, {
+                        status: newChar.status,
+                        fastChoiceMode: newChar.fastChoiceMode,
+                        fastStartTime: newChar.fastStartTime,
+                        fastEndTime: newChar.fastEndTime,
+                        customDurationMs: newChar.customDurationMs,
+                        unlockWaitMs: newChar.unlockWaitMs,
+                        statusUpdatedAt: newChar.statusUpdatedAt
+                    });
+                }
                 try {
                     await db.collection("characters").doc(newChar.id).set(newChar);
                 } catch (saveErr) {
+                    if (window.recentCharStatusOverrides) {
+                        delete window.recentCharStatusOverrides[newChar.id];
+                        try { localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides)); } catch (_) {}
+                    }
                     console.error("Lỗi tạo nhân vật trên Firebase:", saveErr);
                     alert("Không thể tải nhân vật lên máy chủ (có thể ảnh quá dung lượng 1MB hoặc mạng yếu). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
                     return;
@@ -10358,37 +10710,47 @@
             if (idx === -1) return;
             const c = characters[idx];
             const isClosedNow = (c.status === 'closed');
-            const nextStatus = isClosedNow ? 'locked' : 'closed';
+            const nextStatus = isClosedNow ? (c.prevStatusBeforeFix === 'unlocked_24h' ? 'unlocked_24h' : 'locked') : 'closed';
+            const prevStatusToSave = isClosedNow ? null : (c.status || 'locked');
             const nowUpdatedAt = Date.now();
 
             fixingCharIdsInFlight.add(charId);
             if (window.saveRecentCharStatusOverride) {
                 window.saveRecentCharStatusOverride(charId, {
                     status: nextStatus,
-                    fastChoiceMode: null,
-                    fastStartTime: null,
-                    fastEndTime: null,
-                    customDurationMs: null,
+                    fastChoiceMode: nextStatus === 'unlocked_24h' ? (c.fastChoiceMode ?? null) : null,
+                    fastStartTime: nextStatus === 'unlocked_24h' ? (c.fastStartTime ?? null) : null,
+                    fastEndTime: nextStatus === 'unlocked_24h' ? (c.fastEndTime ?? null) : null,
+                    customDurationMs: nextStatus === 'unlocked_24h' ? (c.customDurationMs ?? null) : null,
                     unlockWaitMs: c.unlockWaitMs || 0,
                     statusUpdatedAt: nowUpdatedAt
                 });
             }
             try {
-                await db.collection("characters").doc(charId).set({
+                const payload = {
                     status: nextStatus,
+                    prevStatusBeforeFix: prevStatusToSave,
                     statusUpdatedAt: nowUpdatedAt,
-                    customDurationMs: null,
-                    fastStartTime: null,
-                    fastEndTime: null,
                     reopenTimestamp: null
-                }, { merge: true });
+                };
+                if (nextStatus !== 'unlocked_24h') {
+                    payload.customDurationMs = null;
+                    payload.fastStartTime = null;
+                    payload.fastEndTime = null;
+                }
+                await db.collection("characters").doc(charId).set(payload, { merge: true });
 
                 c.status = nextStatus;
+                c.prevStatusBeforeFix = prevStatusToSave;
                 c.statusUpdatedAt = nowUpdatedAt;
-                c.customDurationMs = null;
-                c.fastStartTime = null;
-                c.fastEndTime = null;
-                activeFastCharIdsInSession.delete(charId);
+                if (nextStatus !== 'unlocked_24h') {
+                    c.customDurationMs = null;
+                    c.fastStartTime = null;
+                    c.fastEndTime = null;
+                    activeFastCharIdsInSession.delete(charId);
+                } else {
+                    activeFastCharIdsInSession.add(charId);
+                }
 
                 if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
                 if (activeChar && activeChar.id === charId) {
@@ -11522,6 +11884,7 @@
         }
 
         function openFastColorScreen() {
+            fastStackActiveIndex = 0;
             document.getElementById('homeScreen').classList.add('hidden');
             document.getElementById('storyScreen').classList.add('hidden');
             document.getElementById('charDetailScreen').classList.add('hidden');
