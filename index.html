@@ -1476,10 +1476,12 @@
                     <button id="guideTargetBtn" onclick="openColorGuide(false)" class="pastel-fast-wave bg-pink-400/10 border border-pink-300/40 px-2 py-0.5 rounded-lg font-bold underline text-xs">
                         Tô Màu
                     </button>
-                    <span>hoặc dùng</span>
-                    <button type="button" onclick="openPencilModal()" class="pastel-fast-wave bg-purple-400/10 border border-purple-300/40 px-2 py-0.5 rounded-lg font-bold underline text-xs active:scale-95 transition">
-                        Chì Màu
-                    </button>
+                    <span id="aiPencilOptionWrap" class="inline-flex items-center gap-1">
+                        <span>hoặc dùng</span>
+                        <button type="button" onclick="openPencilModal()" class="pastel-fast-wave bg-purple-400/10 border border-purple-300/40 px-2 py-0.5 rounded-lg font-bold underline text-xs active:scale-95 transition">
+                            Chì Màu
+                        </button>
+                    </span>
                 </div>
 
                  
@@ -4813,7 +4815,7 @@
                         <span class="text-xs font-bold text-pink-200 truncate flex-1 text-left">${c.name}</span>
                         ${isUnlocked
                             ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-300/30 px-1.5 py-0.5 rounded-full font-bold">Đã mở</span>'
-                            : (isCountingDown ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-300/30 px-1.5 py-0.5 rounded-full font-bold">Đợi (6 chì)</span>' : '')}
+                            : (isCountingDown ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-300/30 px-1.5 py-0.5 rounded-full font-bold">Đợi (6 chì)</span>' : (isFastCharActive(c) ? '<span class="text-[9px] bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-300/30 px-1.5 py-0.5 rounded-full font-bold">Nhanh nhẹn</span>' : ''))}
                     </div>
                 `;
             }).join('');
@@ -4878,6 +4880,10 @@
                     btn.className = "jelly-btn w-full bg-gradient-to-r from-pink-500 via-amber-400 to-purple-500 hover:brightness-110 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg active:scale-95 transition";
                     btn.innerText = "⚡ Dùng 6 Chì Màu Mở Ngay (Đã duyệt)";
                     btn.onclick = () => skipCountdownWithSixPencils(char.id);
+                } else if (isFastCharActive(char)) {
+                    btn.className = "jelly-btn w-full bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:brightness-110 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg active:scale-95 transition";
+                    btn.innerText = "⚡ Vào Sắc Màu Nhanh Nhẹn để lấy link ➔";
+                    btn.onclick = () => { closeMiniRedeemModal(); closePencilModal(); openFastColorScreen(); };
                 } else {
                     btn.className = "jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg active:scale-95 transition";
                     btn.innerText = "Đổi 10 Chì Màu Lấy Link";
@@ -5001,6 +5007,10 @@
 
             if (targetChar.status === 'closed') {
                 alert("Nhân vật này hiện đang đóng link, không thể dùng Chì Màu để mở lúc này!");
+                return;
+            }
+            if (isFastCharActive(targetChar)) {
+                alert(`Nhân vật "${targetChar.name}" đang mở đợt ở Sắc Màu Nhanh Nhẹn, không thể dùng 10 Bút Chì Màu để mở khóa trực tiếp! Vui lòng làm thủ tục tại Sắc Màu Nhanh Nhẹn nhé.`);
                 return;
             }
 
@@ -8322,7 +8332,6 @@
                         <button onclick="openFastProofModal('${c.id}')" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 hover:brightness-110 font-black text-xs py-3 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">
                             Hãy thả tim và vẽ đường cho tình yêu chạy trước khi kết thúc duyệt tự động.
                         </button>
-                        ${hasTenPencils ? `<button onclick="redeemTenPencilsBySafeId('${safeCharId}')" class="jelly-btn w-full bg-gradient-to-r from-emerald-500 via-pink-500 to-purple-600 hover:brightness-110 font-black text-xs py-2.5 px-4 rounded-xl text-white shadow-lg active:scale-95 transition">✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay</button>` : ''}
                     </div>
                 `;
             }
@@ -8948,6 +8957,9 @@
             prompt.classList.remove('hidden');
             closedBox.classList.add('hidden');
 
+            const pencilOptWrap = document.getElementById('aiPencilOptionWrap');
+            if (pencilOptWrap) pencilOptWrap.classList.toggle('hidden', isActiveFast);
+
             if (isActiveFast) {
                 targetBtn.className = "bg-transparent font-black underline text-xs pastel-fast-wave";
                 targetBtn.innerText = "Sắc Màu Nhanh Nhẹn";
@@ -8979,14 +8991,9 @@
                 return;
             }
 
-            const canFastRedeem10 = (isActiveFast && !isUnlocked && curPencilsDetail >= 10);
-
             if (isUnlocked) {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg active:scale-95 transition animate-bounce";
                 text.innerText = `ĐÃ MỞ KHÓA - Mở Link ${activeChar.name} Ngay!`;
-            } else if (canFastRedeem10) {
-                btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500/35 via-pink-500/35 to-purple-500/35 text-amber-200 border border-amber-300/70 font-black text-xs py-3 px-4 rounded-xl shadow-[0_0_16px_rgba(251,191,36,0.3)] transition active:scale-95";
-                text.innerText = "✨ Bạn đã có đủ 10 chì, hãy đổi để lấy link ngay";
             } else {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-white/10 text-white/50 border border-white/20 font-bold text-xs py-3 px-4 rounded-xl transition";
                 text.innerText = "Link Google AI Studio (Chưa mở khóa)";
@@ -9375,11 +9382,6 @@
 
             const isActiveFast = isFastCharActive(activeChar);
             if (isActiveFast) {
-                const curPencilsClick = currentUser ? getUserPencilCount(currentUser.username) : 0;
-                if (curPencilsClick >= 10) {
-                    redeemTenPencilsForChar(activeChar.id);
-                    return;
-                }
                 alert(`Khóa! Vui lòng nộp proof tại mục Sắc Màu Nhanh Nhẹn để mở khóa link ${activeChar.name}!`);
                 openFastColorScreen();
             } else {
