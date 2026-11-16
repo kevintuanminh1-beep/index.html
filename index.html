@@ -60,12 +60,12 @@
         }
 
         .fx-aurora {
-            position: absolute; inset: -40%;
+            position: absolute; inset: -30%;
             background: 
-                radial-gradient(circle at 30% 30%, rgba(192, 132, 252, 0.22) 0%, transparent 45%),
-                radial-gradient(circle at 70% 60%, rgba(244, 114, 182, 0.2) 0%, transparent 45%),
-                radial-gradient(circle at 50% 80%, rgba(56, 189, 248, 0.2) 0%, transparent 45%);
-            filter: blur(75px);
+                radial-gradient(circle at 30% 30%, rgba(192, 132, 252, 0.22) 0%, transparent 55%),
+                radial-gradient(circle at 70% 60%, rgba(244, 114, 182, 0.2) 0%, transparent 55%),
+                radial-gradient(circle at 50% 80%, rgba(56, 189, 248, 0.2) 0%, transparent 55%);
+            will-change: transform;
             animation: auroraBreathe 18s ease-in-out infinite alternate;
         }
         @keyframes auroraBreathe {
@@ -103,8 +103,7 @@
             position: absolute;
             background: linear-gradient(135deg, #ffd1dc 0%, #f472b6 100%);
             border-radius: 12px 1px 12px 1px;
-            opacity: 0.65;
-            filter: drop-shadow(0 0 3px rgba(244,114,182,0.4));
+            opacity: 0.68;
             animation: sakuraFall linear infinite;
             will-change: transform;
         }
@@ -2729,7 +2728,7 @@
                 }
             }
         }
-        const DEFAULT_VISUAL_EFFECTS = ["fx-dust", "fx-aurora", "fx-stars", "fx-paper", "fx-sakura"];
+        const DEFAULT_VISUAL_EFFECTS = ["fx-dust", "fx-aurora", "fx-stars", "fx-sakura"];
 
         function isValidAvatarSrc(src) {
             return typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:image/'));
@@ -5649,65 +5648,57 @@
             }, () => {});
 
             db.collection("settings").doc("main").onSnapshot((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    if (data.availableCategories) availableCategories = data.availableCategories;
-                    if (data.customMenuIcons) customMenuIcons = { ...customMenuIcons, ...data.customMenuIcons };
-                    if (typeof data.ownerNtfyTopic === 'string') {
-                        ownerNtfyTopic = data.ownerNtfyTopic;
-                        localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
-                    }
-                    if (data.bgMusic) {
-                        const nextMusicHash = JSON.stringify(data.bgMusic.playlist || data.bgMusic.musicUrl || data.bgMusic.youtubeUrl || "");
-                        if (window._lastBgMusicHash !== nextMusicHash) {
-                            window._lastBgMusicHash = nextMusicHash;
-                            loadSavedBackgroundMusic(data.bgMusic);
-                        }
-                    }
-                    applyCustomMenuIcons();
-                    renderCategoryTags();
+                if (!doc.exists) return;
+                const data = doc.data() || {};
+                if (data.availableCategories) availableCategories = data.availableCategories;
+                if (data.customMenuIcons) customMenuIcons = { ...customMenuIcons, ...data.customMenuIcons };
+                if (typeof data.ownerNtfyTopic === 'string') {
+                    ownerNtfyTopic = data.ownerNtfyTopic;
+                    localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
                 }
+                if (data.bgMusic) {
+                    const nextMusicHash = JSON.stringify(data.bgMusic.playlist || data.bgMusic.musicUrl || data.bgMusic.youtubeUrl || "");
+                    if (window._lastBgMusicHash !== nextMusicHash) {
+                        window._lastBgMusicHash = nextMusicHash;
+                        loadSavedBackgroundMusic(data.bgMusic);
+                    }
+                }
+                if (data.sailorCards) {
+                    const d = data.sailorCards;
+                    sailorCardsConfig = {
+                        meme: Array.isArray(d.meme) ? d.meme : [],
+                        sailor: Array.isArray(d.sailor) ? d.sailor : [],
+                        secret: Array.isArray(d.secret) ? d.secret : [],
+                        backImage: d.backImage || "",
+                        backCropPos: d.backCropPos || "center",
+                        audioUrl: d.audioUrl || "",
+                        audioVolume: (typeof d.audioVolume === 'number') ? d.audioVolume : sailorAudioVolume
+                    };
+                    if (typeof d.audioVolume === 'number') {
+                        sailorAudioVolume = Math.max(0, Math.min(100, d.audioVolume));
+                        localStorage.setItem('palette_sailor_audio_volume', sailorAudioVolume);
+                        const vSlider = document.getElementById('sailorAudioVolumeSlider');
+                        const vPct = document.getElementById('sailorAudioVolumePercent');
+                        if (vSlider) vSlider.value = sailorAudioVolume;
+                        if (vPct) vPct.innerText = sailorAudioVolume + '%';
+                    }
+                    try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
+                    const audioInp = document.getElementById('sailorCustomAudioUrl');
+                    if (audioInp && !audioInp.matches(':focus')) {
+                        audioInp.value = (sailorCardsConfig.audioUrl || "").startsWith('data:') ? "" : (sailorCardsConfig.audioUrl || "");
+                    }
+                    if (!document.getElementById('sailorCardModal')?.classList.contains('hidden') && !isSailorCardFlipping) {
+                        renderSailorCardsGrid();
+                    }
+                    if (!document.getElementById('sailorAdminModal')?.classList.contains('hidden')) {
+                        renderSailorAdminList();
+                    }
+                }
+                applyCustomMenuIcons();
+                renderCategoryTags();
             }, (error) => {
                 if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
-
-            // Đồng bộ dữ liệu thẻ bài nằm trực tiếp trong settings/main (được cấp phép sẵn)
-            db.collection("settings").doc("main").onSnapshot((doc) => {
-                if (doc.exists) {
-                    const data = doc.data() || {};
-                    if (data.sailorCards) {
-                        const d = data.sailorCards;
-                        sailorCardsConfig = {
-                            meme: Array.isArray(d.meme) ? d.meme : [],
-                            sailor: Array.isArray(d.sailor) ? d.sailor : [],
-                            secret: Array.isArray(d.secret) ? d.secret : [],
-                            backImage: d.backImage || "",
-                            backCropPos: d.backCropPos || "center",
-                            audioUrl: d.audioUrl || "",
-                            audioVolume: (typeof d.audioVolume === 'number') ? d.audioVolume : sailorAudioVolume
-                        };
-                        if (typeof d.audioVolume === 'number') {
-                            sailorAudioVolume = Math.max(0, Math.min(100, d.audioVolume));
-                            localStorage.setItem('palette_sailor_audio_volume', sailorAudioVolume);
-                            const vSlider = document.getElementById('sailorAudioVolumeSlider');
-                            const vPct = document.getElementById('sailorAudioVolumePercent');
-                            if (vSlider) vSlider.value = sailorAudioVolume;
-                            if (vPct) vPct.innerText = sailorAudioVolume + '%';
-                        }
-                        try { localStorage.setItem('palette_sailor_cards', JSON.stringify(sailorCardsConfig)); } catch (_) {}
-                        const audioInp = document.getElementById('sailorCustomAudioUrl');
-                        if (audioInp && !audioInp.matches(':focus')) {
-                            audioInp.value = (sailorCardsConfig.audioUrl || "").startsWith('data:') ? "" : (sailorCardsConfig.audioUrl || "");
-                        }
-                        if (!document.getElementById('sailorCardModal')?.classList.contains('hidden') && !isSailorCardFlipping) {
-                            renderSailorCardsGrid();
-                        }
-                        if (!document.getElementById('sailorAdminModal')?.classList.contains('hidden')) {
-                            renderSailorAdminList();
-                        }
-                    }
-                }
-            }, () => {});
         }
 
         // Tải duy nhất dữ liệu của chính người đang đăng nhập (Tiết kiệm 80% lượt đọc)
@@ -8505,7 +8496,7 @@
                 }
             }, { passive: true });
 
-            for (let offset = total - 1; offset >= 0; offset--) {
+            for (let offset = Math.min(total - 1, 2); offset >= 0; offset--) {
                 const realIdx = (fastStackActiveIndex + offset) % total;
                 const c = fastChars[realIdx];
                 const card = document.createElement('div');
@@ -9035,7 +9026,6 @@
             }
 
             if (skipBtn) skipBtn.classList.add('hidden');
-            if (skipBtn) skipBtn.classList.add('hidden');
             if (isUnlocked) {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg active:scale-95 transition animate-bounce";
                 text.innerText = `ĐÃ MỞ KHÓA - Mở Link ${activeChar.name} Ngay!`;
@@ -9213,7 +9203,10 @@
                     }
                 });
 
-                if (activeChar) updateAIStudioButton();
+                if (activeChar) {
+                    const activeEnd = userUnlockTimers[currentUser.username]?.[activeChar.id] || userUnlockTimers[currentUser.username.toLowerCase()]?.[activeChar.id];
+                    if (activeEnd && Date.now() < activeEnd) updateAIStudioButton();
+                }
             }, 1000);
         }
 
