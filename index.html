@@ -5934,10 +5934,12 @@
                 }
             });
 
+            const isUsersModalOpen = () => !document.getElementById('registeredUsersModal')?.classList.contains('hidden');
+
             db.collection("users").onSnapshot((snapshot) => {
                 snapshot.forEach(doc => { registeredUsers[doc.id] = doc.data(); });
                 updateRegisteredUsersCountUI();
-                renderUsersModalContent();
+                if (isUsersModalOpen()) renderUsersModalContent();
             });
 
             // Đồng bộ realtime số Bút Chì Màu của tất cả thành viên cho Chủ Web
@@ -5946,7 +5948,7 @@
                     userPencilsData[doc.id.toLowerCase()] = doc.data() || { count: 0 };
                 });
                 updatePencilUI();
-                renderUsersModalContent();
+                if (isUsersModalOpen()) renderUsersModalContent();
             }, (error) => {
                 if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
@@ -5957,7 +5959,7 @@
                     userUnlockedState[doc.id] = doc.data().chars || {};
                     userUnlockedState[doc.id.toLowerCase()] = doc.data().chars || {};
                 });
-                renderUsersModalContent();
+                if (isUsersModalOpen()) renderUsersModalContent();
             }, (error) => {
                 if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
@@ -5966,7 +5968,7 @@
             db.collection("unlock_timers").onSnapshot((snapshot) => {
                 allMembersUnlockTimers = {};
                 snapshot.forEach(doc => { allMembersUnlockTimers[doc.id] = doc.data() || {}; });
-                renderUsersModalContent();
+                if (isUsersModalOpen()) renderUsersModalContent();
             });
 
             // Lắng nghe danh sách ảnh Help chờ Chủ Web Duyệt Link
@@ -7808,6 +7810,16 @@
                 return `https://images.weserv.nl/?url=${encodeURIComponent(u)}${isGif ? '&n=-1' : ''}`;
             }
             return u;
+        }
+
+        function getCatboxOnErrorAttr(rawUrl) {
+            if (!rawUrl || String(rawUrl).startsWith('data:')) return '';
+            return `onerror="handleCatboxImgError(this, '${cmtEsc(rawUrl)}')"`;
+        }
+
+        function getCatboxOnErrorAttr(rawUrl) {
+            if (!rawUrl || String(rawUrl).startsWith('data:')) return '';
+            return `onerror="handleCatboxImgError(this, '${cmtEsc(rawUrl)}')"`;
         }
 
         function handleCatboxImgError(imgEl, rawSrc) {
