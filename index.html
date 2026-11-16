@@ -1380,6 +1380,9 @@
                 Quay lại danh sách
             </button>
             <div class="flex items-center gap-2">
+                <button id="adminRestoreLikesBtn" onclick="restoreLikesFromActivities()" class="hidden bg-rose-500/25 hover:bg-rose-500/40 border border-rose-300/50 text-rose-200 px-2.5 py-1 rounded-full text-xs font-bold active:scale-95 transition flex items-center gap-1" title="Khôi phục lại tim và link lưu giữ cho mọi người">
+                    🔄 Khôi phục tim & link
+                </button>
                 <button id="adminEditCharBtn" onclick="openEditForActiveChar()" class="hidden bg-yellow-400/20 border border-yellow-300/50 text-yellow-300 px-2.5 py-1 rounded-full text-xs font-bold active:scale-95 transition flex items-center gap-1">
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     Sửa char
@@ -8558,22 +8561,7 @@
                         }
                     }
 
-                    // Sau tròn 24 tiếng nếu chưa bấm thả tim thì khóa lại để user làm lại thủ tục lấy link
-                    if (window.hasLikesSynced && currentUser && userUnlockedState[currentUser.username]?.[c.id] === true) {
-                        const likes = charLikesData[c.id] || [];
-                        if (!likes.includes(currentUser.username)) {
-                            const unlockTime = userUnlockTimestamps[currentUser.username]?.[c.id];
-                            if (unlockTime && (now - unlockTime >= 24 * 60 * 60 * 1000)) {
-                                userUnlockedState[currentUser.username][c.id] = false;
-                                delete userUnlockTimestamps[currentUser.username][c.id];
-                                localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
-                                db.collection("unlocked").doc(currentUser.username).set({ chars: userUnlockedState[currentUser.username] });
-                                if (activeChar && activeChar.id === c.id) updateAIStudioButton();
-                                renderFastColorCenter();
-                                renderCharacters();
-                            }
-                        }
-                    }
+                    // Đã tắt cơ chế tự khóa sau 24h để bảo vệ tuyệt đối link cho các thành viên, tránh rủi ro mất link khi có lỗi đồng bộ
                 });
                 updateCountdownDisplayOnly();
             }, 1000);
@@ -8920,8 +8908,14 @@
             }
 
             const adminEditBtn = document.getElementById('adminEditCharBtn');
-            if (currentUser?.isOwner) adminEditBtn.classList.remove('hidden');
-            else adminEditBtn.classList.add('hidden');
+            const adminRestoreLikesBtn = document.getElementById('adminRestoreLikesBtn');
+            if (currentUser?.isOwner) {
+                adminEditBtn?.classList.remove('hidden');
+                adminRestoreLikesBtn?.classList.remove('hidden');
+            } else {
+                adminEditBtn?.classList.add('hidden');
+                adminRestoreLikesBtn?.classList.add('hidden');
+            }
 
             document.getElementById('homeScreen').classList.add('hidden');
             document.getElementById('storyScreen').classList.add('hidden');
@@ -8950,7 +8944,7 @@
         }
 
         function togglePouringHeart() {
-            if (!currentUser) {
+            if (!currentUser || !activeChar) {
                 alert("Vui lòng đăng nhập để bấm lưu giữ người thương nhé!");
                 return;
             }
@@ -8960,12 +8954,22 @@
             if (!charLikesData[activeChar.id]) charLikesData[activeChar.id] = [];
             const likesArr = charLikesData[activeChar.id];
             const index = likesArr.indexOf(currentUser.username);
+            const likeRef = db.collection("likes").doc(activeChar.id);
 
+            // Dùng arrayUnion & arrayRemove nguyên tử: Tuyệt đối không bao giờ ghi đè làm mất tim của người khác
             if (index > -1) {
                 likesArr.splice(index, 1);
+                likeRef.update({
+                    users: firebase.firestore.FieldValue.arrayRemove(currentUser.username)
+                }).catch(() => {
+                    likeRef.set({ users: likesArr }, { merge: true });
+                });
                 logMemberActivity("Bỏ tim người thương", `Nhân vật: ${activeChar.name}`);
             } else {
                 likesArr.push(currentUser.username);
+                likeRef.set({
+                    users: firebase.firestore.FieldValue.arrayUnion(currentUser.username)
+                }, { merge: true });
                 logMemberActivity("Đã thả tim lưu giữ người thương ❤️", `Nhân vật: ${activeChar.name}`, "general", {
                     charId: activeChar.id,
                     charName: activeChar.name
@@ -8973,9 +8977,145 @@
                 sendPhonePushToOwner(`❤️ Thả tim: ${currentUser.username}`, `Đã lưu giữ nhân vật: ${activeChar.name}`, 3);
             }
 
-            db.collection("likes").doc(activeChar.id).set({ users: likesArr });
             updateHeartUI();
             updateRegisteredUsersCountUI();
+        }
+
+        async function restoreLikesFromActivities() {
+            if (!activeChar || !currentUser?.isOwner) return;
+            const charId = activeChar.id;
+            const charName = activeChar.name;
+
+            const stripVn = (s) => (s || '').toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd')
+                .replace(/[^a-z0-9]/g, '');
+
+            const targetStrip = stripVn(charName); // vd: "quachgiavy"
+
+            const btn = document.getElementById('adminRestoreLikesBtn');
+            const origText = btn ? btn.innerText : '';
+            if (btn) { btn.disabled = true; btn.innerText = "⏳ Đang quét acc thật..."; }
+
+            try {
+                const realUsersSet = new Set(charLikesData[charId] || []);
+
+                // 1. Quét collection "activities": Gom TẤT CẢ acc thật đã từng bấm nút "thả tim lưu giữ"
+                try {
+                    const actSnap = await db.collection("activities").get();
+                    actSnap.forEach(doc => {
+                        const d = doc.data() || {};
+                        const u = d.username;
+                        if (!u) return;
+
+                        const cId = d.charId || "";
+                        const cNameStrip = stripVn(d.charName);
+                        const cDetStrip = stripVn(d.details);
+
+                        const isCharMatch = (cId === charId) ||
+                                            (cNameStrip && (cNameStrip.includes(targetStrip) || targetStrip.includes(cNameStrip))) ||
+                                            (cDetStrip && cDetStrip.includes(targetStrip));
+
+                        if (isCharMatch) {
+                            const title = d.title || "";
+                            if (title.includes("thả tim lưu giữ") || title.includes("Mở khóa link") || title.includes("Duyệt")) {
+                                realUsersSet.add(u);
+                            } else if (title.includes("Bỏ tim")) {
+                                realUsersSet.delete(u);
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.warn("Lỗi đọc activities:", e);
+                }
+
+                // 2. Quét collection "unlock_timers": Gom TẤT CẢ acc thật đang đếm ngược chờ mở link
+                try {
+                    const timersSnap = await db.collection("unlock_timers").get();
+                    timersSnap.forEach(doc => {
+                        const d = doc.data() || {};
+                        // doc.id chính là username của thành viên
+                        if (d[charId] || d[charId.toLowerCase()]) {
+                            const originalName = registeredUsers[doc.id.toLowerCase()]?.username || doc.id;
+                            realUsersSet.add(originalName);
+                        }
+                    });
+                } catch (e) {
+                    console.warn("Lỗi đọc unlock_timers:", e);
+                }
+
+                // 3. Quét collection "unlocked": Gom TẤT CẢ acc thật đã mở khóa char này
+                try {
+                    const unlSnap = await db.collection("unlocked").get();
+                    unlSnap.forEach(doc => {
+                        const d = doc.data() || {};
+                        const chars = d.chars || {};
+                        if (chars[charId] === true || chars[charId.toLowerCase()] === true) {
+                            const originalName = registeredUsers[doc.id.toLowerCase()]?.username || doc.id;
+                            realUsersSet.add(originalName);
+                        }
+                    });
+                } catch (e) {
+                    console.warn("Lỗi đọc unlocked:", e);
+                }
+
+                // 4. Quét collection "proof_submissions": Gom TẤT CẢ acc thật đã gửi ảnh bằng chứng duyệt char này
+                try {
+                    const proofSnap = await db.collection("proof_submissions").get();
+                    proofSnap.forEach(doc => {
+                        const d = doc.data() || {};
+                        const u = d.username;
+                        if (!u) return;
+                        if (d.charId === charId || stripVn(d.charName).includes(targetStrip) || stripVn(d.proofType).includes(targetStrip)) {
+                            realUsersSet.add(u);
+                        }
+                    });
+                } catch (e) {
+                    console.warn("Lỗi đọc proof_submissions:", e);
+                }
+
+                // 5. Quét collection "comments": Gom acc thật đã bình luận ở char này
+                try {
+                    const cmtDoc = await db.collection("comments").doc(charId).get();
+                    if (cmtDoc.exists) {
+                        const list = cmtDoc.data()?.list || [];
+                        list.forEach(c => {
+                            if (c.author) realUsersSet.add(c.author);
+                            (c.replies || []).forEach(r => { if (r.author) realUsersSet.add(r.author); });
+                        });
+                    }
+                } catch (e) {
+                    console.warn("Lỗi đọc comments:", e);
+                }
+
+                const finalRealUsers = Array.from(realUsersSet);
+
+                if (finalRealUsers.length === 0) {
+                    alert(`Không tìm thấy dữ liệu tài khoản nào liên quan đến "${charName}".`);
+                    return;
+                }
+
+                // 6. Ghi đè danh sách TÀI KHOẢN THẬT này vào thẳng Firestore collection "likes"
+                await db.collection("likes").doc(charId).set({ users: finalRealUsers });
+                charLikesData[charId] = finalRealUsers;
+
+                // 7. Đồng thời bảo đảm 100% các acc thật này đều được giữ link vĩnh viễn trong "unlocked"
+                for (const u of finalRealUsers) {
+                    try {
+                        await db.collection("unlocked").doc(u).set({
+                            chars: { [charId]: true }
+                        }, { merge: true });
+                    } catch (_) {}
+                }
+
+                updateHeartUI();
+                playPaletteTingSound();
+                alert(`🎉 ĐÃ KHÔI PHỤC THÀNH CÔNG VỀ CON SỐ THỰC!\n\nĐã tìm và trả tim cho ${finalRealUsers.length} tài khoản thật của "${charName}".\n\nToàn bộ các tài khoản này khi vào web sẽ thấy nút tim của họ đã hồng rực trở lại và link được lưu giữ an toàn vĩnh viễn!`);
+            } catch (err) {
+                console.error("Lỗi khôi phục tim thực:", err);
+                alert("Lỗi khi khôi phục: " + (err?.message || "Vui lòng thử lại"));
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerText = origText; }
+            }
         }
 
         function updateAIStudioButton() {
