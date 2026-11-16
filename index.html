@@ -50,6 +50,7 @@
         .fx-dust-particle {
             position: absolute;
             border-radius: 50%;
+            will-change: transform, opacity;
             animation: floatDust linear infinite;
         }
         @keyframes floatDust {
@@ -1732,6 +1733,14 @@
             </div>
             <p id="proofSubtitle" class="text-xs text-sky-100/80 mb-3"></p>
             <div id="aiFeedbackBox" class="hidden text-xs p-3.5 rounded-2xl mb-3 border leading-relaxed"></div>
+            <div id="normalSosWaitBox" class="hidden text-xs p-3 rounded-2xl mb-3 border border-amber-300/45 bg-amber-500/15 space-y-2">
+                <p class="text-[11px] text-amber-200 leading-relaxed font-bold">
+                    ⏳ Hệ thống đang xử lý hơi lâu trên thiết bị của bạn. Bạn có thể đợi thêm chút hoặc bấm SOS gửi ảnh cho Palette duyệt tay luôn nhé!
+                </p>
+                <button type="button" id="normalWaitSosBtn" onclick="triggerDirectSosHelp('normal', 'normalWaitSosBtn')" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 px-3 rounded-xl text-xs shadow active:scale-95 transition">
+                    🆘 Gửi SOS Ngay (Không cần đợi)
+                </button>
+            </div>
 
             <div class="space-y-3 mb-4 text-xs">
                 <div class="bg-black/25 p-3 rounded-2xl border border-white/10">
@@ -1762,6 +1771,9 @@
 
             <button id="submitProofBtn" onclick="processNormalProofVerification()" class="jelly-btn w-full bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 font-extrabold text-sm py-2.5 rounded-xl shadow-lg flex items-center justify-center gap-2">
                 <span id="submitProofBtnText">Vẽ Đường Cho Tình Yêu Chạy</span>
+            </button>
+            <button type="button" id="directNormalSosBtn" onclick="triggerDirectSosHelp('normal', 'directNormalSosBtn')" class="mt-2 w-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-300/45 text-amber-200 font-extrabold py-2 px-3 rounded-xl text-[11px] active:scale-95 transition flex items-center justify-center gap-1.5">
+                <span>🆘 Bị treo / Duyệt lỗi? Gửi SOS nhờ Palette duyệt tay</span>
             </button>
             <p class="text-[10.5px] text-pink-200/70 text-center mt-2 italic leading-tight">
                 * Sắc Màu có thể đi dạo loanh quanh trong lúc đợi duyệt nếu có hơi lâu nhé.
@@ -1825,6 +1837,14 @@
             <p id="fastProofSubtitle" class="text-xs text-sky-100/80 mb-3"></p>
             
             <div id="fastAiFeedbackBox" class="hidden text-xs p-3 rounded-2xl mb-3 border"></div>
+            <div id="fastSosWaitBox" class="hidden text-xs p-3 rounded-2xl mb-3 border border-amber-300/45 bg-amber-500/15 space-y-2">
+                <p class="text-[11px] text-amber-200 leading-relaxed font-bold">
+                    ⏳ Hệ thống đang xử lý hơi lâu trên thiết bị của bạn. Bạn có thể đợi thêm chút hoặc bấm SOS gửi ảnh cho Palette duyệt tay luôn nhé!
+                </p>
+                <button type="button" id="fastWaitSosBtn" onclick="triggerDirectSosHelp('fast', 'fastWaitSosBtn')" class="w-full bg-gradient-to-r from-amber-400 to-pink-500 hover:brightness-110 text-black font-black py-2 px-3 rounded-xl text-xs shadow active:scale-95 transition">
+                    🆘 Gửi SOS Ngay (Không cần đợi)
+                </button>
+            </div>
 
             <div class="bg-black/25 p-3 rounded-2xl border border-white/10 text-xs mb-4">
                 <label class="block font-bold text-sky-200 mb-1.5">Ảnh chụp bài viết Facebook:</label>
@@ -1843,6 +1863,9 @@
 
             <button id="fastSubmitBtn" onclick="processFastProofVerification()" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500 to-pink-600 font-extrabold text-sm py-2.5 rounded-xl shadow-lg flex items-center justify-center gap-2">
                 <span id="fastSubmitBtnText">Vẽ Đường Cho Tình Yêu Chạy</span>
+            </button>
+            <button type="button" id="directFastSosBtn" onclick="triggerDirectSosHelp('fast', 'directFastSosBtn')" class="mt-2 w-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-300/45 text-amber-200 font-extrabold py-2 px-3 rounded-xl text-[11px] active:scale-95 transition flex items-center justify-center gap-1.5">
+                <span>🆘 Bị treo / Duyệt lỗi? Gửi SOS nhờ Palette duyệt tay</span>
             </button>
             <p class="text-[10.5px] text-fuchsia-200/70 text-center mt-2 italic leading-tight">
                 * Sắc Màu có thể đi dạo loanh quanh trong lúc đợi duyệt nếu có hơi lâu nhé.
@@ -2622,22 +2645,167 @@
         db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
         let tesseractLoadPromise = null;
-        function ensureTesseractLoaded() {
-            if (window.Tesseract && typeof window.Tesseract.recognize === 'function') {
-                return Promise.resolve();
-            }
-            if (tesseractLoadPromise) return tesseractLoadPromise;
-            tesseractLoadPromise = new Promise((resolve, reject) => {
+        function loadScriptWithTimeout(src, timeoutMs = 15000) {
+            return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-                script.onload = () => resolve();
+                let settled = false;
+                const timer = setTimeout(() => {
+                    if (settled) return;
+                    settled = true;
+                    script.remove();
+                    reject(new Error("Quá thời gian tải bộ đọc AI"));
+                }, timeoutMs);
+                script.src = src;
+                script.onload = () => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve();
+                };
                 script.onerror = () => {
-                    tesseractLoadPromise = null;
-                    reject(new Error("Không thể tải bộ đọc chữ AI. Vui lòng kiểm tra kết nối mạng!"));
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    script.remove();
+                    reject(new Error("Lỗi tải script OCR"));
                 };
                 document.head.appendChild(script);
             });
+        }
+
+        async function ensureTesseractLoaded() {
+            if (window.Tesseract && typeof window.Tesseract.createWorker === 'function') {
+                return;
+            }
+            if (tesseractLoadPromise) return tesseractLoadPromise;
+            tesseractLoadPromise = (async () => {
+                const cdns = [
+                    "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js",
+                    "https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"
+                ];
+                let lastErr = null;
+                for (const url of cdns) {
+                    try {
+                        await loadScriptWithTimeout(url, 15000);
+                        if (window.Tesseract && typeof window.Tesseract.createWorker === 'function') return;
+                    } catch (err) {
+                        lastErr = err;
+                    }
+                }
+                tesseractLoadPromise = null;
+                throw lastErr || new Error("Không thể tải bộ đọc chữ AI. Vui lòng kiểm tra kết nối mạng hoặc mở bằng Chrome/Safari!");
+            })();
             return tesseractLoadPromise;
+        }
+
+        let sharedOcrWorker = null;
+        let sharedOcrWorkerPromise = null;
+        let activeOcrLoggerCb = null;
+        let activeOcrErrorCb = null;
+        let ocrQueueTail = Promise.resolve();
+
+        async function resetSharedOcrWorker() {
+            const w = sharedOcrWorker;
+            sharedOcrWorker = null;
+            sharedOcrWorkerPromise = null;
+            if (w && typeof w.terminate === 'function') {
+                try { await w.terminate(); } catch (_) {}
+            }
+        }
+
+        async function getOrCreateOcrWorker(useNoCache = false) {
+            if (sharedOcrWorker) return sharedOcrWorker;
+            if (sharedOcrWorkerPromise) return sharedOcrWorkerPromise;
+
+            sharedOcrWorkerPromise = (async () => {
+                const worker = await Tesseract.createWorker('vie', 1, {
+                    cacheMethod: useNoCache ? 'none' : 'write',
+                    logger: (m) => {
+                        if (typeof activeOcrLoggerCb === 'function') activeOcrLoggerCb(m);
+                    },
+                    errorHandler: (err) => {
+                        if (typeof activeOcrErrorCb === 'function') activeOcrErrorCb(err);
+                    }
+                });
+                sharedOcrWorker = worker;
+                return worker;
+            })();
+
+            try {
+                return await sharedOcrWorkerPromise;
+            } catch (err) {
+                sharedOcrWorkerPromise = null;
+                throw err;
+            }
+        }
+
+        function runTesseractOCR(imageSrc, onStageProgress) {
+            const task = ocrQueueTail.then(() => executeOcrWithRetry(imageSrc, onStageProgress));
+            ocrQueueTail = task.catch(() => {});
+            return task;
+        }
+
+        async function executeOcrWithRetry(imageSrc, onStageProgress) {
+            await ensureTesseractLoaded();
+            let lastErr = null;
+
+            for (let attempt = 0; attempt < 2; attempt++) {
+                const useNoCache = (attempt === 1);
+                let timerId = null;
+
+                try {
+                    const result = await new Promise((resolve, reject) => {
+                        let done = false;
+                        const fail = (err) => {
+                            if (done) return;
+                            done = true;
+                            if (timerId) clearTimeout(timerId);
+                            activeOcrLoggerCb = null;
+                            activeOcrErrorCb = null;
+                            reject(err instanceof Error ? err : new Error(String(err || "Lỗi đọc ảnh AI")));
+                        };
+
+                        timerId = setTimeout(() => {
+                            fail(new Error("Quá thời gian xử lý ảnh (mạng yếu hoặc trình duyệt trong app chặn AI). Bạn hãy thử mở bằng Chrome/Safari hoặc bấm Help bên dưới nhé!"));
+                        }, 45000);
+
+                        activeOcrErrorCb = (err) => fail(err || new Error("Bộ đọc AI bị gián đoạn trên thiết bị này"));
+                        activeOcrLoggerCb = (m) => {
+                            if (!onStageProgress || !m) return;
+                            const st = m.status || '';
+                            const p = Math.max(0, Math.min(1, Number(m.progress) || 0));
+                            if (st === 'loading tesseract core') {
+                                onStageProgress(0.05 + p * 0.15, "Đang tải lõi đọc chữ AI...");
+                            } else if (st === 'initializing tesseract') {
+                                onStageProgress(0.2 + p * 0.08, "Đang khởi tạo bộ đọc AI...");
+                            } else if (st === 'loading language traineddata') {
+                                onStageProgress(0.28 + p * 0.25, "Đang tải dữ liệu tiếng Việt...");
+                            } else if (st === 'initializing api') {
+                                onStageProgress(0.55, "Đang chuẩn bị quét ảnh...");
+                            } else if (st === 'recognizing text') {
+                                onStageProgress(0.56 + p * 0.44, "Đang nhận diện chữ trong ảnh...");
+                            }
+                        };
+
+                        getOrCreateOcrWorker(useNoCache)
+                            .then(worker => worker.recognize(imageSrc))
+                            .then(res => {
+                                if (done) return;
+                                done = true;
+                                if (timerId) clearTimeout(timerId);
+                                activeOcrLoggerCb = null;
+                                activeOcrErrorCb = null;
+                                resolve(res);
+                            })
+                            .catch(fail);
+                    });
+                    return result;
+                } catch (err) {
+                    lastErr = err;
+                    await resetSharedOcrWorker();
+                }
+            }
+            throw lastErr || new Error("Không thể nhận diện chữ từ ảnh này!");
         }
 
         const OWNER_USER = "Bibi 0304";
@@ -2742,7 +2910,7 @@
         function createSakuraContainer() {
             const container = document.createElement('div');
             container.className = 'fx-sakura-container';
-            for (let i = 0; i < 14; i++) {
+            for (let i = 0; i < 8; i++) {
                 const petal = document.createElement('div');
                 petal.className = 'fx-sakura-petal';
                 const size = Math.random() * 6 + 7; // Kích cỡ nhỏ xinh
@@ -3204,7 +3372,7 @@
             const container = document.createElement('div');
             container.className = 'fx-dust-container';
             const colors = ['rgba(244,114,182,0.6)', 'rgba(251,191,36,0.6)', 'rgba(56,189,248,0.6)', 'rgba(255,255,255,0.7)'];
-            for (let i = 0; i < 35; i++) {
+            for (let i = 0; i < 18; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'fx-dust-particle';
                 const size = Math.random() * 3.5 + 1.2;
@@ -4225,6 +4393,8 @@
         let cachedFbOcrText = "";
         let cachedFbOcrData = null;
         let cachedDcDataUrls = [];
+        let pendingFbFilePromise = null;
+        let pendingDcFilePromise = null;
 
         async function handleFbFileSelected(input) {
             const span = document.getElementById('proofFbImgName');
@@ -4233,6 +4403,7 @@
                 cachedFbDataUrl = "";
                 cachedFbOcrText = "";
                 cachedFbOcrData = null;
+                pendingFbFilePromise = null;
                 if (span) {
                     span.innerText = "Chưa chọn ảnh";
                     span.className = "text-[11px] text-sky-200/70 truncate flex-1";
@@ -4243,9 +4414,16 @@
                 span.innerText = "✓ " + (file.name || "1 ảnh đã chọn");
                 span.className = "text-[11px] text-emerald-300 font-extrabold truncate flex-1";
             }
-            cachedFbDataUrl = await processImageForFastOCR(file);
             cachedFbOcrText = "";
             cachedFbOcrData = null;
+            pendingFbFilePromise = processImageForFastOCR(file).then(res => {
+                cachedFbDataUrl = res || "";
+                return cachedFbDataUrl;
+            }).catch(() => {
+                cachedFbDataUrl = "";
+                return "";
+            });
+            await pendingFbFilePromise;
         }
 
         async function handleDcFileChange(input) {
@@ -4255,6 +4433,7 @@
 
             if (!file) {
                 cachedDcDataUrls = [];
+                pendingDcFilePromise = null;
                 if (span) {
                     span.innerText = "Chưa chọn ảnh";
                     span.className = "text-[11px] text-sky-200/70 truncate flex-1";
@@ -4269,16 +4448,23 @@
             }
             if (clearBtn) clearBtn.classList.remove('hidden');
 
-            const base64 = await processImageForFastOCR(file);
-            cachedDcDataUrls = base64 ? [base64] : [];
-            if (!base64 && span) {
-                span.innerText = "⚠️ Ảnh lỗi / chưa hỗ trợ";
-                span.className = "text-[11px] text-amber-300 font-bold truncate flex-1";
-            }
+            pendingDcFilePromise = processImageForFastOCR(file).then(base64 => {
+                cachedDcDataUrls = base64 ? [base64] : [];
+                if (!base64 && span) {
+                    span.innerText = "⚠️ Ảnh lỗi / chưa hỗ trợ";
+                    span.className = "text-[11px] text-amber-300 font-bold truncate flex-1";
+                }
+                return cachedDcDataUrls;
+            }).catch(() => {
+                cachedDcDataUrls = [];
+                return [];
+            });
+            await pendingDcFilePromise;
         }
 
         function clearDcProofSelection() {
             cachedDcDataUrls = [];
+            pendingDcFilePromise = null;
             const span = document.getElementById('proofDcImgName');
             const clearBtn = document.getElementById('clearDcBtn');
             const input = document.getElementById('proofDcImg');
@@ -4292,26 +4478,22 @@
 
         async function convertHeicBlobToJpeg(file) {
             if (typeof window.heic2any !== 'function') {
-                await new Promise((resolve, reject) => {
-                    const s = document.createElement('script');
-                    s.src = "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js";
-                    s.onload = resolve;
-                    s.onerror = reject;
-                    document.head.appendChild(s);
-                });
+                await loadScriptWithTimeout("https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js", 12000);
             }
             if (typeof window.heic2any === 'function') {
-                const converted = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
+                const converted = await Promise.race([
+                    heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 }),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error("HEIC timeout")), 15000))
+                ]);
                 return Array.isArray(converted) ? converted[0] : converted;
             }
             return null;
         }
 
-        function drawBitmapOrImgToJpeg(source, w, h, maxDim = 1200, quality = 0.85) {
+        function drawBitmapOrImgToJpeg(source, w, h, maxDim = 1280, quality = 0.85) {
             const rawW = Number(w) || (source ? (source.naturalWidth || source.width) : 0) || 0;
             const rawH = Number(h) || (source ? (source.naturalHeight || source.height) : 0) || 0;
 
-            // TUYỆT ĐỐI KHÔNG tự gán 800x1000 để vẽ nền trắng khi ảnh bị lỗi kích thước
             if (!rawW || !rawH || rawW <= 0 || rawH <= 0) {
                 return "";
             }
@@ -4341,70 +4523,72 @@
             }
         }
 
-        // BỘ NÉN & ĐỌC ẢNH ĐA NĂNG (HỖ TRỢ CẢ HEIC, ẢNH CUỘN DÀI & CHỐNG TRÀN RAM)
-        async function processImageForFastOCR(file) {
-            if (!file) return "";
-
-            const fileName = (file.name || "").toLowerCase();
-            const fileType = (file.type || "").toLowerCase();
-            let workingBlob = file;
-
-            if (fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif')) {
-                try {
-                    const jpgBlob = await convertHeicBlobToJpeg(file);
-                    if (jpgBlob) workingBlob = jpgBlob;
-                } catch (_) {}
-            }
-
+        async function decodeBlobNativelyToJpeg(blob, maxDim = 1280, quality = 0.85) {
             if (typeof createImageBitmap === 'function') {
                 try {
-                    const bitmap = await createImageBitmap(workingBlob);
-                    const jpegUrl = drawBitmapOrImgToJpeg(bitmap, bitmap.width, bitmap.height, 2400, 0.88);
+                    const bitmap = await createImageBitmap(blob);
+                    const jpegUrl = drawBitmapOrImgToJpeg(bitmap, bitmap.width, bitmap.height, maxDim, quality);
                     if (typeof bitmap.close === 'function') bitmap.close();
                     if (jpegUrl && jpegUrl.startsWith('data:image/jpeg')) return jpegUrl;
                 } catch (_) {}
             }
 
-            const objResult = await new Promise((resolve) => {
+            return await new Promise((resolve) => {
                 let objUrl = "";
+                let done = false;
+                const finish = (val) => {
+                    if (done) return;
+                    done = true;
+                    if (objUrl) { try { URL.revokeObjectURL(objUrl); } catch (_) {} }
+                    resolve(val || "");
+                };
+                const t = setTimeout(() => finish(""), 10000);
                 try {
-                    objUrl = URL.createObjectURL(workingBlob);
+                    objUrl = URL.createObjectURL(blob);
                 } catch (_) {
+                    clearTimeout(t);
                     return resolve("");
                 }
                 const img = new Image();
                 img.onload = () => {
+                    clearTimeout(t);
                     try {
-                        const jpegUrl = drawBitmapOrImgToJpeg(img, img.naturalWidth || img.width, img.naturalHeight || img.height, 2400, 0.88);
-                        URL.revokeObjectURL(objUrl);
-                        resolve(jpegUrl);
+                        finish(drawBitmapOrImgToJpeg(img, img.naturalWidth || img.width, img.naturalHeight || img.height, maxDim, quality));
                     } catch (_) {
-                        URL.revokeObjectURL(objUrl);
-                        resolve("");
+                        finish("");
                     }
                 };
                 img.onerror = () => {
-                    URL.revokeObjectURL(objUrl);
-                    resolve("");
+                    clearTimeout(t);
+                    finish("");
                 };
                 img.src = objUrl;
             });
-            if (objResult) return objResult;
+        }
 
-            try {
-                const retryHeic = await convertHeicBlobToJpeg(file);
-                if (retryHeic && typeof createImageBitmap === 'function') {
-                    const bitmap2 = await createImageBitmap(retryHeic);
-                    const jpeg2 = drawBitmapOrImgToJpeg(bitmap2, bitmap2.width, bitmap2.height, 2400, 0.88);
-                    if (typeof bitmap2.close === 'function') bitmap2.close();
-                    if (jpeg2) return jpeg2;
-                }
-            } catch (_) {}
+        // BỘ NÉN & ĐỌC ẢNH ĐA NĂNG (ƯU TIÊN GIẢI MÃ GỐC NHANH, TỐI ĐA 1280PX CHỐNG TRÀN RAM)
+        async function processImageForFastOCR(file) {
+            if (!file || file.size === 0) return "";
+
+            const nativeResult = await decodeBlobNativelyToJpeg(file, 1280, 0.85);
+            if (nativeResult) return nativeResult;
+
+            const fileName = (file.name || "").toLowerCase();
+            const fileType = (file.type || "").toLowerCase();
+            if (fileType.includes('heic') || fileType.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif')) {
+                try {
+                    const jpgBlob = await convertHeicBlobToJpeg(file);
+                    if (jpgBlob) {
+                        const heicResult = await decodeBlobNativelyToJpeg(jpgBlob, 1280, 0.85);
+                        if (heicResult) return heicResult;
+                    }
+                } catch (_) {}
+            }
 
             return "";
         }
 
-        function enhanceDiscordStripForOCR(dataUrl, yStartRatio = 0, yEndRatio = 1, maxOutWidth = 1800) {
+        function enhanceDiscordStripForOCR(dataUrl, yStartRatio = 0, yEndRatio = 1, maxOutWidth = 1280) {
             return new Promise(resolve => {
                 if (!dataUrl) return resolve("");
                 const img = new Image();
@@ -4416,9 +4600,15 @@
                         const startY = Math.max(0, Math.round(h * yStartRatio));
                         const endY = Math.min(h, Math.round(h * yEndRatio));
                         const cropH = Math.max(1, endY - startY);
-                        const scale = Math.min(2.0, Math.max(1.0, maxOutWidth / w));
-                        const outW = Math.max(1, Math.round(w * scale));
-                        const outH = Math.max(1, Math.round(cropH * scale));
+                        let scale = Math.min(1.8, Math.max(1.0, maxOutWidth / w));
+                        let outW = Math.max(1, Math.round(w * scale));
+                        let outH = Math.max(1, Math.round(cropH * scale));
+                        const maxPixels = 2600000;
+                        if (outW * outH > maxPixels) {
+                            const shrink = Math.sqrt(maxPixels / (outW * outH));
+                            outW = Math.max(1, Math.round(outW * shrink));
+                            outH = Math.max(1, Math.round(outH * shrink));
+                        }
                         const canvas = document.createElement('canvas');
                         canvas.width = outW;
                         canvas.height = outH;
@@ -6427,6 +6617,147 @@
             } catch (_) {}
         }
 
+        let sosWaitTimerNormal = null;
+        let sosWaitTimerFast = null;
+
+        function clearSosWaitBox(mode) {
+            if (mode === 'normal') {
+                if (sosWaitTimerNormal) { clearTimeout(sosWaitTimerNormal); sosWaitTimerNormal = null; }
+                document.getElementById('normalSosWaitBox')?.classList.add('hidden');
+            } else {
+                if (sosWaitTimerFast) { clearTimeout(sosWaitTimerFast); sosWaitTimerFast = null; }
+                document.getElementById('fastSosWaitBox')?.classList.add('hidden');
+            }
+        }
+
+        function updateDirectSosButtonUI(mode, charId) {
+            const btnId = mode === 'fast' ? 'directFastSosBtn' : 'directNormalSosBtn';
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            const used = Boolean(charId && hasUserUsedHelpForChar(currentUser?.username, charId));
+            if (used) {
+                btn.disabled = true;
+                btn.className = "mt-2 w-full bg-white/10 border border-white/20 text-sky-200/70 font-bold py-2 px-3 rounded-xl text-[11px] cursor-not-allowed";
+                btn.innerText = "✓ Bạn đã gửi SOS (Help) cho nhân vật này rồi (1 lần/char)";
+            } else {
+                btn.disabled = false;
+                btn.className = "mt-2 w-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-300/45 text-amber-200 font-extrabold py-2 px-3 rounded-xl text-[11px] active:scale-95 transition flex items-center justify-center gap-1.5";
+                btn.innerHTML = "<span>🆘 Bị treo / Duyệt lỗi? Gửi SOS nhờ Palette duyệt tay</span>";
+            }
+        }
+
+        async function readFileAsSmallThumb(file) {
+            if (!file) return "";
+            let raw = "";
+            try { raw = await processImageForFastOCR(file); } catch (_) {}
+            if (!raw) {
+                try { raw = await compressUploadedImage(file, 600, 0.52); } catch (_) {}
+            }
+            if (!raw) return "";
+            return await shrinkDataUrlForFirestore(raw, 600, 0.52);
+        }
+
+        async function triggerDirectSosHelp(mode, btnId) {
+            if (isSendingHelpRequest) return;
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập để sử dụng nút SOS nhé!");
+                return;
+            }
+            const targetChar = (mode === 'fast')
+                ? (fastTargetChar || characters.find(c => isFastCharActive(c)) || activeChar)
+                : activeChar;
+
+            if (!targetChar) {
+                alert("Không tìm thấy thông tin nhân vật để gửi SOS!");
+                return;
+            }
+
+            if (hasUserUsedHelpForChar(currentUser.username, targetChar.id)) {
+                updateDirectSosButtonUI(mode, targetChar.id);
+                alert("Bạn đã bấm SOS (Help) cho nhân vật này rồi! Mỗi nhân vật chỉ được bấm 1 lần thôi nhé.");
+                return;
+            }
+
+            const btn = document.getElementById(btnId);
+            const origHtml = btn ? btn.innerHTML : "";
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = "⏳ Đang chuẩn bị ảnh gửi SOS...";
+            }
+
+            try {
+                let imagesList = [];
+                if (mode === 'fast') {
+                    const fbFile = document.getElementById('fastProofFbImg')?.files?.[0];
+                    if (!fbFile) {
+                        alert("Vui lòng chọn ảnh chụp bài viết Facebook trước khi bấm gửi SOS nhé!");
+                        return;
+                    }
+                    const fbThumb = await readFileAsSmallThumb(fbFile);
+                    if (!fbThumb) {
+                        alert("Không đọc được tệp ảnh bạn vừa chọn (ảnh lỗi hoặc chưa tải từ iCloud). Bạn hãy chụp lại ảnh màn hình rồi chọn lại nhé!");
+                        return;
+                    }
+                    imagesList = [{ label: "Ảnh Facebook", src: fbThumb }];
+                } else {
+                    const fbFile = document.getElementById('proofFbImg')?.files?.[0];
+                    const dcFile = document.getElementById('proofDcImg')?.files?.[0];
+                    const hasFb = Boolean(cachedFbDataUrl || fbFile);
+                    const hasDc = Boolean(cachedDcDataUrls[0] || dcFile);
+                    if (!hasFb || !hasDc) {
+                        alert("Vui lòng chọn đủ cả ảnh Facebook và ảnh Discord trước khi bấm gửi SOS nhé!");
+                        return;
+                    }
+                    const fbThumb = cachedFbDataUrl
+                        ? await shrinkDataUrlForFirestore(cachedFbDataUrl, 600, 0.52)
+                        : await readFileAsSmallThumb(fbFile);
+                    const dcThumb = cachedDcDataUrls[0]
+                        ? await shrinkDataUrlForFirestore(cachedDcDataUrls[0], 600, 0.52)
+                        : await readFileAsSmallThumb(dcFile);
+                    if (fbThumb) imagesList.push({ label: "Ảnh Facebook", src: fbThumb });
+                    if (dcThumb) imagesList.push({ label: "Ảnh Discord", src: dcThumb });
+                    if (imagesList.length === 0) {
+                        alert("Không đọc được ảnh bạn vừa chọn. Bạn hãy chụp lại ảnh màn hình rồi thử lại nhé!");
+                        return;
+                    }
+                }
+
+                if (!confirm(`Gửi ảnh SOS nhờ Palette duyệt tay cho "${targetChar.name}"?\n(Lưu ý: Mỗi nhân vật chỉ được bấm SOS 1 lần thôi nhé!)`)) {
+                    return;
+                }
+
+                clearSosWaitBox(mode);
+
+                lastFailedProofContext = {
+                    mode: mode,
+                    modeLabel: mode === 'fast' ? "Sắc Màu Nhanh Nhẹn (SOS)" : `Duyệt Thường - ${activeProofType} (SOS)`,
+                    charId: targetChar.id,
+                    charName: targetChar.name,
+                    failReason: "User bấm SOS trực tiếp (máy duyệt lâu / lỗi trên thiết bị)",
+                    images: imagesList
+                };
+
+                await sendManualHelpRequest(btnId);
+
+                if (mode === 'fast') {
+                    const fBtn = document.getElementById('fastSubmitBtn');
+                    const fTxt = document.getElementById('fastSubmitBtnText');
+                    if (fBtn) fBtn.disabled = false;
+                    if (fTxt) fTxt.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
+                } else {
+                    const sBtn = document.getElementById('submitProofBtn');
+                    const sTxt = document.getElementById('submitProofBtnText');
+                    if (sBtn) sBtn.disabled = false;
+                    if (sTxt) sTxt.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
+                }
+            } finally {
+                if (btn && !hasUserUsedHelpForChar(currentUser?.username, targetChar?.id)) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            }
+        }
+
         function buildHelpBoxHtml(btnId, charId) {
             if (hasUserUsedHelpForChar(currentUser?.username, charId)) {
                 return `
@@ -6535,6 +6866,10 @@
                     btn.disabled = true;
                     btn.className = "w-full bg-emerald-500/25 border border-emerald-300/50 text-emerald-200 font-extrabold py-2 px-3 rounded-xl text-xs cursor-not-allowed";
                     btn.innerText = "✓ Đã gửi cho Palette! Vui lòng đợi thông báo mở link nhé 💖";
+                }
+                if (ctx.charId) {
+                    updateDirectSosButtonUI('normal', ctx.charId);
+                    updateDirectSosButtonUI('fast', ctx.charId);
                 }
                 playPaletteTingSound();
             } catch (err) {
@@ -9808,6 +10143,9 @@
             const submitText = document.getElementById('submitProofBtnText');
             const feedbackBox = document.getElementById('aiFeedbackBox');
 
+            if (pendingFbFilePromise) await pendingFbFilePromise;
+            if (pendingDcFilePromise) await pendingDcFilePromise;
+
             // Kiểm tra ảnh Facebook trong bộ nhớ đệm
             if (!cachedFbDataUrl) {
                 const fbInput = document.getElementById('proofFbImg');
@@ -9833,6 +10171,14 @@
             }
 
             submitBtn.disabled = true;
+            clearSosWaitBox('normal');
+            if (activeChar?.id && !hasUserUsedHelpForChar(currentUser?.username, activeChar.id)) {
+                sosWaitTimerNormal = setTimeout(() => {
+                    if (submitBtn.disabled) {
+                        document.getElementById('normalSosWaitBox')?.classList.remove('hidden');
+                    }
+                }, 8000);
+            }
             feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-black/40 border-pink-300/40";
             feedbackBox.classList.remove('hidden');
 
@@ -9853,7 +10199,7 @@
                 submitText.innerText = `Đang duyệt... ${percent}%`;
             };
 
-            setProgressUI(15, "Đang chuẩn bị quét...");
+            setProgressUI(15, "Đang nạp bộ đọc AI...");
 
             try {
                 // 1. Quét Facebook (nếu đã quét thành công ở lượt trước thì tự động dùng lại cache, không tốn RAM và không bao giờ bị lỗi)
@@ -9861,14 +10207,10 @@
                 let fbRaw = cachedFbOcrText;
                 let fbOcrData = cachedFbOcrData;
                 if (!fbRaw || !fbOcrData) {
-                    setProgressUI(25, "Đang đọc ảnh Facebook...");
-                    const { data } = await Tesseract.recognize(cachedFbDataUrl, 'vie', {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                const p = Math.round(20 + (m.progress || 0) * 25);
-                                setProgressUI(p, "Đang đọc ảnh Facebook...");
-                            }
-                        }
+                    setProgressUI(22, "Đang đọc ảnh Facebook...");
+                    const { data } = await runTesseractOCR(cachedFbDataUrl, (ratio, msg) => {
+                        const p = Math.round(22 + ratio * 28);
+                        setProgressUI(p, msg || "Đang đọc ảnh Facebook...");
                     });
                     fbRaw = data.text;
                     fbOcrData = data;
@@ -9900,15 +10242,11 @@
                 setProgressUI(55, "Đang tối ưu & đọc ảnh Discord...");
                 let combinedDcText = "";
                 for (let i = 0; i < cachedDcDataUrls.length; i++) {
-                    const enhancedFull = await enhanceDiscordStripForOCR(cachedDcDataUrls[i], 0, 1, 1800);
+                    const enhancedFull = await enhanceDiscordStripForOCR(cachedDcDataUrls[i], 0, 1, 1280);
                     const imgForOcr = enhancedFull || cachedDcDataUrls[i];
-                    const { data: { text: dcRaw } } = await Tesseract.recognize(imgForOcr, 'vie', {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                const p = Math.min(88, Math.round(55 + (m.progress || 0) * 32));
-                                setProgressUI(p, `Đang đọc ảnh Discord (${i + 1}/${cachedDcDataUrls.length})...`);
-                            }
-                        }
+                    const { data: { text: dcRaw } } = await runTesseractOCR(imgForOcr, (ratio) => {
+                        const p = Math.min(88, Math.round(55 + ratio * 33));
+                        setProgressUI(p, `Đang đọc ảnh Discord (${i + 1}/${cachedDcDataUrls.length})...`);
                     });
                     combinedDcText += " " + dcRaw.toLowerCase();
                 }
@@ -9935,13 +10273,13 @@
                 };
 
                 let hasChannelName = checkDcChannelMatch(combinedDcText);
-                // Nếu lần 1 vẫn sót tên kênh nhỏ ở góc trên, zoom 2x phần Header trên cùng để đọc lại
+                // Nếu lần 1 vẫn sót tên kênh nhỏ ở góc trên, zoom phần Header trên cùng để đọc lại
                 if (!hasChannelName && cachedDcDataUrls[0]) {
                     try {
                         setProgressUI(89, "Đang đọc rõ hơn tên kênh Discord...");
-                        const topStripUrl = await enhanceDiscordStripForOCR(cachedDcDataUrls[0], 0, 0.25, 2200);
+                        const topStripUrl = await enhanceDiscordStripForOCR(cachedDcDataUrls[0], 0, 0.25, 1280);
                         if (topStripUrl) {
-                            const { data: { text: topRaw } } = await Tesseract.recognize(topStripUrl, 'vie');
+                            const { data: { text: topRaw } } = await runTesseractOCR(topStripUrl);
                             if (checkDcChannelMatch(topRaw)) {
                                 hasChannelName = true;
                                 combinedDcText += " " + topRaw.toLowerCase();
@@ -10073,13 +10411,13 @@
 
                     let timeCheck = checkTimeMatchesInText(dcScan);
 
-                    // Nếu lần 1 sót giờ, quét kỹ vùng tin nhắn (14%..85% chiều cao, bao gồm cả khi bật bàn phím) ở độ nét 2x
+                    // Nếu lần 1 sót giờ, quét kỹ vùng tin nhắn (14%..85% chiều cao, bao gồm cả khi bật bàn phím)
                     if (!timeCheck.hasValid && cachedDcDataUrls[0]) {
                         try {
                             setProgressUI(92, "Đang đọc rõ hơn mốc giờ Discord...");
-                            const enhancedUrl = await enhanceDiscordStripForOCR(cachedDcDataUrls[0], 0.14, 0.85, 2200);
+                            const enhancedUrl = await enhanceDiscordStripForOCR(cachedDcDataUrls[0], 0.14, 0.85, 1280);
                             if (enhancedUrl) {
-                                const { data: { text: retryRaw } } = await Tesseract.recognize(enhancedUrl, 'eng');
+                                const { data: { text: retryRaw } } = await runTesseractOCR(enhancedUrl);
                                 const retryArea = sliceToActualMessageArea(retryRaw);
                                 const retryCheck = checkTimeMatchesInText(retryArea);
                                 if (retryCheck.hasValid) {
@@ -10158,18 +10496,18 @@
 
                 let hasAllTemplateSections = checkDcTemplateSections(combinedDcText);
 
-                // Nếu lần đầu đọc sót dòng ở nửa dưới (như dòng "Tên char muốn chơi"), tự zoom 2x phần dưới ảnh để quét lại
+                // Nếu lần đầu đọc sót dòng ở nửa dưới (như dòng "Tên char muốn chơi"), tự quét lại phần dưới ảnh
                 if (!hasAllTemplateSections && cachedDcDataUrls[0]) {
                     try {
                         setProgressUI(95, "Đang đọc kỹ hơn 3 mục mẫu Discord...");
-                        const bottomStripUrl = await enhanceDiscordStripForOCR(cachedDcDataUrls[0], 0.45, 1, 2200);
+                        const bottomStripUrl = await enhanceDiscordStripForOCR(cachedDcDataUrls[0], 0.45, 1, 1280);
                         if (bottomStripUrl) {
-                            const { data: { text: bottomRaw } } = await Tesseract.recognize(bottomStripUrl, 'vie');
+                            const { data: { text: bottomRaw } } = await runTesseractOCR(bottomStripUrl);
                             combinedDcText += " " + bottomRaw.toLowerCase();
                             hasAllTemplateSections = checkDcTemplateSections(combinedDcText);
                         }
                         if (!hasAllTemplateSections) {
-                            const { data: { text: origRaw } } = await Tesseract.recognize(cachedDcDataUrls[0], 'vie');
+                            const { data: { text: origRaw } } = await runTesseractOCR(cachedDcDataUrls[0]);
                             combinedDcText += " " + origRaw.toLowerCase();
                             hasAllTemplateSections = checkDcTemplateSections(combinedDcText);
                         }
@@ -10186,17 +10524,21 @@
                         const fbFiles = Array.from(document.getElementById('proofFbImg')?.files || []);
                         const dcFiles = Array.from(document.getElementById('proofDcImg')?.files || []);
                         if (fbFiles.length || dcFiles.length) {
-                            await storeProofImages([...fbFiles, ...dcFiles], {
-                                username: currentUser.username,
-                                charId: activeChar.id,
-                                proofType: activeProofType,
-                                mode: "normal"
-                            });
+                            await Promise.race([
+                                storeProofImages([...fbFiles, ...dcFiles], {
+                                    username: currentUser.username,
+                                    charId: activeChar.id,
+                                    proofType: activeProofType,
+                                    mode: "normal"
+                                }),
+                                new Promise(res => setTimeout(res, 6000))
+                            ]);
                         }
                     } catch(e) {}
                 }
 
                 // HOÀN THÀNH 100%
+                clearSosWaitBox('normal');
                 setProgressUI(100, "Hoàn tất kiểm duyệt!");
                 submitBtn.disabled = false;
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
@@ -10238,6 +10580,7 @@
                 `;
 
             } catch (err) {
+                clearSosWaitBox('normal');
                 submitBtn.disabled = false;
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
@@ -10289,6 +10632,15 @@
             }
 
             submitBtn.disabled = true;
+            clearSosWaitBox('fast');
+            const sosCharId = fastTargetChar?.id || characters.find(c => isFastCharActive(c))?.id || activeChar?.id;
+            if (sosCharId && !hasUserUsedHelpForChar(currentUser?.username, sosCharId)) {
+                sosWaitTimerFast = setTimeout(() => {
+                    if (submitBtn.disabled) {
+                        document.getElementById('fastSosWaitBox')?.classList.remove('hidden');
+                    }
+                }, 8000);
+            }
             feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-black/40 border-fuchsia-300/40";
             feedbackBox.classList.remove('hidden');
 
@@ -10309,7 +10661,7 @@
                 submitText.innerText = `Đang duyệt... ${percent}%`;
             };
 
-            setFastProgressUI(20, "Đang tối ưu ảnh chụp...");
+            setFastProgressUI(18, "Đang nạp bộ đọc AI...");
             let fastFbDataUrl = "";
 
             try {
@@ -10326,20 +10678,18 @@
                 let fastFbOcrData = null;
 
                 for (let i = 0; i < fastFiles.length; i++) {
+                    setFastProgressUI(22, `Đang tối ưu ảnh (${i + 1}/${fastFiles.length})...`);
                     const processedData = await processImageForFastOCR(fastFiles[i]);
                     if (!processedData) {
                         throw new Error("Không đọc được tệp ảnh này (có thể ảnh chưa tải về từ đám mây hoặc định dạng lỗi). Bạn hãy chụp lại ảnh màn hình rồi chọn lại nhé!");
                     }
                     if (!fastFbDataUrl) fastFbDataUrl = processedData;
 
-                    const baseP = 20 + Math.round((i / fastFiles.length) * 70);
-                    const { data } = await Tesseract.recognize(processedData, 'vie', {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                const p = Math.min(95, Math.round(baseP + m.progress * (70 / fastFiles.length)));
-                                setFastProgressUI(p, `Đang nhận diện ảnh (${i + 1}/${fastFiles.length})...`);
-                            }
-                        }
+                    const baseP = 25 + Math.round((i / fastFiles.length) * 70);
+                    const spanP = Math.round(70 / fastFiles.length);
+                    const { data } = await runTesseractOCR(processedData, (ratio, msg) => {
+                        const p = Math.min(95, Math.round(baseP + ratio * spanP));
+                        setFastProgressUI(p, msg || `Đang nhận diện ảnh (${i + 1}/${fastFiles.length})...`);
                     });
                     if (!fastFbOcrData) fastFbOcrData = data;
                     combinedFastText += " " + data.text;
@@ -10365,16 +10715,20 @@
                 const hasReact = await checkFacebookReact(fastFbDataUrl, fastFbOcrData);
                 if (!hasReact) throw new Error("Ảnh chưa nhận diện được nút đã thả cảm xúc (Tim / Thích / Thương thương). Vui lòng chụp rõ nút đã thả nhé!");
 
-                setFastProgressUI(97, "Đang tải ảnh bằng chứng lên...");
+                setFastProgressUI(97, "Đang hoàn tất duyệt...");
                 try {
-                    await storeProofImages(fastFiles, {
-                        username: currentUser.username,
-                        charId: fastTargetChar.id,
-                        proofType: "Sắc Màu Nhanh Nhẹn",
-                        mode: "fast"
-                    });
+                    await Promise.race([
+                        storeProofImages(fastFiles, {
+                            username: currentUser.username,
+                            charId: fastTargetChar.id,
+                            proofType: "Sắc Màu Nhanh Nhẹn",
+                            mode: "fast"
+                        }),
+                        new Promise(res => setTimeout(res, 6000))
+                    ]);
                 } catch (_) {}
 
+                clearSosWaitBox('fast');
                 setFastProgressUI(100, "Hoàn thành kiểm duyệt!");
                 submitBtn.disabled = false;
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
@@ -10473,6 +10827,7 @@
                 }, 4000);
 
             } catch (err) {
+                clearSosWaitBox('fast');
                 submitBtn.disabled = false;
                 submitText.innerText = "Vẽ Đường Cho Tình Yêu Chạy";
                 feedbackBox.className = "text-xs p-3.5 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
@@ -11723,10 +12078,12 @@
             activeProofType = userType;
             document.getElementById('proofSubtitle').innerText = `Dành cho ${userType}: Đang duyệt mở khóa cho [${activeChar.name}]. Tải đủ ảnh bên dưới:`;
             renderProofSampleBoxes();
+            updateDirectSosButtonUI('normal', activeChar.id);
             document.getElementById('proofPopup').classList.remove('hidden');
         }
 
         function closeProofModal() {
+            clearSosWaitBox('normal');
             // 1. Ẩn modal
             document.getElementById('proofPopup').classList.add('hidden');
 
@@ -11987,12 +12344,14 @@
             }
 
             renderProofSampleBoxes();
+            updateDirectSosButtonUI('fast', target.id);
             const modal = document.getElementById('fastProofPopup');
             if (modal) modal.classList.remove('hidden');
             playPaletteTingSound();
         }
 
         function closeFastProofModal() {
+            clearSosWaitBox('fast');
             const modal = document.getElementById('fastProofPopup');
             if (modal) modal.classList.add('hidden');
             const fileInput = document.getElementById('fastProofFbImg');
