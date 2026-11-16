@@ -700,13 +700,13 @@
             <!-- Đổi 6 Chì Màu bỏ qua N giờ đếm ngược sau khi đã duyệt -->
             <div id="countingDownSkipBoxInModal" class="hidden bg-gradient-to-r from-amber-500/15 via-pink-500/15 to-purple-500/15 border border-amber-300/45 p-3.5 rounded-2xl mb-4 space-y-2"></div>
 
-            <!-- Nút đổi 10 Chì Màu -->
+            <!-- Nút đổi Chì Màu lấy Link -->
             <div class="bg-black/30 border border-white/10 p-3.5 rounded-2xl mb-4">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-extrabold text-pink-300 uppercase">Đổi 10 Chì Màu lấy Link:</span>
                     <span class="text-[11px] text-amber-300 font-bold">Cần: 10 Chì</span>
                 </div>
-                <p class="text-[11px] text-sky-100/80 mb-2.5">Khi tích đủ 10 Chì Màu, bạn có thể chọn mở khóa ngay bất kỳ một nhân vật nào mà không cần làm thủ tục!</p>
+                <p class="text-[11px] text-sky-100/80 mb-2.5">Tích đủ <b>10 Chì Màu</b> để đổi mở khóa ngay nhân vật thường mà không cần làm thủ tục! <i>(Riêng nhân vật Sắc Màu Nhanh Nhẹn đã duyệt ảnh đang đếm ngược chỉ cần <b>6 Chì</b> ở khung phía trên để mở ngay).</i></p>
                 <div class="relative flex items-center gap-2">
                     <div class="relative flex-1">
                         <input id="redeemCharInput" type="text" onkeydown="if(event.key==='Enter') submitRedeemSearch()" oninput="handleRedeemInput(this.value)" onfocus="handleRedeemInput(this.value)" placeholder="Gõ tên nhân vật muốn đổi..." class="w-full bg-black/60 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400 placeholder:text-sky-200/50">
@@ -1946,22 +1946,36 @@
                     </div>
 
                     <!-- LỰA CHỌN 1: CÓ ĐẾM NGƯỢC SỰ KIỆN N GIỜ -->
-                    <label class="block p-2.5 rounded-xl border border-fuchsia-300/30 bg-black/40 cursor-pointer hover:border-fuchsia-300 transition">
-                        <div class="flex items-center gap-2 mb-1">
+                    <div class="block p-2.5 rounded-xl border border-fuchsia-300/30 bg-black/40 hover:border-fuchsia-300 transition space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
                             <input type="radio" name="formFastChoice" value="event_countdown" checked onchange="toggleFastChoiceUI(this.value)" class="accent-fuchsia-400">
-                            <span class="text-xs font-extrabold text-amber-300">1. Có đếm ngược sự kiện (Mở nhanh trong N giờ)</span>
-                        </div>
+                            <span class="text-xs font-extrabold text-amber-300">1. Có đếm ngược sự kiện (Trong N giờ)</span>
+                        </label>
                         <p class="text-[10.5px] text-sky-100/80 leading-relaxed pl-5">
-                            • <b>Trước khi gửi proof:</b> Hiện đồng hồ đếm ngược sự kiện.<br>
-                            • <b>Sau khi duyệt xong:</b> Mở link <b>NGAY LẬP TỨC</b> (0 chờ đếm ngược).<br>
+                            • <b>Trước khi gửi proof:</b> Hiện đồng hồ đếm ngược sự kiện trên ảnh.<br>
                             • Hết số giờ sự kiện bên dưới sẽ <b>tự động chuyển sang Chế độ 2</b>.
                         </p>
-                        <div id="fastEventTimeInputs" class="mt-2 pl-5 pt-2 border-t border-white/10 flex items-center gap-2 text-[11px]">
-                            <span class="text-pink-200 font-bold">Thời gian sự kiện:</span>
-                            <input id="formOpenHours" type="number" min="0" value="24" class="w-14 bg-black/60 border border-white/20 rounded-lg px-2 py-1 text-center font-bold text-white"> Giờ
-                            <input id="formOpenMinutes" type="number" min="0" max="59" value="0" class="w-14 bg-black/60 border border-white/20 rounded-lg px-2 py-1 text-center font-bold text-white"> Phút
+                        <div id="fastEventTimeInputs" class="pl-5 pt-2 border-t border-white/10 space-y-2 text-[11px]">
+                            <div class="flex items-center gap-2">
+                                <span class="text-pink-200 font-bold">Thời gian sự kiện:</span>
+                                <input id="formOpenHours" type="number" min="0" value="24" class="w-14 bg-black/60 border border-white/20 rounded-lg px-2 py-1 text-center font-bold text-white"> Giờ
+                                <input id="formOpenMinutes" type="number" min="0" max="59" value="0" class="w-14 bg-black/60 border border-white/20 rounded-lg px-2 py-1 text-center font-bold text-white"> Phút
+                            </div>
+                            <div class="bg-black/40 border border-white/10 rounded-xl p-2 space-y-1.5">
+                                <div class="text-[10.5px] font-bold text-fuchsia-200">Sau khi duyệt proof trong lúc sự kiện đang chạy:</div>
+                                <div class="grid grid-cols-2 gap-1.5">
+                                    <label class="flex items-center gap-1.5 cursor-pointer bg-white/5 hover:bg-white/10 p-1.5 rounded-lg border border-white/10">
+                                        <input type="radio" name="formEventWaitMode" value="immediate" checked class="accent-emerald-400">
+                                        <span class="text-[10.5px] font-bold text-emerald-300">⚡ Mở ngay (0 chờ)</span>
+                                    </label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer bg-white/5 hover:bg-white/10 p-1.5 rounded-lg border border-white/10">
+                                        <input type="radio" name="formEventWaitMode" value="countdown" class="accent-amber-400">
+                                        <span class="text-[10.5px] font-bold text-amber-300">⏳ Có đếm ngược giờ</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                    </label>
+                    </div>
 
                     <!-- LỰA CHỌN 2: KHÔNG ĐẾM NGƯỢC SỰ KIỆN (BẮT CHỜ SAU DUYỆT) -->
                     <label class="block p-2.5 rounded-xl border border-amber-300/30 bg-black/40 cursor-pointer hover:border-amber-300 transition">
@@ -4088,8 +4102,13 @@
 
         function isFastCharOpensImmediately(c) {
             if (!c || c.status !== 'unlocked_24h') return false;
-            // Nếu đang trong N giờ sự kiện -> Duyệt xong là Mở ngay lập tức (0 chờ đếm ngược)
-            return isFastCharInInstantWindow(c);
+            // Chỉ mở ngay khi đang trong N giờ sự kiện VÀ admin chọn "Mở ngay (0 chờ)"
+            if (!isFastCharInInstantWindow(c)) return false;
+            return c.fastEventWaitMode !== 'countdown';
+        }
+
+        function getCharRedeemCost(charObj) {
+            return (charObj && charObj.status === 'unlocked_24h') ? 6 : 10;
         }
 
         function toggleFastChoiceUI(val) {
@@ -4885,8 +4904,9 @@
                     btn.innerText = "⚡ Vào Sắc Màu Nhanh Nhẹn để lấy link ➔";
                     btn.onclick = () => { closeMiniRedeemModal(); closePencilModal(); openFastColorScreen(); };
                 } else {
+                    const cost = getCharRedeemCost(char);
                     btn.className = "jelly-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-lg active:scale-95 transition";
-                    btn.innerText = "Đổi 10 Chì Màu Lấy Link";
+                    btn.innerText = `Đổi ${cost} Chì Màu Lấy Link`;
                     btn.onclick = confirmMiniRedeem;
                 }
             }
@@ -8358,16 +8378,19 @@
             }
 
             const inInstantWindow = isFastCharInInstantWindow(c);
+            const opensImmediately = isFastCharOpensImmediately(c);
             const wMs = (typeof c.unlockWaitMs === 'number' && c.unlockWaitMs > 0) ? c.unlockWaitMs : 7200000;
             const wLabel = wMs >= 3600000 ? `${Math.round(wMs / 3600000 * 10) / 10} tiếng` : `${Math.round(wMs / 60000)} phút`;
-            const noteHtml = inInstantWindow
+            const noteHtml = opensImmediately
                 ? "✨ Đang trong đợt mở nhanh: Duyệt ảnh Facebook thành công là mở khóa link NGAY LẬP TỨC không cần chờ!"
-                : `⏳ Đã hết đợt mở nhanh: Sau khi duyệt ảnh Facebook, hệ thống sẽ đếm ngược ${wLabel} để mở link (hoặc dùng 6 Chì Màu mở ngay sau khi đã duyệt).`;
+                : (inInstantWindow
+                    ? `⏳ Đang trong đợt sự kiện: Sau khi duyệt ảnh Facebook, hệ thống sẽ đếm ngược ${wLabel} để mở link (hoặc dùng 6 Chì Màu mở ngay sau khi đã duyệt).`
+                    : `⏳ Đã hết đợt mở nhanh: Sau khi duyệt ảnh Facebook, hệ thống sẽ đếm ngược ${wLabel} để mở link (hoặc dùng 6 Chì Màu mở ngay sau khi đã duyệt).`);
 
             return `
                 <div class="w-full text-center mb-4">
                     <span class="bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-pink-200 border border-pink-300/40 text-[10px] px-3.5 py-1 rounded-full font-black tracking-widest uppercase shadow">
-                        ${inInstantWindow ? 'Đang mở nhanh · Duyệt mở ngay' : 'Hết giờ mở nhanh · Đếm ngược chờ mở link'}
+                        ${opensImmediately ? 'Đang mở nhanh · Duyệt mở ngay' : (inInstantWindow ? 'Sự kiện có hạn · Duyệt xong đếm ngược' : 'Hết giờ mở nhanh · Đếm ngược chờ mở link')}
                     </span>
                     <h3 class="text-2xl font-black mt-2 flex items-center justify-center gap-1.5 flex-wrap">
                         <span class="char-pastel-0">${c.name}</span>
@@ -8963,9 +8986,8 @@
             const closedSub = document.getElementById('closedNoticeSubtext');
             const skipBtn = document.getElementById('skipCountdownDetailBtn');
 
-            if (skipBtn) skipBtn.classList.add('hidden');
-
             if (activeChar.status === 'closed') {
+                if (skipBtn) skipBtn.classList.add('hidden');
                 prompt.classList.add('hidden');
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-red-500/20 text-red-200 border border-red-400/40 font-bold text-xs py-3 px-4 rounded-xl cursor-not-allowed";
                 text.innerText = "🔧 Đang fix (Link tạm đóng để sửa lỗi)";
@@ -9012,6 +9034,8 @@
                 return;
             }
 
+            if (skipBtn) skipBtn.classList.add('hidden');
+            if (skipBtn) skipBtn.classList.add('hidden');
             if (isUnlocked) {
                 btn.className = "w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-lg active:scale-95 transition animate-bounce";
                 text.innerText = `ĐÃ MỞ KHÓA - Mở Link ${activeChar.name} Ngay!`;
@@ -10213,10 +10237,9 @@
                 const uName = currentUser.username;
                 const uKey = uName.toLowerCase();
 
-                // Giai đoạn 1 (Đang trong N giờ sự kiện): waitMs = 0 (Mở luôn)
-                // Giai đoạn 2 (Hết N giờ hoặc chọn Chế độ 2 Không đếm ngược sự kiện): Bắt buộc đếm ngược chờ mở link
+                // Chỉ mở ngay (waitMs = 0) nếu đang trong N giờ sự kiện VÀ chọn "Mở ngay (0 chờ)"
                 let waitMs = 0;
-                if (!isFastCharInInstantWindow(fastTargetChar)) {
+                if (!isFastCharOpensImmediately(fastTargetChar)) {
                     waitMs = (typeof fastTargetChar.unlockWaitMs === 'number' && fastTargetChar.unlockWaitMs > 0)
                         ? fastTargetChar.unlockWaitMs
                         : (2 * 3600 * 1000);
@@ -10454,6 +10477,8 @@
 
             const choice1 = document.querySelector('input[name="formFastChoice"][value="event_countdown"]');
             if (choice1) choice1.checked = true;
+            const waitImmediate = document.querySelector('input[name="formEventWaitMode"][value="immediate"]');
+            if (waitImmediate) waitImmediate.checked = true;
             toggleFastChoiceUI('event_countdown');
 
             const oH = document.getElementById('formOpenHours');
@@ -10563,6 +10588,7 @@
             const isNew = document.getElementById('formCharIsNew')?.value === 'true';
 
             const fastChoice = document.querySelector('input[name="formFastChoice"]:checked')?.value || 'event_countdown';
+            const fastEventWaitMode = document.querySelector('input[name="formEventWaitMode"]:checked')?.value || 'immediate';
             const openH = parseInt(document.getElementById('formOpenHours')?.value) || 0;
             const openM = parseInt(document.getElementById('formOpenMinutes')?.value) || 0;
             const customDurationMs = (openH * 3600 + openM * 60) * 1000 || (24 * 3600 * 1000);
@@ -10602,6 +10628,7 @@
                     const prevEndMs = getFastCharEndMs(characters[idx]);
                     characters[idx].status = status;
                     characters[idx].fastChoiceMode = fastChoice;
+                    characters[idx].fastEventWaitMode = (status === 'unlocked_24h') ? fastEventWaitMode : null;
                     characters[idx].afterFastMode = null;
                     characters[idx].isNew = isNew;
                     characters[idx].unlockWaitMs = unlockWaitMs;
@@ -10669,6 +10696,7 @@
                     aiStudioUrl: aiLink,
                     status,
                     fastChoiceMode: fastChoice,
+                    fastEventWaitMode: (status === 'unlocked_24h') ? fastEventWaitMode : null,
                     afterFastMode: null,
                     isNew,
                     unlockWaitMs,
@@ -10756,7 +10784,7 @@
                     statusUpdatedAt: nowUpdatedAt,
                     reopenTimestamp: null
                 };
-                if (nextStatus !== 'unlocked_24h') {
+                if (nextStatus === 'locked') {
                     payload.customDurationMs = null;
                     payload.fastStartTime = null;
                     payload.fastEndTime = null;
@@ -10766,13 +10794,15 @@
                 c.status = nextStatus;
                 c.prevStatusBeforeFix = prevStatusToSave;
                 c.statusUpdatedAt = nowUpdatedAt;
-                if (nextStatus !== 'unlocked_24h') {
+                if (nextStatus === 'locked') {
                     c.customDurationMs = null;
                     c.fastStartTime = null;
                     c.fastEndTime = null;
                     activeFastCharIdsInSession.delete(charId);
-                } else {
+                } else if (nextStatus === 'unlocked_24h') {
                     activeFastCharIdsInSession.add(charId);
+                } else {
+                    activeFastCharIdsInSession.delete(charId);
                 }
 
                 if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
@@ -10856,6 +10886,9 @@
                 : 'event_countdown';
             const choiceRadio = document.querySelector(`input[name="formFastChoice"][value="${savedChoice}"]`);
             if (choiceRadio) choiceRadio.checked = true;
+            const savedEventWaitMode = (c.fastEventWaitMode === 'countdown') ? 'countdown' : 'immediate';
+            const eventWaitRadio = document.querySelector(`input[name="formEventWaitMode"][value="${savedEventWaitMode}"]`);
+            if (eventWaitRadio) eventWaitRadio.checked = true;
             toggleFastChoiceUI(savedChoice);
 
             toggleStatusSettings(effectiveStatus);
