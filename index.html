@@ -5762,23 +5762,35 @@
                 if (isFirstNotificationSnapshot) {
                     newLogs.forEach(item => window.knownUserNotificationKeys.add(getNotifUniqueKey(item)));
                     if (lastSeenTs > 0) {
-                        const missedNotifs = newLogs.filter(item => (Number(item.createdAt) || 0) > lastSeenTs).slice(0, 5);
-                        if (missedNotifs.length > 0) {
-                            missedNotifs.reverse().forEach(item => {
-                                showInAppNotifyToast(item.title, item.body);
-                                showBrowserNotificationSafe(item.title, item.body);
-                            });
+                        const missedNotifs = newLogs.filter(item => (Number(item.createdAt) || 0) > lastSeenTs);
+                        if (missedNotifs.length === 1) {
+                            const item = missedNotifs[0];
+                            showInAppNotifyToast(item.title, item.body);
+                            showBrowserNotificationSafe(item.title, item.body);
+                            playPaletteTingSound();
+                        } else if (missedNotifs.length > 1) {
+                            const latestItem = missedNotifs[0];
+                            const summaryTitle = `🔔 Có ${missedNotifs.length} thông báo mới`;
+                            const summaryBody = `${latestItem.title}${latestItem.body ? ` · ${latestItem.body}` : ''}`;
+                            showInAppNotifyToast(summaryTitle, summaryBody);
+                            showBrowserNotificationSafe(summaryTitle, summaryBody);
                             playPaletteTingSound();
                         }
                     }
                 } else {
                     const arrived = newLogs.filter(item => !window.knownUserNotificationKeys.has(getNotifUniqueKey(item)));
                     arrived.forEach(item => window.knownUserNotificationKeys.add(getNotifUniqueKey(item)));
-                    if (arrived.length > 0) {
-                        arrived.slice(0, 5).reverse().forEach(item => {
-                            showInAppNotifyToast(item.title, item.body);
-                            showBrowserNotificationSafe(item.title, item.body);
-                        });
+                    if (arrived.length === 1) {
+                        const item = arrived[0];
+                        showInAppNotifyToast(item.title, item.body);
+                        showBrowserNotificationSafe(item.title, item.body);
+                        playPaletteTingSound();
+                    } else if (arrived.length > 1) {
+                        const latestItem = arrived[0];
+                        const summaryTitle = `🔔 Có ${arrived.length} thông báo mới`;
+                        const summaryBody = `${latestItem.title}${latestItem.body ? ` · ${latestItem.body}` : ''}`;
+                        showInAppNotifyToast(summaryTitle, summaryBody);
+                        showBrowserNotificationSafe(summaryTitle, summaryBody);
                         playPaletteTingSound();
                     }
                 }
@@ -5865,11 +5877,15 @@
                     if (savedSeenTs > 0) {
                         const missedActs = memberActivities.filter(a => (Number(a.createdAt) || 0) > savedSeenTs && !notifiedOwnerActivityIds.has(a.id));
                         missedActs.forEach(a => notifiedOwnerActivityIds.add(a.id));
-                        if (missedActs.length > 0) {
-                            missedActs.slice(0, 5).reverse().forEach(notifyOwnerForActivity);
-                            if (missedActs.length > 5) {
-                                showInAppNotifyToast(`⚡ Còn ${missedActs.length - 5} hoạt động khác`, `Mở mục Thành viên ➔ Hoạt động để xem toàn bộ nhé!`);
-                            }
+                        if (missedActs.length === 1) {
+                            notifyOwnerForActivity(missedActs[0]);
+                            playPaletteTingSound();
+                        } else if (missedActs.length > 1) {
+                            const latestAct = missedActs[0];
+                            const summaryTitle = `⚡ Có ${missedActs.length} hoạt động mới`;
+                            const summaryBody = `${latestAct.username}: ${latestAct.title}${latestAct.details ? ` · ${latestAct.details}` : ''}`;
+                            showInAppNotifyToast(summaryTitle, summaryBody);
+                            showBrowserNotificationSafe(summaryTitle, summaryBody);
                             playPaletteTingSound();
                         }
                     }
@@ -5877,8 +5893,15 @@
                 } else {
                     const newActs = memberActivities.filter(a => !prevIds.has(a.id) && !notifiedOwnerActivityIds.has(a.id));
                     newActs.forEach(a => notifiedOwnerActivityIds.add(a.id));
-                    if (newActs.length > 0) {
-                        newActs.slice(0, 5).reverse().forEach(notifyOwnerForActivity);
+                    if (newActs.length === 1) {
+                        notifyOwnerForActivity(newActs[0]);
+                        playPaletteTingSound();
+                    } else if (newActs.length > 1) {
+                        const latestAct = newActs[0];
+                        const summaryTitle = `⚡ Có ${newActs.length} hoạt động mới`;
+                        const summaryBody = `${latestAct.username}: ${latestAct.title}${latestAct.details ? ` · ${latestAct.details}` : ''}`;
+                        showInAppNotifyToast(summaryTitle, summaryBody);
+                        showBrowserNotificationSafe(summaryTitle, summaryBody);
                         playPaletteTingSound();
                     }
                 }
@@ -6264,30 +6287,28 @@
             });
         }
 
-        // Hiện thông báo nổi pastel xếp chồng (không ghi đè mất thông báo trước)
+        // Chỉ hiện 1 thanh thông báo pastel gọn duy nhất
         function showInAppNotifyToast(title, body) {
             let container = document.getElementById('paletteToastContainer');
             if (!container) {
                 container = document.createElement('div');
                 container.id = 'paletteToastContainer';
-                container.className = "fixed top-14 left-1/2 -translate-x-1/2 z-[120] w-[92%] max-w-sm flex flex-col gap-2 pointer-events-none";
+                container.className = "fixed top-14 left-1/2 -translate-x-1/2 z-[120] w-[92%] max-w-sm pointer-events-none";
                 document.body.appendChild(container);
             }
-            while (container.children.length >= 5) {
-                container.removeChild(container.firstChild);
-            }
+            container.innerHTML = '';
             const toast = document.createElement('div');
-            toast.className = "pointer-events-auto bg-[#121c38]/95 backdrop-blur-md border-2 border-pink-300/80 p-3 rounded-2xl shadow-[0_0_25px_rgba(244,114,182,0.5)] text-left space-y-1 cursor-pointer transition";
+            toast.className = "pointer-events-auto bg-[#121c38]/95 backdrop-blur-md border border-pink-300/80 px-3 py-2 rounded-2xl shadow-[0_0_20px_rgba(244,114,182,0.45)] text-left space-y-0.5 cursor-pointer transition";
             toast.onclick = () => toast.remove();
             toast.innerHTML = `
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-xs font-black pastel-fast-wave">${cmtEsc(title)}</span>
-                    <span class="text-[10px] text-sky-200/70">✕</span>
+                    <span class="text-xs font-black pastel-fast-wave truncate">${cmtEsc(title)}</span>
+                    <span class="text-[10px] text-sky-200/70 shrink-0">✕</span>
                 </div>
-                <p class="text-[11px] text-sky-100 leading-relaxed">${cmtEsc(body)}</p>
+                <p class="text-[11px] text-sky-100 leading-snug line-clamp-2">${cmtEsc(body)}</p>
             `;
             container.appendChild(toast);
-            window.setTimeout(() => { if (toast.parentNode) toast.remove(); }, 8500);
+            window.setTimeout(() => { if (toast.parentNode) toast.remove(); }, 5500);
         }
 
         // Tự động báo về mục Thất Bại của Chủ Web kèm ảnh chụp khi thành viên bị từ chối
