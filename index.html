@@ -5695,9 +5695,17 @@
                     ...payload,
                     savedAt: Date.now()
                 };
+                const rawJson = JSON.stringify(window.recentCharStatusOverrides);
                 try {
-                    localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides));
-                } catch (_) {}
+                    localStorage.setItem('palette_recent_char_overrides', rawJson);
+                } catch (_) {
+                    // Nếu localStorage đầy do cache ảnh nặng, giải phóng cache ảnh rồi lưu lại ngay để không bao giờ mất trạng thái
+                    try {
+                        localStorage.removeItem('palette_cached_characters');
+                        localStorage.removeItem('palette_proof_samples');
+                        localStorage.setItem('palette_recent_char_overrides', rawJson);
+                    } catch (_) {}
+                }
             };
 
             // 1. Tải nhân vật kèm bảo vệ chống cache cũ ghi đè trạng thái vừa sửa
@@ -5716,10 +5724,12 @@
                     if (ov) {
                         const serverTs = Number(data.statusUpdatedAt) || 0;
                         const ovTs = Number(ov.statusUpdatedAt) || 0;
+                        // Chỉ xóa bảo vệ khi server THẬT SỰ xác nhận đúng trạng thái mới
                         const serverConfirmed = !snapshot.metadata.fromCache
                             && !snapshot.metadata.hasPendingWrites
-                            && serverTs >= ovTs;
-                        const isExpiredVeryOld = (nowMs - (ov.savedAt || 0)) >= 86400000;
+                            && serverTs >= ovTs
+                            && data.status === ov.status;
+                        const isExpiredVeryOld = (nowMs - (ov.savedAt || 0)) >= (7 * 86400000);
 
                         if (serverConfirmed || isExpiredVeryOld) {
                             delete window.recentCharStatusOverrides[doc.id];
@@ -5727,6 +5737,8 @@
                         } else {
                             data.status = ov.status;
                             data.fastChoiceMode = ('fastChoiceMode' in ov) ? ov.fastChoiceMode : (data.fastChoiceMode ?? null);
+                            data.fastEventWaitMode = ('fastEventWaitMode' in ov) ? ov.fastEventWaitMode : (data.fastEventWaitMode ?? null);
+                            data.prevStatusBeforeFix = ('prevStatusBeforeFix' in ov) ? ov.prevStatusBeforeFix : (data.prevStatusBeforeFix ?? null);
                             data.fastStartTime = ('fastStartTime' in ov) ? ov.fastStartTime : (data.fastStartTime ?? null);
                             data.fastEndTime = ('fastEndTime' in ov) ? ov.fastEndTime : (data.fastEndTime ?? null);
                             data.customDurationMs = ('customDurationMs' in ov) ? ov.customDurationMs : (data.customDurationMs ?? null);
@@ -5738,6 +5750,8 @@
                         if ((Number(prev.statusUpdatedAt) || 0) > (Number(data.statusUpdatedAt) || 0)) {
                             data.status = prev.status;
                             data.fastChoiceMode = prev.fastChoiceMode ?? null;
+                            data.fastEventWaitMode = prev.fastEventWaitMode ?? null;
+                            data.prevStatusBeforeFix = prev.prevStatusBeforeFix ?? null;
                             data.fastStartTime = prev.fastStartTime ?? null;
                             data.fastEndTime = prev.fastEndTime ?? null;
                             data.customDurationMs = prev.customDurationMs ?? null;
@@ -10883,7 +10897,10 @@
             const safeVal = (val === 'unlocked_24h' || val === 'closed') ? val : 'locked';
             adminFormStatusState = safeVal;
             const statusInput = document.getElementById('formCharStatus');
-            if (statusInput) statusInput.value = safeVal;
+            if (statusInput) {
+                statusInput.value = safeVal;
+                statusInput.setAttribute('data-selected-status', safeVal);
+            }
 
             const btnLocked = document.getElementById('statusPill-locked');
             const btnFast = document.getElementById('statusPill-unlocked_24h');
@@ -11081,7 +11098,8 @@
             const subtitle = document.getElementById('formCharSubtitle').value.trim();
             const fbLink = document.getElementById('formCharFbLink').value.trim();
             const aiLink = document.getElementById('formCharAiLink').value.trim();
-            const rawFormStatus = document.getElementById('formCharStatus')?.value;
+            const statusInputEl = document.getElementById('formCharStatus');
+            const rawFormStatus = statusInputEl?.getAttribute('data-selected-status') || statusInputEl?.value;
             const status = (adminFormStatusState === 'unlocked_24h' || adminFormStatusState === 'closed')
                 ? adminFormStatusState
                 : ((rawFormStatus === 'unlocked_24h' || rawFormStatus === 'closed') ? rawFormStatus : 'locked');
@@ -11114,6 +11132,13 @@
                 const idx = characters.findIndex(c => c.id === editId);
                 if (idx !== -1) {
                     const oldCharBackup = JSON.parse(JSON.stringify(characters[idx]));
+                    const prevDuration = characters[idx].customDurationMs;
+                    const prevEndMs = getFastCharEndMs(characters[idx]);
+                    const nextUpdatedAt = Math.max(Date.now(), (Number(oldCharBackup.statusUpdatedAt) || 0) + 1);
+                    const nextPrevBeforeFix = (status === 'closed')
+                        ? (oldCharBackup.status === 'closed' ? (oldCharBackup.prevStatusBeforeFix || 'locked') : (oldCharBackup.status || 'locked'))
+                        : null;
+
                     characters[idx].name = name;
                     characters[idx].image = imageSrc;
                     if (uploadedImages.length) characters[idx].galleryImages = uploadedImages;
@@ -11124,9 +11149,8 @@
                     characters[idx].tags = adminSelectedTags.length > 0 ? [...adminSelectedTags] : ['Mới'];
                     characters[idx].fbLink = fbLink;
                     characters[idx].aiStudioUrl = aiLink;
-                    const prevDuration = characters[idx].customDurationMs;
-                    const prevEndMs = getFastCharEndMs(characters[idx]);
                     characters[idx].status = status;
+                    characters[idx].prevStatusBeforeFix = nextPrevBeforeFix;
                     characters[idx].fastChoiceMode = fastChoice;
                     characters[idx].fastEventWaitMode = (status === 'unlocked_24h') ? fastEventWaitMode : null;
                     characters[idx].afterFastMode = null;
@@ -11152,13 +11176,16 @@
                         activeFastCharIdsInSession.delete(editId);
                     }
                     characters[idx].reopenTimestamp = null;
-                    characters[idx].statusUpdatedAt = Date.now();
+                    characters[idx].statusUpdatedAt = nextUpdatedAt;
                     savedChar = JSON.parse(JSON.stringify(characters[idx]));
                     characters[idx] = savedChar;
+
                     if (window.saveRecentCharStatusOverride) {
                         window.saveRecentCharStatusOverride(editId, {
                             status: savedChar.status,
                             fastChoiceMode: savedChar.fastChoiceMode,
+                            fastEventWaitMode: savedChar.fastEventWaitMode,
+                            prevStatusBeforeFix: savedChar.prevStatusBeforeFix ?? null,
                             fastStartTime: savedChar.fastStartTime,
                             fastEndTime: savedChar.fastEndTime,
                             customDurationMs: savedChar.customDurationMs,
@@ -11166,18 +11193,75 @@
                             statusUpdatedAt: savedChar.statusUpdatedAt
                         });
                     }
+                    if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
+
+                    // Chỉ gửi ảnh mới khi người dùng có chọn/dán ảnh mới; tránh re-upload ảnh cũ nặng gây lỗi size/timeout
+                    const firestorePayload = {
+                        id: savedChar.id,
+                        name: savedChar.name,
+                        firstTagSubtitle: savedChar.firstTagSubtitle,
+                        firstTagKeyword: savedChar.firstTagKeyword,
+                        firstTag: savedChar.firstTag,
+                        subtitle: savedChar.subtitle,
+                        tags: savedChar.tags,
+                        fbLink: savedChar.fbLink,
+                        aiStudioUrl: savedChar.aiStudioUrl,
+                        status: savedChar.status,
+                        prevStatusBeforeFix: savedChar.prevStatusBeforeFix ?? null,
+                        fastChoiceMode: savedChar.fastChoiceMode ?? null,
+                        fastEventWaitMode: savedChar.fastEventWaitMode ?? null,
+                        afterFastMode: null,
+                        isNew: Boolean(savedChar.isNew),
+                        unlockWaitMs: savedChar.unlockWaitMs || 0,
+                        customDurationMs: savedChar.customDurationMs ?? null,
+                        fastStartTime: savedChar.fastStartTime ?? null,
+                        fastEndTime: savedChar.fastEndTime ?? null,
+                        reopenTimestamp: null,
+                        statusUpdatedAt: savedChar.statusUpdatedAt
+                    };
+                    if (imageFiles.length > 0 || urlInput) {
+                        firestorePayload.image = savedChar.image;
+                        if (uploadedImages.length) firestorePayload.galleryImages = savedChar.galleryImages;
+                    }
+
                     try {
-                        await db.collection("characters").doc(editId).set(savedChar);
-                        if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
-                    } catch (saveErr) {
-                        if (window.recentCharStatusOverrides) {
-                            delete window.recentCharStatusOverrides[editId];
-                            try { localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides)); } catch (_) {}
+                        const writeRes = await Promise.race([
+                            db.collection("characters").doc(editId).set(firestorePayload, { merge: true }),
+                            new Promise(res => setTimeout(() => res('TIMEOUT'), 8000))
+                        ]);
+                        if (writeRes === 'TIMEOUT') {
+                            showInAppNotifyToast("⏳ Đang đồng bộ ngầm", `Đã giữ trạng thái mới cho "${name}" trên máy, sẽ tự đồng bộ lên máy chủ khi mạng ổn định.`);
                         }
-                        characters[idx] = oldCharBackup;
+                    } catch (saveErr) {
                         console.error("Lỗi cập nhật Firebase:", saveErr);
-                        alert("Không thể lưu lên máy chủ (có thể ảnh quá dung lượng 1MB hoặc mạng yếu). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
-                        return;
+                        if (saveErr?.code === 'permission-denied') {
+                            if (window.recentCharStatusOverrides) {
+                                delete window.recentCharStatusOverrides[editId];
+                                try { localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides)); } catch (_) {}
+                            }
+                            characters[idx] = oldCharBackup;
+                            if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
+                            alert("Không có quyền ghi Firestore! Vui lòng kiểm tra lại tài khoản Chủ Web.");
+                            return;
+                        }
+                        // Nếu lỗi do ảnh quá nặng hoặc mạng/hạn mức: thử lưu riêng phần trạng thái & giữ nguyên lựa chọn hiện tại, KHÔNG hoàn tác về Khóa
+                        try {
+                            await Promise.race([
+                                db.collection("characters").doc(editId).set({
+                                    status: savedChar.status,
+                                    prevStatusBeforeFix: savedChar.prevStatusBeforeFix ?? null,
+                                    fastChoiceMode: savedChar.fastChoiceMode ?? null,
+                                    fastEventWaitMode: savedChar.fastEventWaitMode ?? null,
+                                    customDurationMs: savedChar.customDurationMs ?? null,
+                                    fastStartTime: savedChar.fastStartTime ?? null,
+                                    fastEndTime: savedChar.fastEndTime ?? null,
+                                    unlockWaitMs: savedChar.unlockWaitMs || 0,
+                                    statusUpdatedAt: savedChar.statusUpdatedAt
+                                }, { merge: true }),
+                                new Promise(res => setTimeout(() => res('TIMEOUT'), 5000))
+                            ]);
+                        } catch (_) {}
+                        showInAppNotifyToast("⚠️ Lưu tạm trạng thái", `Đã giữ trạng thái mới cho "${name}" (mạng/hạn mức máy chủ đang chậm).`);
                     }
                 }
             } else {
@@ -11195,6 +11279,7 @@
                     fbLink,
                     aiStudioUrl: aiLink,
                     status,
+                    prevStatusBeforeFix: null,
                     fastChoiceMode: fastChoice,
                     fastEventWaitMode: (status === 'unlocked_24h') ? fastEventWaitMode : null,
                     afterFastMode: null,
@@ -11210,6 +11295,8 @@
                     window.saveRecentCharStatusOverride(newChar.id, {
                         status: newChar.status,
                         fastChoiceMode: newChar.fastChoiceMode,
+                        fastEventWaitMode: newChar.fastEventWaitMode,
+                        prevStatusBeforeFix: null,
                         fastStartTime: newChar.fastStartTime,
                         fastEndTime: newChar.fastEndTime,
                         customDurationMs: newChar.customDurationMs,
@@ -11217,20 +11304,28 @@
                         statusUpdatedAt: newChar.statusUpdatedAt
                     });
                 }
-                try {
-                    await db.collection("characters").doc(newChar.id).set(newChar);
-                } catch (saveErr) {
-                    if (window.recentCharStatusOverrides) {
-                        delete window.recentCharStatusOverrides[newChar.id];
-                        try { localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides)); } catch (_) {}
-                    }
-                    console.error("Lỗi tạo nhân vật trên Firebase:", saveErr);
-                    alert("Không thể tải nhân vật lên máy chủ (có thể ảnh quá dung lượng 1MB hoặc mạng yếu). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
-                    return;
-                }
                 characters.push(newChar);
                 savedChar = newChar;
                 if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
+
+                try {
+                    await Promise.race([
+                        db.collection("characters").doc(newChar.id).set(newChar),
+                        new Promise(res => setTimeout(() => res('TIMEOUT'), 8000))
+                    ]);
+                } catch (saveErr) {
+                    if (saveErr?.code === 'permission-denied') {
+                        characters = characters.filter(c => c.id !== newChar.id);
+                        if (window.recentCharStatusOverrides) {
+                            delete window.recentCharStatusOverrides[newChar.id];
+                            try { localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides)); } catch (_) {}
+                        }
+                        console.error("Lỗi tạo nhân vật trên Firebase:", saveErr);
+                        alert("Không thể tải nhân vật lên máy chủ (ảnh quá 1MB hoặc không đủ quyền). Hãy thử chọn ảnh nhẹ hơn hoặc dùng link ảnh nhé!");
+                        return;
+                    }
+                    console.error("Lỗi tạo nhân vật trên Firebase:", saveErr);
+                }
 
                 triggerNotification("Nhân Vật Mới Đã Xuất Hiện!", `Palette vừa phác thảo xong "${name}". Hãy vào ngắm nhìn ngay nhé!`);
             }
@@ -11260,23 +11355,56 @@
             const idx = characters.findIndex(c => c.id === charId);
             if (idx === -1) return;
             const c = characters[idx];
+            const oldBackup = JSON.parse(JSON.stringify(c));
             const isClosedNow = (c.status === 'closed');
             const nextStatus = isClosedNow ? (c.prevStatusBeforeFix === 'unlocked_24h' ? 'unlocked_24h' : 'locked') : 'closed';
             const prevStatusToSave = isClosedNow ? null : (c.status || 'locked');
-            const nowUpdatedAt = Date.now();
+            const nowUpdatedAt = Math.max(Date.now(), (Number(c.statusUpdatedAt) || 0) + 1);
 
             fixingCharIdsInFlight.add(charId);
+
+            c.status = nextStatus;
+            c.prevStatusBeforeFix = prevStatusToSave;
+            c.statusUpdatedAt = nowUpdatedAt;
+            if (nextStatus === 'locked') {
+                c.customDurationMs = null;
+                c.fastStartTime = null;
+                c.fastEndTime = null;
+                activeFastCharIdsInSession.delete(charId);
+            } else if (nextStatus === 'unlocked_24h') {
+                activeFastCharIdsInSession.add(charId);
+            } else {
+                activeFastCharIdsInSession.delete(charId);
+            }
+
             if (window.saveRecentCharStatusOverride) {
                 window.saveRecentCharStatusOverride(charId, {
                     status: nextStatus,
-                    fastChoiceMode: nextStatus === 'unlocked_24h' ? (c.fastChoiceMode ?? null) : null,
-                    fastStartTime: nextStatus === 'unlocked_24h' ? (c.fastStartTime ?? null) : null,
-                    fastEndTime: nextStatus === 'unlocked_24h' ? (c.fastEndTime ?? null) : null,
-                    customDurationMs: nextStatus === 'unlocked_24h' ? (c.customDurationMs ?? null) : null,
+                    prevStatusBeforeFix: prevStatusToSave,
+                    fastChoiceMode: c.fastChoiceMode ?? null,
+                    fastEventWaitMode: c.fastEventWaitMode ?? null,
+                    fastStartTime: c.fastStartTime ?? null,
+                    fastEndTime: c.fastEndTime ?? null,
+                    customDurationMs: c.customDurationMs ?? null,
                     unlockWaitMs: c.unlockWaitMs || 0,
                     statusUpdatedAt: nowUpdatedAt
                 });
             }
+            if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
+            if (activeChar && activeChar.id === charId) {
+                activeChar.status = nextStatus;
+                activeChar.statusUpdatedAt = nowUpdatedAt;
+                updateAIStudioButton();
+            }
+            if (document.getElementById('editCharId')?.value === charId) {
+                toggleStatusSettings(nextStatus);
+            }
+            renderAdminExistingChars();
+            renderCharacters();
+            renderFastColorCenter();
+            updateFastColorSubtitle();
+            playPaletteTingSound();
+
             try {
                 const payload = {
                     status: nextStatus,
@@ -11289,43 +11417,24 @@
                     payload.fastStartTime = null;
                     payload.fastEndTime = null;
                 }
-                await db.collection("characters").doc(charId).set(payload, { merge: true });
-
-                c.status = nextStatus;
-                c.prevStatusBeforeFix = prevStatusToSave;
-                c.statusUpdatedAt = nowUpdatedAt;
-                if (nextStatus === 'locked') {
-                    c.customDurationMs = null;
-                    c.fastStartTime = null;
-                    c.fastEndTime = null;
-                    activeFastCharIdsInSession.delete(charId);
-                } else if (nextStatus === 'unlocked_24h') {
-                    activeFastCharIdsInSession.add(charId);
-                } else {
-                    activeFastCharIdsInSession.delete(charId);
-                }
-
-                if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
-                if (activeChar && activeChar.id === charId) {
-                    activeChar.status = nextStatus;
-                    activeChar.statusUpdatedAt = nowUpdatedAt;
-                    updateAIStudioButton();
-                }
-                if (document.getElementById('editCharId')?.value === charId) {
-                    toggleStatusSettings(nextStatus);
-                }
-                renderAdminExistingChars();
-                renderCharacters();
-                renderFastColorCenter();
-                updateFastColorSubtitle();
-                playPaletteTingSound();
+                await Promise.race([
+                    db.collection("characters").doc(charId).set(payload, { merge: true }),
+                    new Promise(res => setTimeout(() => res('TIMEOUT'), 8000))
+                ]);
             } catch (err) {
-                if (window.recentCharStatusOverrides) {
-                    delete window.recentCharStatusOverrides[charId];
-                    try { localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides)); } catch (_) {}
-                }
                 console.error("Lỗi đổi trạng thái Đang fix:", err);
-                alert("Chưa thể cập nhật trạng thái lên máy chủ: " + (err?.message || "Vui lòng thử lại!"));
+                if (err?.code === 'permission-denied') {
+                    characters[idx] = oldBackup;
+                    if (window.recentCharStatusOverrides) {
+                        delete window.recentCharStatusOverrides[charId];
+                        try { localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides)); } catch (_) {}
+                    }
+                    if (window.saveCharactersCacheSafely) window.saveCharactersCacheSafely(characters);
+                    renderAdminExistingChars();
+                    renderCharacters();
+                    renderFastColorCenter();
+                    alert("Chưa thể cập nhật trạng thái lên máy chủ: " + (err?.message || "Vui lòng thử lại!"));
+                }
             } finally {
                 fixingCharIdsInFlight.delete(charId);
             }
@@ -11410,8 +11519,10 @@
 
         function openEditForActiveChar() {
             if (!activeChar || !currentUser?.isOwner) return;
+            const latestChar = characters.find(c => c.id === activeChar.id) || activeChar;
+            activeChar = latestChar;
             openAdminModal();
-            loadCharToEdit(activeChar.id);
+            loadCharToEdit(latestChar.id);
         }
 
         function deleteChar(charId) {
