@@ -448,11 +448,21 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
+        /* Chống giật lag, phóng to màn hình và văng bàn phím khi gõ cmt trên mọi điện thoại */
+        input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea {
+            font-size: 16px !important;
+            touch-action: manipulation !important;
+        }
+        #mainCommentInput {
+            font-size: 16px !important;
+            touch-action: manipulation !important;
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+
         /* TỐI ƯU HÓA ĐẶC QUYỀN DÀNH CHO SAFARI TRÊN IOS (IPHONE / IPAD) */
         @supports (-webkit-touch-callout: none) {
-            /* Ngăn Safari tự động zoom màn hình khi gõ chữ nhưng không làm mất dấu tích của checkbox */
             input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea {
-                font-size: 16px !important;
                 -webkit-appearance: none !important;
                 appearance: none !important;
                 border-radius: 0.75rem;
@@ -1528,7 +1538,7 @@
                         <span id="commentCharCounter" class="text-[11px] font-mono text-sky-200/70 font-bold whitespace-nowrap shrink-0 text-right">0/1000 để Ping</span>
                     </div>
 
-                    <textarea id="mainCommentInput" rows="3" oninput="handleCommentInput(this)" placeholder="Cảm nghĩ hoặc bài Feedback trải nghiệm về character... (tối thiểu 1000 ký tự để dùng Ping nhận 3 Chì Màu, không spam ký tự)" class="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-sky-200/40 focus:outline-none focus:border-pink-400"></textarea>
+                    <textarea id="mainCommentInput" rows="3" oninput="handleCommentInput(this)" placeholder="Cảm nghĩ hoặc bài Feedback trải nghiệm về character... (tối thiểu 1000 ký tự để dùng Ping nhận 3 Chì Màu, không spam ký tự)" class="w-full bg-black/40 border border-white/20 rounded-xl px-3 py-2 text-base text-white placeholder-sky-200/40 focus:outline-none focus:border-pink-400"></textarea>
                     <p class="text-[10.5px] text-amber-200/90 leading-relaxed bg-amber-500/10 border border-amber-300/25 rounded-xl px-2.5 py-1.5">
                         📝 <b>Ghi chú:</b> Không spam ký tự (gõ lặp chữ, dấu câu hoặc ký tự vô nghĩa) để đủ 1000 ký tự Ping nhé!
                     </p>
@@ -5294,19 +5304,36 @@
             }
         }
 
-        // ================= XỬ LÝ GÕ BÌNH LUẬN & NÚT PING =================
+        // ================= XỬ LÝ GÕ BÌNH LUẬN & NÚT PING (SIÊU MƯỢT, CHỐNG TẮT BÀN PHÍM) =================
+        let lastPingLongState = false;
+
         function handleCommentInput(textarea) {
             const len = (textarea.value || '').trim().length;
             const counter = document.getElementById('commentCharCounter');
-            if (len >= 1000) {
-                counter.innerText = `${len} ký tự (Đủ Ping ✨)`;
-                counter.className = "text-[11px] font-mono text-emerald-400 font-extrabold whitespace-nowrap shrink-0 text-right";
-            } else {
-                counter.innerText = `${len}/1000 để Ping`;
-                counter.className = "text-[11px] font-mono text-sky-200/70 font-bold whitespace-nowrap shrink-0 text-right";
+            const isLong = len >= 1000;
+
+            if (counter) {
+                const targetText = isLong ? `${len} ký tự (Đủ Ping ✨)` : `${len}/1000 để Ping`;
+                if (counter.textContent !== targetText) {
+                    counter.textContent = targetText;
+                }
+                const targetClass = isLong
+                    ? "text-[11px] font-mono text-emerald-400 font-extrabold whitespace-nowrap shrink-0 text-right"
+                    : "text-[11px] font-mono text-sky-200/70 font-bold whitespace-nowrap shrink-0 text-right";
+                if (counter.className !== targetClass) {
+                    counter.className = targetClass;
+                }
+            }
+
+            if (!isLong) {
                 isPingActiveForCurrentComment = false;
             }
-            updateCommentPingAvailability();
+
+            // Chỉ render lại nút Ping khi trạng thái (dưới 1000 vs từ 1000 ký tự) thực sự thay đổi
+            if (lastPingLongState !== isLong) {
+                lastPingLongState = isLong;
+                updateCommentPingAvailability();
+            }
         }
 
         function updateCommentPingAvailability() {
@@ -5317,7 +5344,7 @@
             const pencilData = currentUser ? userPencilsData[currentUser.username.toLowerCase()] : null;
             const alreadyPingedToday = Boolean(pencilData?.lastPingDate === getLocalDateKey());
 
-            const bellSvg = `<svg class="custom-bell-icon w-3.5 h-3.5 text-pink-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2"></path><path d="M6.7 8.2a5.5 5.5 0 0 1 10.6 0c.8 3.4.2 5.6 2.2 7.8H4.5c2-2.2 1.4-4.4 2.2-7.8Z"></path><path d="M9.6 19a2.6 2.6 0 0 0 4.8 0"></path><path d="M4 4l2 2"></path><path d="m20 4-2 2"></path></svg>`;
+            const bellSvg = `<svg class="custom-bell-icon w-3.5 h-3.5 text-pink-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v2"></path><path d="M6.7 8.2a5.5 5.5 0 0 1 10.6 0c.8 3.4.2 5.6 2.2 7.8H4.5c2-2.2 1.4-4.4 2.2-7.8Z"></path><path d="M9.6 19a2.6 2.6 0 0 0 4.8 0"></path><path d="M4 4l2 2"></path><path d="m20 4-2 2"></path></svg>`;
 
             if (alreadyPingedToday) {
                 isPingActiveForCurrentComment = false;
