@@ -5716,86 +5716,17 @@
                 }
             };
 
-            window.recentCharStatusOverrides = safeParseLocalJson('palette_recent_char_overrides', {});
-            window.saveRecentCharStatusOverride = function(charId, payload) {
-                if (!charId) return;
-                window.recentCharStatusOverrides[charId] = {
-                    ...payload,
-                    savedAt: Date.now()
-                };
-                const rawJson = JSON.stringify(window.recentCharStatusOverrides);
-                try {
-                    localStorage.setItem('palette_recent_char_overrides', rawJson);
-                } catch (_) {
-                    // Nếu localStorage đầy do cache ảnh nặng, giải phóng cache ảnh rồi lưu lại ngay để không bao giờ mất trạng thái
-                    try {
-                        localStorage.removeItem('palette_cached_characters');
-                        localStorage.removeItem('palette_proof_samples');
-                        localStorage.setItem('palette_recent_char_overrides', rawJson);
-                    } catch (_) {}
-                }
-            };
-
-            // 1. Tải nhân vật kèm bảo vệ chống cache cũ ghi đè trạng thái vừa sửa
+            // 1. Tải nhân vật & giữ nguyên trạng thái admin đã chọn, không bị tự nhảy về locked
             db.collection("characters").onSnapshot((snapshot) => {
                 if (snapshot.metadata.fromCache && charactersSyncedFromServer) return;
-                const nowMs = Date.now();
-                const prevById = {};
-                characters.forEach(c => { if (c && c.id) prevById[c.id] = c; });
-
-                let overridesChanged = false;
                 const nextCharacters = [];
                 snapshot.forEach(doc => {
                     const data = { id: doc.id, ...doc.data() };
-                    const ov = window.recentCharStatusOverrides[doc.id];
-
-                    if (ov) {
-                        const serverTs = Number(data.statusUpdatedAt) || 0;
-                        const ovTs = Number(ov.statusUpdatedAt) || 0;
-                        // Chỉ xóa bảo vệ khi server THẬT SỰ xác nhận đúng trạng thái mới
-                        const serverConfirmed = !snapshot.metadata.fromCache
-                            && !snapshot.metadata.hasPendingWrites
-                            && serverTs >= ovTs
-                            && data.status === ov.status;
-                        const isExpiredVeryOld = (nowMs - (ov.savedAt || 0)) >= (7 * 86400000);
-
-                        if (serverConfirmed || isExpiredVeryOld) {
-                            delete window.recentCharStatusOverrides[doc.id];
-                            overridesChanged = true;
-                        } else {
-                            data.status = ov.status;
-                            data.fastChoiceMode = ('fastChoiceMode' in ov) ? ov.fastChoiceMode : (data.fastChoiceMode ?? null);
-                            data.fastEventWaitMode = ('fastEventWaitMode' in ov) ? ov.fastEventWaitMode : (data.fastEventWaitMode ?? null);
-                            data.prevStatusBeforeFix = ('prevStatusBeforeFix' in ov) ? ov.prevStatusBeforeFix : (data.prevStatusBeforeFix ?? null);
-                            data.fastStartTime = ('fastStartTime' in ov) ? ov.fastStartTime : (data.fastStartTime ?? null);
-                            data.fastEndTime = ('fastEndTime' in ov) ? ov.fastEndTime : (data.fastEndTime ?? null);
-                            data.customDurationMs = ('customDurationMs' in ov) ? ov.customDurationMs : (data.customDurationMs ?? null);
-                            data.unlockWaitMs = ov.unlockWaitMs ?? data.unlockWaitMs;
-                            data.statusUpdatedAt = ov.statusUpdatedAt ?? data.statusUpdatedAt;
-                        }
-                    } else if ((snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) && prevById[doc.id]) {
-                        const prev = prevById[doc.id];
-                        if ((Number(prev.statusUpdatedAt) || 0) > (Number(data.statusUpdatedAt) || 0)) {
-                            data.status = prev.status;
-                            data.fastChoiceMode = prev.fastChoiceMode ?? null;
-                            data.fastEventWaitMode = prev.fastEventWaitMode ?? null;
-                            data.prevStatusBeforeFix = prev.prevStatusBeforeFix ?? null;
-                            data.fastStartTime = prev.fastStartTime ?? null;
-                            data.fastEndTime = prev.fastEndTime ?? null;
-                            data.customDurationMs = prev.customDurationMs ?? null;
-                            data.unlockWaitMs = prev.unlockWaitMs ?? data.unlockWaitMs;
-                            data.statusUpdatedAt = prev.statusUpdatedAt;
-                        }
+                    if (!data.status) {
+                        data.status = 'locked';
                     }
-
                     nextCharacters.push(data);
                 });
-
-                if (overridesChanged) {
-                    try {
-                        localStorage.setItem('palette_recent_char_overrides', JSON.stringify(window.recentCharStatusOverrides));
-                    } catch (_) {}
-                }
 
                 characters = nextCharacters;
                 if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) {
@@ -11554,7 +11485,11 @@
             if (!activeChar || !currentUser?.isOwner) return;
             const latestChar = characters.find(c => c.id === activeChar.id) || activeChar;
             activeChar = latestChar;
-            openAdminModal();
+            // Mở modal trực tiếp và load dữ liệu đúng trạng thái của char, không reset về locked
+            document.getElementById('adminModal').classList.remove('hidden');
+            renderAdminCategories();
+            renderAdminExistingChars();
+            renderAdminProofSamplesPanel();
             loadCharToEdit(latestChar.id);
         }
 
