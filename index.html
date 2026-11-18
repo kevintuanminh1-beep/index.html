@@ -665,6 +665,78 @@
             transform: translateY(-3px) scale(1.05);
         }
 
+        /* HIỆU ỨNG LÁ BÀI PASTEL XINH YÊU - XÌ DÁCH HÊN XUI */
+        @keyframes xdCardPopIn {
+            0% { opacity: 0; transform: translateY(-12px) scale(0.84) rotate(-4deg); }
+            100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+        }
+        .xd-play-card {
+            animation: xdCardPopIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            box-shadow: 0 5px 14px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+        }
+        .xd-table-felt {
+            background: radial-gradient(circle at top, rgba(244, 114, 182, 0.14) 0%, rgba(25, 33, 78, 0.94) 55%, rgba(13, 19, 48, 0.98) 100%);
+            border: 2px solid rgba(251, 207, 232, 0.42);
+            box-shadow: inset 0 0 26px rgba(192, 132, 252, 0.16), 0 12px 30px rgba(0, 0, 0, 0.4);
+            contain: content;
+        }
+        .xd-deck-stack {
+            box-shadow:
+                2px 3px 0 rgba(244, 114, 182, 0.45),
+                4px 6px 0 rgba(167, 139, 250, 0.35),
+                0 10px 22px rgba(0, 0, 0, 0.55);
+        }
+        .xd-flying-card {
+            position: fixed;
+            z-index: 150;
+            pointer-events: none;
+            will-change: transform;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+            transition: transform 0.38s cubic-bezier(0.25, 1, 0.35, 1);
+        }
+
+        /* THANH ĐẾM NGƯỢC LƯỢT ĐI 30S VÀ CẢNH BÁO TREO 60S */
+        .turn-timer-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: monospace;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 11px;
+            border: 1px solid rgba(251, 191, 36, 0.5);
+            background: rgba(251, 191, 36, 0.15);
+            color: #fde047;
+            animation: timerPulse 1s ease-in-out infinite alternate;
+        }
+        @keyframes timerPulse {
+            0% { opacity: 0.85; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1.03); }
+        }
+        .turn-thinking-bubble {
+            background: rgba(244, 114, 182, 0.18);
+            border: 1px solid rgba(244, 114, 182, 0.45);
+            color: #fbcfe8;
+            border-radius: 1rem;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* TỐI ƯU HIỆU NĂNG CHO THIẾT BỊ DI ĐỘNG */
+        .fast-center-card, .via-card-mat, .via-dice-tray {
+            contain: content;
+        }
+        * {
+            -webkit-font-smoothing: antialiased;
+        }
+
         </style>
 </head>
 <body class="text-white flex flex-col items-center justify-between p-4 relative selection:bg-pink-500">
@@ -845,11 +917,15 @@
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-sky-300 font-bold">✏️</span>
-                        <span>Chơi <button type="button" onclick="closePencilModal(); openXoGameModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-sky-500/15 border border-sky-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Cùng vẽ X và O</span></button> (7×7 nối 4 đấu Bot, không giới hạn lượt): <b class="text-emerald-300">Thắng +1 chì</b> · <b class="text-rose-300">Thua -1 chì</b> (cần còn ít nhất 1 chì để chơi).</span>
+                        <span>Chơi <button type="button" onclick="closePencilModal(); openXoGameModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-sky-500/15 border border-sky-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Cùng vẽ X và O</span></button> (7×7 nối 4 đấu Bot, không giới hạn lượt): <b class="text-emerald-300">Thắng +2 chì</b> · <b class="text-rose-300">Thua -2 chì</b> (cần còn ít nhất 2 chì để chơi).</span>
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-pink-300 font-bold">🎲</span>
                         <span>Chơi <button type="button" onclick="closePencilModal(); openCuocMauModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-pink-500/15 border border-pink-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Cược Màu Lấy Vía</span></button> (tối đa 5 chì/ván, 5 lượt/ngày) để thử vận may ăn chì nhân theo số khối trùng khớp!</span>
+                    </li>
+                    <li class="flex items-start gap-1.5">
+                        <span class="text-amber-300 font-bold">🃏</span>
+                        <span>Chơi <button type="button" onclick="closePencilModal(); openXiDachModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-purple-500/15 border border-purple-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Xì Dách Hên Xui</span></button> cùng Bot (không giới hạn lượt): <b class="text-emerald-300">Thắng +2 chì</b> · <b class="text-rose-300">Thua -2 chì</b> (cần còn ít nhất 2 chì để chơi).</span>
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-amber-300 font-bold">⚡</span>
@@ -2459,6 +2535,28 @@
                     </div>
                     <svg class="w-4 h-4 text-pink-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </button>
+
+                <!-- Mục con 5: Xì Dách Hên Xui -->
+                <button type="button" onclick="closeLuckyGamesHubModal(); openXiDachModal();" class="jelly-btn w-full bg-gradient-to-r from-purple-400/25 via-pink-400/20 to-sky-400/20 border-2 border-purple-200/50 hover:border-pink-200 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
+                    <div id="iconBox-xidach" onclick="handleMenuIconClick(event, 'xidach')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-300/30 to-pink-300/25 border border-purple-200/50 p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
+                        <div id="menuContent-xidach" class="w-full h-full flex items-center justify-center">
+                            <svg class="w-8 h-8" viewBox="0 0 48 48" fill="none">
+                                <rect x="7" y="10" width="20" height="28" rx="4" transform="rotate(-10 7 10)" fill="#FFF5F8" stroke="#F472B6" stroke-width="2"/>
+                                <rect x="20" y="8" width="20" height="28" rx="4" transform="rotate(8 20 8)" fill="#F5F3FF" stroke="#A855F7" stroke-width="2"/>
+                                <text x="27" y="21" fill="#EC4899" font-size="10" font-weight="900">A♥</text>
+                                <text x="25" y="31" fill="#7C3AED" font-size="9" font-weight="900">21</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <h4 class="text-sm font-extrabold pastel-fast-wave">Xì Dách Hên Xui</h4>
+                            <span class="text-[9px] bg-purple-400/25 text-purple-200 border border-purple-200/40 px-1.5 py-0.5 rounded-full font-bold">Không giới hạn</span>
+                        </div>
+                        <p class="text-[11px] text-pink-100/75 mt-0.5">Bốc bài 21 điểm đấu Bot cute kawaii: Thắng +2 · Thua -2 Chì.</p>
+                    </div>
+                    <svg class="w-4 h-4 text-purple-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
             </div>
 
             <button type="button" onclick="closeLuckyGamesHubModal()" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-2 rounded-xl text-xs transition">Đóng lại</button>
@@ -2467,33 +2565,69 @@
 
     <!-- MODAL GAME: CÙNG VẼ X VÀ O (7x7 NỐI 4) -->
     <div id="xoGameModal" class="fixed inset-0 bg-[#050814]/88 z-50 hidden flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
-        <div class="bg-[#131b3a] border-2 border-pink-200/55 p-3.5 sm:p-5 rounded-3xl max-w-sm sm:max-w-md w-full text-center shadow-[0_0_40px_rgba(244,114,182,0.35)] relative space-y-2.5 my-auto">
-            <!-- Icon Thỏ Xanh ở góc trên bên trái bấm xem hướng dẫn -->
-            <button type="button" onclick="openXoRulesModal()" class="absolute top-3 left-3.5 w-9 h-9 rounded-full bg-sky-400/20 hover:bg-sky-400/35 border border-sky-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.45)] active:scale-90 transition" title="Bấm xem hướng dẫn cách chơi X và O">
-                <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
-                    <ellipse cx="22" cy="17" rx="5.5" ry="14" transform="rotate(-10 22 17)" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.2"/>
-                    <ellipse cx="22" cy="18" rx="2.8" ry="9" transform="rotate(-10 22 18)" fill="#BAE6FD"/>
-                    <ellipse cx="42" cy="17" rx="5.5" ry="14" transform="rotate(10 42 17)" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.2"/>
-                    <ellipse cx="42" cy="18" rx="2.8" ry="9" transform="rotate(10 42 18)" fill="#BAE6FD"/>
-                    <ellipse cx="32" cy="39" rx="19" ry="16" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.2"/>
-                    <ellipse cx="20" cy="42" rx="3.5" ry="2" fill="#FDA4AF" opacity="0.85"/>
-                    <ellipse cx="44" cy="42" rx="3.5" ry="2" fill="#FDA4AF" opacity="0.85"/>
-                    <circle cx="24" cy="37" r="2.5" fill="#0C4A6E"/>
-                    <circle cx="24.7" cy="36.2" r="0.9" fill="#fff"/>
-                    <circle cx="40" cy="37" r="2.5" fill="#0C4A6E"/>
-                    <circle cx="40.7" cy="36.2" r="0.9" fill="#fff"/>
-                    <path d="M28 44c1.5 1.8 3 1.8 4 0c1 1.8 2.5 1.8 4 0" stroke="#0C4A6E" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="51" cy="22" r="7" fill="#38BDF8" stroke="#E0F2FE" stroke-width="1.5"/>
-                    <text x="51" y="25.5" text-anchor="middle" fill="#fff" font-size="10" font-weight="900">?</text>
-                </svg>
-            </button>
+        <div class="bg-[#131b3a] border-2 border-pink-200/55 p-3.5 sm:p-5 rounded-3xl max-w-sm sm:max-w-md w-full text-center shadow-[0_0_40px_rgba(244,114,182,0.35)] relative space-y-2.5 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
+            <!-- Nút Thỏ & Nút Đóng luôn ghim cố định ở góc trên đỉnh -->
+            <div class="sticky top-0 z-30 flex items-center justify-between pb-1 -mt-1 pointer-events-none">
+                <button type="button" onclick="openXoRulesModal()" class="pointer-events-auto w-9 h-9 rounded-full bg-sky-400/20 hover:bg-sky-400/35 border border-sky-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.45)] active:scale-90 transition" title="Bấm xem hướng dẫn cách chơi X và O">
+                    <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
+                        <ellipse cx="22" cy="17" rx="5.5" ry="14" transform="rotate(-10 22 17)" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.2"/>
+                        <ellipse cx="22" cy="18" rx="2.8" ry="9" transform="rotate(-10 22 18)" fill="#BAE6FD"/>
+                        <ellipse cx="42" cy="17" rx="5.5" ry="14" transform="rotate(10 42 17)" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.2"/>
+                        <ellipse cx="42" cy="18" rx="2.8" ry="9" transform="rotate(10 42 18)" fill="#BAE6FD"/>
+                        <ellipse cx="32" cy="39" rx="19" ry="16" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.2"/>
+                        <ellipse cx="20" cy="42" rx="3.5" ry="2" fill="#FDA4AF" opacity="0.85"/>
+                        <ellipse cx="44" cy="42" rx="3.5" ry="2" fill="#FDA4AF" opacity="0.85"/>
+                        <circle cx="24" cy="37" r="2.5" fill="#0C4A6E"/>
+                        <circle cx="24.7" cy="36.2" r="0.9" fill="#fff"/>
+                        <circle cx="40" cy="37" r="2.5" fill="#0C4A6E"/>
+                        <circle cx="40.7" cy="36.2" r="0.9" fill="#fff"/>
+                        <path d="M28 44c1.5 1.8 3 1.8 4 0c1 1.8 2.5 1.8 4 0" stroke="#0C4A6E" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="51" cy="22" r="7" fill="#38BDF8" stroke="#E0F2FE" stroke-width="1.5"/>
+                        <text x="51" y="25.5" text-anchor="middle" fill="#fff" font-size="10" font-weight="900">?</text>
+                    </svg>
+                </button>
+                <div class="flex items-center gap-1.5 pointer-events-auto">
+                    <!-- Nút Chuông nhận thông báo ghép đôi -->
+                    <button type="button" id="xoInviteBellBtn" onclick="toggleMatchInviteBell()" class="w-8 h-8 rounded-full bg-pink-500/20 hover:bg-pink-500/35 border border-pink-300/60 text-pink-200 flex items-center justify-center transition active:scale-90" title="Bật/Tắt chuông nhận lời mời ghép đôi">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </button>
+                    <!-- Nút Ghép Đôi Online -->
+                    <button type="button" id="xoMatchmakeBtn" onclick="openMatchmakingModal('xo')" class="jelly-btn bg-gradient-to-r from-pink-500 to-purple-600 text-white font-extrabold text-[11px] px-2.5 py-1.5 rounded-full border border-pink-200/60 shadow flex items-center gap-1 active:scale-95 transition" title="Bấm ghép đôi chơi cùng người khác">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span>Ghép Đôi</span>
+                    </button>
+                    <!-- Nút Đóng Ghim Cố Định -->
+                    <button type="button" onclick="closeXoGameModal()" class="w-8 h-8 rounded-full bg-black/60 hover:bg-rose-500 border border-white/20 text-sky-200 hover:text-white flex items-center justify-center font-black transition" title="Đóng">✕</button>
+                </div>
+            </div>
 
-            <button type="button" onclick="closeXoGameModal()" class="text-sky-200 hover:text-white text-xl p-1 font-bold absolute top-3 right-3.5" title="Đóng">✕</button>
+            <!-- Thanh thông tin phòng khi đang ghép đôi -->
+            <div id="xoRoomInfoBar" class="hidden bg-pink-500/15 border border-pink-300/40 rounded-2xl p-2 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-1.5 truncate">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                    <span id="xoRoomLabel" class="font-extrabold text-pink-200 truncate">Phòng đấu: Đang kết nối...</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span id="xoTurnCountdownBadge" class="turn-timer-badge">⏳ 30s</span>
+                    <button type="button" onclick="openRoomChatModal()" class="bg-purple-500/30 hover:bg-purple-500/50 border border-purple-300/40 text-purple-100 font-bold px-2 py-1 rounded-xl text-[10.5px] transition flex items-center gap-1">
+                        <span>💬 Chat</span>
+                        <span id="roomChatUnreadBadge" class="hidden w-2 h-2 rounded-full bg-rose-400"></span>
+                    </button>
+                    <button type="button" onclick="leaveCurrentGameRoom()" class="bg-red-500/25 hover:bg-red-500/45 border border-red-400/40 text-red-200 font-extrabold px-2 py-1 rounded-xl text-[10.5px] transition">
+                        Nghỉ phòng
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dòng chữ trạng thái suy nghĩ chi tiết -->
+            <div id="xoThinkingStatusBar" class="hidden text-center py-0.5">
+                <span id="xoThinkingText" class="turn-thinking-bubble"></span>
+            </div>
 
             <div class="px-9">
                 <span class="text-[10px] bg-pink-400/20 text-pink-200 border border-pink-200/40 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">7×7 Nối 4 · Đấu Bot</span>
                 <h3 class="text-lg sm:text-xl font-black pastel-fast-wave mt-0.5">Cùng vẽ X và O</h3>
-                <p class="text-[10.5px] text-sky-100/80 font-medium">Thắng: <b class="text-emerald-300">+1 Chì</b> · Thua: <b class="text-rose-300">-1 Chì</b> · Hòa: <b class="text-sky-200">0 Chì</b></p>
+                <p class="text-[10.5px] text-sky-100/80 font-medium">Thắng: <b class="text-emerald-300">+2 Chì</b> · Thua: <b class="text-rose-300">-2 Chì</b> · Hòa: <b class="text-sky-200">0 Chì</b></p>
             </div>
 
             <!-- Thanh hiển thị Túi Bút Chì & Tỉ số -->
@@ -2564,11 +2698,11 @@
                 <li>• <b>Mục tiêu:</b> Trên bàn cờ <b>7×7 (49 ô)</b>, ai vẽ nối đủ <b>4 ký hiệu liên tiếp</b> theo hàng Ngang, Dọc hoặc Chéo trước sẽ thắng!</li>
                 <li>• <b>Đấu với Bot:</b> Bạn vẽ <b class="text-pink-300">X</b>, Bot vẽ <b class="text-sky-300">O</b>. Ai nối được 4 ô liên tiếp trước sẽ giành chiến thắng!</li>
                 <li>• <b>Thưởng / Phạt Bút Chì Màu:</b><br>
-                    – Thắng: <b class="text-emerald-300">+1 Bút Chì Màu</b><br>
-                    – Thua: <b class="text-rose-300">-1 Bút Chì Màu</b><br>
+                    – Thắng: <b class="text-emerald-300">+2 Bút Chì Màu</b><br>
+                    – Thua: <b class="text-rose-300">-2 Bút Chì Màu</b><br>
                     – Hòa: <b class="text-sky-200">Giữ nguyên số chì</b>
                 </li>
-                <li>• <b>Lưu ý:</b> Chơi không giới hạn lượt mỗi ngày, nhưng nếu túi về <b>0 Bút Chì Màu</b> thì sẽ không chơi tiếp được nữa nhé!</li>
+                <li>• <b>Lưu ý:</b> Chơi không giới hạn lượt mỗi ngày, cần còn ít nhất <b>2 Bút Chì Màu</b> trong túi để chơi nhé!</li>
             </ul>
             <button type="button" onclick="closeXoRulesModal()" class="w-full bg-gradient-to-r from-sky-400 to-pink-400 text-[#0f172a] font-black py-2 rounded-xl text-xs active:scale-95 transition">
                 Đã hiểu, chiến thôi! ✏️
@@ -2578,7 +2712,12 @@
 
     <!-- MODAL GAME: CƯỢC MÀU LẤY VÍA (BẦU CUA 4 MẶT PASTEL XINH YÊU) -->
     <div id="cuocMauModal" class="fixed inset-0 bg-[#050814]/88 z-50 hidden flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
-        <div class="bg-[#131b3a] border-2 border-pink-200/60 p-3.5 sm:p-5 rounded-3xl max-w-sm sm:max-w-md w-full text-center shadow-[0_0_45px_rgba(244,114,182,0.38)] relative space-y-2.5 my-auto">
+        <div class="bg-[#131b3a] border-2 border-pink-200/60 p-3.5 sm:p-5 rounded-3xl max-w-sm sm:max-w-md w-full text-center shadow-[0_0_45px_rgba(244,114,182,0.38)] relative space-y-2.5 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
+            <!-- Nút Thoát Ghim Cố Định Trên Cùng -->
+            <div class="sticky top-0 z-30 flex items-center justify-between pb-1 -mt-1 pointer-events-none">
+                <div></div>
+                <button type="button" onclick="closeCuocMauModal()" class="pointer-events-auto w-8 h-8 rounded-full bg-black/60 hover:bg-rose-500 border border-white/20 text-sky-200 hover:text-white flex items-center justify-center font-black transition" title="Đóng">✕</button>
+            </div>
             <!-- Icon Thỏ Hồng ở góc trên bên trái bấm xem hướng dẫn -->
             <button type="button" onclick="openViaRulesModal()" class="absolute top-3 left-3.5 w-9 h-9 rounded-full bg-pink-400/20 hover:bg-pink-400/35 border border-pink-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(244,114,182,0.45)] active:scale-90 transition" title="Bấm xem Thỏ Hồng hướng dẫn Cược Màu Lấy Vía">
                 <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
@@ -2705,6 +2844,331 @@
             <button type="button" onclick="saveCuocMauFacesToCloud()" id="saveCuocMauAdminBtn" class="jelly-btn w-full bg-gradient-to-r from-pink-400 to-amber-300 text-[#18102c] font-black py-2.5 rounded-xl text-xs shadow-lg active:scale-95 transition">
                 ✓ Lưu 4 Mặt Lên Hệ Thống
             </button>
+        </div>
+    </div>
+
+    <!-- MODAL GAME: XÌ DÁCH HÊN XUI (BÀI TÂY PASTEL ĐẤU BOT - 100% ICON SVG CODE) -->
+    <div id="xiDachModal" class="fixed inset-0 bg-[#050814]/88 z-50 hidden flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
+        <div class="bg-[#131b3a] border-2 border-pink-200/60 p-3.5 sm:p-5 rounded-3xl max-w-sm sm:max-w-md w-full text-center shadow-[0_0_45px_rgba(244,114,182,0.38)] relative space-y-2.5 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
+            <!-- Nút Thỏ & Nút Đóng luôn ghim cố định ở góc trên đỉnh -->
+            <div class="sticky top-0 z-30 flex items-center justify-between pb-1 -mt-1 pointer-events-none">
+                <button type="button" onclick="openXiDachRulesModal()" class="pointer-events-auto w-9 h-9 rounded-full bg-pink-400/20 hover:bg-pink-400/35 border border-pink-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(244,114,182,0.45)] active:scale-90 transition" title="Bấm xem Thỏ Hồng hướng dẫn luật Xì Dách">
+                    <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
+                        <ellipse cx="22" cy="17" rx="5.5" ry="14" transform="rotate(-10 22 17)" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
+                        <ellipse cx="22" cy="18" rx="2.8" ry="9" transform="rotate(-10 22 18)" fill="#FDA4AF"/>
+                        <ellipse cx="42" cy="17" rx="5.5" ry="14" transform="rotate(10 42 17)" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
+                        <ellipse cx="42" cy="18" rx="2.8" ry="9" transform="rotate(10 42 18)" fill="#FDA4AF"/>
+                        <ellipse cx="32" cy="39" rx="19" ry="16" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
+                        <ellipse cx="20" cy="42" rx="3.8" ry="2.2" fill="#FB7185" opacity="0.75"/>
+                        <ellipse cx="44" cy="42" rx="3.8" ry="2.2" fill="#FB7185" opacity="0.75"/>
+                        <circle cx="24" cy="37" r="2.5" fill="#831843"/>
+                        <circle cx="24.7" cy="36.2" r="0.9" fill="#fff"/>
+                        <circle cx="40" cy="37" r="2.5" fill="#831843"/>
+                        <circle cx="40.7" cy="36.2" r="0.9" fill="#fff"/>
+                        <path d="M28 44c1.5 1.8 3 1.8 4 0c1 1.8 2.5 1.8 4 0" stroke="#831843" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="51" cy="22" r="7" fill="#F472B6" stroke="#FFE4EE" stroke-width="1.5"/>
+                        <text x="51" y="25.5" text-anchor="middle" fill="#fff" font-size="10" font-weight="900">?</text>
+                    </svg>
+                </button>
+                <div class="flex items-center gap-1.5 pointer-events-auto">
+                    <!-- Nút Chuông nhận thông báo ghép đôi -->
+                    <button type="button" id="xdInviteBellBtn" onclick="toggleMatchInviteBell()" class="w-8 h-8 rounded-full bg-purple-500/20 hover:bg-purple-500/35 border border-purple-300/60 text-purple-200 flex items-center justify-center transition active:scale-90" title="Bật/Tắt chuông nhận lời mời ghép đôi">
+                        <svg class="w-4 h-4 animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </button>
+                    <!-- Nút Ghép Đôi Xì Dách (2-4 người) -->
+                    <button type="button" id="xdMatchmakeBtn" onclick="openMatchmakingModal('xidach')" class="jelly-btn bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-[11px] px-2.5 py-1.5 rounded-full border border-purple-200/60 shadow flex items-center gap-1 active:scale-95 transition" title="Ghép phòng chơi chung 2-4 người">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span>Ghép Đôi</span>
+                    </button>
+                    <!-- Nút Đóng Ghim Cố Định -->
+                    <button type="button" onclick="closeXiDachModal()" class="w-8 h-8 rounded-full bg-black/60 hover:bg-rose-500 border border-white/20 text-sky-200 hover:text-white flex items-center justify-center font-black transition" title="Đóng">✕</button>
+                </div>
+            </div>
+
+            <!-- Thanh thông tin phòng khi đang ghép đôi Xì Dách -->
+            <div id="xdRoomInfoBar" class="hidden bg-purple-500/15 border border-purple-300/40 rounded-2xl p-2 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-1.5 truncate">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                    <span id="xdRoomLabel" class="font-extrabold text-purple-200 truncate">Phòng Xì Dách: Đang kết nối...</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span id="xdTurnCountdownBadge" class="turn-timer-badge">⏳ 30s</span>
+                    <button type="button" onclick="openRoomChatModal()" class="bg-purple-500/30 hover:bg-purple-500/50 border border-purple-300/40 text-purple-100 font-bold px-2 py-1 rounded-xl text-[10.5px] transition flex items-center gap-1">
+                        <span>💬 Chat</span>
+                        <span id="xdRoomChatUnreadBadge" class="hidden w-2 h-2 rounded-full bg-rose-400"></span>
+                    </button>
+                    <button type="button" onclick="leaveCurrentGameRoom()" class="bg-red-500/25 hover:bg-red-500/45 border border-red-400/40 text-red-200 font-extrabold px-2 py-1 rounded-xl text-[10.5px] transition">
+                        Nghỉ phòng
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dòng chữ trạng thái lượt đi & đang suy nghĩ -->
+            <div id="xdThinkingStatusBar" class="hidden text-center py-0.5">
+                <span id="xdThinkingText" class="turn-thinking-bubble"></span>
+            </div>
+
+            <!-- KHUNG PHÒNG CHỜ SẴN SÀNG (CHỈ BẮT ĐẦU KHI TẤT CẢ ẤN SẴN SÀNG) -->
+            <div id="xdReadyCheckBox" class="hidden bg-gradient-to-br from-purple-500/20 via-pink-500/15 to-sky-500/15 border-2 border-pink-300/60 rounded-3xl p-3.5 space-y-2.5 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-pink-200 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                        <span>Phòng Chờ Sẵn Sàng</span>
+                    </span>
+                    <span id="xdReadyCountBadge" class="text-[10px] bg-black/45 border border-white/15 px-2 py-0.5 rounded-full font-extrabold text-amber-300">0/2 sẵn sàng</span>
+                </div>
+                <div id="xdReadyPlayersList" class="space-y-1.5 text-left"></div>
+                <button type="button" id="xdReadyToggleBtn" onclick="toggleXiDachReady()" class="jelly-btn w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black py-2.5 rounded-xl text-xs shadow-lg active:scale-95 transition">
+                    🙋 Bấm Sẵn Sàng Ngay
+                </button>
+            </div>
+
+            <!-- Khung danh sách các người chơi khác trong phòng Xì Dách nhiều người -->
+            <div id="xdMultiplayerOthersBox" class="hidden space-y-2 pt-0.5"></div>
+
+            <div class="px-9">
+                <span class="text-[10px] bg-purple-400/20 text-purple-200 border border-purple-200/40 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Bài Tây Pastel · Không giới hạn</span>
+                <h3 class="text-lg sm:text-xl font-black pastel-fast-wave mt-0.5">Xì Dách Hên Xui</h3>
+                <p class="text-[10.5px] text-sky-100/80 font-medium">Thắng: <b class="text-emerald-300">+2 Chì</b> · Thua: <b class="text-rose-300">-2 Chì</b> · Hòa: <b class="text-sky-200">0 Chì</b></p>
+            </div>
+
+            <!-- Túi chì & Tỉ số -->
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="bg-[#1b254d]/85 border border-pink-200/30 rounded-2xl p-1.5 flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-pink-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="m15 5 4 4"/></svg>
+                    <span class="text-pink-100 font-bold">Túi chì:</span>
+                    <span id="xdPencilBalance" class="font-black text-amber-300">0</span>
+                </div>
+                <div class="bg-[#1b254d]/85 border border-purple-200/30 rounded-2xl p-1.5 flex items-center justify-center gap-2 font-extrabold">
+                    <span class="text-pink-300">Bạn <span id="xdWinScore">0</span></span>
+                    <span class="text-white/30">·</span>
+                    <span class="text-sky-300">Bot <span id="xdLoseScore">0</span></span>
+                </div>
+            </div>
+
+            <!-- Cảnh báo hết chì -->
+            <div id="xdNoPencilBox" class="hidden bg-rose-500/15 border border-rose-300/45 rounded-2xl p-3 space-y-2 text-xs">
+                <p class="text-rose-200 font-bold leading-relaxed flex items-center justify-center gap-1.5 flex-wrap">
+                    <svg class="w-4 h-4 text-rose-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                    <span>Túi bạn hiện còn <b>0 Bút Chì Màu</b> nên chưa thể chơi Xì Dách! Hãy kiếm thêm chì rồi quay lại nhé.</span>
+                </p>
+                <button type="button" onclick="closeXiDachModal(); openPencilModal();" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                    <span>Mở Túi Bút Chì Màu kiếm thêm</span>
+                </button>
+            </div>
+
+            <!-- BÀN BÀI XÌ DÁCH XINH YÊU -->
+            <div class="xd-table-felt rounded-3xl p-3 space-y-2.5">
+                <!-- Bài của Bot cute kawaii -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between px-1 text-[11px] font-extrabold">
+                        <span class="text-sky-200 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-sky-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="4" fill="#1e3a8a" fill-opacity="0.45"/><path d="M12 7V3"/><circle cx="12" cy="2.5" r="1" fill="currentColor"/><circle cx="9.5" cy="13" r="1.2" fill="#BAE6FD"/><circle cx="14.5" cy="13" r="1.2" fill="#BAE6FD"/><path d="M9.5 16c1.5 1 3.5 1 5 0"/></svg>
+                            <span>Bài của Bot cute kawaii:</span>
+                        </span>
+                        <span id="xdBotScoreBadge" class="bg-sky-500/20 text-sky-200 border border-sky-300/35 px-2 py-0.5 rounded-full text-[10px] font-black">Chưa bốc</span>
+                    </div>
+                    <!-- Bong bóng suy nghĩ & quyết định của Bot -->
+                    <div id="xdBotThoughtBubble" class="hidden mx-auto max-w-[96%] bg-[#1a2550]/95 border border-sky-300/45 rounded-2xl px-2.5 py-1.5 text-[11px] font-bold text-sky-100 flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(56,189,248,0.22)]"></div>
+                    <div id="xdBotHandRow" class="flex items-center justify-center gap-1.5 sm:gap-2 min-h-[78px] flex-wrap"></div>
+                </div>
+
+                <!-- BỘ BÀI Ở GIỮA BÀN (CHẠM ĐỂ BỐC BÀI BAY VỀ TAY) -->
+                <div class="relative flex items-center justify-center py-0.5">
+                    <div class="absolute inset-x-0 top-1/2 border-t border-dashed border-pink-200/25"></div>
+                    <button type="button" id="xdDeckPileBtn" onclick="xiDachHit()" class="relative z-10 flex items-center gap-2.5 bg-[#12193b]/95 border border-pink-200/45 hover:border-amber-200 px-3 py-1.5 rounded-2xl shadow-lg active:scale-95 transition group" title="Chạm vào bộ bài để bốc 1 lá">
+                        <div id="xdDeckVisualWrap" class="xd-deck-stack w-9 h-[54px] rounded-lg overflow-hidden border border-pink-200/80 bg-[#1a103c] shrink-0 group-hover:-translate-y-0.5 transition"></div>
+                        <div class="text-left leading-tight">
+                            <div class="text-[10.5px] font-black text-pink-200">Bộ Bài Chung</div>
+                            <div id="xdDeckCountLabel" class="text-[9.5px] font-bold text-amber-200/90">Còn 52 lá · Chạm để bốc</div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Bài của Bạn -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between px-1 text-[11px] font-extrabold">
+                        <span class="text-pink-200 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-pink-300 fill-pink-400/80 shrink-0" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            <span>Bài của Bạn:</span>
+                        </span>
+                        <span id="xdPlayerScoreBadge" class="bg-pink-500/20 text-pink-200 border border-pink-300/40 px-2 py-0.5 rounded-full text-[10px] font-black">0 điểm</span>
+                    </div>
+                    <div id="xdPlayerHandRow" class="flex items-center justify-center gap-1.5 sm:gap-2 min-h-[78px] flex-wrap"></div>
+                </div>
+            </div>
+
+            <!-- Trạng thái / Kết quả -->
+            <div id="xdStatusBanner" class="bg-black/35 border border-pink-200/25 rounded-2xl px-3 py-2 text-xs font-extrabold text-pink-100 min-h-[42px] flex items-center justify-center gap-1.5 leading-snug"></div>
+
+            <!-- Nút Bốc / Dằn -->
+            <div id="xdPlayActionsRow" class="grid grid-cols-2 gap-2">
+                <button type="button" id="xdHitBtn" onclick="xiDachHit()" class="jelly-btn bg-gradient-to-r from-pink-400 to-rose-400 hover:brightness-110 text-[#1b1030] font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5"></button>
+                <button type="button" id="xdStandBtn" onclick="xiDachStand()" class="jelly-btn bg-gradient-to-r from-amber-300 to-purple-400 hover:brightness-110 text-[#1b1030] font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5"></button>
+            </div>
+
+            <!-- Nút Ván Mới / Thoát -->
+            <div class="flex items-center gap-2 pt-0.5">
+                <button type="button" id="xdNewRoundBtn" onclick="startNewXiDachRound()" class="jelly-btn flex-1 bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 hover:brightness-110 text-[#1b1030] font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5"></button>
+                <button type="button" onclick="closeXiDachModal()" class="bg-white/10 hover:bg-white/20 text-sky-100 font-bold text-xs py-2.5 px-4 rounded-xl transition">
+                    Thoát
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL THỎ HỒNG HƯỚNG DẪN XÌ DÁCH HÊN XUI -->
+    <div id="xiDachRulesModal" class="fixed inset-0 bg-[#050814]/85 z-[65] hidden flex items-center justify-center p-4">
+        <div class="bg-[#131b3a] border-2 border-pink-300/60 p-5 rounded-3xl max-w-xs w-full text-left shadow-[0_0_35px_rgba(244,114,182,0.38)] space-y-3 relative max-h-[86vh] overflow-y-auto custom-scroll">
+            <button type="button" onclick="closeXiDachRulesModal()" class="text-sky-200 hover:text-white p-1.5 absolute top-3 right-3.5" title="Đóng">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="flex items-center gap-2.5 border-b border-white/10 pb-2.5">
+                <div class="w-9 h-9 rounded-full bg-pink-400/20 border border-pink-300/50 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" viewBox="0 0 64 64" fill="none"><ellipse cx="22" cy="17" rx="5.5" ry="14" transform="rotate(-10 22 17)" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/><ellipse cx="42" cy="17" rx="5.5" ry="14" transform="rotate(10 42 17)" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/><ellipse cx="32" cy="39" rx="19" ry="16" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/><circle cx="24" cy="37" r="2.5" fill="#831843"/><circle cx="40" cy="37" r="2.5" fill="#831843"/><path d="M28 44c1.5 1.8 3 1.8 4 0c1 1.8 2.5 1.8 4 0" stroke="#831843" stroke-width="2" stroke-linecap="round"/></svg>
+                </div>
+                <div>
+                    <h4 class="text-sm font-black text-pink-200">Thỏ Hồng Hướng Dẫn</h4>
+                    <p class="text-[10px] text-pink-200/65">Luật chơi Xì Dách Hên Xui</p>
+                </div>
+            </div>
+            <ul class="text-[11.5px] text-sky-100/90 space-y-2 leading-relaxed">
+                <li>• <b>Tính điểm lá bài:</b> Lá <b>2–10</b> tính đúng số · Lá <b>J, Q, K</b> tính <b>10 điểm</b> · Lá <b>A (Át)</b> tự tính <b>1, 10 hoặc 11</b> sao cho có lợi nhất!</li>
+                <li>• <b>Thứ tự mạnh nhất:</b><br>
+                    1. <b class="text-amber-300">Xì Bàng (2 lá A)</b> – Mạnh nhất!<br>
+                    2. <b class="text-pink-300">Xì Dách (A + 10/J/Q/K)</b><br>
+                    3. <b class="text-emerald-300">Ngũ Linh (5 lá ≤ 21đ)</b><br>
+                    4. <b>Điểm thường (16–21đ)</b> – Ai cao hơn thắng.<br>
+                    5. <b class="text-rose-300">Quắc (&gt; 21đ)</b> – Nếu cả 2 cùng Quắc sẽ <b>Hòa</b>!
+                </li>
+                <li>• <b>Bốc bài xen kẽ hồi hộp:</b> Ban đầu bàn trống (0 lá). Hai bên sẽ <b>chia xen kẽ 2 lá đầu</b>. Sau đó, mỗi vòng bạn và <b>Bot cute kawaii</b> sẽ lần lượt bốc thêm hoặc chọn Dằn (tối đa 5 lá).</li>
+                <li>• <b>Chơi công bằng:</b> Bot cute kawaii hoàn toàn <b>không biết trước bài của bạn</b>, tự bốc bài theo cảm tính riêng kèm suy nghĩ đắn đo sinh động!</li>
+                <li>• <b>Thưởng / Phạt:</b> Chơi <b>không giới hạn lượt</b>! Thắng <b class="text-emerald-300">+2 Chì</b> · Thua <b class="text-rose-300">-2 Chì</b> · Hòa <b class="text-sky-200">0 Chì</b> (cần còn ít nhất 2 Chì để tham gia).</li>
+            </ul>
+            <button type="button" onclick="closeXiDachRulesModal()" class="w-full bg-gradient-to-r from-pink-400 to-purple-400 text-[#18102c] font-black py-2 rounded-xl text-xs active:scale-95 transition flex items-center justify-center gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="4" y="3" width="12" height="16" rx="2.5"/><path d="M16 7h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1"/></svg>
+                <span>Đã hiểu, chia bài thôi!</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL GHÉP ĐÔI REALTIME (MỜI NGƯỜI ĐANG ONLINE / BẠN BÈ) -->
+    <div id="matchmakingModal" class="fixed inset-0 bg-[#050814]/88 z-[75] hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-[#131b3a] border-2 border-pink-300/60 p-4 sm:p-5 rounded-3xl max-w-sm w-full text-left shadow-[0_0_40px_rgba(244,114,182,0.4)] relative space-y-3 my-auto max-h-[90vh] custom-scroll">
+            <div class="sticky top-0 z-20 flex items-center justify-between bg-[#131b3a] border-b border-white/10 pb-2">
+                <div>
+                    <h3 id="matchmakingTitle" class="text-sm font-black pastel-fast-wave">Ghép Đôi Chơi Chung</h3>
+                    <p id="matchmakingSubtitle" class="text-[10px] text-sky-200/70">Mời người đang online cùng vào phòng</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <!-- Nút Chuông Bật/Tắt Trong Modal -->
+                    <button type="button" id="modalInviteBellBtn" onclick="toggleMatchInviteBell()" class="w-8 h-8 rounded-full bg-pink-500/20 hover:bg-pink-500/35 border border-pink-300/60 text-pink-200 flex items-center justify-center transition active:scale-90" title="Bật/Tắt nhận lời mời">
+                        <svg class="w-4 h-4 animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </button>
+                    <button type="button" onclick="closeMatchmakingModal()" class="w-8 h-8 rounded-full bg-black/60 hover:bg-rose-500 border border-white/20 text-sky-200 hover:text-white flex items-center justify-center font-black transition">✕</button>
+                </div>
+            </div>
+
+            <!-- Dòng trạng thái chuông thông báo -->
+            <div id="inviteBellStatusBox" class="bg-black/35 border border-pink-300/30 rounded-2xl p-2.5 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                    <span id="inviteBellIconSpan" class="text-sm">🔔</span>
+                    <div>
+                        <div id="inviteBellTitleSpan" class="font-bold text-pink-200 text-[11px]">Đang bật nhận lời mời</div>
+                        <div id="inviteBellDescSpan" class="text-[9.5px] text-sky-200/65">Sẽ rung chuông khi có người rủ chơi</div>
+                    </div>
+                </div>
+                <button type="button" onclick="toggleMatchInviteBell()" id="inviteBellToggleBtn" class="bg-emerald-500/25 hover:bg-emerald-500/40 border border-emerald-300/50 text-emerald-200 font-extrabold px-2.5 py-1 rounded-xl text-[10.5px] active:scale-95 transition">
+                    Đang Bật
+                </button>
+            </div>
+
+            <!-- Ô TÌM KIẾM TÊN BẠN BÈ ĐỂ KẾT BẠN (CHỈ 1 Ô DUY NHẤT) -->
+            <div class="relative flex items-center">
+                <input id="searchFriendInput" type="text" oninput="handleSearchFriendInput(this.value)" placeholder="🔍 Gõ tên bạn bè để kết bạn / rủ chơi..." class="w-full bg-black/45 border border-pink-300/35 focus:border-pink-300 rounded-2xl pl-3 pr-8 py-2 text-xs text-white placeholder-sky-200/45 outline-none transition shadow-inner">
+                <button type="button" onclick="clearSearchFriendInput()" id="clearSearchFriendBtn" class="hidden absolute right-2.5 text-xs text-sky-200/60 hover:text-white font-bold p-1">✕</button>
+            </div>
+
+            <!-- Tab chọn: Đang Online vs Bạn Bè -->
+            <div class="grid grid-cols-2 gap-1.5 p-1 bg-black/40 rounded-2xl border border-white/10 text-xs">
+                <button type="button" id="matchTabOnlineBtn" onclick="switchMatchmakingTab('online')" class="py-1.5 px-2 rounded-xl font-bold bg-pink-500/35 text-pink-200 border border-pink-300/40">
+                    <span id="onlineUsersStatusBadge">⚪ Chưa có ai onl</span>
+                </button>
+                <button type="button" id="matchTabFriendsBtn" onclick="switchMatchmakingTab('friends')" class="py-1.5 px-2 rounded-xl font-bold text-sky-200/70 hover:text-white">
+                    💖 Bạn Bè (<span id="friendsCountBadge">0</span>)
+                </button>
+            </div>
+
+            <!-- Danh sách hiển thị (Số người online hoặc Danh sách Bạn Bè) -->
+            <div id="matchmakingUserList" class="space-y-2 max-h-64 overflow-y-auto custom-scroll pr-1"></div>
+
+            <!-- Lời mời đang gửi hoặc đang chờ người khác -->
+            <div id="matchmakingPendingStatus" class="hidden bg-black/40 border border-amber-300/35 rounded-2xl p-2.5 text-center space-y-1 text-xs">
+                <div class="font-extrabold text-amber-300 flex items-center justify-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                    <span id="matchmakingPendingText">Đang gửi lời mời...</span>
+                </div>
+                <p class="text-[10.5px] text-sky-200/75">Vui lòng đợi bạn ấy bấm đồng ý nhé!</p>
+                <button type="button" onclick="cancelPendingInvite()" class="text-[10px] text-rose-300 hover:text-white underline font-bold pt-1">Hủy lời mời</button>
+            </div>
+
+            <button type="button" onclick="closeMatchmakingModal()" class="w-full bg-white/10 hover:bg-white/20 text-sky-100 font-bold py-2 rounded-xl text-xs transition">
+                Đóng lại
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL KHUNG CHAT PHÒNG CHƠI (TỰ XÓA KHI NGHỈ PHÒNG) -->
+    <div id="roomChatModal" class="fixed inset-0 bg-[#050814]/88 z-[80] hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-[#131b3a] border-2 border-purple-300/60 p-4 rounded-3xl max-w-sm w-full text-left shadow-[0_0_40px_rgba(168,85,247,0.45)] relative flex flex-col h-[78vh] my-auto">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">💬</span>
+                    <div>
+                        <h4 class="text-xs font-black text-purple-200">Trò Chuyện Trong Phòng</h4>
+                        <p class="text-[9.5px] text-sky-200/60">Tin nhắn sẽ tự biến mất sau khi nghỉ phòng</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeRoomChatModal()" class="w-7 h-7 rounded-full bg-black/60 hover:bg-rose-500 border border-white/20 text-sky-200 hover:text-white flex items-center justify-center font-black transition">✕</button>
+            </div>
+
+            <!-- Danh sách tin nhắn chat -->
+            <div id="roomChatMessagesList" class="flex-1 overflow-y-auto custom-scroll my-2 space-y-2 pr-1 text-xs"></div>
+
+            <!-- Ô nhập tin nhắn -->
+            <div class="shrink-0 flex items-center gap-1.5 pt-1 border-t border-white/10">
+                <input id="roomChatInput" type="text" maxlength="120" onkeydown="if(event.key==='Enter') sendRoomChatMessage()" placeholder="Gõ tin nhắn trò chuyện..." class="flex-1 bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-300">
+                <button type="button" onclick="sendRoomChatMessage()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black px-3.5 py-2 rounded-xl text-xs active:scale-95 transition shadow shrink-0">
+                    Gửi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- THANH THÔNG BÁO NHẬN LỜI MỜI VÀO PHÒNG KÈM CHUÔNG REO -->
+    <div id="gameInviteToast" class="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-[160] w-[92%] max-w-sm hidden transition-all transform">
+        <div class="bg-gradient-to-r from-[#1b1c4b]/95 via-[#2b1945]/95 to-[#162044]/95 border-2 border-pink-300 rounded-3xl p-3.5 shadow-[0_0_40px_rgba(244,114,182,0.8)] space-y-2.5 backdrop-blur-md">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 rounded-full bg-pink-500/30 border border-pink-300/60 flex items-center justify-center shrink-0 shadow">
+                        <svg class="w-5 h-5 text-amber-300 animate-spin" style="animation-duration: 3s;" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </div>
+                    <div class="truncate">
+                        <div class="text-xs font-black pastel-fast-wave truncate" id="gameInviteTitle">Lời mời ghép đôi!</div>
+                        <div class="text-[10px] text-sky-200/90 truncate font-semibold" id="gameInviteDesc">Đang rủ bạn vào phòng chơi cùng</div>
+                    </div>
+                </div>
+                <span class="text-[11px] font-mono font-black text-amber-300 bg-black/40 border border-amber-300/40 px-2 py-0.5 rounded-full shrink-0" id="gameInviteCountdown">20s</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-0.5">
+                <button type="button" id="acceptGameInviteBtn" onclick="acceptCurrentGameInvite()" class="jelly-btn bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow-lg flex items-center justify-center gap-1">
+                    ✓ Đồng ý chơi
+                </button>
+                <button type="button" onclick="declineCurrentGameInvite()" class="bg-white/10 hover:bg-white/20 text-rose-300 font-bold py-2 rounded-xl text-xs active:scale-95 transition">
+                    Từ chối
+                </button>
+            </div>
         </div>
     </div>
 
@@ -4824,6 +5288,7 @@
             sailor: '',
             xo: '',
             via: '',
+            xidach: '',
             notify: 'https://files.catbox.moe/5p55na.gif',
             page: 'https://files.catbox.moe/3j8l9q.gif'
         };
@@ -6339,6 +6804,9 @@
                     if (!document.getElementById('sailorCardModal')?.classList.contains('hidden') && !isSailorCardFlipping) {
                         renderSailorCardsGrid();
                     }
+                    if (!document.getElementById('xiDachModal')?.classList.contains('hidden') && !xdIsResolving) {
+                        updateXiDachUI(false);
+                    }
                     if (!document.getElementById('sailorAdminModal')?.classList.contains('hidden')) {
                         renderSailorAdminList();
                     }
@@ -6478,8 +6946,10 @@
                 const isCardPickAct = actTitleLow.includes('thẻ') || actTitleLow.includes('bốc');
                 const isXoAct = actTitleLow.includes('x và o') || actTitleLow.includes('caro');
                 const isViaAct = actTitleLow.includes('cược màu') || actTitleLow.includes('lấy vía');
+                const isXdAct = actTitleLow.includes('xì dách') || actTitleLow.includes('xi dach');
                 const miniPrefix = isXoAct ? '✏️ X và O'
                     : isViaAct ? '🎲 Cược Màu'
+                    : isXdAct ? '🃏 Xì Dách'
                     : isCardPickAct ? '🃏 Bốc bài'
                     : '🎡 Vòng xoay';
                 const prefixIcon = cat === 'fail' ? '❌ Lỗi ảnh'
@@ -7930,7 +8400,7 @@
             if (t.includes('thất bại') || t.includes('từ chối')) return 'fail';
             if (t.includes('mở khóa') || t.includes('đổi 10 chì') || t.includes('link') || t.includes('lấy link')) return 'link';
             if (t.includes('bình luận') || t.includes('trả lời') || t.includes('cmt') || t.includes('feedback')) return 'comment';
-            if (t.includes('vòng xoay') || t.includes('thẻ màu may mắn') || t.includes('bốc bài') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống') || t.includes('x và o') || t.includes('cược màu') || t.includes('lấy vía')) return 'wheel';
+            if (t.includes('vòng xoay') || t.includes('thẻ màu may mắn') || t.includes('bốc bài') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống') || t.includes('x và o') || t.includes('cược màu') || t.includes('lấy vía') || t.includes('xì dách') || t.includes('xi dach')) return 'wheel';
             return 'other';
         }
 
@@ -8381,9 +8851,13 @@
                         const isCardPick = actLow.includes('thẻ') || actLow.includes('bốc');
                         const isXoGame = actLow.includes('x và o') || actLow.includes('caro');
                         const isViaGame = actLow.includes('cược màu') || actLow.includes('lấy vía');
+                        const isXdGame = actLow.includes('xì dách') || actLow.includes('xi dach');
                         if (isXoGame) {
                             badgeHtml = '<span class="text-[9px] bg-sky-500/25 text-sky-200 border border-sky-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">✏️ X và O</span>';
                             borderClass = 'border-sky-300/30 bg-sky-500/10';
+                        } else if (isXdGame) {
+                            badgeHtml = '<span class="text-[9px] bg-purple-500/25 text-purple-200 border border-purple-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🃏 Xì Dách</span>';
+                            borderClass = 'border-purple-300/30 bg-purple-500/10';
                         } else if (isViaGame) {
                             badgeHtml = '<span class="text-[9px] bg-rose-500/25 text-rose-200 border border-rose-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🎲 Cược Màu</span>';
                             borderClass = 'border-rose-300/30 bg-rose-500/10';
@@ -8596,6 +9070,7 @@
                 sailor: "Thẻ Màu May Mắn",
                 xo: "Cùng vẽ X và O",
                 via: "Cược Màu Lấy Vía",
+                xidach: "Xì Dách Hên Xui",
                 notify: "Thông Báo và Hiệu Ứng",
                 page: "Page và Discord"
             };
@@ -8837,6 +9312,7 @@
                 { key: 'sailor', id: 'menuContent-sailor' },
                 { key: 'xo', id: 'menuContent-xo' },
                 { key: 'via', id: 'menuContent-via' },
+                { key: 'xidach', id: 'menuContent-xidach' },
                 { key: 'notify', id: 'menuContent-notify' },
                 { key: 'page', id: 'menuContent-page' }
             ];
@@ -9097,14 +9573,16 @@
             renderAvatarPickers();
             updateRegisteredUsersCountUI();
             updatePencilUI();
+            updateMatchInviteBellUI();
             updateAdminPencilNotificationBadge();
             updateAdminLinkReviewBadge();
 
             const currentCommentUserEl = document.getElementById('currentCommentUser');
             if (currentCommentUserEl) currentCommentUserEl.innerText = acc.username;
 
-            // Kích hoạt kết nối riêng biệt cho tài khoản hiện tại
+            // Kích hoạt kết nối riêng biệt & nhịp tim online cho tài khoản hiện tại
             initUserSpecificListeners(acc.username);
+            startOnlineHeartbeat(acc.username);
             if (isOwner) initOwnerSpecificListeners();
 
             renderComments();
@@ -9431,37 +9909,45 @@
         function startFastColorTimers() {
             if (countdownTimerInterval) clearInterval(countdownTimerInterval);
             countdownTimerInterval = setInterval(() => {
-                // Nếu người dùng ẩn tab sang app khác thì tạm ngưng tính toán để mát máy
                 if (document.hidden) return;
                 const now = Date.now();
 
-                characters.forEach(c => {
+                // 1. Kiểm tra trạng thái hết hạn nhanh nhẹn
+                let fastChanged = false;
+                for (let i = 0; i < characters.length; i++) {
+                    const c = characters[i];
                     if (c.status === 'unlocked_24h') {
                         if (isFastCharInInstantWindow(c)) {
                             activeFastCharIdsInSession.add(c.id);
                         } else if (activeFastCharIdsInSession.has(c.id)) {
                             activeFastCharIdsInSession.delete(c.id);
-                            renderCharacters();
-                            renderFastColorCenter();
-                            updateFastColorSubtitle();
-                            updateGuide24hText();
+                            fastChanged = true;
                         }
                     }
-                });
-                updateCountdownDisplayOnly();
+                }
+                if (fastChanged) {
+                    renderCharacters();
+                    renderFastColorCenter();
+                    updateFastColorSubtitle();
+                    updateGuide24hText();
+                }
+
+                // 2. Cập nhật chữ đếm ngược hiển thị
+                updateCountdownDisplayOnly(now);
             }, 1000);
         }
 
-        function updateCountdownDisplayOnly() {
-            if (document.hidden) return;
+        function updateCountdownDisplayOnly(now = Date.now()) {
             const isFastVisible = !document.getElementById('fastColorScreen')?.classList.contains('hidden');
             const isStoryVisible = !document.getElementById('storyScreen')?.classList.contains('hidden');
             const isDetailVisible = !document.getElementById('charDetailScreen')?.classList.contains('hidden');
             const isUsersModalVisible = !document.getElementById('registeredUsersModal')?.classList.contains('hidden');
             if (!isFastVisible && !isStoryVisible && !isDetailVisible && !isUsersModalVisible) return;
 
-            const now = Date.now();
-            characters.forEach(c => {
+            const uTimers = (currentUser && userUnlockTimers[currentUser.username]) ? userUnlockTimers[currentUser.username] : null;
+
+            for (let i = 0; i < characters.length; i++) {
+                const c = characters[i];
                 if (isFastCharInInstantWindow(c) && (c.fastEndTime || c.fastStartTime)) {
                     const endTime = c.fastEndTime || (c.fastStartTime + (c.customDurationMs || (24 * 60 * 60 * 1000)));
                     const remain = Math.max(0, endTime - now);
@@ -9471,37 +9957,40 @@
                     const timeStr = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 
                     const elSmall = document.getElementById(`fastCountdownSmall-${c.id}`);
-                    if (elSmall) elSmall.innerText = timeStr;
+                    if (elSmall && elSmall.innerText !== timeStr) elSmall.innerText = timeStr;
 
                     const elStory = document.getElementById(`storyCountdown-${c.id}`);
-                    if (elStory) elStory.innerText = timeStr;
+                    if (elStory && elStory.innerText !== timeStr) elStory.innerText = timeStr;
 
                     if (activeChar && activeChar.id === c.id) {
                         const elDetail = document.getElementById('detailCharCountdown');
-                        if (elDetail) elDetail.innerText = timeStr;
+                        if (elDetail && elDetail.innerText !== timeStr) elDetail.innerText = timeStr;
                     }
                 }
 
-                // Chạy đồng hồ đếm ngược 2 tiếng của người dùng ở thẻ Sắc Màu Nhanh Nhẹn
-                if (currentUser && userUnlockTimers[currentUser.username]) {
-                    const uTimerEnd = userUnlockTimers[currentUser.username][c.id];
-                    if (uTimerEnd) {
-                        const remain = Math.max(0, uTimerEnd - now);
-                        const h = Math.floor(remain / (1000 * 3600));
-                        const m = Math.floor((remain % (1000 * 3600)) / (1000 * 60));
-                        const s = Math.floor((remain % (1000 * 60)) / 1000);
-                        const elUser = document.getElementById(`fastUserTimer-${c.id}`);
-                        if (elUser) elUser.innerText = `${pad(h)}:${pad(m)}:${pad(s)}`;
+                if (uTimers && uTimers[c.id]) {
+                    const uTimerEnd = uTimers[c.id];
+                    const remain = Math.max(0, uTimerEnd - now);
+                    const h = Math.floor(remain / 3600000);
+                    const m = Math.floor((remain % 3600000) / 60000);
+                    const s = Math.floor((remain % 60000) / 1000);
+                    const elUser = document.getElementById(`fastUserTimer-${c.id}`);
+                    const userTimerStr = `${pad(h)}:${pad(m)}:${pad(s)}`;
+                    if (elUser && elUser.innerText !== userTimerStr) elUser.innerText = userTimerStr;
+                }
+            }
+
+            if (isUsersModalVisible) {
+                const waitEls = document.querySelectorAll('.owner-wait-timer[data-unlock-end]');
+                for (let j = 0; j < waitEls.length; j++) {
+                    const el = waitEls[j];
+                    const endMs = Number(el.getAttribute('data-unlock-end')) || 0;
+                    if (endMs > 0) {
+                        const txt = formatRemainCountdownText(endMs, now);
+                        if (el.innerText !== txt) el.innerText = txt;
                     }
                 }
-            });
-
-            document.querySelectorAll('.owner-wait-timer[data-unlock-end]').forEach(el => {
-                const endMs = Number(el.getAttribute('data-unlock-end')) || 0;
-                if (endMs > 0) {
-                    el.innerText = formatRemainCountdownText(endMs, now);
-                }
-            });
+            }
         }
         function pad(n) { return n < 10 ? '0' + n : n; }
 
@@ -10208,12 +10697,16 @@
         let countdown2hInterval = null;
         function startUser2hUnlockCountdownMonitor() {
             if (countdown2hInterval) clearInterval(countdown2hInterval);
+            // Giảm chu kỳ xuống 2.5s (tiết kiệm 60% CPU, đếm ngược mở link vẫn tuyệt đối chính xác)
             countdown2hInterval = setInterval(() => {
                 if (document.hidden || !currentUser || !userUnlockTimers[currentUser.username]) return;
                 const now = Date.now();
-
                 const userTimers = userUnlockTimers[currentUser.username] || {};
-                Object.keys(userTimers).forEach(charId => {
+                const timerKeys = Object.keys(userTimers);
+                if (timerKeys.length === 0) return;
+
+                for (let i = 0; i < timerKeys.length; i++) {
+                    const charId = timerKeys[i];
                     const endTime = userTimers[charId];
                     if (endTime && now >= endTime) {
                         delete userTimers[charId];
@@ -10244,15 +10737,14 @@
                         sendPhonePushToOwner(`🔓 Mở link (Hết đếm ngược): ${currentUser.username}`, `Nhân vật: ${targetC?.name || 'Nhân vật'}`, 4);
                         triggerNotification("Link Đã Mở Khóa!", `Chúc mừng bạn! Link Google AI Studio của "${targetC?.name || 'Nhân vật'}" đã mở khóa (+2 Chì Màu)! Hãy bấm tim lưu giữ, nếu quên sau 1 ngày sẽ phải làm lại thủ tục để lấy lại link nhé!`);
                     }
-                });
+                }
 
-                // Chỉ cập nhật nút AI Studio khi người dùng đang thực sự ở trang chi tiết nhân vật đó
                 const charDetailScreen = document.getElementById('charDetailScreen');
                 if (activeChar && charDetailScreen && !charDetailScreen.classList.contains('hidden')) {
                     const activeEnd = userUnlockTimers[currentUser.username]?.[activeChar.id] || userUnlockTimers[currentUser.username.toLowerCase()]?.[activeChar.id];
                     if (activeEnd && now < activeEnd) updateAIStudioButton();
                 }
-            }, 1000);
+            }, 2500);
         }
 
         // Xử lý khi bấm vào nút đếm ngược
@@ -14344,9 +14836,25 @@
             if (loseEl) loseEl.innerText = xoSessionLosses;
 
             const isOwner = isOwnerUsername(currentUser.username);
-            const noPencil = (!isOwner && bal <= 0);
+            const noPencil = (!isOwner && bal < 2);
             const noBox = document.getElementById('xoNoPencilBox');
-            if (noBox) noBox.classList.toggle('hidden', !noPencil);
+            if (noBox) {
+                // CHỈ HIỆN KHI THỰC SỰ HẾT CHÌ / DƯỚI 2 CHÌ
+                if (noPencil) {
+                    noBox.classList.remove('hidden');
+                    noBox.innerHTML = `
+                        <p class="text-rose-200 font-bold leading-relaxed">
+                            😢 Túi bạn hiện còn <b>${bal} Bút Chì Màu</b> (cần ít nhất <b>2 chì</b> để chơi ván này)! Hãy kiếm thêm Bút Chì Màu để quay lại nhé.
+                        </p>
+                        <button type="button" onclick="closeXoGameModal(); openPencilModal();" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow">
+                            ✏️ Mở Túi Bút Chì Màu kiếm thêm
+                        </button>
+                    `;
+                } else {
+                    noBox.classList.add('hidden');
+                    noBox.innerHTML = '';
+                }
+            }
             return !noPencil;
         }
 
@@ -14575,8 +15083,9 @@
                 pieceCount++;
                 const r = Math.floor(idx / XO_SIZE);
                 const c = idx % XO_SIZE;
-                for (let dr = -2; dr <= 2; dr++) {
-                    for (let dc = -2; dc <= 2; dc++) {
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
                         const nr = r + dr, nc = c + dc;
                         if (nr >= 0 && nr < XO_SIZE && nc >= 0 && nc < XO_SIZE) {
                             const nIdx = nr * XO_SIZE + nc;
@@ -14594,26 +15103,15 @@
                 let quick = 6 - (Math.abs(r - 3) + Math.abs(c - 3));
 
                 board[idx] = 'O';
-                const oWins = countWinningMovesFor(board, 'O');
-                const oOpen3 = hasOpenThreePattern(board, 'O');
                 if (checkXoWinner(board)?.winner === 'O') quick += 1000000;
-                else if (oOpen3) quick += 50000;
-                else if (oWins >= 2) quick += 40000;
-                else if (oWins === 1) quick += 2500;
-
                 board[idx] = 'X';
-                const xWins = countWinningMovesFor(board, 'X');
-                const xOpen3 = hasOpenThreePattern(board, 'X');
                 if (checkXoWinner(board)?.winner === 'X') quick += 800000;
-                else if (xOpen3) quick += 60000;
-                else if (xWins >= 2) quick += 45000;
-                else if (xWins === 1) quick += 3200;
-
                 board[idx] = '';
+
                 scored.push({ idx, quick });
             }
             scored.sort((a, b) => b.quick - a.quick);
-            return scored.slice(0, 12).map(item => item.idx);
+            return scored.slice(0, 10).map(item => item.idx);
         }
 
         function alphabetaXo(board, depth, alpha, beta, isMaximizing) {
@@ -14714,8 +15212,36 @@
             if (!xoGameActive || xoIsBotThinking || xoBoard[idx]) return;
             if (!currentUser) return;
 
+            // NẾU ĐANG TRONG PHÒNG GHÉP ĐÔI REALTIME
+            if (currentGameRoomId && currentGameRoomData) {
+                if (currentGameRoomData.turn !== currentUser.username) {
+                    alert("Chưa tới lượt của bạn! Vui lòng đợi đối thủ đánh nhé.");
+                    return;
+                }
+                const isHost = (currentGameRoomData.hostUser === currentUser.username);
+                const mySym = isHost ? 'X' : 'O';
+                xoBoard[idx] = mySym;
+                playPencilPaperSound(mySym === 'X');
+                renderXoBoard(idx);
+
+                const checkWin = checkXoWinner(xoBoard);
+                const players = currentGameRoomData.players || [];
+                const nextUser = players.find(p => p !== currentUser.username);
+
+                db.collection("game_rooms").doc(currentGameRoomId).set({
+                    board: xoBoard,
+                    turn: nextUser,
+                    turnStartedAt: Date.now(),
+                    _isSkippingTurn: false,
+                    ...(checkWin ? { status: 'ended', winnerResult: checkWin } : {})
+                }, { merge: true });
+
+                if (checkWin) finishXoRound(checkWin);
+                return;
+            }
+
             const isOwnerAcc = isOwnerUsername(currentUser.username);
-            if (!isOwnerAcc && getUserPencilCount(currentUser.username) <= 0) {
+            if (!isOwnerAcc && getUserPencilCount(currentUser.username) < 2) {
                 xoGameActive = false;
                 updateXoHeaderUI();
                 renderXoBoard(-1);
@@ -14725,8 +15251,6 @@
             xoBoard[idx] = 'X';
             playPencilPaperSound(true);
             renderXoBoard(idx);
-            updateXoNewRoundBtnUI();
-            updateXoNewRoundBtnUI();
             updateXoNewRoundBtnUI();
 
             const check = checkXoWinner(xoBoard);
@@ -14772,28 +15296,84 @@
             const uKey = username.toLowerCase();
             const isOwnerAcc = isOwnerUsername(username);
 
+            // Nếu đang trong phòng ghép đôi 2 người online -> xử lý riêng & không rơi xuống nhánh đấu Bot
+            if (currentGameRoomId && currentGameRoomData) {
+                const isHost = (currentGameRoomData.hostUser === username);
+                const opponent = currentGameRoomData.players.find(p => p !== username) || "Đối thủ";
+                const mySymbol = isHost ? 'X' : 'O';
+                const iWon = (result.winner === mySymbol);
+                const isDraw = (result.winner === 'draw');
+
+                if (isDraw) {
+                    setXoStatus(`🤝 Hòa với ${opponent}! Bàn 49 ô đã kín hết rồi!`, "text-sky-200");
+                    if (outcomeCard && outcomeTitle && outcomeDesc) {
+                        outcomeCard.className = "rounded-2xl p-2.5 border border-sky-300/40 bg-sky-500/15 text-xs space-y-1";
+                        outcomeTitle.className = "text-sm font-black text-sky-200";
+                        outcomeTitle.innerText = "🤝 Hòa Nhau Rồi! (0 Chì Màu)";
+                        outcomeDesc.className = "text-[11px] text-sky-100/85 leading-relaxed";
+                        outcomeDesc.innerText = `Bạn và ${opponent} bất phân thắng bại, số Bút Chì Màu giữ nguyên nhé!`;
+                    }
+                    playEmptyCardNeutralSound();
+                } else if (iWon) {
+                    xoSessionWins++;
+                    setXoStatus(`🎉 Đỉnh quá! Bạn đã thắng ${opponent}!`, "text-emerald-300");
+                    if (outcomeCard && outcomeTitle && outcomeDesc) {
+                        outcomeCard.className = "rounded-2xl p-2.5 border border-emerald-300/50 bg-emerald-500/15 text-xs space-y-1";
+                        outcomeTitle.className = "text-sm font-black text-emerald-300";
+                        outcomeTitle.innerText = `🎉 Thắng ${opponent}! (+2 Bút Chì Màu)`;
+                        outcomeDesc.className = "text-[11px] text-emerald-100/90 leading-relaxed";
+                        outcomeDesc.innerText = isOwnerAcc ? "Bạn vừa thắng ghép đôi! (Túi Chủ Web giữ cố định 10 Chì)." : `Bạn vừa thắng ${opponent} và nhận +2 Bút Chì Màu!`;
+                    }
+                    await addPencilToUser(username, 2, `Thắng ${opponent} cờ X và O`, true);
+                    playJoyfulWinSound();
+                    logMemberActivity("X và O ghép đôi", `Thắng ${opponent} (+2 Bút Chì Màu)`, "wheel");
+                } else {
+                    xoSessionLosses++;
+                    setXoStatus(`😢 Chia buồn! ${opponent} đã nối 4 ô trước rồi...`, "text-rose-300");
+                    if (!isOwnerAcc) {
+                        const cur = getUserPencilCount(username);
+                        const next = Math.max(0, cur - 2);
+                        userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: next };
+                        await db.collection("pencils").doc(uKey).set({ count: next }, { merge: true }).catch(() => {});
+                        updatePencilUI();
+                    }
+                    if (outcomeCard && outcomeTitle && outcomeDesc) {
+                        outcomeCard.className = "rounded-2xl p-2.5 border border-rose-300/50 bg-rose-500/15 text-xs space-y-1";
+                        outcomeTitle.className = "text-sm font-black text-rose-300";
+                        outcomeTitle.innerText = `😢 Thua ${opponent}! (-2 Bút Chì Màu)`;
+                        outcomeDesc.className = "text-[11px] text-rose-100/90 leading-relaxed";
+                        outcomeDesc.innerText = isOwnerAcc ? "Bạn vừa thua ván ghép đôi! (Túi Chủ Web giữ cố định 10 Chì)." : `Bạn bị trừ 2 Bút Chì Màu chuyển sang cho ${opponent}.`;
+                    }
+                    playSadDeflateSound();
+                    logMemberActivity("X và O ghép đôi", `Thua ${opponent} (-2 Bút Chì Màu)`, "wheel");
+                }
+                updateXoHeaderUI();
+                updateXoNewRoundBtnUI();
+                return;
+            }
+
             if (result.winner === 'X') {
                 xoSessionWins++;
                 setXoStatus("🎉 Đỉnh quá! Bạn đã vẽ thắng Bot rồi!", "text-emerald-300");
                 if (outcomeCard && outcomeTitle && outcomeDesc) {
                     outcomeCard.className = "rounded-2xl p-2.5 border border-emerald-300/50 bg-emerald-500/15 text-xs space-y-1";
                     outcomeTitle.className = "text-sm font-black text-emerald-300";
-                    outcomeTitle.innerText = "🎉 Chúc Mừng Chiến Thắng! (+1 Bút Chì Màu)";
+                    outcomeTitle.innerText = "🎉 Chúc Mừng Chiến Thắng! (+2 Bút Chì Màu)";
                     outcomeDesc.className = "text-[11px] text-emerald-100/90 leading-relaxed";
                     outcomeDesc.innerText = isOwnerAcc
                         ? "Bạn vừa hạ gục Bot 7×7 cực kỳ xuất sắc! (Túi Chủ Web giữ cố định 10 Chì Màu)."
-                        : "Tuyệt vời quá! Bạn vừa đánh bại Bot và nhận +1 Bút Chì Màu vào túi ✏️💖";
+                        : "Tuyệt vời quá! Bạn vừa đánh bại Bot và nhận +2 Bút Chì Màu vào túi ✏️💖";
                 }
-                await addPencilToUser(username, 1, "", true);
+                await addPencilToUser(username, 2, "", true);
                 playJoyfulWinSound();
-                logMemberActivity("Cùng vẽ X và O (7×7)", "Thắng Bot (+1 Bút Chì Màu)", "wheel");
-                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thắng Bot (+1 Bút Chì Màu)", 3);
+                logMemberActivity("Cùng vẽ X và O (7×7)", "Thắng Bot (+2 Bút Chì Màu)", "wheel");
+                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thắng Bot (+2 Bút Chì Màu)", 3);
             } else if (result.winner === 'O') {
                 xoSessionLosses++;
                 setXoStatus("😢 Chia buồn! Bot vừa nối 4 ô O trước rồi...", "text-rose-300");
                 if (!isOwnerAcc) {
                     const cur = getUserPencilCount(username);
-                    const next = Math.max(0, cur - 1);
+                    const next = Math.max(0, cur - 2);
                     userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: next };
                     db.collection("pencils").doc(uKey).set({ count: next }, { merge: true }).catch(() => {});
                     updatePencilUI();
@@ -14802,17 +15382,17 @@
                 if (outcomeCard && outcomeTitle && outcomeDesc) {
                     outcomeCard.className = "rounded-2xl p-2.5 border border-rose-300/50 bg-rose-500/15 text-xs space-y-1";
                     outcomeTitle.className = "text-sm font-black text-rose-300";
-                    outcomeTitle.innerText = "😢 Xin Chia Buồn! (-1 Bút Chì Màu)";
+                    outcomeTitle.innerText = "😢 Xin Chia Buồn! (-2 Bút Chì Màu)";
                     outcomeDesc.className = "text-[11px] text-rose-100/90 leading-relaxed";
                     outcomeDesc.innerText = isOwnerAcc
                         ? "Tiếc quá Bot đã nối 4 ô O trước! (Túi Chủ Web vẫn giữ cố định 10 Chì)."
-                        : (remainNow > 0
-                            ? `Bot đã nối 4 ô O trước rồi! Bạn bị trừ 1 Bút Chì Màu (còn ${remainNow} Chì). Vẽ ván mới gỡ lại nha!`
-                            : "Tiếc quá, bạn bị trừ 1 Bút Chì Màu và hiện đã hết sạch chì (0 Chì) nên chưa thể chơi tiếp!");
+                        : (remainNow >= 2
+                            ? `Bot đã nối 4 ô O trước rồi! Bạn bị trừ 2 Bút Chì Màu (còn ${remainNow} Chì). Vẽ ván mới gỡ lại nha!`
+                            : `Tiếc quá, bạn bị trừ 2 Bút Chì Màu (hiện còn ${remainNow} Chì, cần ít nhất 2 chì để chơi tiếp)!`);
                 }
                 playSadDeflateSound();
-                logMemberActivity("Cùng vẽ X và O (7×7)", "Thua Bot (-1 Bút Chì Màu)", "wheel");
-                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thua Bot (-1 Bút Chì Màu)", 3);
+                logMemberActivity("Cùng vẽ X và O (7×7)", "Thua Bot (-2 Bút Chì Màu)", "wheel");
+                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thua Bot (-2 Bút Chì Màu)", 3);
             } else {
                 setXoStatus("🤝 Hòa nhau! Bàn 49 ô đã kín hết rồi!", "text-sky-200");
                 if (outcomeCard && outcomeTitle && outcomeDesc) {
@@ -15371,6 +15951,1863 @@
             } finally {
                 if (btn) { btn.disabled = false; btn.innerText = "✓ Lưu 4 Mặt Lên Hệ Thống"; }
             }
+        }
+
+        // ================= MINI GAME: XÌ DÁCH HÊN XUI (BÀI TÂY PASTEL CUTE · 100% ICON SVG CODE · BOT CÔNG BẰNG) =================
+        const XD_SVG = {
+            card: `<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="12" height="16" rx="2.5"/><path d="M16 7h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1"/></svg>`,
+            hand: `<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v4"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M6 14v-1a2 2 0 0 0-4 0v2a8 8 0 0 0 16 0v-4a2 2 0 0 0-4 0"/></svg>`,
+            eye: `<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>`,
+            refresh: `<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>`,
+            clock: `<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`,
+            sparkle: `<svg class="w-3.5 h-3.5 text-amber-300 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.5L21 10.8l-6.8 2.2L12 19.5l-2.2-6.5L3 10.8l6.8-2.3Z"/></svg>`,
+            thought: `<svg class="w-4 h-4 text-sky-300 shrink-0 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15a4 4 0 0 1-.4-7.9A5.5 5.5 0 0 1 17 6.5a4.2 4.2 0 0 1 .5 8.4H7z"/><circle cx="6.5" cy="18.5" r="1.3" fill="currentColor"/><circle cx="4" cy="21" r="0.8" fill="currentColor"/></svg>`,
+            decideDraw: `<svg class="w-4 h-4 text-amber-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2.5"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+            decideHold: `<svg class="w-4 h-4 text-emerald-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="8.5 12.5 11 15 15.8 9.5"/></svg>`,
+            win: `<svg class="w-4 h-4 text-emerald-300 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M4 17h16l-1.5-9-4.5 4L12 5l-2 7-4.5-4L4 17zm1 2h14v2H5v-2z"/></svg>`,
+            lose: `<svg class="w-4 h-4 text-rose-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 16c-1-1.5-2.2-2-3.5-2s-2.5.5-3.5 2"/><circle cx="9.5" cy="10" r="1" fill="currentColor"/><circle cx="14.5" cy="10" r="1" fill="currentColor"/></svg>`,
+            draw: `<svg class="w-4 h-4 text-sky-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="8.5" y1="14.5" x2="15.5" y2="14.5"/><circle cx="9.5" cy="10" r="1" fill="currentColor"/><circle cx="14.5" cy="10" r="1" fill="currentColor"/></svg>`,
+            bust: `<svg class="w-4 h-4 text-rose-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polygon points="12 2 15 8.5 22 9.5 17 14 18.5 21 12 17.5 5.5 21 7 14 2 9.5 9 8.5 12 2"/></svg>`
+        };
+
+        const XD_SUITS = [
+            {
+                id: 'hearts', name: 'Cơ', cardBg: 'bg-[#fff3f7]', border: 'border-pink-300', text: 'text-rose-500',
+                pip: `<svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 inline-block" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
+                bigPip: `<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`
+            },
+            {
+                id: 'diamonds', name: 'Rô', cardBg: 'bg-[#fff6ef]', border: 'border-orange-300', text: 'text-orange-500',
+                pip: `<svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 inline-block" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L20 12L12 22L4 12Z"/></svg>`,
+                bigPip: `<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L20 12L12 22L4 12Z"/></svg>`
+            },
+            {
+                id: 'clubs', name: 'Chuồn', cardBg: 'bg-[#f4f1ff]', border: 'border-purple-300', text: 'text-violet-600',
+                pip: `<svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 inline-block" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4.2"/><circle cx="7.5" cy="13.5" r="4.2"/><circle cx="16.5" cy="13.5" r="4.2"/><path d="M10.5 14h3l1 7h-5l1-7z"/></svg>`,
+                bigPip: `<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4.2"/><circle cx="7.5" cy="13.5" r="4.2"/><circle cx="16.5" cy="13.5" r="4.2"/><path d="M10.5 14h3l1 7h-5l1-7z"/></svg>`
+            },
+            {
+                id: 'spades', name: 'Bích', cardBg: 'bg-[#eff8ff]', border: 'border-sky-300', text: 'text-sky-600',
+                pip: `<svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 inline-block" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9 6.5 4 9.8 4 14a4.5 4.5 0 0 0 7.2 3.6c-.2 1.7-.9 3-2.2 4.4h6c-1.3-1.4-2-2.7-2.2-4.4A4.5 4.5 0 0 0 20 14c0-4.2-5-7.5-8-12z"/></svg>`,
+                bigPip: `<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9 6.5 4 9.8 4 14a4.5 4.5 0 0 0 7.2 3.6c-.2 1.7-.9 3-2.2 4.4h6c-1.3-1.4-2-2.7-2.2-4.4A4.5 4.5 0 0 0 20 14c0-4.2-5-7.5-8-12z"/></svg>`
+            }
+        ];
+        const XD_RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        let xdDeck = [];
+        let xdPlayerHand = [];
+        let xdBotHand = [];
+        let xdGameActive = false;
+        let xdIsResolving = false;
+        let xdIsAnimatingCard = false;
+        let xdPlayerHasStood = false;
+        let xdBotHasStood = false;
+        let xdWinScore = 0;
+        let xdLoseScore = 0;
+        let xdBotRevealTimer = null;
+
+        function playXdCardDealSound(cardStep = 0) {
+            withAudioReady((ctx) => {
+                const now = ctx.currentTime;
+                // 1. Tiếng lướt lá bài êm dịu (giấy lụa)
+                const dur = 0.095;
+                const bufSize = Math.max(1, Math.floor(ctx.sampleRate * dur));
+                const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+                const ch = buf.getChannelData(0);
+                for (let i = 0; i < bufSize; i++) {
+                    const env = Math.sin((i / bufSize) * Math.PI);
+                    ch[i] = (Math.random() * 2 - 1) * env;
+                }
+                const src = ctx.createBufferSource();
+                src.buffer = buf;
+
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1350, now);
+                filter.Q.setValueAtTime(0.9, now);
+
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(0.13, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+                src.connect(filter);
+                filter.connect(gain);
+                gain.connect(ctx.destination);
+                src.start(now);
+
+                // 2. Nốt Kalimba ngũ cung vui tai tăng dần theo từng lá
+                const pentatonic = [523.25, 587.33, 659.25, 783.99, 880.00];
+                const noteFreq = pentatonic[Math.max(0, cardStep) % pentatonic.length];
+
+                const pluck = ctx.createOscillator();
+                const pluckGain = ctx.createGain();
+                pluck.type = 'sine';
+                pluck.frequency.setValueAtTime(noteFreq, now + 0.02);
+                pluckGain.gain.setValueAtTime(0.0001, now + 0.02);
+                pluckGain.gain.linearRampToValueAtTime(0.14, now + 0.032);
+                pluckGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+                pluck.connect(pluckGain);
+                pluckGain.connect(ctx.destination);
+                pluck.start(now + 0.02);
+                pluck.stop(now + 0.26);
+            });
+        }
+
+        function playXdStandChimeSound() {
+            withAudioReady((ctx) => {
+                const now = ctx.currentTime;
+                [523.25, 659.25].forEach((freq, idx) => {
+                    const t = now + idx * 0.075;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.0001, t);
+                    gain.gain.linearRampToValueAtTime(0.12, t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.3);
+                });
+            });
+        }
+
+        function playXdBotThinkPluckSound() {
+            withAudioReady((ctx) => {
+                const now = ctx.currentTime;
+                [659.25, 783.99].forEach((freq, idx) => {
+                    const t = now + idx * 0.11;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.0001, t);
+                    gain.gain.linearRampToValueAtTime(0.08, t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.2);
+                });
+            });
+        }
+
+        function playXdRevealFlipSound() {
+            withAudioReady((ctx) => {
+                const now = ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const t = now + idx * 0.055;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.0001, t);
+                    gain.gain.linearRampToValueAtTime(0.13, t + 0.012);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.36);
+                });
+            });
+        }
+
+        function playXdSpecialJackpotSound() {
+            withAudioReady((ctx) => {
+                const now = ctx.currentTime;
+                [587.33, 739.99, 880.00, 1174.66].forEach((freq, idx) => {
+                    const t = now + idx * 0.065;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.0001, t);
+                    gain.gain.linearRampToValueAtTime(0.16, t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.44);
+                });
+            });
+        }
+
+        function playXdBustSoftSound() {
+            withAudioReady((ctx) => {
+                const now = ctx.currentTime;
+                [392.00, 329.63, 261.63].forEach((freq, idx) => {
+                    const t = now + idx * 0.09;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.0001, t);
+                    gain.gain.linearRampToValueAtTime(0.13, t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.26);
+                });
+            });
+        }
+
+        function buildShuffledXdDeck() {
+            const deck = [];
+            for (const suit of XD_SUITS) {
+                for (const rank of XD_RANKS) {
+                    deck.push({ rank, suit });
+                }
+            }
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        function evaluateXiDachHand(hand) {
+            if (!Array.isArray(hand) || hand.length === 0) {
+                return { score: 0, type: 'normal', label: '0 điểm', rankPower: 0 };
+            }
+
+            let baseSum = 0;
+            let aceCount = 0;
+            hand.forEach(card => {
+                if (card.rank === 'A') aceCount++;
+                else if (['J', 'Q', 'K', '10'].includes(card.rank)) baseSum += 10;
+                else baseSum += parseInt(card.rank, 10);
+            });
+
+            if (hand.length === 2) {
+                if (aceCount === 2) {
+                    return { score: 21, type: 'xibang', label: 'Xì Bàng', rankPower: 5 };
+                }
+                if (aceCount === 1 && baseSum === 10) {
+                    return { score: 21, type: 'xidach', label: 'Xì Dách', rankPower: 4 };
+                }
+            }
+
+            let possibleTotals = [baseSum];
+            for (let i = 0; i < aceCount; i++) {
+                const nextSet = new Set();
+                const aceVals = (hand.length <= 3) ? [11, 10, 1] : [11, 1];
+                possibleTotals.forEach(t => {
+                    aceVals.forEach(av => nextSet.add(t + av));
+                });
+                possibleTotals = Array.from(nextSet);
+            }
+
+            const validUnder21 = possibleTotals.filter(v => v <= 21);
+            const bestScore = validUnder21.length > 0
+                ? Math.max(...validUnder21)
+                : Math.min(...possibleTotals);
+
+            if (bestScore > 21) {
+                return { score: bestScore, type: 'bust', label: `Quắc (${bestScore}đ)`, rankPower: 0 };
+            }
+            if (hand.length === 5) {
+                return { score: bestScore, type: 'ngulinh', label: `Ngũ Linh (${bestScore}đ)`, rankPower: 3 };
+            }
+            return {
+                score: bestScore,
+                type: 'normal',
+                label: `${bestScore} điểm${bestScore < 16 ? ' (Chưa đủ 16)' : ''}`,
+                rankPower: 2
+            };
+        }
+
+        function getXdCenterMotifSvg(rank, suitObj) {
+            if (rank === 'A') {
+                return `<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 6.6L21 9.4l-5 4.4 1.5 6.6L12 17l-5.5 3.4L8 13.8 3 9.4l6.6-.8Z"/></svg>`;
+            }
+            if (rank === 'K') {
+                return `<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18l-1.5-10-4.5 4.2L12 5l-3 7.2L4.5 8 3 18zm1 1.5h16v2H4v-2z"/></svg>`;
+            }
+            if (rank === 'Q') {
+                return `<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 10.5c-2.5-3.2-7-4-8.5-1.2-1.2 2.2 1.2 5.2 5.5 3.2-.8 2.5-3 5.5-3 5.5l4-2 2 2 2-2 4 2s-2.2-3-3-5.5c4.3 2 6.7-1 5.5-3.2-1.5-2.8-6-2-8.5 1.2z"/></svg>`;
+            }
+            if (rank === 'J') {
+                return `<svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.5 5.5L22 9l-4.5 4.5.8 6.5L12 17l-6.3 3 .8-6.5L2 9l6.5-1.5Z"/></svg>`;
+            }
+            return suitObj.bigPip;
+        }
+
+        function getXdSyncedBackInnerHtml(compact = false) {
+            if (sailorCardsConfig && sailorCardsConfig.backImage) {
+                const posClass = sailorCardsConfig.backCropPos === 'top' ? 'object-top'
+                    : sailorCardsConfig.backCropPos === 'bottom' ? 'object-bottom' : 'object-center';
+                const safeBack = getSafeCatboxImgUrl(sailorCardsConfig.backImage);
+                return `<img src="${safeBack}" alt="Mặt úp" referrerpolicy="no-referrer" onerror="handleCatboxImgError(this, '${cmtEsc(sailorCardsConfig.backImage)}')" class="w-full h-full object-cover ${posClass}">`;
+            }
+            return `
+                <div class="w-full h-full bg-gradient-to-br from-[#2b1055] via-[#75276d] to-[#f472b6] p-1 flex flex-col items-center justify-center">
+                    <div class="w-full h-full border border-amber-200/55 rounded-lg flex flex-col items-center justify-center">
+                        <svg class="${compact ? 'w-4 h-4' : 'w-5 h-5'} text-amber-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.85)]" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                        ${compact ? '' : '<span class="text-[7px] font-black text-amber-200 tracking-widest uppercase mt-0.5">Vận May</span>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderXdCardHtml(card, faceDown = false) {
+            if (faceDown) {
+                return `
+                    <div class="xd-play-card w-12 h-[72px] sm:w-14 sm:h-20 rounded-xl overflow-hidden border-2 border-pink-200/80 bg-[#1a103c] relative select-none">
+                        ${getXdSyncedBackInnerHtml(false)}
+                    </div>
+                `;
+            }
+
+            const s = card.suit;
+            return `
+                <div class="xd-play-card w-12 h-[72px] sm:w-14 sm:h-20 rounded-xl ${s.cardBg} border-2 ${s.border} p-1 flex flex-col justify-between relative select-none">
+                    <div class="flex items-center justify-between leading-none ${s.text} font-black text-[10px] sm:text-[11px]">
+                        <span>${card.rank}</span>
+                        ${s.pip}
+                    </div>
+                    <div class="flex-1 flex items-center justify-center ${s.text}">
+                        ${getXdCenterMotifSvg(card.rank, s)}
+                    </div>
+                    <div class="flex items-center justify-between leading-none ${s.text} font-black text-[10px] sm:text-[11px] rotate-180">
+                        <span>${card.rank}</span>
+                        ${s.pip}
+                    </div>
+                </div>
+            `;
+        }
+
+        function animateXdCardFromDeckTo(targetRowId) {
+            return new Promise((resolve) => {
+                const deckEl = document.getElementById('xdDeckVisualWrap');
+                const targetRow = document.getElementById(targetRowId);
+                if (!deckEl || !targetRow) {
+                    resolve();
+                    return;
+                }
+
+                const isBot = targetRowId.includes('Bot');
+                const cardW = window.innerWidth >= 640 ? 56 : 48;
+                const cardH = window.innerWidth >= 640 ? 80 : 72;
+
+                const dRect = deckEl.getBoundingClientRect();
+                const tRect = targetRow.getBoundingClientRect();
+                if (!dRect.width || !tRect.width) {
+                    resolve();
+                    return;
+                }
+
+                const sX = dRect.left + (dRect.width - cardW) / 2;
+                const sY = dRect.top + (dRect.height - cardH) / 2;
+
+                const existingCards = targetRow.querySelectorAll('.xd-play-card');
+                let eX, eY;
+
+                if (existingCards.length > 0) {
+                    const lastRect = existingCards[existingCards.length - 1].getBoundingClientRect();
+                    eX = Math.min(tRect.right - cardW - 4, lastRect.right + 6);
+                    eY = lastRect.top;
+                } else {
+                    eX = tRect.left + (tRect.width - cardW) / 2;
+                    eY = tRect.top + (tRect.height - cardH) / 2;
+                }
+
+                const deltaX = Math.round(eX - sX);
+                const deltaY = Math.round(eY - sY);
+
+                const flyer = document.createElement('div');
+                flyer.className = "xd-flying-card w-12 h-[72px] sm:w-14 sm:h-20 rounded-xl overflow-hidden border-2 border-amber-200/90 bg-[#1a103c] shadow-2xl";
+                flyer.style.left = `${sX}px`;
+                flyer.style.top = `${sY}px`;
+                flyer.style.transform = `translate3d(0, 0, 0) scale(0.82) rotate(${isBot ? '6deg' : '-6deg'})`;
+                flyer.innerHTML = getXdSyncedBackInnerHtml(false);
+                document.body.appendChild(flyer);
+
+                requestAnimationFrame(() => {
+                    flyer.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) scale(1) rotate(0deg)`;
+                });
+
+                setTimeout(() => {
+                    flyer.remove();
+                    resolve();
+                }, 390);
+            });
+        }
+
+        function setXdBotThought(msg = "", mode = "think") {
+            const bubble = document.getElementById('xdBotThoughtBubble');
+            if (!bubble) return;
+            if (!msg) {
+                bubble.classList.add('hidden');
+                bubble.innerHTML = '';
+                return;
+            }
+            const iconHtml = mode === 'draw' ? XD_SVG.decideDraw : (mode === 'hold' ? XD_SVG.decideHold : XD_SVG.thought);
+            const borderCls = mode === 'draw'
+                ? "border-amber-300/60 bg-amber-500/15 text-amber-100"
+                : (mode === 'hold'
+                    ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-100"
+                    : "border-sky-300/45 bg-[#1a2550]/95 text-sky-100");
+            bubble.className = `mx-auto max-w-[96%] border rounded-2xl px-2.5 py-1.5 text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(56,189,248,0.22)] ${borderCls}`;
+            bubble.innerHTML = `${iconHtml}<span>${cmtEsc(msg)}</span>`;
+            bubble.classList.remove('hidden');
+        }
+
+        function updateXiDachUI(revealBot = false) {
+            if (!currentUser) return false;
+            const bal = getUserPencilCount(currentUser.username);
+            const isOwnerAcc = isOwnerUsername(currentUser.username);
+            const noPencil = (!isOwnerAcc && bal < 2);
+
+            const balEl = document.getElementById('xdPencilBalance');
+            const winEl = document.getElementById('xdWinScore');
+            const loseEl = document.getElementById('xdLoseScore');
+            const noBox = document.getElementById('xdNoPencilBox');
+
+            if (balEl) balEl.innerText = bal;
+            if (winEl) winEl.innerText = xdWinScore;
+            if (loseEl) loseEl.innerText = xdLoseScore;
+            if (noBox) {
+                // CHỈ HIỆN KHI THỰC SỰ HẾT CHÌ / DƯỚI 2 CHÌ
+                if (noPencil && !xdGameActive) {
+                    noBox.classList.remove('hidden');
+                    noBox.innerHTML = `
+                        <p class="text-rose-200 font-bold leading-relaxed flex items-center justify-center gap-1.5 flex-wrap">
+                            <svg class="w-4 h-4 text-rose-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                            <span>Túi bạn hiện còn <b>${bal} Bút Chì Màu</b> (cần ít nhất <b>2 chì</b> để chơi ván này)! Hãy kiếm thêm chì rồi quay lại nhé.</span>
+                        </p>
+                        <button type="button" onclick="closeXiDachModal(); openPencilModal();" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow flex items-center justify-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                            <span>Mở Túi Bút Chì Màu kiếm thêm</span>
+                        </button>
+                    `;
+                } else {
+                    noBox.classList.add('hidden');
+                    noBox.innerHTML = '';
+                }
+            }
+
+            // Cập nhật bộ bài chung ở giữa bàn (đồng bộ mặt úp bên Thẻ Màu May Mắn)
+            const deckVis = document.getElementById('xdDeckVisualWrap');
+            const deckLbl = document.getElementById('xdDeckCountLabel');
+            const deckBtn = document.getElementById('xdDeckPileBtn');
+            if (deckVis) deckVis.innerHTML = getXdSyncedBackInnerHtml(true);
+
+            const pEval = evaluateXiDachHand(xdPlayerHand);
+            const inInitialDeal = xdGameActive && (xdPlayerHand.length < 2 || xdBotHand.length < 2);
+            const canHit = xdGameActive && !xdIsResolving && !xdIsAnimatingCard && !xdPlayerHasStood && xdPlayerHand.length < 5 && pEval.type !== 'bust';
+
+            if (deckLbl) {
+                deckLbl.innerText = inInitialDeal
+                    ? `Đang chia bài xen kẽ (${xdPlayerHand.length}/2 lá)...`
+                    : (canHit ? `Còn ${xdDeck.length} lá · Chạm để bốc bài` : `Còn ${xdDeck.length} lá bài`);
+            }
+
+            const playerRow = document.getElementById('xdPlayerHandRow');
+            const botRow = document.getElementById('xdBotHandRow');
+            const playerBadge = document.getElementById('xdPlayerScoreBadge');
+            const botBadge = document.getElementById('xdBotScoreBadge');
+
+            if (playerRow) {
+                playerRow.innerHTML = xdPlayerHand.length > 0
+                    ? xdPlayerHand.map(c => renderXdCardHtml(c, false)).join('')
+                    : `<div class="text-[11px] text-pink-200/55 italic py-3">Chưa có lá nào · Bấm Bốc Bài để bắt đầu vòng chia xen kẽ</div>`;
+            }
+            if (botRow) {
+                botRow.innerHTML = xdBotHand.length > 0
+                    ? xdBotHand.map(c => renderXdCardHtml(c, !revealBot)).join('')
+                    : `<div class="text-[11px] text-sky-200/50 italic py-3">Bot cute kawaii đang đợi bốc xen kẽ...</div>`;
+            }
+
+            if (playerBadge) {
+                playerBadge.innerText = xdPlayerHand.length ? `${xdPlayerHand.length} lá · ${pEval.label}` : '0 lá · 0 điểm';
+                playerBadge.className = pEval.type === 'bust'
+                    ? "bg-rose-500/25 text-rose-200 border border-rose-300/50 px-2 py-0.5 rounded-full text-[10px] font-black"
+                    : (pEval.rankPower >= 3
+                        ? "bg-amber-400/25 text-amber-200 border border-amber-300/60 px-2 py-0.5 rounded-full text-[10px] font-black"
+                        : "bg-pink-500/20 text-pink-200 border border-pink-300/40 px-2 py-0.5 rounded-full text-[10px] font-black");
+            }
+
+            if (botBadge) {
+                if (revealBot && xdBotHand.length) {
+                    const bEval = evaluateXiDachHand(xdBotHand);
+                    botBadge.innerText = `${xdBotHand.length} lá · ${bEval.label}`;
+                    botBadge.className = bEval.type === 'bust'
+                        ? "bg-rose-500/25 text-rose-200 border border-rose-300/50 px-2 py-0.5 rounded-full text-[10px] font-black"
+                        : "bg-sky-500/25 text-sky-200 border border-sky-300/50 px-2 py-0.5 rounded-full text-[10px] font-black";
+                } else {
+                    botBadge.innerText = xdBotHand.length ? `${xdBotHand.length} lá · ? điểm` : 'Chưa bốc';
+                    botBadge.className = "bg-sky-500/20 text-sky-200 border border-sky-300/35 px-2 py-0.5 rounded-full text-[10px] font-black";
+                }
+            }
+
+            const hitBtn = document.getElementById('xdHitBtn');
+            const standBtn = document.getElementById('xdStandBtn');
+            const newBtn = document.getElementById('xdNewRoundBtn');
+
+            if (deckBtn) {
+                deckBtn.disabled = !canHit;
+                deckBtn.classList.toggle('opacity-60', !canHit);
+            }
+            if (hitBtn) {
+                hitBtn.disabled = !canHit;
+                hitBtn.className = canHit
+                    ? "jelly-btn bg-gradient-to-r from-pink-400 to-rose-400 hover:brightness-110 text-[#1b1030] font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5"
+                    : "bg-white/10 text-pink-200/40 border border-white/15 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5";
+                hitBtn.innerHTML = `${XD_SVG.card}<span>${inInitialDeal ? 'Bốc Lá Của Bạn' : (xdPlayerHasStood ? 'Đã Dằn Lượt' : 'Bốc 1 Lá Xen Kẽ')}</span>`;
+            }
+            if (standBtn) {
+                const canStand = xdGameActive && !xdIsResolving && !xdIsAnimatingCard && !inInitialDeal && !xdPlayerHasStood;
+                standBtn.disabled = !canStand;
+                standBtn.className = canStand
+                    ? "jelly-btn bg-gradient-to-r from-amber-300 to-purple-400 hover:brightness-110 text-[#1b1030] font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5"
+                    : "bg-white/10 text-pink-200/40 border border-white/15 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5";
+                standBtn.innerHTML = inInitialDeal
+                    ? `${XD_SVG.hand}<span>Đang chia 2 lá đầu</span>`
+                    : (xdPlayerHasStood
+                        ? `${XD_SVG.decideHold}<span>Đã Dằn (Đợi Bot)</span>`
+                        : `${XD_SVG.hand}<span>Dằn Lượt Này</span>`);
+            }
+            if (newBtn) {
+                const hasStarted = xdGameActive && (xdPlayerHand.length > 0 || xdBotHand.length > 0);
+                if (hasStarted || xdIsResolving || xdIsAnimatingCard) {
+                    newBtn.disabled = true;
+                    newBtn.innerHTML = `${XD_SVG.clock}<span>Đang trong ván (Không thể reset)</span>`;
+                    newBtn.className = "flex-1 bg-white/10 text-pink-200/50 border border-white/15 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5";
+                } else {
+                    newBtn.disabled = false;
+                    newBtn.innerHTML = `${XD_SVG.refresh}<span>Ván Mới</span>`;
+                    newBtn.className = "jelly-btn flex-1 bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 hover:brightness-110 text-[#1b1030] font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5";
+                }
+            }
+
+            return !noPencil;
+        }
+
+        function setXiDachBanner(msg, colorCls = "text-pink-100", bgCls = "bg-black/35 border-pink-200/25", iconSvg = XD_SVG.card) {
+            const el = document.getElementById('xdStatusBanner');
+            if (!el) return;
+            el.className = `${bgCls} border rounded-2xl px-3 py-2 text-xs font-extrabold ${colorCls} min-h-[42px] flex items-center justify-center gap-1.5 leading-snug`;
+            el.innerHTML = `${iconSvg}<span>${cmtEsc(msg)}</span>`;
+        }
+
+        function openXiDachModal() {
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập để chơi Xì Dách Hên Xui nhé!");
+                return;
+            }
+            document.getElementById('xiDachModal')?.classList.remove('hidden');
+
+            if (xdGameActive && (xdPlayerHand.length > 0 || xdBotHand.length > 0)) {
+                updateXiDachUI(false);
+                setXdBotThought("");
+                setXiDachBanner("Tiếp tục ván bài đang chơi dở nhé!", "text-pink-100", "bg-black/35 border-pink-200/25", XD_SVG.card);
+            } else {
+                startNewXiDachRound();
+            }
+            playPaletteTingSound();
+        }
+
+        function closeXiDachModal() {
+            if (xdIsResolving || xdIsAnimatingCard) return;
+            closeXiDachRulesModal();
+            document.getElementById('xiDachModal')?.classList.add('hidden');
+        }
+
+        function openXiDachRulesModal() {
+            document.getElementById('xiDachRulesModal')?.classList.remove('hidden');
+            playCheerfulClickSound();
+        }
+
+        function closeXiDachRulesModal() {
+            document.getElementById('xiDachRulesModal')?.classList.add('hidden');
+        }
+
+        function startNewXiDachRound() {
+            if ((xdGameActive && (xdPlayerHand.length > 0 || xdBotHand.length > 0)) || xdIsResolving || xdIsAnimatingCard) {
+                alert("Ván bài đang diễn ra, bạn hãy chơi hết ván này rồi mới bắt đầu ván mới nhé!");
+                return;
+            }
+            if (!currentUser) return;
+            if (xdBotRevealTimer) { clearTimeout(xdBotRevealTimer); xdBotRevealTimer = null; }
+
+            setXdBotThought("");
+
+            const isOwnerAcc = isOwnerUsername(currentUser.username);
+            if (!isOwnerAcc && getUserPencilCount(currentUser.username) < 2) {
+                xdPlayerHand = [];
+                xdBotHand = [];
+                xdGameActive = false;
+                updateXiDachUI(false);
+                setXiDachBanner("Túi bạn cần ít nhất 2 Chì Màu để tham gia Xì Dách nhé!", "text-rose-300", "bg-rose-500/15 border-rose-300/45", XD_SVG.lose);
+                return;
+            }
+
+            xdDeck = buildShuffledXdDeck();
+            xdPlayerHand = [];
+            xdBotHand = [];
+            xdPlayerHasStood = false;
+            xdBotHasStood = false;
+            xdGameActive = true;
+            xdIsResolving = false;
+            xdIsAnimatingCard = false;
+
+            updateXiDachUI(false);
+            setXiDachBanner("Bắt đầu vòng chia xen kẽ: Bạn bấm 'Bốc Lá Của Bạn' để nhận lá đầu tiên nhé!", "text-pink-100", "bg-black/35 border-pink-200/25", XD_SVG.card);
+        }
+
+        // Bốc 1 lá cho Bot có animation bài bay từ bộ bài chung lên hàng bài Bot
+        async function executeBotDrawCardAnimation() {
+            playXdCardDealSound(xdBotHand.length);
+            await animateXdCardFromDeckTo('xdBotHandRow');
+            xdBotHand.push(xdDeck.pop());
+            updateXiDachUI(false);
+        }
+
+        // Bốc bài xen kẽ theo lượt: Bạn bốc lá ➔ Bot bốc lá / Bot đắn đo lượt của Bot
+        async function xiDachHit() {
+            if (!xdGameActive || xdIsResolving || xdIsAnimatingCard || xdPlayerHasStood || xdPlayerHand.length >= 5) return;
+            const pEvalBefore = evaluateXiDachHand(xdPlayerHand);
+            if (pEvalBefore.type === 'bust') return;
+
+            xdIsAnimatingCard = true;
+            updateXiDachUI(false);
+            playXdCardDealSound(xdPlayerHand.length);
+
+            await animateXdCardFromDeckTo('xdPlayerHandRow');
+
+            xdPlayerHand.push(xdDeck.pop());
+            xdIsAnimatingCard = false;
+
+            const pEval = evaluateXiDachHand(xdPlayerHand);
+            updateXiDachUI(false);
+
+            // GIAI ĐOẠN 1: CHIA XEN KẼ 2 LÁ ĐẦU
+            if (xdPlayerHand.length === 1 && xdBotHand.length === 0) {
+                setXiDachBanner("Bạn vừa bốc lá 1. Đang nhường lượt cho Bot cute kawaii bốc...", "text-sky-200", "bg-black/35 border-sky-300/30", XD_SVG.clock);
+                xdIsResolving = true;
+                updateXiDachUI(false);
+
+                // Tạo khoảng dừng thở tự nhiên 650ms để user kịp nhìn lá bài mình vừa nhận
+                xdBotRevealTimer = setTimeout(() => {
+                    setXdBotThought("Tới lượt Bot bốc lá đầu tiên nha...", "draw");
+
+                    xdBotRevealTimer = setTimeout(async () => {
+                        await executeBotDrawCardAnimation();
+                        xdIsResolving = false;
+                        setXdBotThought("");
+                        updateXiDachUI(false);
+                        setXiDachBanner("Lượt bạn bốc lá thứ 2 xen kẽ nhé!", "text-pink-100", "bg-black/35 border-pink-200/25", XD_SVG.card);
+                    }, 650);
+                }, 600);
+                return;
+            }
+
+            if (xdPlayerHand.length === 2 && xdBotHand.length === 1) {
+                setXiDachBanner("Bạn vừa bốc đủ 2 lá. Đang nhường lượt cho Bot cute kawaii...", "text-sky-200", "bg-black/35 border-sky-300/30", XD_SVG.clock);
+                xdIsResolving = true;
+                updateXiDachUI(false);
+
+                // Khoảng dừng thở tự nhiên trước khi Bot bốc lá 2
+                xdBotRevealTimer = setTimeout(() => {
+                    setXdBotThought("Bot bốc tiếp lá thứ 2 cho đủ cặp nè...", "draw");
+
+                    xdBotRevealTimer = setTimeout(async () => {
+                        await executeBotDrawCardAnimation();
+                        xdIsResolving = false;
+                        setXdBotThought("");
+                        updateXiDachUI(false);
+
+                        const pE2 = evaluateXiDachHand(xdPlayerHand);
+                        const bE2 = evaluateXiDachHand(xdBotHand);
+
+                        // Nếu chia xong 2 lá đầu mà có Xì Bàng hoặc Xì Dách -> Mở bài ngay
+                        if (pE2.type === 'xibang' || pE2.type === 'xidach' || bE2.type === 'xibang' || bE2.type === 'xidach') {
+                            setXiDachBanner("Xuất hiện Xì Bàng / Xì Dách! Chuẩn bị so bài...", "text-amber-200", "bg-amber-500/15 border-amber-300/45", XD_SVG.sparkle);
+                            setTimeout(revealAndSettleXiDach, 700);
+                            return;
+                        }
+
+                        setXiDachBanner(`Chia xong 2 lá đầu (Bạn có ${pE2.label}). Bạn muốn bốc thêm hay Dằn lượt này?`, "text-pink-100", "bg-black/35 border-pink-200/25", XD_SVG.sparkle);
+                    }, 650);
+                }, 600);
+                return;
+            }
+
+            // GIAI ĐOẠN 2: BỐC THÊM TỪ LÁ THỨ 3 TRỞ ĐI
+            if (pEval.type === 'bust') {
+                playXdBustSoftSound();
+                setXiDachBanner(`Quắc (${pEval.score} điểm)! Tới lượt Bot cute kawaii quyết định...`, "text-rose-200", "bg-rose-500/15 border-rose-300/45", XD_SVG.bust);
+                xdPlayerHasStood = true;
+                xdIsResolving = true;
+                setTimeout(handleNextBotTurnStep, 700);
+                return;
+            }
+
+            if (xdPlayerHand.length === 5) {
+                playXdSpecialJackpotSound();
+                setXiDachBanner(`Ngũ Linh (${pEval.score} điểm)! Bạn dừng tại đây, tới lượt Bot cute kawaii...`, "text-emerald-200", "bg-emerald-500/15 border-emerald-300/45", XD_SVG.sparkle);
+                xdPlayerHasStood = true;
+                xdIsResolving = true;
+                setTimeout(handleNextBotTurnStep, 700);
+                return;
+            }
+
+            // Bạn vừa bốc 1 lá xong ➔ Tạo nhịp dừng êm rồi mới chuyển sang Bot suy nghĩ
+            setXiDachBanner(`Bạn có ${pEval.label}. Chuyển lượt sang Bot cute kawaii...`, "text-sky-200", "bg-black/35 border-sky-300/30", XD_SVG.clock);
+            xdIsResolving = true;
+            setTimeout(handleNextBotTurnStep, 650);
+        }
+
+        function xiDachStand() {
+            if (!xdGameActive || xdIsResolving || xdIsAnimatingCard) return;
+            if (xdPlayerHand.length < 2) {
+                alert("Bạn cần bốc ít nhất 2 lá bài trước khi dừng nhé!");
+                return;
+            }
+            playXdStandChimeSound();
+            xdPlayerHasStood = true;
+            updateXiDachUI(false);
+            setXiDachBanner("Bạn đã chọn Dằn lượt này. Tới lượt Bot cute kawaii...", "text-sky-200", "bg-black/35 border-sky-300/30", XD_SVG.hand);
+            handleNextBotTurnStep();
+        }
+
+        // Bot cute kawaii chơi hoàn toàn công bằng: CHỈ tự xem bài của chính mình (xdBotHand), không biết bài user!
+        function pickRandomXdLine(lines, lastLine = "") {
+            if (!lines || lines.length === 0) return "";
+            const pool = lines.length > 1 ? lines.filter(l => l !== lastLine) : lines;
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        function decideBotMoveFairly(botHand) {
+            const bEval = evaluateXiDachHand(botHand);
+            if (botHand.length >= 5 || bEval.type === 'bust') return { draw: false, mood: 'done' };
+            if (botHand.length === 2 && (bEval.type === 'xibang' || bEval.type === 'xidach')) {
+                return { draw: false, mood: 'jackpot' };
+            }
+
+            const s = bEval.score;
+            if (s < 15) return { draw: true, mood: 'low' };
+            if (s === 15) return { draw: Math.random() < 0.80, mood: 'hesitate_15' };
+            if (s === 16) return { draw: Math.random() < 0.50, mood: 'hesitate_16' };
+            if (s === 17) return { draw: Math.random() < 0.18, mood: 'hesitate_17' };
+            if (s === 18 && botHand.length === 4) return { draw: Math.random() < 0.15, mood: 'ngulinh_tempt' };
+            return { draw: false, mood: 'confident' };
+        }
+
+        const XD_THOUGHTS_BY_MOOD = {
+            low: [
+                "Hmm... điểm bài mình còn hơi non, chắc phải rút thêm rồi!",
+                "Mới bấy nhiêu đây chưa đủ tuổi đâu, rút thêm một lá nào...",
+                "Chà, bài đang thấp quá, cầu trời ra lá đẹp nhé!",
+                "Không ổn rồi, điểm vẫn còn thiếu, phải bốc thêm thôi!"
+            ],
+            hesitate_15: [
+                "Đắn đo quá đi... bốc thêm thì sợ lố mà dừng thì hơi run!",
+                "Con số này nửa nạc nửa mỡ ghê, có nên liều rút một lá không ta?",
+                "Tim đập thình thịch, giữ nguyên hay thử vận may thêm lá nữa nhỉ?",
+                "Lưỡng lự quá... lỡ bốc trúng lá hình thì toang mất!"
+            ],
+            hesitate_16: [
+                "Vừa đủ tuổi rồi đấy, nhưng giữ tầm này không biết có an toàn không...",
+                "Hít thở sâu nào... dừng lại cho chắc hay đánh liều một phen đây?",
+                "Trực giác đang giằng co dữ dội, rút hay không rút đây ta?",
+                "Hmm... dừng thì hơi thấp, mà rút thêm lại sợ Quắc, khó nghĩ ghê!"
+            ],
+            hesitate_17: [
+                "Bài tầm này cũng tạm ổn rồi... hay là thử vận may thêm xíu ta?",
+                "Cũng kha khá rồi đấy, để suy nghĩ xem có nên chốt đơn luôn không...",
+                "Tới đây thấy cũng êm êm rồi, không biết đối thủ đang nghĩ gì nhỉ?"
+            ],
+            ngulinh_tempt: [
+                "4 lá rồi, thêm 1 lá nhỏ nữa là thành Ngũ Linh luôn đấy, thử không ta?",
+                "Chỉ còn 1 lá nữa là Ngũ Linh... cám dỗ quá đi mất!"
+            ],
+            jackpot: [
+                "Ui chà chà... 2 lá này nhìn xịn xò quá trời luôn nè!"
+            ],
+            confident: [
+                "Chà chà, bài này nhìn khá ưng bụng rồi đấy, để kiểm tra kỹ lại chút!",
+                "Cảm giác tự tin hẳn lên rồi nha, chắc không cần mạo hiểm nữa đâu!",
+                "Ổn áp rồi, bình tĩnh suy nghĩ lại một nhịp trước khi chốt bài..."
+            ],
+            done: [
+                "Xong xuôi hết rồi, hồi hộp chờ lật bài so điểm thôi!"
+            ]
+        };
+
+        const XD_DRAW_DECISION_LINES = [
+            "Bot cute kawaii quyết định: Bốc thêm 1 lá thử vận may!",
+            "Liều ăn nhiều luôn! Bot cute kawaii xin thêm 1 lá nhé!",
+            "Chốt bốc! Cảm tính mách bảo lá tiếp theo sẽ rất đẹp!",
+            "Không chần chừ nữa, Bot cute kawaii rút thêm 1 lá cho chắc kèo!"
+        ];
+
+        const XD_HOLD_DECISION_LINES = [
+            "Bot cute kawaii quyết định: Dằn lượt này! Không bốc thêm!",
+            "Chốt bài! Tới đây là đủ tự tin rồi, tạm dằn ở đây!",
+            "Thôi dừng lại cho an toàn, nhường lượt lại cho bạn nha!",
+            "Không rút nữa đâu, Bot cute kawaii giữ bài này đối đầu luôn!"
+        ];
+
+        function handleNextBotTurnStep() {
+            if (!xdGameActive) return;
+            xdIsResolving = true;
+            updateXiDachUI(false);
+
+            // Nếu Bot đã Dằn trước đó
+            if (xdBotHasStood) {
+                xdIsResolving = false;
+                if (xdPlayerHasStood) {
+                    revealAndSettleXiDach();
+                } else {
+                    const pEv = evaluateXiDachHand(xdPlayerHand);
+                    setXiDachBanner(`Bot cute kawaii đã Dằn bài. Tới lượt bạn (${pEv.label}): bốc tiếp hay Dằn?`, "text-pink-100", "bg-black/35 border-pink-200/25", XD_SVG.sparkle);
+                    updateXiDachUI(false);
+                }
+                return;
+            }
+
+            // Giai đoạn 1: Bot bắt đầu suy nghĩ, đắn đo (nhịp thở 850ms)
+            const decision = decideBotMoveFairly(xdBotHand);
+            const thoughtText = pickRandomXdLine(XD_THOUGHTS_BY_MOOD[decision.mood] || XD_THOUGHTS_BY_MOOD.confident);
+            setXdBotThought(thoughtText, "think");
+            playXdBotThinkPluckSound();
+            playXdBotThinkPluckSound();
+
+            xdBotRevealTimer = setTimeout(() => {
+                if (decision.draw) {
+                    // Giai đoạn 2A: Bot đưa ra quyết định bốc (dừng 650ms đọc bóng thoại)
+                    setXdBotThought(pickRandomXdLine(XD_DRAW_DECISION_LINES), "draw");
+
+                    xdBotRevealTimer = setTimeout(async () => {
+                        await executeBotDrawCardAnimation();
+                        xdIsResolving = false;
+
+                        const bEv = evaluateXiDachHand(xdBotHand);
+                        if (bEv.type === 'bust' || xdBotHand.length >= 5) {
+                            xdBotHasStood = true;
+                        }
+
+                        // Kiểm tra kết thúc ván
+                        if (xdPlayerHasStood && xdBotHasStood) {
+                            setTimeout(revealAndSettleXiDach, 600);
+                            return;
+                        }
+
+                        if (xdPlayerHasStood) {
+                            // Bạn đã dằn, Bot nghỉ 700ms rồi tiếp tục lượt tiếp theo của Bot
+                            setTimeout(handleNextBotTurnStep, 700);
+                        } else {
+                            // Chuyển lượt lại cho bạn bốc lá tiếp theo một cách từ tốn
+                            const pEv = evaluateXiDachHand(xdPlayerHand);
+                            setXiDachBanner(`Bot cute kawaii vừa bốc 1 lá. Tới lượt bạn (${pEv.label}): bốc hay Dằn?`, "text-pink-100", "bg-black/35 border-pink-200/25", XD_SVG.sparkle);
+                            updateXiDachUI(false);
+                        }
+                    }, 650);
+                } else {
+                    // Giai đoạn 2B: Bot Dằn lượt này
+                    xdBotHasStood = true;
+                    playXdStandChimeSound();
+                    setXdBotThought(pickRandomXdLine(XD_HOLD_DECISION_LINES), "hold");
+
+                    xdBotRevealTimer = setTimeout(() => {
+                        xdIsResolving = false;
+                        if (xdPlayerHasStood) {
+                            setTimeout(revealAndSettleXiDach, 600);
+                        } else {
+                            const pEv = evaluateXiDachHand(xdPlayerHand);
+                            setXiDachBanner(`Bot cute kawaii chọn Dằn. Tới lượt bạn (${pEv.label}): bốc tiếp hay Dằn luôn?`, "text-pink-100", "bg-black/35 border-pink-200/25", XD_SVG.sparkle);
+                            updateXiDachUI(false);
+                        }
+                    }, 750);
+                }
+            }, 850);
+        }
+
+        function revealAndSettleXiDach() {
+            xdIsResolving = true;
+            playXdRevealFlipSound();
+            updateXiDachUI(true);
+            settleXiDachShowdown();
+        }
+
+        async function settleXiDachShowdown() {
+            xdGameActive = false;
+            xdIsResolving = false;
+            xdIsAnimatingCard = false;
+
+            const pEval = evaluateXiDachHand(xdPlayerHand);
+            const bEval = evaluateXiDachHand(xdBotHand);
+
+            let outcome = 'draw';
+            if (pEval.type === 'bust' && bEval.type === 'bust') {
+                outcome = 'draw';
+            } else if (pEval.type === 'bust') {
+                outcome = 'lose';
+            } else if (bEval.type === 'bust') {
+                outcome = 'win';
+            } else if (pEval.rankPower !== bEval.rankPower) {
+                outcome = pEval.rankPower > bEval.rankPower ? 'win' : 'lose';
+            } else if (pEval.type === 'xibang' || pEval.type === 'xidach') {
+                outcome = 'draw';
+            } else {
+                if (pEval.score > bEval.score) outcome = 'win';
+                else if (pEval.score < bEval.score) outcome = 'lose';
+                else outcome = 'draw';
+            }
+
+            const username = currentUser.username;
+            const uKey = username.toLowerCase();
+            const isOwnerAcc = isOwnerUsername(username);
+            const summaryTxt = `Bạn: ${pEval.label} · Bot cute kawaii: ${bEval.label}`;
+
+            if (outcome === 'win') {
+                xdWinScore++;
+                await addPencilToUser(username, 2, "", true);
+                playJoyfulWinSound();
+                createPencilSparkles();
+                setXiDachBanner(
+                    isOwnerAcc
+                        ? `Bạn Thắng (${summaryTxt})! (Túi Chủ Web giữ cố định 10 Chì).`
+                        : `Tuyệt vời! Bạn Thắng (${summaryTxt}) và nhận +2 Bút Chì Màu!`,
+                    "text-emerald-200",
+                    "bg-emerald-500/20 border-emerald-300/60",
+                    XD_SVG.win
+                );
+                logMemberActivity("Xì Dách Hên Xui", `Thắng (+2 Bút Chì Màu) · ${summaryTxt}`, "wheel");
+                sendPhonePushToOwner(`🃏 Xì Dách: ${username}`, `Thắng (+2 Chì) · ${summaryTxt}`, 3);
+            } else if (outcome === 'lose') {
+                xdLoseScore++;
+                if (!isOwnerAcc) {
+                    const cur = getUserPencilCount(username);
+                    const next = Math.max(0, cur - 2);
+                    userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: next };
+                    db.collection("pencils").doc(uKey).set({ count: next }, { merge: true }).catch(() => {});
+                    updatePencilUI();
+                }
+                playSadDeflateSound();
+                setXiDachBanner(
+                    isOwnerAcc
+                        ? `Bạn Thua rồi (${summaryTxt}) - Túi Chủ Web giữ cố định 10 Chì.`
+                        : `Tiếc quá, bạn thua rồi (${summaryTxt}) và bị trừ -2 Bút Chì Màu!`,
+                    "text-rose-200",
+                    "bg-rose-500/20 border-rose-300/60",
+                    XD_SVG.lose
+                );
+                logMemberActivity("Xì Dách Hên Xui", `Thua (-2 Bút Chì Màu) · ${summaryTxt}`, "wheel");
+                sendPhonePushToOwner(`🃏 Xì Dách: ${username}`, `Thua (-2 Chì) · ${summaryTxt}`, 3);
+            } else {
+                playEmptyCardNeutralSound();
+                setXiDachBanner(
+                    `Hòa nhau rồi (${summaryTxt})! Giữ nguyên số Bút Chì Màu nhé!`,
+                    "text-sky-100",
+                    "bg-sky-500/20 border-sky-300/50",
+                    XD_SVG.draw
+                );
+                logMemberActivity("Xì Dách Hên Xui", `Hòa (0 Chì) · ${summaryTxt}`, "wheel");
+                sendPhonePushToOwner(`🃏 Xì Dách: ${username}`, `Hòa (0 Chì) · ${summaryTxt}`, 3);
+            }
+
+            updateXiDachUI(true);
+        }
+
+        // ================= HỆ THỐNG GHÉP ĐÔI ONLINE (MULTIPLAYER REALTIME · BOT LÀM CÁI) =================
+        let currentOnlineUsers = [];
+        let userFriendsList = safeParseLocalJson('palette_user_friends', []);
+        let activeMatchmakingGame = 'xo'; // 'xo' | 'xidach'
+        let activeMatchTab = 'online'; // 'online' | 'friends'
+        let friendSearchKeyword = '';
+        let isMatchInviteBellEnabled = (localStorage.getItem('palette_invite_bell_enabled') !== 'false'); // Mặc định BẬT
+        let currentGameRoomId = null;
+        let currentGameRoomData = null;
+        let gameRoomUnsub = null;
+        let roomChatUnsub = null;
+        let incomingInviteUnsub = null;
+        let pendingInviteDocId = null;
+        let inviteCountdownTimer = null;
+        let onlineHeartbeatTimer = null;
+        let onlineUsersUnsub = null;
+        let roomTurnTimerInterval = null;
+        let isBeforeUnloadBound = false;
+
+        // Tạm dừng hiệu ứng nền khi vào phòng game / modal lớn để giảm lag cho điện thoại
+        function setBgVisualEffectsPaused(paused) {
+            const fx = document.getElementById('visualEffectsLayer');
+            if (!fx) return;
+            fx.style.visibility = paused ? 'hidden' : 'visible';
+        }
+
+        // Bật nhịp tim online thời gian thực chuẩn xác (gửi mỗi 20s, tính online trong 90s)
+        function startOnlineHeartbeat(username) {
+            if (!username) return;
+            const uKey = username.toLowerCase();
+            const beat = () => {
+                if (document.hidden) return;
+                db.collection("online_users").doc(uKey).set({
+                    username: username,
+                    avatar: getUserAvatarOrDefault(username),
+                    lastSeen: Date.now(),
+                    inRoom: currentGameRoomId || null,
+                    acceptsInvites: isMatchInviteBellEnabled
+                }, { merge: true }).catch(() => {});
+            };
+            beat();
+            if (onlineHeartbeatTimer) clearInterval(onlineHeartbeatTimer);
+            onlineHeartbeatTimer = setInterval(beat, 20000);
+
+            if (!isBeforeUnloadBound) {
+                isBeforeUnloadBound = true;
+                window.addEventListener('beforeunload', () => {
+                    if (currentUser?.username) {
+                        db.collection("online_users").doc(currentUser.username.toLowerCase()).delete().catch(() => {});
+                    }
+                });
+            }
+
+            if (incomingInviteUnsub) incomingInviteUnsub();
+            incomingInviteUnsub = db.collection("game_invites")
+                .where("toUser", "==", username)
+                .where("status", "==", "pending")
+                .onSnapshot(snap => {
+                    if (!isMatchInviteBellEnabled) return;
+                    const nowTs = Date.now();
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        if (nowTs - (data.createdAt || 0) < 30000 && !currentGameRoomId) {
+                            showIncomingGameInvite(doc.id, data);
+                        }
+                    });
+                }, () => {});
+
+            if (onlineUsersUnsub) onlineUsersUnsub();
+            onlineUsersUnsub = db.collection("online_users").onSnapshot(snap => {
+                const nowTs = Date.now();
+                const othersList = [];
+                let totalOnlineAll = 0;
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if (d.username && (nowTs - (d.lastSeen || 0) < 90000)) {
+                        totalOnlineAll++;
+                        if (d.username.toLowerCase() !== uKey) {
+                            othersList.push(d);
+                        }
+                    }
+                });
+
+                currentOnlineUsers = othersList;
+                const statusBadge = document.getElementById('onlineUsersStatusBadge');
+                if (statusBadge) {
+                    statusBadge.innerText = othersList.length > 0 ? "🟢 Có người đang onl" : "⚪ Chưa có ai onl";
+                }
+
+                if (!document.getElementById('matchmakingModal')?.classList.contains('hidden')) {
+                    renderMatchmakingUsers();
+                }
+            }, () => {});
+        }
+
+        // ---------- Quản lý Bạn Bè ----------
+        function isUserFriend(targetUsername) {
+            if (!targetUsername) return false;
+            return userFriendsList.some(u => u.toLowerCase() === targetUsername.toLowerCase());
+        }
+
+        function toggleFriendship(targetUsername) {
+            if (!targetUsername) return;
+            const uLower = targetUsername.toLowerCase();
+            const idx = userFriendsList.findIndex(u => u.toLowerCase() === uLower);
+            if (idx > -1) {
+                userFriendsList.splice(idx, 1);
+                showInAppNotifyToast("Đã hủy kết bạn", `Đã xóa ${targetUsername} khỏi danh sách bạn bè.`);
+            } else {
+                userFriendsList.push(targetUsername);
+                showInAppNotifyToast("💖 Đã kết bạn!", `Từ giờ khi ${targetUsername} online sẽ hiện ngay trong mục Bạn Bè để rủ chơi nhé!`);
+            }
+            try { localStorage.setItem('palette_user_friends', JSON.stringify(userFriendsList)); } catch (_) {}
+            const countBadge = document.getElementById('friendsCountBadge');
+            if (countBadge) countBadge.innerText = userFriendsList.length;
+            renderMatchmakingUsers();
+            playPaletteTingSound();
+        }
+
+        // ---------- Bảng Ghép Đôi ----------
+        function openMatchmakingModal(gameType = 'xo') {
+            if (!currentUser) {
+                alert("Vui lòng đăng nhập để ghép đôi chơi cùng người khác nhé!");
+                return;
+            }
+            if (getUserPencilCount(currentUser.username) < 2 && !currentUser.isOwner) {
+                alert("Bạn cần có ít nhất 2 Bút Chì Màu trong túi để tham gia phòng ghép đôi!");
+                return;
+            }
+            activeMatchmakingGame = gameType;
+            const titleEl = document.getElementById('matchmakingTitle');
+            const subEl = document.getElementById('matchmakingSubtitle');
+            if (titleEl) {
+                titleEl.innerText = gameType === 'xo' ? "Ghép Đôi: Cùng Vẽ X và O (2 người)" : "Ghép Đôi: Xì Dách Hên Xui (2 - 4 người)";
+            }
+            if (subEl) {
+                subEl.innerText = gameType === 'xo' ? "Thắng ăn 2 chì từ người thua" : "Bot làm Nhà Cái · Thắng ăn 2 chì từ người thua";
+            }
+            const friendsBadge = document.getElementById('friendsCountBadge');
+            if (friendsBadge) friendsBadge.innerText = userFriendsList.length;
+            switchMatchmakingTab('online');
+            clearSearchFriendInput();
+            document.getElementById('matchmakingPendingStatus')?.classList.add('hidden');
+            document.getElementById('matchmakingModal')?.classList.remove('hidden');
+            playPaletteTingSound();
+        }
+
+        function closeMatchmakingModal() {
+            clearSearchFriendInput();
+            document.getElementById('matchmakingModal')?.classList.add('hidden');
+        }
+
+        function handleSearchFriendInput(val) {
+            friendSearchKeyword = (val || '').trim().toLowerCase();
+            const clearBtn = document.getElementById('clearSearchFriendBtn');
+            if (clearBtn) clearBtn.classList.toggle('hidden', !friendSearchKeyword);
+            renderMatchmakingUsers();
+        }
+
+        function clearSearchFriendInput() {
+            friendSearchKeyword = '';
+            const inp = document.getElementById('searchFriendInput');
+            const clearBtn = document.getElementById('clearSearchFriendBtn');
+            if (inp) inp.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
+            renderMatchmakingUsers();
+        }
+
+        function switchMatchmakingTab(tab) {
+            activeMatchTab = tab;
+            const btnOn = document.getElementById('matchTabOnlineBtn');
+            const btnFr = document.getElementById('matchTabFriendsBtn');
+            if (btnOn && btnFr) {
+                if (tab === 'online') {
+                    btnOn.className = "py-1.5 px-2 rounded-xl font-bold bg-pink-500/35 text-pink-200 border border-pink-300/40";
+                    btnFr.className = "py-1.5 px-2 rounded-xl font-bold text-sky-200/70 hover:text-white";
+                } else {
+                    btnFr.className = "py-1.5 px-2 rounded-xl font-bold bg-pink-500/35 text-pink-200 border border-pink-300/40";
+                    btnOn.className = "py-1.5 px-2 rounded-xl font-bold text-sky-200/70 hover:text-white";
+                }
+            }
+            renderMatchmakingUsers();
+        }
+
+        function renderMatchmakingUsers() {
+            const listContainer = document.getElementById('matchmakingUserList');
+            if (!listContainer) return;
+            listContainer.innerHTML = '';
+
+            let displayList = [];
+            const myNameLower = (currentUser?.username || '').toLowerCase();
+
+            // Nếu người dùng đang gõ tìm kiếm ➔ quét toàn bộ danh sách thành viên trên web
+            if (friendSearchKeyword) {
+                const matchedUsernames = Object.keys(registeredUsers)
+                    .map(k => registeredUsers[k]?.username || k)
+                    .filter(name => {
+                        const low = name.toLowerCase();
+                        return low !== myNameLower && low.includes(friendSearchKeyword);
+                    });
+
+                // Kiểm tra thêm trong danh sách đang online phòng khi chưa kịp đồng bộ vào registeredUsers
+                currentOnlineUsers.forEach(o => {
+                    const low = (o.username || '').toLowerCase();
+                    if (low !== myNameLower && low.includes(friendSearchKeyword) && !matchedUsernames.some(n => n.toLowerCase() === low)) {
+                        matchedUsernames.push(o.username);
+                    }
+                });
+
+                displayList = matchedUsernames.map(name => {
+                    const onlineD = currentOnlineUsers.find(o => o.username.toLowerCase() === name.toLowerCase());
+                    return {
+                        username: name,
+                        avatar: getUserAvatarOrDefault(name),
+                        isOnline: Boolean(onlineD),
+                        inRoom: onlineD?.inRoom || null
+                    };
+                });
+
+                if (displayList.length === 0) {
+                    listContainer.innerHTML = `<div class="text-[11px] text-sky-200/50 italic py-6 text-center">Không tìm thấy thành viên nào khớp với tên "${cmtEsc(friendSearchKeyword)}".</div>`;
+                    return;
+                }
+            } else if (activeMatchTab === 'friends') {
+                displayList = userFriendsList.map(name => {
+                    const onlineD = currentOnlineUsers.find(o => o.username.toLowerCase() === name.toLowerCase());
+                    return {
+                        username: name,
+                        avatar: getUserAvatarOrDefault(name),
+                        isOnline: Boolean(onlineD),
+                        inRoom: onlineD?.inRoom || null
+                    };
+                });
+
+                if (displayList.length === 0) {
+                    listContainer.innerHTML = `<div class="text-[11px] text-sky-200/50 italic py-6 text-center">Bạn chưa kết bạn với ai. Hãy gõ tên bạn bè vào ô tìm kiếm ở trên hoặc bấm icon 🤍 bên tab Đang Online để kết bạn nhé!</div>`;
+                    return;
+                }
+            } else {
+                // ================= TAB ĐANG ONLINE: CHỈ BÁO CÓ NGƯỜI ĐANG ONL HAY KHÔNG (KHÔNG HIỆN SỐ) =================
+                const hasAnyOtherOnline = currentOnlineUsers.length > 0;
+                const availableOpponents = currentOnlineUsers.filter(u => !u.inRoom);
+                const hasAvailable = availableOpponents.length > 0;
+
+                const statusDotCls = hasAvailable
+                    ? "bg-emerald-400 animate-ping"
+                    : (hasAnyOtherOnline ? "bg-amber-400 animate-pulse" : "bg-slate-400");
+                const statusTitle = hasAvailable
+                    ? "Có người đang online!"
+                    : (hasAnyOtherOnline ? "Có người online (đang trong phòng)" : "Hiện chưa có ai đang online");
+                const statusTitleCls = hasAvailable
+                    ? "text-emerald-300"
+                    : (hasAnyOtherOnline ? "text-amber-300" : "text-slate-300");
+                const statusDesc = hasAvailable
+                    ? "Hiện đang có người chơi rảnh, bấm ghép nhanh để mời vào phòng chơi chung nhé!"
+                    : (hasAnyOtherOnline
+                        ? "Người đang online hiện đang bận chơi ở phòng khác, bạn đợi chút hoặc sang tab Bạn Bè nhé!"
+                        : "Chưa có thành viên nào khác đang hoạt động. Bạn có thể gõ tên ở ô tìm kiếm trên để kết bạn trước nhé!");
+
+                listContainer.innerHTML = `
+                    <div class="bg-gradient-to-br from-pink-500/15 via-purple-500/15 to-sky-500/15 border-2 border-pink-300/40 rounded-3xl p-5 text-center space-y-3">
+                        <div class="flex items-center justify-center gap-2">
+                            <span class="w-3 h-3 rounded-full ${statusDotCls}"></span>
+                            <span class="text-sm font-black ${statusTitleCls}">${statusTitle}</span>
+                        </div>
+                        <p class="text-[11px] text-sky-200/80 leading-relaxed px-2">
+                            ${statusDesc}
+                        </p>
+                        <button type="button" onclick="quickMatchRandomOnlineUser()" ${!hasAvailable ? 'disabled' : ''} class="w-full ${!hasAvailable ? 'bg-white/10 text-white/40 border border-white/15 cursor-not-allowed' : 'jelly-btn bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:brightness-110 text-white shadow-[0_0_20px_rgba(244,114,182,0.5)]'} font-black text-xs py-3 px-4 rounded-2xl active:scale-95 transition flex items-center justify-center gap-2">
+                            <span>${hasAvailable ? '⚡ Ghép Nhanh Ngẫu Nhiên' : 'Chưa có người sẵn sàng để ghép'}</span>
+                        </button>
+                        <div class="text-[10px] text-pink-200/60 pt-1 border-t border-white/10">
+                            💡 Bạn cũng có thể qua tab <b>💖 Bạn Bè</b> hoặc gõ tên ở ô tìm kiếm trên để rủ bạn thân nhé!
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            displayList.forEach(u => {
+                const isFriend = isUserFriend(u.username);
+                const isOnline = Boolean(u.isOnline);
+                const inRoom = Boolean(u.inRoom);
+
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between gap-2 bg-black/40 border border-white/10 hover:border-pink-300/40 p-2.5 rounded-2xl text-xs transition";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="relative shrink-0">
+                            <img src="${u.avatar || PALETTE_DEFAULT_AVATARS[0]}" class="w-8 h-8 rounded-full object-cover border border-pink-300/40">
+                            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-slate-400'} border border-[#131b3a]"></span>
+                        </div>
+                        <div class="truncate">
+                            <div class="font-extrabold text-pink-200 truncate flex items-center gap-1">
+                                <span>${cmtEsc(u.username)}</span>
+                                ${isFriend ? '<span class="text-[9px] text-rose-300 font-bold">💖 Bạn</span>' : ''}
+                            </div>
+                            <div class="text-[10px] ${inRoom ? 'text-amber-300' : (isOnline ? 'text-emerald-300' : 'text-slate-400')}">
+                                ${inRoom ? 'Đang trong phòng' : (isOnline ? 'Đang online' : 'Ngoại tuyến')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="toggleFriendship('${cmtEsc(u.username)}')" class="w-7 h-7 rounded-full ${isFriend ? 'bg-pink-500/25 border-pink-300/50 text-pink-300' : 'bg-white/5 border-white/10 text-white/50'} border flex items-center justify-center text-xs active:scale-90 transition" title="${isFriend ? 'Hủy kết bạn' : 'Kết bạn'}">
+                            ${isFriend ? '💖' : '🤍'}
+                        </button>
+                        <button type="button" onclick="sendGameInviteTo('${cmtEsc(u.username)}')" ${(!isOnline || inRoom) ? 'disabled' : ''} class="${(!isOnline || inRoom) ? 'bg-white/10 text-white/40 cursor-not-allowed' : 'jelly-btn bg-gradient-to-r from-pink-500 to-purple-600 text-white font-extrabold shadow'} text-[11px] px-3 py-1.5 rounded-xl active:scale-95 transition">
+                            Mời chơi
+                        </button>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        // Tự động chọn ngẫu nhiên 1 người đang rảnh để mời vào phòng
+        function quickMatchRandomOnlineUser() {
+            const available = currentOnlineUsers.filter(u => !u.inRoom);
+            if (available.length === 0) {
+                alert("Hiện tại chưa có người chơi nào khác đang rảnh để ghép đôi. Bạn hãy rủ bạn bè vào web cùng chơi nhé!");
+                return;
+            }
+            const picked = available[Math.floor(Math.random() * available.length)];
+            sendGameInviteTo(picked.username);
+        }
+
+        // Gửi lời mời trực tiếp đến người đang online
+        async function sendGameInviteTo(targetUsername) {
+            if (!currentUser) return;
+            const statusBox = document.getElementById('matchmakingPendingStatus');
+            const statusTxt = document.getElementById('matchmakingPendingText');
+
+            try {
+                const inviteRef = await db.collection("game_invites").add({
+                    fromUser: currentUser.username,
+                    fromAvatar: getUserAvatarOrDefault(currentUser.username),
+                    toUser: targetUsername,
+                    gameType: activeMatchmakingGame,
+                    status: 'pending',
+                    createdAt: Date.now()
+                });
+                pendingInviteDocId = inviteRef.id;
+
+                if (statusBox) statusBox.classList.remove('hidden');
+                if (statusTxt) statusTxt.innerText = `Đang mời ${targetUsername} tham gia...`;
+
+                // Chờ phản hồi trong 25 giây
+                const inviteUnsub = db.collection("game_invites").doc(inviteRef.id).onSnapshot(doc => {
+                    if (!doc.exists) return;
+                    const d = doc.data();
+                    if (d.status === 'accepted' && d.roomId) {
+                        inviteUnsub();
+                        if (statusBox) statusBox.classList.add('hidden');
+                        closeMatchmakingModal();
+                        joinGameRoom(d.roomId, d.gameType);
+                    } else if (d.status === 'declined') {
+                        inviteUnsub();
+                        if (statusBox) statusBox.classList.add('hidden');
+                        alert(`${targetUsername} vừa từ chối lời mời chơi.`);
+                    }
+                });
+
+                setTimeout(() => {
+                    inviteUnsub();
+                    if (pendingInviteDocId === inviteRef.id) {
+                        cancelPendingInvite();
+                        alert(`Hết thời gian chờ phản hồi từ ${targetUsername}.`);
+                    }
+                }, 25000);
+            } catch (err) {
+                alert("Lỗi khi gửi lời mời: " + (err?.message || ""));
+            }
+        }
+
+        function cancelPendingInvite() {
+            if (pendingInviteDocId) {
+                db.collection("game_invites").doc(pendingInviteDocId).delete().catch(() => {});
+                pendingInviteDocId = null;
+            }
+            document.getElementById('matchmakingPendingStatus')?.classList.add('hidden');
+        }
+
+        // Âm thanh chuông báo mời ghép đôi leng keng kịch tính
+        function playMatchInviteBellSound() {
+            withAudioReady((ctx) => {
+                const now = ctx.currentTime;
+                // Chuỗi 4 tiếng chuông leng keng vui tai
+                const chimes = [783.99, 987.77, 1174.66, 1567.98];
+                chimes.forEach((freq, idx) => {
+                    const t = now + idx * 0.12;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.0001, t);
+                    gain.gain.linearRampToValueAtTime(0.3, t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.48);
+                });
+            });
+        }
+
+        // Bật / Tắt nhận lời mời ghép đôi
+        function toggleMatchInviteBell() {
+            isMatchInviteBellEnabled = !isMatchInviteBellEnabled;
+            localStorage.setItem('palette_invite_bell_enabled', isMatchInviteBellEnabled ? 'true' : 'false');
+            updateMatchInviteBellUI();
+            if (currentUser) {
+                db.collection("online_users").doc(currentUser.username.toLowerCase()).set({
+                    acceptsInvites: isMatchInviteBellEnabled
+                }, { merge: true }).catch(() => {});
+            }
+            if (isMatchInviteBellEnabled) {
+                playMatchInviteBellSound();
+                showInAppNotifyToast("🔔 Đã bật chuông ghép đôi", "Bạn sẽ nhận được thông báo khi có người rủ chơi chung!");
+            } else {
+                playCheerfulClickSound();
+                showInAppNotifyToast("🔕 Đã tắt chuông ghép đôi", "Tạm thời không nhận thông báo lời mời từ người khác.");
+            }
+        }
+
+        function updateMatchInviteBellUI() {
+            const bellSvgOn = `<svg class="w-4 h-4 text-pink-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`;
+            const bellSvgOff = `<svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><path d="M18.63 13A17.89 17.89 0 0 1 18 8"></path><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"></path><path d="M18 8a6 6 0 0 0-9.33-5"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+
+            const xoBtn = document.getElementById('xoInviteBellBtn');
+            const xdBtn = document.getElementById('xdInviteBellBtn');
+            const modalBtn = document.getElementById('modalInviteBellBtn');
+            const iconSpan = document.getElementById('inviteBellIconSpan');
+            const titleSpan = document.getElementById('inviteBellTitleSpan');
+            const descSpan = document.getElementById('inviteBellDescSpan');
+            const toggleBtn = document.getElementById('inviteBellToggleBtn');
+
+            [xoBtn, xdBtn, modalBtn].forEach(btn => {
+                if (!btn) return;
+                btn.innerHTML = isMatchInviteBellEnabled ? bellSvgOn : bellSvgOff;
+                btn.className = isMatchInviteBellEnabled
+                    ? "w-8 h-8 rounded-full bg-pink-500/20 hover:bg-pink-500/35 border border-pink-300/60 text-pink-200 flex items-center justify-center transition active:scale-90 shadow-[0_0_10px_rgba(244,114,182,0.4)]"
+                    : "w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-slate-400 flex items-center justify-center transition active:scale-90";
+                btn.title = isMatchInviteBellEnabled ? "Chuông đang bật (Chạm để tắt)" : "Chuông đang tắt (Chạm để bật)";
+            });
+
+            if (iconSpan) iconSpan.innerText = isMatchInviteBellEnabled ? "🔔" : "🔕";
+            if (titleSpan) titleSpan.innerText = isMatchInviteBellEnabled ? "Đang bật nhận lời mời ghép đôi" : "Đang tắt nhận lời mời";
+            if (descSpan) descSpan.innerText = isMatchInviteBellEnabled ? "Sẽ rung chuông khi có người rủ chơi" : "Không bị làm phiền bởi lời mời";
+            if (toggleBtn) {
+                toggleBtn.innerText = isMatchInviteBellEnabled ? "Đang Bật" : "Đang Tắt";
+                toggleBtn.className = isMatchInviteBellEnabled
+                    ? "bg-emerald-500/25 hover:bg-emerald-500/40 border border-emerald-300/50 text-emerald-200 font-extrabold px-2.5 py-1 rounded-xl text-[10.5px] active:scale-95 transition"
+                    : "bg-white/10 hover:bg-white/20 border border-white/20 text-slate-300 font-bold px-2.5 py-1 rounded-xl text-[10.5px] active:scale-95 transition";
+            }
+        }
+
+        // Nhận lời mời từ người khác
+        let currentReceivedInvite = null;
+        function showIncomingGameInvite(inviteId, data) {
+            if (!isMatchInviteBellEnabled) return; // Bảo vệ: Nếu tắt chuông thì bỏ qua
+            currentReceivedInvite = { inviteId, ...data };
+            const toast = document.getElementById('gameInviteToast');
+            const titleEl = document.getElementById('gameInviteTitle');
+            const descEl = document.getElementById('gameInviteDesc');
+            const countEl = document.getElementById('gameInviteCountdown');
+            if (!toast) return;
+
+            const gameName = data.gameType === 'xo' ? "Cùng vẽ X và O" : "Xì Dách Hên Xui";
+            if (titleEl) titleEl.innerText = `🔔 ${data.fromUser} rủ chơi!`;
+            if (descEl) descEl.innerText = `Muốn cùng bạn vào phòng chơi ${gameName}`;
+
+            let secLeft = 20;
+            if (countEl) countEl.innerText = `${secLeft}s`;
+            if (inviteCountdownTimer) clearInterval(inviteCountdownTimer);
+            inviteCountdownTimer = setInterval(() => {
+                secLeft--;
+                if (countEl) countEl.innerText = `${secLeft}s`;
+                if (secLeft <= 0) {
+                    declineCurrentGameInvite();
+                }
+            }, 1000);
+
+            toast.classList.remove('hidden');
+            playMatchInviteBellSound();
+        }
+
+        async function acceptCurrentGameInvite() {
+            if (!currentReceivedInvite) return;
+            const { inviteId, fromUser, gameType } = currentReceivedInvite;
+            clearInterval(inviteCountdownTimer);
+            document.getElementById('gameInviteToast')?.classList.add('hidden');
+
+            try {
+                const nowTs = Date.now();
+                const isXd = (gameType === 'xidach');
+                const roomRef = await db.collection("game_rooms").add({
+                    gameType: gameType,
+                    hostUser: fromUser,
+                    players: [fromUser, currentUser.username],
+                    playerStates: {
+                        [fromUser]: { symbol: 'X', ready: !isXd, score: 0, hand: [], hasStood: false },
+                        [currentUser.username]: { symbol: 'O', ready: !isXd, score: 0, hand: [], hasStood: false }
+                    },
+                    status: isXd ? 'waiting' : 'playing',
+                    turn: fromUser,
+                    turnStartedAt: nowTs,
+                    board: Array(XO_TOTAL_CELLS).fill(''),
+                    deck: isXd ? buildShuffledXdDeck() : [],
+                    botHand: [],
+                    moves: [],
+                    createdAt: nowTs
+                });
+
+                await db.collection("game_invites").doc(inviteId).set({
+                    status: 'accepted',
+                    roomId: roomRef.id
+                }, { merge: true });
+
+                joinGameRoom(roomRef.id, gameType);
+            } catch (err) {
+                alert("Lỗi khi vào phòng: " + (err?.message || ""));
+            }
+        }
+
+        function declineCurrentGameInvite() {
+            if (currentReceivedInvite?.inviteId) {
+                db.collection("game_invites").doc(currentReceivedInvite.inviteId).set({ status: 'declined' }, { merge: true }).catch(() => {});
+            }
+            clearInterval(inviteCountdownTimer);
+            currentReceivedInvite = null;
+            document.getElementById('gameInviteToast')?.classList.add('hidden');
+        }
+
+        // Vào phòng chơi chung Realtime + kích hoạt đếm giờ 30s / 60s
+        function joinGameRoom(roomId, gameType) {
+            currentGameRoomId = roomId;
+            if (gameRoomUnsub) gameRoomUnsub();
+            setBgVisualEffectsPaused(true);
+
+            if (gameType === 'xo') {
+                openXoGameModal();
+                document.getElementById('xoRoomInfoBar')?.classList.remove('hidden');
+                document.getElementById('xoThinkingStatusBar')?.classList.remove('hidden');
+            } else {
+                openXiDachModal();
+                document.getElementById('xdRoomInfoBar')?.classList.remove('hidden');
+                document.getElementById('xdThinkingStatusBar')?.classList.remove('hidden');
+            }
+
+            gameRoomUnsub = db.collection("game_rooms").doc(roomId).onSnapshot(doc => {
+                if (!doc.exists) {
+                    handleRoomClosedByOther();
+                    return;
+                }
+                currentGameRoomData = doc.data();
+                renderCurrentRoomState();
+            });
+
+            startRoomTurnCountdownMonitor();
+            listenToRoomChat(roomId);
+            showInAppNotifyToast("🎉 Đã vào phòng ghép đôi!", "Chúc các bạn có những ván chơi thật vui và kịch tính!");
+        }
+
+        function startRoomTurnCountdownMonitor() {
+            if (roomTurnTimerInterval) clearInterval(roomTurnTimerInterval);
+            roomTurnTimerInterval = setInterval(() => {
+                if (!currentGameRoomId || !currentGameRoomData || currentGameRoomData.status !== 'playing') return;
+
+                const data = currentGameRoomData;
+                const turnUser = data.turn;
+                const startedAt = Number(data.turnStartedAt) || Date.now();
+                const elapsedSec = Math.floor((Date.now() - startedAt) / 1000);
+                const remSkipSec = Math.max(0, 30 - elapsedSec);
+                const remKickSec = Math.max(0, 60 - elapsedSec);
+
+                const xoBadge = document.getElementById('xoTurnCountdownBadge');
+                const xdBadge = document.getElementById('xdTurnCountdownBadge');
+                const badgeTxt = remSkipSec > 0 ? `⏳ ${remSkipSec}s` : `⚠️ Quá giờ (${remKickSec}s)`;
+
+                if (xoBadge && xoBadge.innerText !== badgeTxt) xoBadge.innerText = badgeTxt;
+                if (xdBadge && xdBadge.innerText !== badgeTxt) xdBadge.innerText = badgeTxt;
+
+                if (currentUser && turnUser === currentUser.username && elapsedSec >= 30 && !data._isSkippingTurn) {
+                    handleTurnTimeoutSkip(data);
+                }
+                if (currentUser && turnUser !== currentUser.username && elapsedSec >= 60 && !data._isKickingPlayer) {
+                    handleInactivityKickOrLoss(data, turnUser);
+                }
+            }, 1000);
+        }
+
+        async function handleTurnTimeoutSkip(roomData) {
+            if (!currentGameRoomId || roomData._isSkippingTurn) return;
+            roomData._isSkippingTurn = true;
+            try {
+                const players = roomData.players || [];
+                const currentIdx = players.indexOf(roomData.turn);
+                const nextUser = players[(currentIdx + 1) % players.length];
+                await db.collection("game_rooms").doc(currentGameRoomId).set({
+                    turn: nextUser,
+                    turnStartedAt: Date.now(),
+                    _isSkippingTurn: false
+                }, { merge: true });
+                showInAppNotifyToast("⏰ Quá 30s chưa đánh", "Đã tự động chuyển lượt cho đối thủ!");
+            } catch (_) {}
+        }
+
+        async function handleInactivityKickOrLoss(roomData, afkUsername) {
+            if (!currentGameRoomId || roomData._isKickingPlayer) return;
+            roomData._isKickingPlayer = true;
+            const players = roomData.players || [];
+            const rId = currentGameRoomId;
+            try {
+                if (players.length <= 2) {
+                    const winner = players.find(p => p !== afkUsername) || currentUser.username;
+                    await db.collection("game_rooms").doc(rId).set({
+                        status: 'ended',
+                        winner: winner,
+                        endReason: `${afkUsername} treo máy quá 1 phút`
+                    }, { merge: true });
+                    await addPencilToUser(winner, 2, `Thắng do ${afkUsername} treo máy`);
+                    const afkKey = afkUsername.toLowerCase();
+                    const snap = await db.collection("pencils").doc(afkKey).get();
+                    const curP = snap.exists ? (Number(snap.data().count) || 0) : 0;
+                    await db.collection("pencils").doc(afkKey).set({ count: Math.max(0, curP - 2) }, { merge: true });
+                    alert(`⏰ ${afkUsername} không hoạt động quá 1 phút! Bạn được xử thắng và nhận +2 Bút Chì Màu!`);
+                } else {
+                    const nextPlayers = players.filter(p => p !== afkUsername);
+                    const currentIdx = players.indexOf(afkUsername);
+                    const nextTurn = nextPlayers[currentIdx % nextPlayers.length];
+                    await db.collection("game_rooms").doc(rId).set({
+                        players: nextPlayers,
+                        turn: nextTurn,
+                        turnStartedAt: Date.now(),
+                        _isKickingPlayer: false
+                    }, { merge: true });
+                    const afkKey = afkUsername.toLowerCase();
+                    const snap = await db.collection("pencils").doc(afkKey).get();
+                    const curP = snap.exists ? (Number(snap.data().count) || 0) : 0;
+                    await db.collection("pencils").doc(afkKey).set({ count: Math.max(0, curP - 2) }, { merge: true });
+                    alert(`⚠️ ${afkUsername} đã bị kick ra khỏi phòng do không hoạt động quá 1 phút (trừ 2 Bút Chì Màu).`);
+                }
+            } catch (_) {}
+        }
+
+        function renderCurrentRoomState() {
+            if (!currentGameRoomData || !currentUser) return;
+            const data = currentGameRoomData;
+            const isXo = data.gameType === 'xo';
+
+            const turnUser = data.turn;
+            const isMyTurn = (turnUser === currentUser.username);
+            const thinkingText = isMyTurn
+                ? "👉 Lượt của bạn! Bạn đang suy nghĩ nước đi..."
+                : `💭 ${turnUser} đang trong game và đang suy nghĩ...`;
+
+            if (isXo) {
+                const label = document.getElementById('xoRoomLabel');
+                const thinkEl = document.getElementById('xoThinkingText');
+                if (label) label.innerText = `Phòng: ${data.players.join(' vs ')}`;
+                if (thinkEl) thinkEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-pink-400 animate-ping"></span><span>${cmtEsc(thinkingText)}</span>`;
+
+                if (Array.isArray(data.board) && data.board.length === XO_TOTAL_CELLS) {
+                    xoBoard = [...data.board];
+                    xoGameActive = (data.status === 'playing');
+                    renderXoBoard(-1);
+                }
+
+                if (data.status === 'ended' && data.winnerResult && !data._handledLocalResult) {
+                    data._handledLocalResult = true;
+                    finishXoRound(data.winnerResult);
+                    return;
+                }
+
+                setXoStatus(
+                    isMyTurn ? "👉 Lượt của bạn! Chạm vào ô để đánh nhé!" : `⏳ Đang tới lượt của ${turnUser}...`,
+                    isMyTurn ? "text-pink-200" : "text-sky-200"
+                );
+            } else {
+                const label = document.getElementById('xdRoomLabel');
+                const thinkEl = document.getElementById('xdThinkingText');
+                if (label) label.innerText = `Phòng Xì Dách (${data.players.length} người) · Bot làm Cái`;
+                if (thinkEl) thinkEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span><span>${data.status === 'waiting' ? '⏳ Đang chờ mọi người ấn Sẵn Sàng...' : cmtEsc(thinkingText)}</span>`;
+
+                const readyBox = document.getElementById('xdReadyCheckBox');
+                const players = data.players || [];
+                const pStates = data.playerStates || {};
+
+                // CHẾ ĐỘ PHÒNG CHỜ SẴN SÀNG: CHƯA BẮT ĐẦU VÁN NẾU CHƯA ĐỦ NGƯỜI ẤN SẴN SÀNG
+                if (data.status === 'waiting') {
+                    xdGameActive = false;
+                    if (readyBox) readyBox.classList.remove('hidden');
+
+                    let readyCount = 0;
+                    const listEl = document.getElementById('xdReadyPlayersList');
+                    if (listEl) {
+                        listEl.innerHTML = players.map(pName => {
+                            const isRdy = Boolean(pStates[pName]?.ready);
+                            if (isRdy) readyCount++;
+                            return `
+                                <div class="flex items-center justify-between bg-black/40 border ${isRdy ? 'border-emerald-300/50' : 'border-white/15'} rounded-xl px-3 py-1.5 text-xs">
+                                    <span class="font-extrabold text-pink-200">${cmtEsc(pName)} ${pName === currentUser.username ? '(Bạn)' : ''}</span>
+                                    <span class="text-[10.5px] font-black ${isRdy ? 'text-emerald-300' : 'text-amber-300 animate-pulse'}">
+                                        ${isRdy ? '✓ Đã sẵn sàng' : '⏳ Chưa sẵn sàng'}
+                                    </span>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+
+                    const badgeEl = document.getElementById('xdReadyCountBadge');
+                    if (badgeEl) badgeEl.innerText = `${readyCount}/${players.length} sẵn sàng`;
+
+                    const amIReady = Boolean(pStates[currentUser.username]?.ready);
+                    const btnEl = document.getElementById('xdReadyToggleBtn');
+                    if (btnEl) {
+                        btnEl.innerText = amIReady ? "✓ Đã Sẵn Sàng (Bấm để hủy)" : "🙋 Bấm Sẵn Sàng Ngay";
+                        btnEl.className = amIReady
+                            ? "w-full bg-white/15 border border-emerald-300/60 text-emerald-200 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition"
+                            : "jelly-btn w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black py-2.5 rounded-xl text-xs shadow-lg active:scale-95 transition";
+                    }
+
+                    updateXiDachUI(false);
+                    setXiDachBanner("⏳ Đang đợi tất cả thành viên bấm Sẵn Sàng để bắt đầu chia bài...", "text-amber-200", "bg-black/40 border-amber-300/40", XD_SVG.clock);
+                } else {
+                    // TẤT CẢ ĐÃ SẴN SÀNG -> BẮT ĐẦU CHƠI CHÍNH THỨC
+                    if (readyBox) readyBox.classList.add('hidden');
+                    if (!xdGameActive && data.status === 'playing') {
+                        xdGameActive = true;
+                        xdDeck = Array.isArray(data.deck) && data.deck.length ? data.deck : buildShuffledXdDeck();
+                        xdPlayerHand = Array.isArray(pStates[currentUser.username]?.hand) ? pStates[currentUser.username].hand : [];
+                        xdBotHand = Array.isArray(data.botHand) ? data.botHand : [];
+                        xdPlayerHasStood = Boolean(pStates[currentUser.username]?.hasStood);
+                        updateXiDachUI(false);
+                        setXiDachBanner(
+                            data.turn === currentUser.username
+                                ? "🎉 Tất cả đã sẵn sàng! Lượt của bạn bốc bài nhé!"
+                                : `🎉 Đã vào ván! Đang tới lượt của ${data.turn}...`,
+                            "text-pink-100",
+                            "bg-black/35 border-pink-200/30",
+                            XD_SVG.sparkle
+                        );
+                    }
+                }
+            }
+        }
+
+        // Bấm Sẵn Sàng trong phòng Xì Dách -> Khi 100% thành viên sẵn sàng sẽ tự chuyển sang 'playing'
+        async function toggleXiDachReady() {
+            if (!currentGameRoomId || !currentGameRoomData || !currentUser) return;
+            const data = currentGameRoomData;
+            if (data.status !== 'waiting') return;
+
+            const uName = currentUser.username;
+            const pStates = data.playerStates || {};
+            const nextReady = !Boolean(pStates[uName]?.ready);
+
+            const updatedStates = {
+                ...pStates,
+                [uName]: { ...(pStates[uName] || {}), ready: nextReady }
+            };
+
+            const players = data.players || [];
+            const everyoneReady = players.length >= 2 && players.every(p => Boolean(updatedStates[p]?.ready));
+
+            try {
+                await db.collection("game_rooms").doc(currentGameRoomId).set({
+                    playerStates: updatedStates,
+                    ...(everyoneReady ? {
+                        status: 'playing',
+                        turn: players[0],
+                        turnStartedAt: Date.now()
+                    } : {})
+                }, { merge: true });
+
+                playCheerfulClickSound();
+                if (everyoneReady) {
+                    playPaletteTingSound();
+                }
+            } catch (err) {
+                console.error("Lỗi cập nhật sẵn sàng:", err);
+            }
+        }
+
+        // Rời phòng / Nghỉ phòng (Tự động xóa sạch lịch sử chat của phòng đó)
+        async function leaveCurrentGameRoom() {
+            if (!currentGameRoomId) return;
+            if (!confirm("Bạn có chắc chắn muốn nghỉ phòng không? (Phòng chơi và tin nhắn chat sẽ kết thúc)")) return;
+
+            const rId = currentGameRoomId;
+            currentGameRoomId = null;
+            currentGameRoomData = null;
+            if (gameRoomUnsub) { gameRoomUnsub(); gameRoomUnsub = null; }
+            if (roomChatUnsub) { roomChatUnsub(); roomChatUnsub = null; }
+            if (roomTurnTimerInterval) { clearInterval(roomTurnTimerInterval); roomTurnTimerInterval = null; }
+            setBgVisualEffectsPaused(false);
+
+            document.getElementById('xoRoomInfoBar')?.classList.add('hidden');
+            document.getElementById('xoThinkingStatusBar')?.classList.add('hidden');
+            document.getElementById('xdRoomInfoBar')?.classList.add('hidden');
+            document.getElementById('xdThinkingStatusBar')?.classList.add('hidden');
+            document.getElementById('xdReadyCheckBox')?.classList.add('hidden');
+            document.getElementById('xdMultiplayerOthersBox')?.classList.add('hidden');
+
+            try {
+                // Xóa phòng và toàn bộ tin nhắn chat trong phòng đó
+                await db.collection("game_rooms").doc(rId).delete();
+                const chatSnaps = await db.collection("game_rooms").doc(rId).collection("chat").get();
+                const batch = db.batch();
+                chatSnaps.forEach(d => batch.delete(d.ref));
+                await batch.commit();
+            } catch (_) {}
+
+            closeRoomChatModal();
+            showInAppNotifyToast("Đã nghỉ phòng", "Đã rời phòng chơi và dọn sạch phòng.");
+        }
+
+        function handleRoomClosedByOther() {
+            if (!currentGameRoomId) return;
+            currentGameRoomId = null;
+            currentGameRoomData = null;
+            if (gameRoomUnsub) { gameRoomUnsub(); gameRoomUnsub = null; }
+            if (roomChatUnsub) { roomChatUnsub(); roomChatUnsub = null; }
+
+            document.getElementById('xoRoomInfoBar')?.classList.add('hidden');
+            document.getElementById('xdRoomInfoBar')?.classList.add('hidden');
+            closeRoomChatModal();
+            alert("Bạn chơi cùng đã nghỉ phòng! Phòng chơi kết thúc.");
+        }
+
+        // ---------- Khung Chat Realtime Trong Phòng ----------
+        function openRoomChatModal() {
+            if (!currentGameRoomId) {
+                alert("Bạn cần ở trong một phòng ghép đôi để trò chuyện!");
+                return;
+            }
+            document.getElementById('roomChatModal')?.classList.remove('hidden');
+            document.getElementById('roomChatUnreadBadge')?.classList.add('hidden');
+            document.getElementById('xdRoomChatUnreadBadge')?.classList.add('hidden');
+            document.getElementById('roomChatInput')?.focus();
+            playCheerfulClickSound();
+        }
+
+        function closeRoomChatModal() {
+            document.getElementById('roomChatModal')?.classList.add('hidden');
+        }
+
+        function listenToRoomChat(roomId) {
+            const listEl = document.getElementById('roomChatMessagesList');
+            if (roomChatUnsub) roomChatUnsub();
+
+            roomChatUnsub = db.collection("game_rooms").doc(roomId).collection("chat")
+                .orderBy("createdAt", "asc")
+                .onSnapshot(snap => {
+                    if (!listEl) return;
+                    listEl.innerHTML = '';
+                    snap.forEach(doc => {
+                        const m = doc.data();
+                        const isMe = (m.username === currentUser?.username);
+                        const bubble = document.createElement('div');
+                        bubble.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-0.5`;
+                        bubble.innerHTML = `
+                            <span class="text-[9.5px] ${isMe ? 'text-pink-300' : 'text-sky-300'} font-bold">${cmtEsc(m.username)}</span>
+                            <div class="${isMe ? 'bg-pink-500/35 border-pink-300/50 text-white rounded-br-none' : 'bg-white/10 border-white/15 text-sky-100 rounded-bl-none'} border px-3 py-1.5 rounded-2xl max-w-[85%] break-words leading-relaxed">
+                                ${cmtEsc(m.text)}
+                            </div>
+                        `;
+                        listEl.appendChild(bubble);
+                    });
+                    listEl.scrollTop = listEl.scrollHeight;
+
+                    // Nếu khung chat đang đóng thì hiện chấm đỏ thông báo có tin mới
+                    if (document.getElementById('roomChatModal')?.classList.contains('hidden') && snap.docs.length > 0) {
+                        document.getElementById('roomChatUnreadBadge')?.classList.remove('hidden');
+                        document.getElementById('xdRoomChatUnreadBadge')?.classList.remove('hidden');
+                    }
+                }, () => {});
+        }
+
+        async function sendRoomChatMessage() {
+            if (!currentGameRoomId || !currentUser) return;
+            const input = document.getElementById('roomChatInput');
+            const text = (input?.value || '').trim();
+            if (!text) return;
+
+            try {
+                input.value = '';
+                await db.collection("game_rooms").doc(currentGameRoomId).collection("chat").add({
+                    username: currentUser.username,
+                    text: text,
+                    createdAt: Date.now()
+                });
+                playCheerfulClickSound();
+            } catch (_) {}
         }
 
         function openLuckyWheelModal() {
