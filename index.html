@@ -14618,51 +14618,57 @@
             const candidates = getSmartXoCandidates(board);
             if (candidates.length === 0) return -1;
 
+            // 1. Thấy nước thắng ngay (đủ 4 ô O): 95% sẽ đánh
             for (const idx of candidates) {
                 board[idx] = 'O';
                 const won = checkXoWinner(board)?.winner === 'O';
                 board[idx] = '';
-                if (won) return idx;
+                if (won && Math.random() < 0.95) return idx;
             }
 
+            // 2. Thấy bạn sắp thắng ngay (đủ 3 ô X): ~82% sẽ nhận ra để chặn
             for (const idx of candidates) {
                 board[idx] = 'X';
                 const xWins = checkXoWinner(board)?.winner === 'X';
                 board[idx] = '';
-                if (xWins) return idx;
+                if (xWins && Math.random() < 0.82) return idx;
             }
 
-            const xImmediateThreats = countWinningMovesFor(board, 'X');
-            if (xImmediateThreats === 0) {
-                for (const idx of candidates) {
-                    board[idx] = 'O';
-                    const unstoppable = hasOpenThreePattern(board, 'O') || countWinningMovesFor(board, 'O') >= 2;
-                    board[idx] = '';
-                    if (unstoppable) return idx;
+            // 3. Đánh theo cảm giác người bình thường (nhìn 1 bước + ngẫu nhiên nhẹ, không dùng thuật toán sâu)
+            const scored = candidates.map(idx => {
+                const r = Math.floor(idx / XO_SIZE);
+                const c = idx % XO_SIZE;
+                let pts = (6 - (Math.abs(r - 3) + Math.abs(c - 3))) * 3;
+
+                for (const combo of XO_WIN_COMBOS) {
+                    if (!combo.includes(idx)) continue;
+                    let oCnt = 0, xCnt = 0;
+                    for (let k = 0; k < 4; k++) {
+                        if (board[combo[k]] === 'O') oCnt++;
+                        else if (board[combo[k]] === 'X') xCnt++;
+                    }
+                    if (xCnt === 0) {
+                        if (oCnt === 2) pts += 65;
+                        else if (oCnt === 1) pts += 20;
+                        else pts += 5;
+                    } else if (oCnt === 0) {
+                        if (xCnt === 2) pts += 48;
+                        else if (xCnt === 1) pts += 12;
+                    }
                 }
-            }
 
-            for (const idx of candidates) {
-                board[idx] = 'X';
-                const xDanger = hasOpenThreePattern(board, 'X') || countWinningMovesFor(board, 'X') >= 2;
-                board[idx] = '';
-                if (xDanger) return idx;
-            }
+                // Thêm độ dao động tự nhiên như người thật
+                pts += Math.random() * 55;
+                return { idx, pts };
+            });
 
-            let bestMove = candidates[0];
-            let bestScore = -Infinity;
-            const searchDepth = candidates.length <= 8 ? 4 : 3;
+            scored.sort((a, b) => b.pts - a.pts);
 
-            for (const idx of candidates) {
-                board[idx] = 'O';
-                const score = alphabetaXo(board, searchDepth, -Infinity, Infinity, false);
-                board[idx] = '';
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMove = idx;
-                }
-            }
-            return bestMove;
+            // Chọn ngẫu nhiên trong top 3 nước hợp lý nhất
+            const pickRoll = Math.random();
+            if (scored.length >= 3 && pickRoll > 0.90) return scored[2].idx;
+            if (scored.length >= 2 && pickRoll > 0.68) return scored[1].idx;
+            return scored[0].idx;
         }
 
         function handleXoCellClick(idx) {
