@@ -6470,11 +6470,18 @@
 
             const notifyOwnerForActivity = (act) => {
                 const cat = getActivityCategory(act);
-                const isCardPickAct = (act.title || '').toLowerCase().includes('thẻ') || (act.title || '').toLowerCase().includes('bốc');
+                const actTitleLow = (act.title || '').toLowerCase();
+                const isCardPickAct = actTitleLow.includes('thẻ') || actTitleLow.includes('bốc');
+                const isXoAct = actTitleLow.includes('x và o') || actTitleLow.includes('caro');
+                const isViaAct = actTitleLow.includes('cược màu') || actTitleLow.includes('lấy vía');
+                const miniPrefix = isXoAct ? '✏️ X và O'
+                    : isViaAct ? '🎲 Cược Màu'
+                    : isCardPickAct ? '🃏 Bốc bài'
+                    : '🎡 Vòng xoay';
                 const prefixIcon = cat === 'fail' ? '❌ Lỗi ảnh'
                     : cat === 'comment' ? '💬 Cmt mới'
                     : cat === 'link' ? '🔓 Mở link'
-                    : cat === 'wheel' ? (isCardPickAct ? '🃏 Bốc bài' : '🎡 Vòng xoay')
+                    : cat === 'wheel' ? miniPrefix
                     : '✨ Hoạt động mới';
                 const toastTitle = `${prefixIcon}: ${act.username}`;
                 showInAppNotifyToast(toastTitle, `${act.title}${act.details ? ` · ${act.details}` : ''}`);
@@ -7919,7 +7926,7 @@
             if (t.includes('thất bại') || t.includes('từ chối')) return 'fail';
             if (t.includes('mở khóa') || t.includes('đổi 10 chì') || t.includes('link') || t.includes('lấy link')) return 'link';
             if (t.includes('bình luận') || t.includes('trả lời') || t.includes('cmt') || t.includes('feedback')) return 'comment';
-            if (t.includes('vòng xoay') || t.includes('thẻ màu may mắn') || t.includes('bốc bài') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống')) return 'wheel';
+            if (t.includes('vòng xoay') || t.includes('thẻ màu may mắn') || t.includes('bốc bài') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống') || t.includes('x và o') || t.includes('cược màu') || t.includes('lấy vía')) return 'wheel';
             return 'other';
         }
 
@@ -8313,7 +8320,7 @@
                         💬 Cmt (${cmtCount})
                     </button>
                     <button type="button" onclick="setActivitySubFilter('wheel')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'wheel' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow' : 'bg-white/5 text-sky-200/70 hover:bg-white/10'}">
-                        🎡 Vòng Xoay &amp; Bốc Bài (${wheelCount})
+                        🎮 Mini Game (${wheelCount})
                     </button>
                     <button type="button" onclick="setActivitySubFilter('fail')" class="px-2.5 py-1 rounded-xl text-[10.5px] font-extrabold whitespace-nowrap transition active:scale-95 ${activeActivitySubFilter === 'fail' ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow' : 'bg-white/5 text-red-200/80 hover:bg-white/10'}">
                         ❌ Thất Bại (${failCount})
@@ -8366,11 +8373,23 @@
                         badgeHtml = '<span class="text-[9px] bg-pink-500/25 text-pink-300 border border-pink-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">💬 Cmt</span>';
                         borderClass = 'border-pink-300/30 bg-pink-500/10';
                     } else if (cat === 'wheel') {
-                        const isCardPick = (act.title || '').toLowerCase().includes('thẻ') || (act.title || '').toLowerCase().includes('bốc');
-                        badgeHtml = isCardPick
-                            ? '<span class="text-[9px] bg-fuchsia-500/25 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🃏 Bốc Bài</span>'
-                            : '<span class="text-[9px] bg-amber-500/25 text-amber-300 border border-amber-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🎡 Vòng Xoay</span>';
-                        borderClass = 'border-amber-300/30 bg-amber-500/10';
+                        const actLow = (act.title || '').toLowerCase();
+                        const isCardPick = actLow.includes('thẻ') || actLow.includes('bốc');
+                        const isXoGame = actLow.includes('x và o') || actLow.includes('caro');
+                        const isViaGame = actLow.includes('cược màu') || actLow.includes('lấy vía');
+                        if (isXoGame) {
+                            badgeHtml = '<span class="text-[9px] bg-sky-500/25 text-sky-200 border border-sky-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">✏️ X và O</span>';
+                            borderClass = 'border-sky-300/30 bg-sky-500/10';
+                        } else if (isViaGame) {
+                            badgeHtml = '<span class="text-[9px] bg-rose-500/25 text-rose-200 border border-rose-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🎲 Cược Màu</span>';
+                            borderClass = 'border-rose-300/30 bg-rose-500/10';
+                        } else if (isCardPick) {
+                            badgeHtml = '<span class="text-[9px] bg-fuchsia-500/25 text-fuchsia-200 border border-fuchsia-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🃏 Bốc Bài</span>';
+                            borderClass = 'border-fuchsia-300/30 bg-fuchsia-500/10';
+                        } else {
+                            badgeHtml = '<span class="text-[9px] bg-amber-500/25 text-amber-300 border border-amber-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🎡 Vòng Xoay</span>';
+                            borderClass = 'border-amber-300/30 bg-amber-500/10';
+                        }
                     } else if (cat === 'fail') {
                         badgeHtml = '<span class="text-[9px] bg-red-500/25 text-red-300 border border-red-400/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">❌ Thất Bại</span>';
                         borderClass = 'border-red-400/35 bg-red-500/10';
@@ -8468,7 +8487,7 @@
             const labels = {
                 link: "Mở Link",
                 comment: "Cmt",
-                wheel: "Vòng Xoay & Bốc Bài",
+                wheel: "Mini Game",
                 fail: "Thất Bại"
             };
             const targetActs = memberActivities.filter(a => getActivityCategory(a) === category);
@@ -14714,6 +14733,7 @@
                 await addPencilToUser(username, 1, "", true);
                 playJoyfulWinSound();
                 logMemberActivity("Cùng vẽ X và O (7×7)", "Thắng Bot (+1 Bút Chì Màu)", "wheel");
+                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thắng Bot (+1 Bút Chì Màu)", 3);
             } else if (result.winner === 'O') {
                 xoSessionLosses++;
                 setXoStatus("😢 Chia buồn! Bot vừa nối 4 ô O trước rồi...", "text-rose-300");
@@ -14738,6 +14758,7 @@
                 }
                 playSadDeflateSound();
                 logMemberActivity("Cùng vẽ X và O (7×7)", "Thua Bot (-1 Bút Chì Màu)", "wheel");
+                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thua Bot (-1 Bút Chì Màu)", 3);
             } else {
                 setXoStatus("🤝 Hòa nhau! Bàn 49 ô đã kín hết rồi!", "text-sky-200");
                 if (outcomeCard && outcomeTitle && outcomeDesc) {
@@ -14748,6 +14769,8 @@
                     outcomeDesc.innerText = "Bàn cờ 7×7 đã kín chỗ mà bất phân thắng bại, số Bút Chì Màu của bạn vẫn giữ nguyên nhé!";
                 }
                 playEmptyCardNeutralSound();
+                logMemberActivity("Cùng vẽ X và O (7×7)", "Hòa Bot (0 Bút Chì Màu)", "wheel");
+                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Hòa Bot (0 Bút Chì Màu)", 3);
             }
 
             updateXoHeaderUI();
@@ -15167,11 +15190,16 @@
                         }
                     }
 
-                    logMemberActivity(
-                        "Cược Màu Lấy Vía",
-                        `Cược ${totalBet} chì · Kết quả: ${netDelta > 0 ? `+${netDelta}` : netDelta} chì`,
-                        "wheel"
-                    );
+                    const betSummary = viaBets
+                        .map((b, idx) => b > 0 ? `${(cuocMauFaces[idx] || DEFAULT_CUOC_MAU_FACES[idx]).name}: ${b} chì` : '')
+                        .filter(Boolean)
+                        .join(', ');
+                    const rollSummary = finalRoll
+                        .map(f => (cuocMauFaces[f] || DEFAULT_CUOC_MAU_FACES[f]).name)
+                        .join(' · ');
+                    const viaDetailText = `Đặt ${totalBet} chì (${betSummary}) · Xúc xắc: ${rollSummary} · Kết quả: ${netDelta > 0 ? `+${netDelta}` : netDelta} chì`;
+                    logMemberActivity("Cược Màu Lấy Vía", viaDetailText, "wheel");
+                    sendPhonePushToOwner(`🎲 Cược Màu Lấy Vía: ${username}`, viaDetailText, 3);
                 } catch (err) {
                     console.error("Lỗi tổng kết Cược Màu Lấy Vía:", err);
                 } finally {
