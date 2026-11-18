@@ -2566,9 +2566,9 @@
     <!-- MODAL GAME: CÙNG VẼ X VÀ O (7x7 NỐI 4) -->
     <div id="xoGameModal" class="fixed inset-0 bg-[#050814]/88 z-50 hidden flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
         <div class="bg-[#131b3a] border-2 border-pink-200/55 p-3.5 sm:p-5 rounded-3xl max-w-sm sm:max-w-md w-full text-center shadow-[0_0_40px_rgba(244,114,182,0.35)] relative space-y-2.5 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
-            <!-- Nút Thỏ & Nút Đóng luôn ghim cố định ở góc trên đỉnh -->
-            <div class="sticky top-0 z-30 flex items-center justify-between pb-1 -mt-1 pointer-events-none">
-                <button type="button" onclick="openXoRulesModal()" class="pointer-events-auto w-9 h-9 rounded-full bg-sky-400/20 hover:bg-sky-400/35 border border-sky-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.45)] active:scale-90 transition" title="Bấm xem hướng dẫn cách chơi X và O">
+            <!-- Hàng nút Thỏ, Chuông, Ghép Đôi & Đóng (trôi tự nhiên theo trang khi lướt) -->
+            <div class="relative z-20 flex items-center justify-between pb-1 -mt-1">
+                <button type="button" onclick="openXoRulesModal()" class="w-9 h-9 rounded-full bg-sky-400/20 hover:bg-sky-400/35 border border-sky-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.45)] active:scale-90 transition" title="Bấm xem hướng dẫn cách chơi X và O">
                     <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
                         <ellipse cx="22" cy="17" rx="5.5" ry="14" transform="rotate(-10 22 17)" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2.2"/>
                         <ellipse cx="22" cy="18" rx="2.8" ry="9" transform="rotate(-10 22 18)" fill="#BAE6FD"/>
@@ -2713,32 +2713,28 @@
     <!-- MODAL GAME: CƯỢC MÀU LẤY VÍA (BẦU CUA 4 MẶT PASTEL XINH YÊU) -->
     <div id="cuocMauModal" class="fixed inset-0 bg-[#050814]/88 z-50 hidden flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
         <div class="bg-[#131b3a] border-2 border-pink-200/60 p-3.5 sm:p-5 rounded-3xl max-w-sm sm:max-w-md w-full text-center shadow-[0_0_45px_rgba(244,114,182,0.38)] relative space-y-2.5 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
-            <!-- Nút Thoát Ghim Cố Định Trên Cùng -->
-            <div class="sticky top-0 z-30 flex items-center justify-between pb-1 -mt-1 pointer-events-none">
-                <div></div>
-                <button type="button" onclick="closeCuocMauModal()" class="pointer-events-auto w-8 h-8 rounded-full bg-black/60 hover:bg-rose-500 border border-white/20 text-sky-200 hover:text-white flex items-center justify-center font-black transition" title="Đóng">✕</button>
+            <!-- Hàng nút Thỏ Hồng & Đóng (trôi tự nhiên theo trang khi lướt) -->
+            <div class="relative z-20 flex items-center justify-between pb-1 -mt-1">
+                <button type="button" onclick="openViaRulesModal()" class="w-9 h-9 rounded-full bg-pink-400/20 hover:bg-pink-400/35 border border-pink-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(244,114,182,0.45)] active:scale-90 transition" title="Bấm xem Thỏ Hồng hướng dẫn Cược Màu Lấy Vía">
+                    <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
+                        <ellipse cx="22" cy="17" rx="5.5" ry="14" transform="rotate(-10 22 17)" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
+                        <ellipse cx="22" cy="18" rx="2.8" ry="9" transform="rotate(-10 22 18)" fill="#FDA4AF"/>
+                        <ellipse cx="42" cy="17" rx="5.5" ry="14" transform="rotate(10 42 17)" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
+                        <ellipse cx="42" cy="18" rx="2.8" ry="9" transform="rotate(10 42 18)" fill="#FDA4AF"/>
+                        <ellipse cx="32" cy="39" rx="19" ry="16" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
+                        <ellipse cx="20" cy="42" rx="3.8" ry="2.2" fill="#FB7185" opacity="0.75"/>
+                        <ellipse cx="44" cy="42" rx="3.8" ry="2.2" fill="#FB7185" opacity="0.75"/>
+                        <circle cx="24" cy="37" r="2.5" fill="#831843"/>
+                        <circle cx="24.7" cy="36.2" r="0.9" fill="#fff"/>
+                        <circle cx="40" cy="37" r="2.5" fill="#831843"/>
+                        <circle cx="40.7" cy="36.2" r="0.9" fill="#fff"/>
+                        <path d="M28 44c1.5 1.8 3 1.8 4 0c1 1.8 2.5 1.8 4 0" stroke="#831843" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="51" cy="22" r="7" fill="#F472B6" stroke="#FFE4EE" stroke-width="1.5"/>
+                        <text x="51" y="25.5" text-anchor="middle" fill="#fff" font-size="10" font-weight="900">?</text>
+                    </svg>
+                </button>
+                <button type="button" onclick="closeCuocMauModal()" class="w-8 h-8 rounded-full bg-black/60 hover:bg-rose-500 border border-white/20 text-sky-200 hover:text-white flex items-center justify-center font-black transition" title="Đóng">✕</button>
             </div>
-            <!-- Icon Thỏ Hồng ở góc trên bên trái bấm xem hướng dẫn -->
-            <button type="button" onclick="openViaRulesModal()" class="absolute top-3 left-3.5 w-9 h-9 rounded-full bg-pink-400/20 hover:bg-pink-400/35 border border-pink-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(244,114,182,0.45)] active:scale-90 transition" title="Bấm xem Thỏ Hồng hướng dẫn Cược Màu Lấy Vía">
-                <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
-                    <ellipse cx="22" cy="17" rx="5.5" ry="14" transform="rotate(-10 22 17)" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
-                    <ellipse cx="22" cy="18" rx="2.8" ry="9" transform="rotate(-10 22 18)" fill="#FDA4AF"/>
-                    <ellipse cx="42" cy="17" rx="5.5" ry="14" transform="rotate(10 42 17)" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
-                    <ellipse cx="42" cy="18" rx="2.8" ry="9" transform="rotate(10 42 18)" fill="#FDA4AF"/>
-                    <ellipse cx="32" cy="39" rx="19" ry="16" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
-                    <ellipse cx="20" cy="42" rx="3.8" ry="2.2" fill="#FB7185" opacity="0.75"/>
-                    <ellipse cx="44" cy="42" rx="3.8" ry="2.2" fill="#FB7185" opacity="0.75"/>
-                    <circle cx="24" cy="37" r="2.5" fill="#831843"/>
-                    <circle cx="24.7" cy="36.2" r="0.9" fill="#fff"/>
-                    <circle cx="40" cy="37" r="2.5" fill="#831843"/>
-                    <circle cx="40.7" cy="36.2" r="0.9" fill="#fff"/>
-                    <path d="M28 44c1.5 1.8 3 1.8 4 0c1 1.8 2.5 1.8 4 0" stroke="#831843" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="51" cy="22" r="7" fill="#F472B6" stroke="#FFE4EE" stroke-width="1.5"/>
-                    <text x="51" y="25.5" text-anchor="middle" fill="#fff" font-size="10" font-weight="900">?</text>
-                </svg>
-            </button>
-
-            <button type="button" onclick="closeCuocMauModal()" class="text-sky-200 hover:text-white text-xl p-1 font-bold absolute top-3 right-3.5" title="Đóng">✕</button>
 
             <div class="px-9">
                 <span class="text-[10px] bg-pink-400/20 text-pink-200 border border-pink-200/40 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Bầu Cua 4 Mặt · Lấy Vía</span>
@@ -2850,9 +2846,9 @@
     <!-- MODAL GAME: XÌ DÁCH HÊN XUI (BÀI TÂY PASTEL ĐẤU BOT - 100% ICON SVG CODE) -->
     <div id="xiDachModal" class="fixed inset-0 bg-[#050814]/88 z-50 hidden flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
         <div class="bg-[#131b3a] border-2 border-pink-200/60 p-3.5 sm:p-5 rounded-3xl max-w-sm sm:max-w-md w-full text-center shadow-[0_0_45px_rgba(244,114,182,0.38)] relative space-y-2.5 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
-            <!-- Nút Thỏ & Nút Đóng luôn ghim cố định ở góc trên đỉnh -->
-            <div class="sticky top-0 z-30 flex items-center justify-between pb-1 -mt-1 pointer-events-none">
-                <button type="button" onclick="openXiDachRulesModal()" class="pointer-events-auto w-9 h-9 rounded-full bg-pink-400/20 hover:bg-pink-400/35 border border-pink-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(244,114,182,0.45)] active:scale-90 transition" title="Bấm xem Thỏ Hồng hướng dẫn luật Xì Dách">
+            <!-- Hàng nút Thỏ, Chuông, Ghép Đôi & Đóng (trôi tự nhiên theo trang khi lướt) -->
+            <div class="relative z-20 flex items-center justify-between pb-1 -mt-1">
+                <button type="button" onclick="openXiDachRulesModal()" class="w-9 h-9 rounded-full bg-pink-400/20 hover:bg-pink-400/35 border border-pink-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(244,114,182,0.45)] active:scale-90 transition" title="Bấm xem Thỏ Hồng hướng dẫn luật Xì Dách">
                     <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
                         <ellipse cx="22" cy="17" rx="5.5" ry="14" transform="rotate(-10 22 17)" fill="#FFE4EE" stroke="#F472B6" stroke-width="2.2"/>
                         <ellipse cx="22" cy="18" rx="2.8" ry="9" transform="rotate(-10 22 18)" fill="#FDA4AF"/>
@@ -2873,7 +2869,7 @@
                 <div class="flex items-center gap-1.5 pointer-events-auto">
                     <!-- Nút Chuông nhận thông báo ghép đôi -->
                     <button type="button" id="xdInviteBellBtn" onclick="toggleMatchInviteBell()" class="w-8 h-8 rounded-full bg-purple-500/20 hover:bg-purple-500/35 border border-purple-300/60 text-purple-200 flex items-center justify-center transition active:scale-90" title="Bật/Tắt chuông nhận lời mời ghép đôi">
-                        <svg class="w-4 h-4 animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                     </button>
                     <!-- Nút Ghép Đôi Xì Dách (2-4 người) -->
                     <button type="button" id="xdMatchmakeBtn" onclick="openMatchmakingModal('xidach')" class="jelly-btn bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-[11px] px-2.5 py-1.5 rounded-full border border-purple-200/60 shadow flex items-center gap-1 active:scale-95 transition" title="Ghép phòng chơi chung 2-4 người">
@@ -2960,8 +2956,8 @@
 
             <!-- BÀN BÀI XÌ DÁCH XINH YÊU -->
             <div class="xd-table-felt rounded-3xl p-3 space-y-2.5">
-                <!-- Bài của Bot cute kawaii -->
-                <div class="space-y-1.5">
+                <!-- Bài của Bot cute kawaii (chỉ hiện khi chơi 1 mình với Bot) -->
+                <div id="xdSoloBotSection" class="space-y-1.5">
                     <div class="flex items-center justify-between px-1 text-[11px] font-extrabold">
                         <span class="text-sky-200 flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-sky-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="4" fill="#1e3a8a" fill-opacity="0.45"/><path d="M12 7V3"/><circle cx="12" cy="2.5" r="1" fill="currentColor"/><circle cx="9.5" cy="13" r="1.2" fill="#BAE6FD"/><circle cx="14.5" cy="13" r="1.2" fill="#BAE6FD"/><path d="M9.5 16c1.5 1 3.5 1 5 0"/></svg>
@@ -3056,7 +3052,7 @@
     <!-- MODAL GHÉP ĐÔI REALTIME (MỜI NGƯỜI ĐANG ONLINE / BẠN BÈ) -->
     <div id="matchmakingModal" class="fixed inset-0 bg-[#050814]/88 z-[75] hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
         <div class="bg-[#131b3a] border-2 border-pink-300/60 p-4 sm:p-5 rounded-3xl max-w-sm w-full text-left shadow-[0_0_40px_rgba(244,114,182,0.4)] relative space-y-3 my-auto max-h-[90vh] custom-scroll">
-            <div class="sticky top-0 z-20 flex items-center justify-between bg-[#131b3a] border-b border-white/10 pb-2">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
                 <div>
                     <h3 id="matchmakingTitle" class="text-sm font-black pastel-fast-wave">Ghép Đôi Chơi Chung</h3>
                     <p id="matchmakingSubtitle" class="text-[10px] text-sky-200/70">Mời người đang online cùng vào phòng</p>
@@ -3064,7 +3060,7 @@
                 <div class="flex items-center gap-1.5">
                     <!-- Nút Chuông Bật/Tắt Trong Modal -->
                     <button type="button" id="modalInviteBellBtn" onclick="toggleMatchInviteBell()" class="w-8 h-8 rounded-full bg-pink-500/20 hover:bg-pink-500/35 border border-pink-300/60 text-pink-200 flex items-center justify-center transition active:scale-90" title="Bật/Tắt nhận lời mời">
-                        <svg class="w-4 h-4 animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                     </button>
                     <button type="button" onclick="closeMatchmakingModal()" class="w-8 h-8 rounded-full bg-black/60 hover:bg-rose-500 border border-white/20 text-sky-200 hover:text-white flex items-center justify-center font-black transition">✕</button>
                 </div>
@@ -6947,10 +6943,14 @@
                 const cat = getActivityCategory(act);
                 const actTitleLow = (act.title || '').toLowerCase();
                 const isCardPickAct = actTitleLow.includes('thẻ') || actTitleLow.includes('bốc');
+                const isMatchOkAct = actTitleLow.includes('ghép đôi thành công');
+                const isMatchFailAct = actTitleLow.includes('ghép đôi thất bại');
                 const isXoAct = actTitleLow.includes('x và o') || actTitleLow.includes('caro');
                 const isViaAct = actTitleLow.includes('cược màu') || actTitleLow.includes('lấy vía');
                 const isXdAct = actTitleLow.includes('xì dách') || actTitleLow.includes('xi dach');
-                const miniPrefix = isXoAct ? '✏️ X và O'
+                const miniPrefix = isMatchOkAct ? '🤝 Ghép đôi'
+                    : isMatchFailAct ? '💔 Ghép thất bại'
+                    : isXoAct ? '✏️ X và O'
                     : isViaAct ? '🎲 Cược Màu'
                     : isXdAct ? '🃏 Xì Dách'
                     : isCardPickAct ? '🃏 Bốc bài'
@@ -8403,7 +8403,7 @@
             if (t.includes('thất bại') || t.includes('từ chối')) return 'fail';
             if (t.includes('mở khóa') || t.includes('đổi 10 chì') || t.includes('link') || t.includes('lấy link')) return 'link';
             if (t.includes('bình luận') || t.includes('trả lời') || t.includes('cmt') || t.includes('feedback')) return 'comment';
-            if (t.includes('vòng xoay') || t.includes('thẻ màu may mắn') || t.includes('bốc bài') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống') || t.includes('x và o') || t.includes('cược màu') || t.includes('lấy vía') || t.includes('xì dách') || t.includes('xi dach')) return 'wheel';
+            if (t.includes('vòng xoay') || t.includes('thẻ màu may mắn') || t.includes('bốc bài') || t.includes('quay') || t.includes('trúng') || t.includes('ô trống') || t.includes('x và o') || t.includes('cược màu') || t.includes('lấy vía') || t.includes('xì dách') || t.includes('xi dach') || t.includes('ghép đôi')) return 'wheel';
             return 'other';
         }
 
@@ -8852,10 +8852,18 @@
                     } else if (cat === 'wheel') {
                         const actLow = (act.title || '').toLowerCase();
                         const isCardPick = actLow.includes('thẻ') || actLow.includes('bốc');
+                        const isMatchOk = actLow.includes('ghép đôi thành công');
+                        const isMatchFail = actLow.includes('ghép đôi thất bại');
                         const isXoGame = actLow.includes('x và o') || actLow.includes('caro');
                         const isViaGame = actLow.includes('cược màu') || actLow.includes('lấy vía');
                         const isXdGame = actLow.includes('xì dách') || actLow.includes('xi dach');
-                        if (isXoGame) {
+                        if (isMatchOk) {
+                            badgeHtml = '<span class="text-[9px] bg-emerald-500/25 text-emerald-200 border border-emerald-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">🤝 Ghép Thành Công</span>';
+                            borderClass = 'border-emerald-300/35 bg-emerald-500/10';
+                        } else if (isMatchFail) {
+                            badgeHtml = '<span class="text-[9px] bg-rose-500/25 text-rose-200 border border-rose-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">💔 Ghép Thất Bại</span>';
+                            borderClass = 'border-rose-300/35 bg-rose-500/10';
+                        } else if (isXoGame) {
                             badgeHtml = '<span class="text-[9px] bg-sky-500/25 text-sky-200 border border-sky-300/40 px-1.5 py-0.2 rounded-full font-bold shrink-0">✏️ X và O</span>';
                             borderClass = 'border-sky-300/30 bg-sky-500/10';
                         } else if (isXdGame) {
@@ -14956,7 +14964,25 @@
             document.getElementById('xoGameModal')?.classList.add('hidden');
         }
 
-        function startNewXoRound() {
+        async function startNewXoRound() {
+            if (currentGameRoomId && currentGameRoomData?.gameType === 'xo') {
+                if (currentGameRoomData.status === 'playing') {
+                    alert("Ván cờ trong phòng đang diễn ra, hãy chơi hết ván rồi mới vẽ ván mới nhé!");
+                    return;
+                }
+                const players = currentGameRoomData.players || [];
+                const nextHostFirst = players[(Number(currentGameRoomData.roundNumber) || 1) % Math.max(1, players.length)] || players[0];
+                await db.collection("game_rooms").doc(currentGameRoomId).set({
+                    board: Array(XO_TOTAL_CELLS).fill(''),
+                    status: 'playing',
+                    winnerResult: null,
+                    turn: nextHostFirst,
+                    turnStartedAt: Date.now(),
+                    roundNumber: (Number(currentGameRoomData.roundNumber) || 1) + 1
+                }, { merge: true });
+                document.getElementById('xoOutcomeCard')?.classList.add('hidden');
+                return;
+            }
             if (xoGameActive && xoBoard.some(v => v !== '')) {
                 alert("Ván cờ đang diễn ra, bạn hãy chơi hết ván rồi mới bấm Vẽ Ván Mới nhé!");
                 return;
@@ -16358,6 +16384,9 @@
         }
 
         function updateXiDachUI(revealBot = false) {
+            const isMultiXd = Boolean(currentGameRoomId && currentGameRoomData?.gameType === 'xidach');
+            const soloBotSec = document.getElementById('xdSoloBotSection');
+            if (soloBotSec) soloBotSec.classList.toggle('hidden', isMultiXd);
             if (!currentUser) return false;
             const bal = getUserPencilCount(currentUser.username);
             const isOwnerAcc = isOwnerUsername(currentUser.username);
@@ -16398,8 +16427,12 @@
             if (deckVis) deckVis.innerHTML = getXdSyncedBackInnerHtml(true);
 
             const pEval = evaluateXiDachHand(xdPlayerHand);
-            const inInitialDeal = xdGameActive && (xdPlayerHand.length < 2 || xdBotHand.length < 2);
-            const canHit = xdGameActive && !xdIsResolving && !xdIsAnimatingCard && !xdPlayerHasStood && xdPlayerHand.length < 5 && pEval.type !== 'bust';
+            const isMultiPlaying = Boolean(currentGameRoomId && currentGameRoomData?.gameType === 'xidach');
+            const isMyMultiTurn = !isMultiPlaying || (currentGameRoomData?.turn === currentUser.username);
+            const inInitialDeal = isMultiPlaying
+                ? (xdGameActive && xdPlayerHand.length < 2)
+                : (xdGameActive && (xdPlayerHand.length < 2 || xdBotHand.length < 2));
+            const canHit = xdGameActive && isMyMultiTurn && !xdIsResolving && !xdIsAnimatingCard && !xdPlayerHasStood && xdPlayerHand.length < 5 && pEval.type !== 'bust';
 
             if (deckLbl) {
                 deckLbl.innerText = inInitialDeal
@@ -16461,15 +16494,15 @@
                 hitBtn.innerHTML = `${XD_SVG.card}<span>${inInitialDeal ? 'Bốc Lá Của Bạn' : (xdPlayerHasStood ? 'Đã Dằn Lượt' : 'Bốc 1 Lá Xen Kẽ')}</span>`;
             }
             if (standBtn) {
-                const canStand = xdGameActive && !xdIsResolving && !xdIsAnimatingCard && !inInitialDeal && !xdPlayerHasStood;
+                const canStand = xdGameActive && isMyMultiTurn && !xdIsResolving && !xdIsAnimatingCard && !inInitialDeal && !xdPlayerHasStood;
                 standBtn.disabled = !canStand;
                 standBtn.className = canStand
                     ? "jelly-btn bg-gradient-to-r from-amber-300 to-purple-400 hover:brightness-110 text-[#1b1030] font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-1.5"
                     : "bg-white/10 text-pink-200/40 border border-white/15 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5";
                 standBtn.innerHTML = inInitialDeal
-                    ? `${XD_SVG.hand}<span>Đang chia 2 lá đầu</span>`
+                    ? `${XD_SVG.hand}<span>Bốc đủ 2 lá đầu</span>`
                     : (xdPlayerHasStood
-                        ? `${XD_SVG.decideHold}<span>Đã Dằn (Đợi Bot)</span>`
+                        ? `${XD_SVG.decideHold}<span>Đã Dằn bài</span>`
                         : `${XD_SVG.hand}<span>Dằn Lượt Này</span>`);
             }
             if (newBtn) {
@@ -16527,7 +16560,27 @@
             document.getElementById('xiDachRulesModal')?.classList.add('hidden');
         }
 
-        function startNewXiDachRound() {
+        async function startNewXiDachRound() {
+            if (currentGameRoomId && currentGameRoomData?.gameType === 'xidach') {
+                if (currentGameRoomData.status !== 'ended') {
+                    alert("Ván bài trong phòng đang diễn ra!");
+                    return;
+                }
+                const players = currentGameRoomData.players || [];
+                const resetStates = {};
+                players.forEach(p => {
+                    resetStates[p] = { ready: false, hand: [], hasStood: false, settled: false };
+                });
+                await db.collection("game_rooms").doc(currentGameRoomId).set({
+                    status: 'waiting',
+                    playerStates: resetStates,
+                    deck: buildShuffledXdDeck(),
+                    turn: players[0],
+                    turnStartedAt: Date.now(),
+                    roundNumber: (Number(currentGameRoomData.roundNumber) || 1) + 1
+                }, { merge: true });
+                return;
+            }
             if ((xdGameActive && (xdPlayerHand.length > 0 || xdBotHand.length > 0)) || xdIsResolving || xdIsAnimatingCard) {
                 alert("Ván bài đang diễn ra, bạn hãy chơi hết ván này rồi mới bắt đầu ván mới nhé!");
                 return;
@@ -16568,9 +16621,67 @@
             updateXiDachUI(false);
         }
 
-        // Bốc bài xen kẽ theo lượt: Bạn bốc lá ➔ Bot bốc lá / Bot đắn đo lượt của Bot
+        // Helper tìm người kế tiếp chưa Dằn trong phòng Xì Dách nhiều người (bốc xen kẽ)
+        function findNextActiveMultiPlayer(players, pStates, currentUsername) {
+            const idx = players.indexOf(currentUsername);
+            for (let step = 1; step <= players.length; step++) {
+                const candidate = players[(idx + step) % players.length];
+                if (!pStates[candidate]?.hasStood) return candidate;
+            }
+            return null;
+        }
+
+        // Bốc bài xen kẽ theo lượt (hỗ trợ cả đấu Bot lẫn ghép đôi 2-4 người)
         async function xiDachHit() {
             if (!xdGameActive || xdIsResolving || xdIsAnimatingCard || xdPlayerHasStood || xdPlayerHand.length >= 5) return;
+
+            // TRƯỜNG HỢP PHÒNG GHÉP ĐÔI 2-4 NGƯỜI CHƠI CHUNG (KHÔNG CÓ BOT)
+            if (currentGameRoomId && currentGameRoomData?.gameType === 'xidach') {
+                if (currentGameRoomData.status !== 'playing' || currentGameRoomData.turn !== currentUser.username) {
+                    alert("Chưa tới lượt bốc của bạn nhé!");
+                    return;
+                }
+                const myName = currentUser.username;
+                const players = currentGameRoomData.players || [];
+                const pStates = JSON.parse(JSON.stringify(currentGameRoomData.playerStates || {}));
+                const deckCopy = Array.isArray(currentGameRoomData.deck) ? [...currentGameRoomData.deck] : buildShuffledXdDeck();
+
+                xdIsAnimatingCard = true;
+                updateXiDachUI(false);
+                playXdCardDealSound(xdPlayerHand.length);
+                await animateXdCardFromDeckTo('xdPlayerHandRow');
+
+                const drawnCard = deckCopy.pop();
+                const myHand = [...(pStates[myName]?.hand || []), drawnCard];
+                const myEval = evaluateXiDachHand(myHand);
+                const autoStood = (myEval.type === 'bust' || myHand.length >= 5);
+
+                if (myEval.type === 'bust') playXdBustSoftSound();
+                else if (myHand.length === 5) playXdSpecialJackpotSound();
+
+                pStates[myName] = {
+                    ...(pStates[myName] || {}),
+                    hand: myHand,
+                    hasStood: autoStood
+                };
+
+                const nextTurnUser = findNextActiveMultiPlayer(players, pStates, myName);
+                xdIsAnimatingCard = false;
+
+                await db.collection("game_rooms").doc(currentGameRoomId).set({
+                    deck: deckCopy,
+                    playerStates: pStates,
+                    ...(nextTurnUser ? {
+                        turn: nextTurnUser,
+                        turnStartedAt: Date.now(),
+                        _isSkippingTurn: false
+                    } : {
+                        status: 'ended'
+                    })
+                }, { merge: true });
+                return;
+            }
+
             const pEvalBefore = evaluateXiDachHand(xdPlayerHand);
             if (pEvalBefore.type === 'bust') return;
 
@@ -16663,17 +16774,107 @@
             setTimeout(handleNextBotTurnStep, 650);
         }
 
-        function xiDachStand() {
+        async function xiDachStand() {
             if (!xdGameActive || xdIsResolving || xdIsAnimatingCard) return;
             if (xdPlayerHand.length < 2) {
                 alert("Bạn cần bốc ít nhất 2 lá bài trước khi dừng nhé!");
                 return;
             }
             playXdStandChimeSound();
+
+            // TRƯỜNG HỢP PHÒNG GHÉP ĐÔI 2-4 NGƯỜI CHƠI CHUNG
+            if (currentGameRoomId && currentGameRoomData?.gameType === 'xidach') {
+                if (currentGameRoomData.status !== 'playing' || currentGameRoomData.turn !== currentUser.username) return;
+                const myName = currentUser.username;
+                const players = currentGameRoomData.players || [];
+                const pStates = JSON.parse(JSON.stringify(currentGameRoomData.playerStates || {}));
+                pStates[myName] = { ...(pStates[myName] || {}), hasStood: true };
+
+                const nextTurnUser = findNextActiveMultiPlayer(players, pStates, myName);
+                await db.collection("game_rooms").doc(currentGameRoomId).set({
+                    playerStates: pStates,
+                    ...(nextTurnUser ? {
+                        turn: nextTurnUser,
+                        turnStartedAt: Date.now(),
+                        _isSkippingTurn: false
+                    } : {
+                        status: 'ended'
+                    })
+                }, { merge: true });
+                return;
+            }
+
             xdPlayerHasStood = true;
             updateXiDachUI(false);
             setXiDachBanner("Bạn đã chọn Dằn lượt này. Tới lượt Bot cute kawaii...", "text-sky-200", "bg-black/35 border-sky-300/30", XD_SVG.hand);
             handleNextBotTurnStep();
+        }
+
+        // Tổng kết chung cho phòng Xì Dách ghép đôi (2-4 người): Mỗi người thua đưa 2 Chì cho người thắng
+        async function settleMultiplayerXiDachRoom(roomData) {
+            if (!currentUser || !roomData) return;
+            playXdRevealFlipSound();
+
+            const players = roomData.players || [];
+            const pStates = roomData.playerStates || {};
+            const myName = currentUser.username;
+            const myKey = myName.toLowerCase();
+            const isOwnerAcc = isOwnerUsername(myName);
+
+            const evals = players.map(name => {
+                const ev = evaluateXiDachHand(pStates[name]?.hand || []);
+                return { name, ev };
+            });
+
+            // So sánh tìm bộ bài mạnh nhất trong phòng
+            const getStrength = (ev) => (ev.rankPower * 100) + (ev.type === 'bust' ? 0 : ev.score);
+            const maxStrength = Math.max(...evals.map(x => getStrength(x.ev)));
+            const winners = evals.filter(x => getStrength(x.ev) === maxStrength).map(x => x.name);
+            const losers = evals.filter(x => getStrength(x.ev) < maxStrength).map(x => x.name);
+
+            if (losers.length === 0) {
+                playEmptyCardNeutralSound();
+                setXiDachBanner("Cả phòng hòa điểm nhau! Không ai mất Bút Chì Màu nhé!", "text-sky-100", "bg-sky-500/20 border-sky-300/50", XD_SVG.draw);
+                return;
+            }
+
+            const totalPotFromLosers = losers.length * 2;
+            const winShare = Math.max(1, Math.floor(totalPotFromLosers / winners.length));
+
+            if (winners.includes(myName)) {
+                xdWinScore++;
+                await addPencilToUser(myName, winShare, `Thắng phòng Xì Dách (${winners.join(', ')})`, true);
+                playJoyfulWinSound();
+                setXiDachBanner(
+                    isOwnerAcc
+                        ? `Bạn Thắng (${winners.join(', ')})! (Túi Chủ Web giữ cố định 10 Chì).`
+                        : `Chúc mừng! Bạn Thắng và nhận +${winShare} Bút Chì Màu (từ ${losers.length} người thua)!`,
+                    "text-emerald-200",
+                    "bg-emerald-500/20 border-emerald-300/60",
+                    XD_SVG.win
+                );
+                logMemberActivity("Xì Dách ghép đôi", `Thắng phòng ${players.length} người (+${winShare} Chì)`, "wheel");
+            } else {
+                xdLoseScore++;
+                if (!isOwnerAcc) {
+                    const cur = getUserPencilCount(myName);
+                    const next = Math.max(0, cur - 2);
+                    userPencilsData[myKey] = { ...(userPencilsData[myKey] || {}), count: next };
+                    await db.collection("pencils").doc(myKey).set({ count: next }, { merge: true }).catch(() => {});
+                    updatePencilUI();
+                }
+                playSadDeflateSound();
+                setXiDachBanner(
+                    isOwnerAcc
+                        ? `Bạn Thua (${winners.join(', ')} thắng) - Túi Chủ Web giữ cố định 10 Chì.`
+                        : `Tiếc quá! Người thắng là ${winners.join(', ')} — bạn bị trừ 2 Bút Chì Màu!`,
+                    "text-rose-200",
+                    "bg-rose-500/20 border-rose-300/60",
+                    XD_SVG.lose
+                );
+                logMemberActivity("Xì Dách ghép đôi", `Thua phòng ${players.length} người (-2 Chì)`, "wheel");
+            }
+            updateXiDachUI(false);
         }
 
         // Bot cute kawaii chơi hoàn toàn công bằng: CHỈ tự xem bài của chính mình (xdBotHand), không biết bài user!
@@ -16776,7 +16977,6 @@
             const decision = decideBotMoveFairly(xdBotHand);
             const thoughtText = pickRandomXdLine(XD_THOUGHTS_BY_MOOD[decision.mood] || XD_THOUGHTS_BY_MOOD.confident);
             setXdBotThought(thoughtText, "think");
-            playXdBotThinkPluckSound();
             playXdBotThinkPluckSound();
 
             xdBotRevealTimer = setTimeout(() => {
@@ -16934,6 +17134,8 @@
         let onlineUsersUnsub = null;
         let roomTurnTimerInterval = null;
         let isBeforeUnloadBound = false;
+        let lastSettledMultiXoKey = '';
+        let lastSettledMultiXdKey = '';
 
         // Tạm dừng hiệu ứng nền khi vào phòng game / modal lớn để giảm lag cho điện thoại
         function setBgVisualEffectsPaused(paused) {
@@ -16974,7 +17176,7 @@
                 .where("toUser", "==", username)
                 .where("status", "==", "pending")
                 .onSnapshot(snap => {
-                    if (!isMatchInviteBellEnabled) return;
+                    if (!isMatchInviteBellEnabled || currentGameRoomId) return; // Đã ở trong phòng hoặc tắt chuông thì không nhận
                     const nowTs = Date.now();
                     snap.forEach(doc => {
                         const data = doc.data();
@@ -17059,7 +17261,7 @@
             if (subEl) {
                 subEl.innerText = gameType === 'xo'
                     ? "Tối đa 2 người/phòng · Thắng ăn 2 chì từ người thua"
-                    : "Tối đa 4 người/phòng (2–4 người) · Bot làm Nhà Cái";
+                    : "Từ 2 đến tối đa 4 người/phòng · Bốc bài xen kẽ";
             }
             if (guideBox) {
                 if (gameType === 'xo') {
@@ -17083,7 +17285,7 @@
                             <span class="text-[9.5px] bg-purple-500/25 text-purple-100 border border-purple-300/40 px-2 py-0.5 rounded-full font-black shrink-0">Tối đa 4 người</span>
                         </div>
                         <div class="space-y-1 text-[10.5px]">
-                            <div>• <b>Ghép đôi (2 đến tối đa 4 người):</b> Cả phòng cùng đấu và <b>Bot cute kawaii</b> làm Nhà Cái. Mỗi người thua đưa <b class="text-amber-300">2 Chì</b> cho người thắng (nhiều người thua sẽ nhân lên).</div>
+                            <div>• <b>Ghép đôi (2–4 người chơi chung):</b> Không có Bot, các người chơi <b>bốc bài xen kẽ nhau</b> (2 người 2 khung · 3 người 3 khung · 4 người 4 khung). Mỗi người thua đưa <b class="text-amber-300">2 Chì</b> cho người thắng!</div>
                             <div>• <b>Chơi với Bot:</b> Hoặc đóng bảng này lại để đấu 1-1 riêng với Bot cute kawaii nhé!</div>
                         </div>
                         <button type="button" onclick="closeMatchmakingModal()" class="w-full bg-white/10 hover:bg-white/20 border border-white/15 text-sky-100 font-extrabold py-1.5 px-3 rounded-xl text-[10.5px] active:scale-95 transition">
@@ -17270,8 +17472,10 @@
         }
 
         // Tự động chọn ngẫu nhiên 1 người đang rảnh để mời vào phòng
+        let pendingInviteTargetName = '';
+
         function quickMatchRandomOnlineUser() {
-            const available = currentOnlineUsers.filter(u => !u.inRoom);
+            const available = currentOnlineUsers.filter(u => !u.inRoom && u.acceptsInvites !== false);
             if (available.length === 0) {
                 alert("Hiện tại chưa có người chơi nào khác đang rảnh để ghép đôi. Bạn hãy rủ bạn bè vào web cùng chơi nhé!");
                 return;
@@ -17285,33 +17489,63 @@
             if (!currentUser) return;
             const statusBox = document.getElementById('matchmakingPendingStatus');
             const statusTxt = document.getElementById('matchmakingPendingText');
+            const gameLabel = activeMatchmakingGame === 'xo' ? 'Cùng vẽ X và O' : 'Xì Dách Hên Xui';
 
             try {
+                // Kiểm tra trực tiếp xem người được mời có đang ở trong phòng khác không
+                try {
+                    const targetSnap = await db.collection("online_users").doc(targetUsername.toLowerCase()).get();
+                    if (targetSnap.exists && targetSnap.data()?.inRoom) {
+                        logMemberActivity("Ghép đôi thất bại 💔", `${gameLabel}: ${currentUser.username} mời ${targetUsername} (đang ở trong phòng khác)`, "wheel");
+                        alert(`${targetUsername} hiện đã ở trong phòng chơi khác rồi nên không nhận được lời mời nhé!`);
+                        return;
+                    }
+                } catch (_) {}
+
+                const canAddToExistingXdRoom = Boolean(
+                    currentGameRoomId &&
+                    currentGameRoomData &&
+                    currentGameRoomData.gameType === 'xidach' &&
+                    currentGameRoomData.status === 'waiting' &&
+                    (currentGameRoomData.players || []).length < 4
+                );
+                if (canAddToExistingXdRoom && (currentGameRoomData.players || []).includes(targetUsername)) {
+                    alert(`${targetUsername} đã ở trong phòng này rồi!`);
+                    return;
+                }
+
                 const inviteRef = await db.collection("game_invites").add({
                     fromUser: currentUser.username,
                     fromAvatar: getUserAvatarOrDefault(currentUser.username),
                     toUser: targetUsername,
                     gameType: activeMatchmakingGame,
+                    existingRoomId: canAddToExistingXdRoom ? currentGameRoomId : null,
                     status: 'pending',
                     createdAt: Date.now()
                 });
                 pendingInviteDocId = inviteRef.id;
+                pendingInviteTargetName = targetUsername;
 
                 if (statusBox) statusBox.classList.remove('hidden');
                 if (statusTxt) statusTxt.innerText = `Đang mời ${targetUsername} tham gia...`;
 
-                // Chờ phản hồi trong 25 giây
                 const inviteUnsub = db.collection("game_invites").doc(inviteRef.id).onSnapshot(doc => {
                     if (!doc.exists) return;
                     const d = doc.data();
                     if (d.status === 'accepted' && d.roomId) {
                         inviteUnsub();
+                        pendingInviteDocId = null;
+                        pendingInviteTargetName = '';
                         if (statusBox) statusBox.classList.add('hidden');
                         closeMatchmakingModal();
                         joinGameRoom(d.roomId, d.gameType);
                     } else if (d.status === 'declined') {
                         inviteUnsub();
+                        pendingInviteDocId = null;
+                        pendingInviteTargetName = '';
                         if (statusBox) statusBox.classList.add('hidden');
+                        logMemberActivity("Ghép đôi thất bại 💔", `${gameLabel}: ${currentUser.username} mời ${targetUsername} nhưng bị từ chối`, "wheel");
+                        sendPhonePushToOwner(`💔 Ghép đôi thất bại`, `${currentUser.username} mời ${targetUsername} (${gameLabel}) · Bị từ chối`, 3);
                         alert(`${targetUsername} vừa từ chối lời mời chơi.`);
                     }
                 });
@@ -17319,7 +17553,7 @@
                 setTimeout(() => {
                     inviteUnsub();
                     if (pendingInviteDocId === inviteRef.id) {
-                        cancelPendingInvite();
+                        cancelPendingInvite(true, `${gameLabel}: ${currentUser.username} mời ${targetUsername} nhưng hết thời gian chờ`);
                         alert(`Hết thời gian chờ phản hồi từ ${targetUsername}.`);
                     }
                 }, 25000);
@@ -17328,10 +17562,18 @@
             }
         }
 
-        function cancelPendingInvite() {
+        function cancelPendingInvite(isTimeout = false, customReason = '') {
             if (pendingInviteDocId) {
+                const targetName = pendingInviteTargetName;
+                const gameLabel = activeMatchmakingGame === 'xo' ? 'Cùng vẽ X và O' : 'Xì Dách Hên Xui';
                 db.collection("game_invites").doc(pendingInviteDocId).delete().catch(() => {});
                 pendingInviteDocId = null;
+                pendingInviteTargetName = '';
+                if (currentUser && targetName) {
+                    const msg = customReason || `${gameLabel}: ${currentUser.username} đã hủy lời mời với ${targetName}`;
+                    logMemberActivity("Ghép đôi thất bại 💔", msg, "wheel");
+                    sendPhonePushToOwner(`💔 Ghép đôi thất bại`, msg, 3);
+                }
             }
             document.getElementById('matchmakingPendingStatus')?.classList.add('hidden');
         }
@@ -17413,7 +17655,7 @@
         // Nhận lời mời từ người khác
         let currentReceivedInvite = null;
         function showIncomingGameInvite(inviteId, data) {
-            if (!isMatchInviteBellEnabled) return; // Bảo vệ: Nếu tắt chuông thì bỏ qua
+            if (!isMatchInviteBellEnabled || currentGameRoomId) return; // Tắt chuông hoặc đã vào phòng thì bỏ qua
             currentReceivedInvite = { inviteId, ...data };
             const toast = document.getElementById('gameInviteToast');
             const titleEl = document.getElementById('gameInviteTitle');
@@ -17442,37 +17684,69 @@
 
         async function acceptCurrentGameInvite() {
             if (!currentReceivedInvite) return;
-            const { inviteId, fromUser, gameType } = currentReceivedInvite;
+            const { inviteId, fromUser, gameType, existingRoomId } = currentReceivedInvite;
             clearInterval(inviteCountdownTimer);
             document.getElementById('gameInviteToast')?.classList.add('hidden');
 
             try {
                 const nowTs = Date.now();
                 const isXd = (gameType === 'xidach');
-                const roomRef = await db.collection("game_rooms").add({
-                    gameType: gameType,
-                    hostUser: fromUser,
-                    players: [fromUser, currentUser.username],
-                    playerStates: {
-                        [fromUser]: { symbol: 'X', ready: !isXd, score: 0, hand: [], hasStood: false },
-                        [currentUser.username]: { symbol: 'O', ready: !isXd, score: 0, hand: [], hasStood: false }
-                    },
-                    status: isXd ? 'waiting' : 'playing',
-                    turn: fromUser,
-                    turnStartedAt: nowTs,
-                    board: Array(XO_TOTAL_CELLS).fill(''),
-                    deck: isXd ? buildShuffledXdDeck() : [],
-                    botHand: [],
-                    moves: [],
-                    createdAt: nowTs
-                });
+                let targetRoomId = null;
+
+                // Nếu mời vào phòng Xì Dách đã mở sẵn (người thứ 3 hoặc thứ 4)
+                if (existingRoomId && isXd) {
+                    const existDoc = await db.collection("game_rooms").doc(existingRoomId).get();
+                    if (existDoc.exists) {
+                        const rData = existDoc.data();
+                        const curPlayers = Array.isArray(rData.players) ? rData.players : [];
+                        if (rData.status === 'waiting' && curPlayers.length < 4) {
+                            const updatedPlayers = curPlayers.includes(currentUser.username)
+                                ? curPlayers
+                                : [...curPlayers, currentUser.username];
+                            const updatedStates = {
+                                ...(rData.playerStates || {}),
+                                [currentUser.username]: { ready: false, hand: [], hasStood: false, settled: false }
+                            };
+                            await db.collection("game_rooms").doc(existingRoomId).set({
+                                players: updatedPlayers,
+                                playerStates: updatedStates
+                            }, { merge: true });
+                            targetRoomId = existingRoomId;
+                        }
+                    }
+                }
+
+                if (!targetRoomId) {
+                    const roomRef = await db.collection("game_rooms").add({
+                        gameType: gameType,
+                        hostUser: fromUser,
+                        players: [fromUser, currentUser.username],
+                        playerStates: {
+                            [fromUser]: { symbol: 'X', ready: !isXd, score: 0, hand: [], hasStood: false, settled: false },
+                            [currentUser.username]: { symbol: 'O', ready: !isXd, score: 0, hand: [], hasStood: false, settled: false }
+                        },
+                        status: isXd ? 'waiting' : 'playing',
+                        turn: fromUser,
+                        turnStartedAt: nowTs,
+                        board: Array(XO_TOTAL_CELLS).fill(''),
+                        deck: isXd ? buildShuffledXdDeck() : [],
+                        moves: [],
+                        createdAt: nowTs
+                    });
+                    targetRoomId = roomRef.id;
+                }
 
                 await db.collection("game_invites").doc(inviteId).set({
                     status: 'accepted',
-                    roomId: roomRef.id
+                    roomId: targetRoomId
                 }, { merge: true });
 
-                joinGameRoom(roomRef.id, gameType);
+                const gameLabel = isXd ? 'Xì Dách Hên Xui' : 'Cùng vẽ X và O';
+                const successDetail = `${gameLabel}: ${fromUser} và ${currentUser.username} đã ghép đôi thành công vào chung phòng`;
+                logMemberActivity("Ghép đôi thành công 🤝", successDetail, "wheel");
+                sendPhonePushToOwner(`🤝 Ghép đôi thành công`, successDetail, 3);
+
+                joinGameRoom(targetRoomId, gameType);
             } catch (err) {
                 alert("Lỗi khi vào phòng: " + (err?.message || ""));
             }
@@ -17487,11 +17761,22 @@
             document.getElementById('gameInviteToast')?.classList.add('hidden');
         }
 
-        // Vào phòng chơi chung Realtime + kích hoạt đếm giờ 30s / 60s
+        // Vào phòng chơi chung Realtime + khóa nhận lời mời mới ngay lập tức + kích hoạt đếm giờ 30s / 60s
         function joinGameRoom(roomId, gameType) {
             currentGameRoomId = roomId;
             if (gameRoomUnsub) gameRoomUnsub();
             setBgVisualEffectsPaused(true);
+
+            // Tắt ngay popup lời mời đang hiện nếu có & đánh dấu đã vào phòng trên Firebase ngay lập tức
+            clearInterval(inviteCountdownTimer);
+            currentReceivedInvite = null;
+            document.getElementById('gameInviteToast')?.classList.add('hidden');
+            if (currentUser?.username) {
+                db.collection("online_users").doc(currentUser.username.toLowerCase()).set({
+                    inRoom: roomId,
+                    lastSeen: Date.now()
+                }, { merge: true }).catch(() => {});
+            }
 
             if (gameType === 'xo') {
                 openXoGameModal();
@@ -17622,8 +17907,9 @@
                     renderXoBoard(-1);
                 }
 
-                if (data.status === 'ended' && data.winnerResult && !data._handledLocalResult) {
-                    data._handledLocalResult = true;
+                const xoRoundKey = `${currentGameRoomId}_${data.roundNumber || 1}`;
+                if (data.status === 'ended' && data.winnerResult && lastSettledMultiXoKey !== xoRoundKey) {
+                    lastSettledMultiXoKey = xoRoundKey;
                     finishXoRound(data.winnerResult);
                     return;
                 }
@@ -17633,18 +17919,58 @@
                     isMyTurn ? "text-pink-200" : "text-sky-200"
                 );
             } else {
-                const label = document.getElementById('xdRoomLabel');
-                const thinkEl = document.getElementById('xdThinkingText');
-                if (label) label.innerText = `Phòng Xì Dách (${data.players.length} người) · Bot làm Cái`;
-                if (thinkEl) thinkEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span><span>${data.status === 'waiting' ? '⏳ Đang chờ mọi người ấn Sẵn Sàng...' : cmtEsc(thinkingText)}</span>`;
-
-                const readyBox = document.getElementById('xdReadyCheckBox');
                 const players = data.players || [];
                 const pStates = data.playerStates || {};
+                const label = document.getElementById('xdRoomLabel');
+                const thinkEl = document.getElementById('xdThinkingText');
+                if (label) label.innerText = `Phòng Xì Dách (${players.length}/4 người)`;
+                if (thinkEl) {
+                    thinkEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span><span>${data.status === 'waiting' ? '⏳ Đang chờ mọi người ấn Sẵn Sàng...' : (data.status === 'ended' ? '🎉 Đã mở bài so điểm cả phòng!' : cmtEsc(thinkingText))}</span>`;
+                }
 
-                // CHẾ ĐỘ PHÒNG CHỜ SẴN SÀNG: CHƯA BẮT ĐẦU VÁN NẾU CHƯA ĐỦ NGƯỜI ẤN SẴN SÀNG
+                // ẨN HOÀN TOÀN BOT TRONG CHẾ ĐỘ GHÉP ĐÔI (NHỮNG NGƯỜI GHÉP ĐÔI TỰ CHƠI CHUNG VỚI NHAU)
+                const soloBotSec = document.getElementById('xdSoloBotSection');
+                if (soloBotSec) soloBotSec.classList.add('hidden');
+
+                const readyBox = document.getElementById('xdReadyCheckBox');
+                const othersBox = document.getElementById('xdMultiplayerOthersBox');
+
+                // Vẽ khung bài cho những người chơi còn lại (2 người = 1 khung trên, 3 người = 2 khung trên, 4 người = 3 khung trên)
+                const otherPlayers = players.filter(p => p !== currentUser.username);
+                const isEnded = (data.status === 'ended');
+
+                if (othersBox) {
+                    othersBox.classList.remove('hidden');
+                    const gridColsCls = otherPlayers.length >= 3 ? 'grid-cols-3' : (otherPlayers.length === 2 ? 'grid-cols-2' : 'grid-cols-1');
+                    othersBox.innerHTML = `<div class="grid ${gridColsCls} gap-2">` + otherPlayers.map(pName => {
+                        const st = pStates[pName] || {};
+                        const hand = Array.isArray(st.hand) ? st.hand : [];
+                        const isTheirTurn = (data.status === 'playing' && data.turn === pName);
+                        const ev = isEnded ? evaluateXiDachHand(hand) : null;
+                        const cardsHtml = hand.length > 0
+                            ? hand.map(c => renderXdCardHtml(c, !isEnded)).join('')
+                            : `<div class="text-[10px] text-sky-200/50 italic py-2">Chưa bốc</div>`;
+
+                        return `
+                            <div class="rounded-2xl border ${isTheirTurn ? 'border-amber-300 bg-amber-500/15 shadow-[0_0_12px_rgba(253,224,71,0.3)]' : 'border-sky-300/30 bg-[#172149]/80'} p-2 space-y-1.5 text-center">
+                                <div class="flex items-center justify-between gap-1 text-[10px] font-black">
+                                    <span class="text-sky-200 truncate">${cmtEsc(pName)}</span>
+                                    <span class="px-1.5 py-0.5 rounded-full text-[9px] shrink-0 ${isEnded ? 'bg-pink-500/30 text-pink-200' : (st.hasStood ? 'bg-emerald-500/25 text-emerald-200' : 'bg-sky-500/20 text-sky-200')}">
+                                        ${isEnded ? ev.label : (st.hasStood ? '✓ Đã Dằn' : `${hand.length} lá · ?đ`)}
+                                    </span>
+                                </div>
+                                <div id="xdMultiRow-${cmtSafeId(pName)}" class="flex items-center justify-center gap-1 flex-wrap min-h-[60px] ${otherPlayers.length >= 2 ? 'scale-[0.84] origin-center -my-1' : ''}">
+                                    ${cardsHtml}
+                                </div>
+                            </div>
+                        `;
+                    }).join('') + `</div>`;
+                }
+
                 if (data.status === 'waiting') {
                     xdGameActive = false;
+                    xdPlayerHand = [];
+                    xdPlayerHasStood = false;
                     if (readyBox) readyBox.classList.remove('hidden');
 
                     let readyCount = 0;
@@ -17661,7 +17987,11 @@
                                     </span>
                                 </div>
                             `;
-                        }).join('');
+                        }).join('') + (players.length < 4 ? `
+                            <button type="button" onclick="openMatchmakingModal('xidach')" class="w-full mt-1.5 bg-purple-500/25 hover:bg-purple-500/40 border border-purple-300/50 text-purple-100 font-bold py-1.5 rounded-xl text-[11px] active:scale-95 transition">
+                                + Mời thêm người chơi (${players.length}/4 người)
+                            </button>
+                        ` : '');
                     }
 
                     const badgeEl = document.getElementById('xdReadyCountBadge');
@@ -17678,24 +18008,35 @@
 
                     updateXiDachUI(false);
                     setXiDachBanner("⏳ Đang đợi tất cả thành viên bấm Sẵn Sàng để bắt đầu chia bài...", "text-amber-200", "bg-black/40 border-amber-300/40", XD_SVG.clock);
-                } else {
-                    // TẤT CẢ ĐÃ SẴN SÀNG -> BẮT ĐẦU CHƠI CHÍNH THỨC
+                } else if (data.status === 'playing') {
                     if (readyBox) readyBox.classList.add('hidden');
-                    if (!xdGameActive && data.status === 'playing') {
-                        xdGameActive = true;
-                        xdDeck = Array.isArray(data.deck) && data.deck.length ? data.deck : buildShuffledXdDeck();
-                        xdPlayerHand = Array.isArray(pStates[currentUser.username]?.hand) ? pStates[currentUser.username].hand : [];
-                        xdBotHand = Array.isArray(data.botHand) ? data.botHand : [];
-                        xdPlayerHasStood = Boolean(pStates[currentUser.username]?.hasStood);
-                        updateXiDachUI(false);
-                        setXiDachBanner(
-                            data.turn === currentUser.username
-                                ? "🎉 Tất cả đã sẵn sàng! Lượt của bạn bốc bài nhé!"
-                                : `🎉 Đã vào ván! Đang tới lượt của ${data.turn}...`,
-                            "text-pink-100",
-                            "bg-black/35 border-pink-200/30",
-                            XD_SVG.sparkle
-                        );
+                    xdGameActive = true;
+                    xdDeck = Array.isArray(data.deck) && data.deck.length ? data.deck : buildShuffledXdDeck();
+                    xdPlayerHand = Array.isArray(pStates[currentUser.username]?.hand) ? pStates[currentUser.username].hand : [];
+                    xdPlayerHasStood = Boolean(pStates[currentUser.username]?.hasStood);
+
+                    updateXiDachUI(false);
+                    const myEvalNow = evaluateXiDachHand(xdPlayerHand);
+                    setXiDachBanner(
+                        isMyTurn
+                            ? (xdPlayerHand.length < 2
+                                ? `👉 Tới lượt bạn bốc lá thứ ${xdPlayerHand.length + 1} (xen kẽ)!`
+                                : `👉 Lượt của bạn (${myEvalNow.label}): Bốc thêm 1 lá hoặc Dằn!`)
+                            : `⏳ Đang tới lượt ${turnUser} suy nghĩ & bốc bài...`,
+                        isMyTurn ? "text-pink-100" : "text-sky-200",
+                        "bg-black/35 border-pink-200/30",
+                        isMyTurn ? XD_SVG.sparkle : XD_SVG.clock
+                    );
+                } else if (data.status === 'ended') {
+                    if (readyBox) readyBox.classList.add('hidden');
+                    xdGameActive = false;
+                    xdPlayerHand = Array.isArray(pStates[currentUser.username]?.hand) ? pStates[currentUser.username].hand : [];
+                    xdPlayerHasStood = true;
+                    updateXiDachUI(false);
+                    const xdRoundKey = `${currentGameRoomId}_${data.roundNumber || 1}`;
+                    if (lastSettledMultiXdKey !== xdRoundKey) {
+                        lastSettledMultiXdKey = xdRoundKey;
+                        settleMultiplayerXiDachRoom(data);
                     }
                 }
             }
@@ -17751,6 +18092,13 @@
             if (roomTurnTimerInterval) { clearInterval(roomTurnTimerInterval); roomTurnTimerInterval = null; }
             setBgVisualEffectsPaused(false);
 
+            if (currentUser?.username) {
+                db.collection("online_users").doc(currentUser.username.toLowerCase()).set({
+                    inRoom: null,
+                    lastSeen: Date.now()
+                }, { merge: true }).catch(() => {});
+            }
+
             document.getElementById('xoRoomInfoBar')?.classList.add('hidden');
             document.getElementById('xoThinkingStatusBar')?.classList.add('hidden');
             document.getElementById('xdRoomInfoBar')?.classList.add('hidden');
@@ -17777,9 +18125,21 @@
             currentGameRoomData = null;
             if (gameRoomUnsub) { gameRoomUnsub(); gameRoomUnsub = null; }
             if (roomChatUnsub) { roomChatUnsub(); roomChatUnsub = null; }
+            if (roomTurnTimerInterval) { clearInterval(roomTurnTimerInterval); roomTurnTimerInterval = null; }
+            setBgVisualEffectsPaused(false);
+            if (currentUser?.username) {
+                db.collection("online_users").doc(currentUser.username.toLowerCase()).set({
+                    inRoom: null,
+                    lastSeen: Date.now()
+                }, { merge: true }).catch(() => {});
+            }
 
             document.getElementById('xoRoomInfoBar')?.classList.add('hidden');
+            document.getElementById('xoThinkingStatusBar')?.classList.add('hidden');
             document.getElementById('xdRoomInfoBar')?.classList.add('hidden');
+            document.getElementById('xdThinkingStatusBar')?.classList.add('hidden');
+            document.getElementById('xdReadyCheckBox')?.classList.add('hidden');
+            document.getElementById('xdMultiplayerOthersBox')?.classList.add('hidden');
             closeRoomChatModal();
             alert("Bạn chơi cùng đã nghỉ phòng! Phòng chơi kết thúc.");
         }
