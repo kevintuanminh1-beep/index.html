@@ -7869,7 +7869,11 @@
                     return;
                 }
 
-                filteredList.forEach(act => {
+                // Hiển thị trước 25 hoạt động mới nhất để chống đơ máy
+                const displayLimit = window._activitiesDisplayLimit || 25;
+                const visibleActivities = filteredList.slice(0, displayLimit);
+
+                visibleActivities.forEach(act => {
                     const timeStr = formatCommentTime(act);
                     const avt = act.avatar || PALETTE_DEFAULT_AVATARS[0];
                     const cat = getActivityCategory(act);
@@ -7931,6 +7935,18 @@
                     `;
                     container.appendChild(item);
                 });
+
+                // Nút xem thêm mượt mà nếu còn hoạt động cũ
+                if (filteredList.length > (window._activitiesDisplayLimit || 25)) {
+                    const moreBox = document.createElement('div');
+                    moreBox.className = "pt-2 text-center";
+                    moreBox.innerHTML = `
+                        <button type="button" onclick="window._activitiesDisplayLimit = (window._activitiesDisplayLimit || 25) + 30; renderUsersModalContent();" class="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-sky-200 font-extrabold py-2 px-3 rounded-xl text-xs active:scale-95 transition">
+                            Xem thêm 30 hoạt động cũ (còn ${filteredList.length - (window._activitiesDisplayLimit || 25)}) ▾
+                        </button>
+                    `;
+                    container.appendChild(moreBox);
+                }
             }
         }
 
@@ -8001,24 +8017,32 @@
 
         function sendOnlineHeartbeat() {}
 
-        async function openUsersListModal() {
+        function openUsersListModal() {
             if (!currentUser?.isOwner) return;
             if (activeUsersModalTab !== 'activities') activeUsersModalTab = 'registered';
-            try {
-                const [pencilsSnap, unlockedSnap] = await Promise.all([
-                    db.collection("pencils").get(),
-                    db.collection("unlocked").get()
-                ]);
-                pencilsSnap.forEach(doc => {
-                    userPencilsData[doc.id.toLowerCase()] = doc.data() || { count: 0 };
-                });
-                unlockedSnap.forEach(doc => {
-                    userUnlockedState[doc.id] = doc.data().chars || {};
-                    userUnlockedState[doc.id.toLowerCase()] = doc.data().chars || {};
-                });
-            } catch (_) {}
-            renderUsersModalContent();
+            // Mở giao diện ngay lập tức trong 0.05s không chờ mạng
             document.getElementById('registeredUsersModal').classList.remove('hidden');
+            renderUsersModalContent();
+            playPaletteTingSound();
+
+            // Đồng bộ ngầm trong nền, không làm đơ nút bấm
+            Promise.all([
+                db.collection("pencils").get().catch(() => null),
+                db.collection("unlocked").get().catch(() => null)
+            ]).then(([pencilsSnap, unlockedSnap]) => {
+                if (pencilsSnap) {
+                    pencilsSnap.forEach(doc => {
+                        userPencilsData[doc.id.toLowerCase()] = doc.data() || { count: 0 };
+                    });
+                }
+                if (unlockedSnap) {
+                    unlockedSnap.forEach(doc => {
+                        userUnlockedState[doc.id] = doc.data().chars || {};
+                        userUnlockedState[doc.id.toLowerCase()] = doc.data().chars || {};
+                    });
+                }
+                renderUsersModalContent();
+            });
         }
 
         function closeUsersListModal() {
