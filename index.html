@@ -15081,24 +15081,29 @@
                 if (oCnt === 4) return 10000000;
                 if (xCnt === 4) return -10000000;
 
-                if (oCnt === 3) score += 2600;
-                else if (oCnt === 2) score += 220;
-                else if (oCnt === 1) score += 18;
+                if (oCnt === 3) score += 3400;
+                else if (oCnt === 2) score += 280;
+                else if (oCnt === 1) score += 22;
 
-                if (xCnt === 3) score -= 4800;
-                else if (xCnt === 2) score -= 340;
-                else if (xCnt === 1) score -= 22;
+                if (xCnt === 3) score -= 6800;
+                else if (xCnt === 2) score -= 460;
+                else if (xCnt === 1) score -= 28;
             }
 
-            if (hasOpenThreePattern(board, 'O')) score += 65000;
-            if (hasOpenThreePattern(board, 'X')) score -= 95000;
+            const oWinThreats = countWinningMovesFor(board, 'O');
+            const xWinThreats = countWinningMovesFor(board, 'X');
+            if (oWinThreats >= 2) score += 450000;
+            if (xWinThreats >= 2) score -= 680000;
+
+            if (hasOpenThreePattern(board, 'O')) score += 95000;
+            if (hasOpenThreePattern(board, 'X')) score -= 180000;
 
             for (let r = 0; r < XO_SIZE; r++) {
                 for (let c = 0; c < XO_SIZE; c++) {
                     const v = board[r * XO_SIZE + c];
                     if (!v) continue;
                     const centerVal = 6 - (Math.abs(r - 3) + Math.abs(c - 3));
-                    score += (v === 'O' ? centerVal * 4 : -centerVal * 4);
+                    score += (v === 'O' ? centerVal * 5 : -centerVal * 5);
                 }
             }
             return score;
@@ -15112,9 +15117,10 @@
                 pieceCount++;
                 const r = Math.floor(idx / XO_SIZE);
                 const c = idx % XO_SIZE;
-                for (let dr = -1; dr <= 1; dr++) {
-                    for (let dc = -1; dc <= 1; dc++) {
+                for (let dr = -2; dr <= 2; dr++) {
+                    for (let dc = -2; dc <= 2; dc++) {
                         if (dr === 0 && dc === 0) continue;
+                        if (Math.abs(dr) === 2 && Math.abs(dc) === 2 && Math.abs(dr) !== Math.abs(dc)) continue;
                         const nr = r + dr, nc = c + dc;
                         if (nr >= 0 && nr < XO_SIZE && nc >= 0 && nc < XO_SIZE) {
                             const nIdx = nr * XO_SIZE + nc;
@@ -15132,9 +15138,26 @@
                 let quick = 6 - (Math.abs(r - 3) + Math.abs(c - 3));
 
                 board[idx] = 'O';
-                if (checkXoWinner(board)?.winner === 'O') quick += 1000000;
+                if (checkXoWinner(board)?.winner === 'O') quick += 2000000;
+                else if (hasOpenThreePattern(board, 'O')) quick += 120000;
+                else if (countWinningMovesFor(board, 'O') >= 2) quick += 95000;
+
                 board[idx] = 'X';
-                if (checkXoWinner(board)?.winner === 'X') quick += 800000;
+                if (checkXoWinner(board)?.winner === 'X') quick += 1500000;
+                else if (hasOpenThreePattern(board, 'X')) quick += 140000;
+                else if (countWinningMovesFor(board, 'X') >= 2) quick += 110000;
+
+                // Thưởng nhẹ cho ô nằm trên nhiều đường có sẵn quân
+                for (const combo of XO_WIN_COMBOS) {
+                    if (!combo.includes(idx)) continue;
+                    let oC = 0, xC = 0;
+                    for (let k = 0; k < 4; k++) {
+                        if (board[combo[k]] === 'O') oC++;
+                        else if (board[combo[k]] === 'X') xC++;
+                    }
+                    if (xC === 0 && oC > 0) quick += oC * 25;
+                    if (oC === 0 && xC > 0) quick += xC * 32;
+                }
                 board[idx] = '';
 
                 scored.push({ idx, quick });
@@ -15143,7 +15166,8 @@
             return scored.slice(0, 10).map(item => item.idx);
         }
 
-        function alphabetaXo(board, depth, alpha, beta, isMaximizing) {
+        function alphabetaXo(board, depth, alpha, beta, isMaximizing, deadlineMs = 0) {
+            if (deadlineMs && Date.now() > deadlineMs) return evaluateXoBoard(board);
             const win = checkXoWinner(board);
             if (win) {
                 if (win.winner === 'O') return 10000000 + depth * 1000;
@@ -15159,7 +15183,7 @@
                 let best = -Infinity;
                 for (const idx of candidates) {
                     board[idx] = 'O';
-                    const val = alphabetaXo(board, depth - 1, alpha, beta, false);
+                    const val = alphabetaXo(board, depth - 1, alpha, beta, false, deadlineMs);
                     board[idx] = '';
                     if (val > best) best = val;
                     if (best > alpha) alpha = best;
@@ -15170,7 +15194,7 @@
                 let best = Infinity;
                 for (const idx of candidates) {
                     board[idx] = 'X';
-                    const val = alphabetaXo(board, depth - 1, alpha, beta, true);
+                    const val = alphabetaXo(board, depth - 1, alpha, beta, true, deadlineMs);
                     board[idx] = '';
                     if (val < best) best = val;
                     if (best < beta) beta = best;
@@ -15184,57 +15208,50 @@
             const candidates = getSmartXoCandidates(board);
             if (candidates.length === 0) return -1;
 
-            // 1. Thấy nước thắng ngay (đủ 4 ô O): 95% sẽ đánh
+            // 1. Thắng ngay lập tức nếu O đủ 4 ô (100%)
             for (const idx of candidates) {
                 board[idx] = 'O';
                 const won = checkXoWinner(board)?.winner === 'O';
                 board[idx] = '';
-                if (won && Math.random() < 0.95) return idx;
+                if (won) return idx;
             }
 
-            // 2. Thấy bạn sắp thắng ngay (đủ 3 ô X): ~82% sẽ nhận ra để chặn
+            // 2. Chặn bắt buộc nếu X sắp thắng ở lượt sau (100%)
             for (const idx of candidates) {
                 board[idx] = 'X';
                 const xWins = checkXoWinner(board)?.winner === 'X';
                 board[idx] = '';
-                if (xWins && Math.random() < 0.82) return idx;
+                if (xWins) return idx;
             }
 
-            // 3. Đánh theo cảm giác người bình thường (nhìn 1 bước + ngẫu nhiên nhẹ, không dùng thuật toán sâu)
-            const scored = candidates.map(idx => {
-                const r = Math.floor(idx / XO_SIZE);
-                const c = idx % XO_SIZE;
-                let pts = (6 - (Math.abs(r - 3) + Math.abs(c - 3))) * 3;
-
-                for (const combo of XO_WIN_COMBOS) {
-                    if (!combo.includes(idx)) continue;
-                    let oCnt = 0, xCnt = 0;
-                    for (let k = 0; k < 4; k++) {
-                        if (board[combo[k]] === 'O') oCnt++;
-                        else if (board[combo[k]] === 'X') xCnt++;
-                    }
-                    if (xCnt === 0) {
-                        if (oCnt === 2) pts += 65;
-                        else if (oCnt === 1) pts += 20;
-                        else pts += 5;
-                    } else if (oCnt === 0) {
-                        if (xCnt === 2) pts += 48;
-                        else if (xCnt === 1) pts += 12;
-                    }
+            // 3. Tạo thế thắng chắc (hàng 3 thoáng 2 đầu hoặc bẫy đôi) nếu X chưa có đe dọa trực tiếp
+            const xImmediate = countWinningMovesFor(board, 'X');
+            if (xImmediate === 0) {
+                for (const idx of candidates) {
+                    board[idx] = 'O';
+                    const unstoppable = hasOpenThreePattern(board, 'O') || countWinningMovesFor(board, 'O') >= 2;
+                    board[idx] = '';
+                    if (unstoppable) return idx;
                 }
+            }
 
-                // Thêm độ dao động tự nhiên như người thật
-                pts += Math.random() * 55;
-                return { idx, pts };
-            });
+            // 4. Tìm nước đi tối ưu nhất bằng Alpha-Beta 4-5 lớp (có giới hạn 260ms chống lag máy)
+            let bestMove = candidates[0];
+            let bestScore = -Infinity;
+            const searchDepth = candidates.length <= 7 ? 5 : 4;
+            const deadlineMs = Date.now() + 260;
 
-            scored.sort((a, b) => b.pts - a.pts);
-
-            // Chọn ngẫu nhiên trong top 3 nước hợp lý nhất
-            const pickRoll = Math.random();
-            if (scored.length >= 3 && pickRoll > 0.90) return scored[2].idx;
-            if (scored.length >= 2 && pickRoll > 0.68) return scored[1].idx;
-            return scored[0].idx;
+            for (const idx of candidates) {
+                board[idx] = 'O';
+                const score = alphabetaXo(board, searchDepth, -Infinity, Infinity, false, deadlineMs);
+                board[idx] = '';
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = idx;
+                }
+                if (Date.now() > deadlineMs) break;
+            }
+            return bestMove;
         }
 
         function handleXoCellClick(idx) {
@@ -15765,11 +15782,20 @@
 
             isViaRolling = true;
             viaDiceLocked = [false, false, false, false];
+
+            // Giảm nhẹ xác suất vào ô đang đặt cược (16.5% mỗi viên -> ~51.4% tỷ lệ trúng cả ván thay vì ~68.4%)
+            const betFaceIdx = viaBets.findIndex(b => b > 0);
+            const otherFaces = [0, 1, 2, 3].filter(f => f !== betFaceIdx);
+            const rollSingleViaDie = () => {
+                if (betFaceIdx === -1) return Math.floor(Math.random() * 4);
+                if (Math.random() < 0.165) return betFaceIdx;
+                return otherFaces[Math.floor(Math.random() * otherFaces.length)];
+            };
             const finalRoll = [
-                Math.floor(Math.random() * 4),
-                Math.floor(Math.random() * 4),
-                Math.floor(Math.random() * 4),
-                Math.floor(Math.random() * 4)
+                rollSingleViaDie(),
+                rollSingleViaDie(),
+                rollSingleViaDie(),
+                rollSingleViaDie()
             ];
 
             const rollBtn = document.getElementById('viaRollBtn');
