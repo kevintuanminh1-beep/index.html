@@ -2604,7 +2604,7 @@
             <div class="px-9">
                 <span class="text-[10px] bg-pink-400/20 text-pink-200 border border-pink-200/40 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Bầu Cua 4 Mặt · Lấy Vía</span>
                 <h3 class="text-lg sm:text-xl font-black pastel-fast-wave mt-0.5">Cược Màu Lấy Vía</h3>
-                <p class="text-[10.5px] text-sky-100/80 font-medium">Cược tối đa <b class="text-pink-200">2 ô</b> &amp; <b class="text-amber-300">5 Chì/ván</b> · <b class="text-pink-200">5 lượt/ngày</b></p>
+                <p class="text-[10.5px] text-sky-100/80 font-medium">Cược tối đa <b class="text-pink-200">1 ô</b> &amp; <b class="text-amber-300">5 Chì/ván</b> · <b class="text-pink-200">5 lượt/ngày</b></p>
             </div>
 
             <!-- Thanh Túi Chì & Lượt hôm nay -->
@@ -2633,7 +2633,7 @@
             <!-- BÀN BÀI ĐẶT CƯỢC 4 MẶT XINH YÊU -->
             <div class="via-card-mat rounded-3xl p-2.5 sm:p-3 space-y-2">
                 <div class="flex items-center justify-between px-1">
-                    <span class="text-[10.5px] font-extrabold text-pink-100/90">🃏 Chọn tối đa 2 ô để đặt cược (+ / -):</span>
+                    <span class="text-[10.5px] font-extrabold text-pink-100/90">🃏 Chọn 1 ô để đặt cược (+ / -):</span>
                     <button type="button" onclick="clearViaBets()" class="text-[10px] text-sky-200/80 hover:text-white underline font-bold">Đặt lại</button>
                 </div>
                 <div id="viaBettingMatGrid" class="grid grid-cols-2 gap-2"></div>
@@ -2678,7 +2678,7 @@
             </div>
             <ul class="text-[11.5px] text-sky-100/90 space-y-2 leading-relaxed">
                 <li>• <b>Cách chơi (như Bầu Cua):</b> Bàn bài có <b>4 mặt</b> và khay có <b>4 khối xúc xắc</b>.</li>
-                <li>• <b>Đặt cược:</b> Bấm <b>+</b> / <b>-</b> để đặt Bút Chì Màu vào tối đa <b class="text-pink-200">2 ô mặt / ván</b> (tổng tối đa <b class="text-amber-300">5 Chì Màu / ván</b>).</li>
+                <li>• <b>Đặt cược:</b> Bấm <b>+</b> / <b>-</b> để đặt Bút Chì Màu vào <b class="text-pink-200">1 ô mặt duy nhất / ván</b> (tối đa <b class="text-amber-300">5 Chì Màu / ván</b>).</li>
                 <li>• <b>Cách tính thưởng:</b><br>
                     – Mặt bạn đặt xuất hiện <b>K lần</b> trên 4 khối (1, 2, 3 hoặc 4 lần): Giữ nguyên vốn và <b class="text-emerald-300">ăn thêm K × số chì đã đặt</b> ở mặt đó!<br>
                     – Không xuất hiện: <b class="text-rose-300">Mất số chì</b> đặt ở mặt đó.
@@ -14394,25 +14394,62 @@
             banner.innerText = text;
         }
 
+        function updateXoNewRoundBtnUI() {
+            const btn = document.getElementById('xoNewRoundBtn');
+            if (!btn) return;
+            const hasMovesInProgress = xoGameActive && xoBoard.some(v => v !== '');
+            if (hasMovesInProgress) {
+                btn.disabled = true;
+                btn.innerText = "⏳ Đang trong ván (Không thể reset)";
+                btn.className = "flex-1 bg-white/10 text-pink-200/50 border border-white/15 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed";
+            } else {
+                btn.disabled = false;
+                btn.innerText = "🔄 Vẽ Ván Mới";
+                btn.className = "jelly-btn flex-1 bg-gradient-to-r from-pink-400 via-rose-400 to-purple-500 hover:brightness-110 text-white font-black text-xs py-2.5 rounded-xl shadow-lg active:scale-95 transition";
+            }
+        }
+
         function openXoGameModal() {
             if (!currentUser) {
                 alert("Vui lòng đăng nhập để chơi Cùng vẽ X và O nhé!");
                 return;
             }
             document.getElementById('xoGameModal')?.classList.remove('hidden');
-            startNewXoRound();
+
+            // Nếu ván trước đang đánh dở (chưa kết thúc), tiếp tục giữ nguyên bàn cờ hiện tại
+            if (xoGameActive && xoBoard.some(v => v !== '')) {
+                updateXoHeaderUI();
+                setXoStatus("Tiếp tục ván đang chơi dở nhé! Lượt của bạn ✏️", "text-pink-200");
+                renderXoBoard(-1);
+                updateXoNewRoundBtnUI();
+            } else {
+                startNewXoRound();
+            }
             playPaletteTingSound();
         }
 
         function closeXoGameModal() {
-            if (xoBotTimer) { clearTimeout(xoBotTimer); xoBotTimer = null; }
-            xoIsBotThinking = false;
-            xoGameActive = false;
+            if (xoBotTimer) {
+                clearTimeout(xoBotTimer);
+                xoBotTimer = null;
+            }
+            // Nếu đang đến lượt Bot suy nghĩ mà thoát, cho Bot chốt luôn nước đi để mở lại không bị kẹt lượt
+            if (xoGameActive && xoIsBotThinking) {
+                const botIdx = pickBotXoMove(xoBoard);
+                if (botIdx !== -1) xoBoard[botIdx] = 'O';
+                xoIsBotThinking = false;
+                const afterBot = checkXoWinner(xoBoard);
+                if (afterBot) finishXoRound(afterBot);
+            }
             closeXoRulesModal();
             document.getElementById('xoGameModal')?.classList.add('hidden');
         }
 
         function startNewXoRound() {
+            if (xoGameActive && xoBoard.some(v => v !== '')) {
+                alert("Ván cờ đang diễn ra, bạn hãy chơi hết ván rồi mới bấm Vẽ Ván Mới nhé!");
+                return;
+            }
             if (xoBotTimer) { clearTimeout(xoBotTimer); xoBotTimer = null; }
             xoBoard = Array(XO_TOTAL_CELLS).fill('');
             xoWinLine = [];
@@ -14429,12 +14466,14 @@
                 xoGameActive = false;
                 setXoStatus("Hết Bút Chì Màu rồi! Hãy kiếm thêm chì để chơi tiếp nhé.", "text-rose-300");
                 renderXoBoard(-1);
+                updateXoNewRoundBtnUI();
                 return;
             }
 
             xoGameActive = true;
             setXoStatus("Lượt của bạn: Nối 4 ô X để thắng Bot nhé! ✏️", "text-pink-200");
             renderXoBoard(-1);
+            updateXoNewRoundBtnUI();
         }
 
         function checkXoWinner(board) {
@@ -14686,6 +14725,9 @@
             xoBoard[idx] = 'X';
             playPencilPaperSound(true);
             renderXoBoard(idx);
+            updateXoNewRoundBtnUI();
+            updateXoNewRoundBtnUI();
+            updateXoNewRoundBtnUI();
 
             const check = checkXoWinner(xoBoard);
             if (check) {
@@ -14786,6 +14828,7 @@
             }
 
             updateXoHeaderUI();
+            updateXoNewRoundBtnUI();
         }
 
         // ================= MINI GAME: CƯỢC MÀU LẤY VÍA (BẦU CUA 4 MẶT · 4 KHỐI XÚC XẮC) =================
@@ -14999,8 +15042,8 @@
             const maxAllowed = currentUser.isOwner ? 5 : Math.min(5, curPencils);
 
             if (delta > 0) {
-                if (viaBets[faceIdx] === 0 && activeFacesCount >= 2) {
-                    alert("Mỗi ván chỉ được chọn cược tối đa 2 ô mặt thôi nhé!");
+                if (viaBets[faceIdx] === 0 && activeFacesCount >= 1) {
+                    alert("Mỗi ván chỉ được chọn cược 1 ô mặt duy nhất thôi nhé! (Bấm - về 0 hoặc 'Đặt lại' nếu muốn đổi ô khác)");
                     return;
                 }
                 if (!currentUser.isOwner && curPencils <= 0) {
@@ -15095,8 +15138,8 @@
                 return;
             }
             const activeFacesCount = viaBets.filter(b => b > 0).length;
-            if (activeFacesCount > 2) {
-                alert("Mỗi ván chỉ được đặt cược tối đa 2 ô mặt thôi nhé!");
+            if (activeFacesCount > 1) {
+                alert("Mỗi ván chỉ được đặt cược tối đa 1 ô mặt duy nhất thôi nhé!");
                 return;
             }
             if (totalBet > 5 || (!isOwnerAcc && totalBet > curPencils)) {
