@@ -2316,7 +2316,7 @@
     <!-- Đã chuyển việc quản lý thư viện ảnh vào bên trong mục Tài Khoản / Thông Báo của Chủ Web -->
 
     <!-- MODAL THAY ẢNH/GIF MỤC LỚN -->
-    <div id="adminMenuIconModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div id="adminMenuIconModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[85] hidden flex items-center justify-center p-4">
         <div class="bg-[#121c38] border-2 border-pink-300/60 p-5 rounded-3xl max-w-sm w-full text-left shadow-2xl space-y-3">
             <div class="flex items-center justify-between border-b border-white/10 pb-2">
                 <h3 id="menuIconModalTitle" class="text-sm font-extrabold text-pink-300">Đổi Ảnh / GIF Mục Lớn</h3>
@@ -6250,8 +6250,10 @@
                 if (error && error.code === 'resource-exhausted') handleQuotaExceededError();
             });
 
+            window._menuIconsDocUpdatedAt = 0;
             db.collection("settings").doc("menu_icons").onSnapshot((doc) => {
                 if (doc.exists && doc.data()?.customMenuIcons) {
+                    window._menuIconsDocUpdatedAt = Number(doc.data().updatedAt) || Date.now();
                     customMenuIcons = { ...customMenuIcons, ...doc.data().customMenuIcons };
                     try { localStorage.setItem('palette_custom_menu_icons', JSON.stringify(customMenuIcons)); } catch (_) {}
                     applyCustomMenuIcons();
@@ -6288,7 +6290,9 @@
                 if (!doc.exists) return;
                 const data = doc.data() || {};
                 if (data.availableCategories) availableCategories = data.availableCategories;
-                if (data.customMenuIcons) customMenuIcons = { ...customMenuIcons, ...data.customMenuIcons };
+                if (data.customMenuIcons && !window._menuIconsDocUpdatedAt) {
+                    customMenuIcons = { ...customMenuIcons, ...data.customMenuIcons };
+                }
                 if (typeof data.ownerNtfyTopic === 'string') {
                     ownerNtfyTopic = data.ownerNtfyTopic;
                     localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
@@ -8569,8 +8573,11 @@
         }
 
         function handleMenuIconClick(e, menuKey) {
-            if (!currentUser?.isOwner) return;
-            e.stopPropagation();
+            if (!checkIsOwnerAccount()) return;
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             currentEditingMenuKey = menuKey;
 
             const modal = document.getElementById('adminMenuIconModal');
@@ -8776,19 +8783,18 @@
                 customMenuIcons[currentEditingMenuKey] = finalSrc;
                 let savedToCloud = false;
 
+                await db.collection("settings").doc("menu_icons").set({
+                    customMenuIcons: customMenuIcons,
+                    updatedAt: Date.now()
+                }, { merge: true });
+                savedToCloud = true;
+
                 try {
                     await db.collection("settings").doc("main").set({
                         availableCategories: availableCategories,
                         customMenuIcons: customMenuIcons
                     }, { merge: true });
-                    savedToCloud = true;
-                } catch (mainErr) {
-                    // Nếu settings/main bị đầy 1 MB, tự lưu riêng sang settings/menu_icons
-                    await db.collection("settings").doc("menu_icons").set({
-                        customMenuIcons: customMenuIcons
-                    }, { merge: true });
-                    savedToCloud = true;
-                }
+                } catch (_) {}
 
                 if (savedToCloud) {
                     try { localStorage.setItem('palette_custom_menu_icons', JSON.stringify(customMenuIcons)); } catch (_) {}
