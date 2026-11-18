@@ -15068,8 +15068,11 @@
             return false;
         }
 
+        let xoTransTable = new Map();
+
         function evaluateXoBoard(board) {
             let score = 0;
+            let oTwos = 0, xTwos = 0;
             for (const combo of XO_WIN_COMBOS) {
                 let oCnt = 0, xCnt = 0;
                 for (let k = 0; k < 4; k++) {
@@ -15081,29 +15084,32 @@
                 if (oCnt === 4) return 10000000;
                 if (xCnt === 4) return -10000000;
 
-                if (oCnt === 3) score += 3400;
-                else if (oCnt === 2) score += 280;
-                else if (oCnt === 1) score += 22;
+                if (oCnt === 3) score += 4500;
+                else if (oCnt === 2) { score += 340; oTwos++; }
+                else if (oCnt === 1) score += 26;
 
-                if (xCnt === 3) score -= 6800;
-                else if (xCnt === 2) score -= 460;
-                else if (xCnt === 1) score -= 28;
+                if (xCnt === 3) score -= 9500;
+                else if (xCnt === 2) { score -= 580; xTwos++; }
+                else if (xCnt === 1) score -= 34;
             }
+
+            if (oTwos >= 3) score += 2500;
+            if (xTwos >= 3) score -= 4500;
 
             const oWinThreats = countWinningMovesFor(board, 'O');
             const xWinThreats = countWinningMovesFor(board, 'X');
-            if (oWinThreats >= 2) score += 450000;
-            if (xWinThreats >= 2) score -= 680000;
+            if (oWinThreats >= 2) score += 550000;
+            if (xWinThreats >= 2) score -= 850000;
 
-            if (hasOpenThreePattern(board, 'O')) score += 95000;
-            if (hasOpenThreePattern(board, 'X')) score -= 180000;
+            if (hasOpenThreePattern(board, 'O')) score += 140000;
+            if (hasOpenThreePattern(board, 'X')) score -= 280000;
 
             for (let r = 0; r < XO_SIZE; r++) {
                 for (let c = 0; c < XO_SIZE; c++) {
                     const v = board[r * XO_SIZE + c];
                     if (!v) continue;
                     const centerVal = 6 - (Math.abs(r - 3) + Math.abs(c - 3));
-                    score += (v === 'O' ? centerVal * 5 : -centerVal * 5);
+                    score += (v === 'O' ? centerVal * 6 : -centerVal * 6);
                 }
             }
             return score;
@@ -15138,16 +15144,17 @@
                 let quick = 6 - (Math.abs(r - 3) + Math.abs(c - 3));
 
                 board[idx] = 'O';
-                if (checkXoWinner(board)?.winner === 'O') quick += 2000000;
-                else if (hasOpenThreePattern(board, 'O')) quick += 120000;
-                else if (countWinningMovesFor(board, 'O') >= 2) quick += 95000;
+                if (checkXoWinner(board)?.winner === 'O') quick += 4000000;
+                else if (hasOpenThreePattern(board, 'O')) quick += 240000;
+                else if (countWinningMovesFor(board, 'O') >= 2) quick += 180000;
 
                 board[idx] = 'X';
-                if (checkXoWinner(board)?.winner === 'X') quick += 1500000;
-                else if (hasOpenThreePattern(board, 'X')) quick += 140000;
-                else if (countWinningMovesFor(board, 'X') >= 2) quick += 110000;
+                if (checkXoWinner(board)?.winner === 'X') quick += 3200000;
+                else if (hasOpenThreePattern(board, 'X')) quick += 290000;
+                else if (countWinningMovesFor(board, 'X') >= 2) quick += 220000;
 
-                // Thưởng nhẹ cho ô nằm trên nhiều đường có sẵn quân
+                // Phát hiện giao điểm tạo nhiều hàng 2 -> bẫy tương lai
+                let oFork2 = 0, xFork2 = 0;
                 for (const combo of XO_WIN_COMBOS) {
                     if (!combo.includes(idx)) continue;
                     let oC = 0, xC = 0;
@@ -15155,15 +15162,23 @@
                         if (board[combo[k]] === 'O') oC++;
                         else if (board[combo[k]] === 'X') xC++;
                     }
-                    if (xC === 0 && oC > 0) quick += oC * 25;
-                    if (oC === 0 && xC > 0) quick += xC * 32;
+                    if (xC === 0 && oC > 0) {
+                        quick += oC * 35;
+                        if (oC >= 2) oFork2++;
+                    }
+                    if (oC === 0 && xC > 0) {
+                        quick += xC * 45;
+                        if (xC >= 2) xFork2++;
+                    }
                 }
+                if (oFork2 >= 2) quick += 8500;
+                if (xFork2 >= 2) quick += 12000;
                 board[idx] = '';
 
                 scored.push({ idx, quick });
             }
             scored.sort((a, b) => b.quick - a.quick);
-            return scored.slice(0, 10).map(item => item.idx);
+            return scored.slice(0, 12).map(item => item.idx);
         }
 
         function alphabetaXo(board, depth, alpha, beta, isMaximizing, deadlineMs = 0) {
@@ -15176,9 +15191,14 @@
             }
             if (depth <= 0) return evaluateXoBoard(board);
 
+            const ttKey = board.join('') + '|' + depth + '|' + (isMaximizing ? '1' : '0');
+            const cached = xoTransTable.get(ttKey);
+            if (cached !== undefined) return cached;
+
             const candidates = getSmartXoCandidates(board);
             if (candidates.length === 0) return 0;
 
+            let resultVal;
             if (isMaximizing) {
                 let best = -Infinity;
                 for (const idx of candidates) {
@@ -15188,8 +15208,9 @@
                     if (val > best) best = val;
                     if (best > alpha) alpha = best;
                     if (beta <= alpha) break;
+                    if (deadlineMs && Date.now() > deadlineMs) break;
                 }
-                return best;
+                resultVal = best;
             } else {
                 let best = Infinity;
                 for (const idx of candidates) {
@@ -15199,9 +15220,13 @@
                     if (val < best) best = val;
                     if (best < beta) beta = best;
                     if (beta <= alpha) break;
+                    if (deadlineMs && Date.now() > deadlineMs) break;
                 }
-                return best;
+                resultVal = best;
             }
+
+            if (xoTransTable.size < 18000) xoTransTable.set(ttKey, resultVal);
+            return resultVal;
         }
 
         function pickBotXoMove(board) {
@@ -15216,7 +15241,7 @@
                 if (won) return idx;
             }
 
-            // 2. Chặn bắt buộc nếu X sắp thắng ở lượt sau (100%)
+            // 2. Chặn bắt buộc nếu X sắp thắng ngay ở lượt sau (100%)
             for (const idx of candidates) {
                 board[idx] = 'X';
                 const xWins = checkXoWinner(board)?.winner === 'X';
@@ -15224,7 +15249,7 @@
                 if (xWins) return idx;
             }
 
-            // 3. Tạo thế thắng chắc (hàng 3 thoáng 2 đầu hoặc bẫy đôi) nếu X chưa có đe dọa trực tiếp
+            // 3. Tạo thế thắng chắc chắn không thể đỡ (hàng 3 thoáng 2 đầu hoặc bẫy đôi)
             const xImmediate = countWinningMovesFor(board, 'X');
             if (xImmediate === 0) {
                 for (const idx of candidates) {
@@ -15235,21 +15260,42 @@
                 }
             }
 
-            // 4. Tìm nước đi tối ưu nhất bằng Alpha-Beta 4-5 lớp (có giới hạn 260ms chống lag máy)
-            let bestMove = candidates[0];
-            let bestScore = -Infinity;
-            const searchDepth = candidates.length <= 7 ? 5 : 4;
-            const deadlineMs = Date.now() + 260;
-
+            // 4. Chặn ngay mọi nước X có thể tạo hàng 3 thoáng 2 đầu hoặc bẫy đôi ở lượt kế tiếp
             for (const idx of candidates) {
-                board[idx] = 'O';
-                const score = alphabetaXo(board, searchDepth, -Infinity, Infinity, false, deadlineMs);
+                board[idx] = 'X';
+                const xDanger = hasOpenThreePattern(board, 'X') || countWinningMovesFor(board, 'X') >= 2;
                 board[idx] = '';
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMove = idx;
-                }
+                if (xDanger) return idx;
+            }
+
+            // 5. Iterative Deepening Alpha-Beta (Sâu dần 3 -> 5 -> 7 nước) kết hợp Transposition Table
+            xoTransTable.clear();
+            let bestMove = candidates[0];
+            const deadlineMs = Date.now() + 380;
+
+            for (let depth = 3; depth <= 7; depth += 2) {
                 if (Date.now() > deadlineMs) break;
+                let iterBestMove = candidates[0];
+                let iterBestScore = -Infinity;
+                let completedFullDepth = true;
+
+                for (const idx of candidates) {
+                    if (Date.now() > deadlineMs) {
+                        completedFullDepth = false;
+                        break;
+                    }
+                    board[idx] = 'O';
+                    const score = alphabetaXo(board, depth, -Infinity, Infinity, false, deadlineMs);
+                    board[idx] = '';
+                    if (score > iterBestScore) {
+                        iterBestScore = score;
+                        iterBestMove = idx;
+                    }
+                }
+                if (completedFullDepth || depth === 3) {
+                    bestMove = iterBestMove;
+                }
+                if (iterBestScore >= 9000000) break;
             }
             return bestMove;
         }
@@ -15783,12 +15829,12 @@
             isViaRolling = true;
             viaDiceLocked = [false, false, false, false];
 
-            // Giảm nhẹ xác suất vào ô đang đặt cược (16.5% mỗi viên -> ~51.4% tỷ lệ trúng cả ván thay vì ~68.4%)
+            // Mức khó tối đa (8.5% mỗi viên -> ~70% trượt sạch, chỉ ~29.9% cơ hội trúng lấy vía)
             const betFaceIdx = viaBets.findIndex(b => b > 0);
             const otherFaces = [0, 1, 2, 3].filter(f => f !== betFaceIdx);
             const rollSingleViaDie = () => {
                 if (betFaceIdx === -1) return Math.floor(Math.random() * 4);
-                if (Math.random() < 0.165) return betFaceIdx;
+                if (Math.random() < 0.085) return betFaceIdx;
                 return otherFaces[Math.floor(Math.random() * otherFaces.length)];
             };
             const finalRoll = [
