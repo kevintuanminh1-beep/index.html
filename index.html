@@ -2817,7 +2817,7 @@
                     – Mặt bạn đặt xuất hiện <b>K lần</b> trên 4 khối (1, 2, 3 hoặc 4 lần): Giữ nguyên vốn và <b class="text-emerald-300">ăn thêm K × số chì đã đặt</b> ở mặt đó!<br>
                     – Không xuất hiện: <b class="text-rose-300">Mất số chì</b> đặt ở mặt đó.
                 </li>
-                <li>• <b>Giới hạn:</b> <b class="text-pink-200">3 ngày được chơi 1 lần</b> (vẫn chơi được khi còn 0 Chì — thua sẽ bị trừ xuống số âm).</li>
+                <li>• <b>Giới hạn:</b> <b class="text-pink-200">3 ngày được chơi 1 lần</b> (cần có ít nhất 1 Chì Màu trong túi để đặt cược).</li>
             </ul>
             <button type="button" onclick="closeViaRulesModal()" class="w-full bg-gradient-to-r from-pink-400 to-amber-300 text-[#18102c] font-black py-2 rounded-xl text-xs active:scale-95 transition">
                 Đã hiểu, lấy vía ngay! 🎲
@@ -5626,7 +5626,7 @@
             if (!username) return 0;
             if (isOwnerUsername(username)) return 10;
             const key = String(username).trim().toLowerCase();
-            return Number(userPencilsData[key]?.count) || 0;
+            return Math.max(0, Number(userPencilsData[key]?.count) || 0);
         }
 
         async function addPencilToUser(username, amount, reason = "", showSparkles = true) {
@@ -5671,9 +5671,7 @@
             const modalCount = document.getElementById('modalTotalPencilCount');
             if (badge) {
                 badge.innerText = count;
-                badge.className = count < 0
-                    ? "bg-rose-500/30 text-rose-200 px-2 py-0.5 rounded-full font-black text-[11px] border border-rose-400/60"
-                    : "bg-pink-400/20 text-pink-100 px-2 py-0.5 rounded-full font-black text-[11px] border border-pink-300/40";
+                badge.className = "bg-pink-400/20 text-pink-100 px-2 py-0.5 rounded-full font-black text-[11px] border border-pink-300/40";
             }
             if (modalCount) modalCount.innerText = count;
             const hint = document.getElementById('pencilUnlockHint');
@@ -9028,11 +9026,11 @@
             if (txt.startsWith('=')) {
                 const parsed = parseInt(txt.slice(1), 10);
                 if (isNaN(parsed)) { alert("Số không hợp lệ!"); return; }
-                nextCount = parsed;
+                nextCount = Math.max(0, parsed);
             } else {
                 const delta = parseInt(txt, 10);
                 if (isNaN(delta)) { alert("Số không hợp lệ!"); return; }
-                nextCount = cur + delta;
+                nextCount = Math.max(0, cur + delta);
             }
             const uKey = targetUsername.toLowerCase();
             try {
@@ -9537,6 +9535,254 @@
             }
         }
 
+        function readDeviceCookie(name) {
+            try {
+                const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+                return match ? decodeURIComponent(match[1]) : '';
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function writeDeviceCookie(name, value) {
+            try {
+                document.cookie = `${name}=${encodeURIComponent(value)}; max-age=315360000; path=/; SameSite=Lax`;
+            } catch (_) {}
+        }
+
+        function readDeviceIndexedDb(key) {
+            return new Promise((resolve) => {
+                if (!window.indexedDB) return resolve('');
+                try {
+                    const req = indexedDB.open('palette_device_lock_db', 1);
+                    req.onupgradeneeded = () => {
+                        const dbObj = req.result;
+                        if (!dbObj.objectStoreNames.contains('meta')) {
+                            dbObj.createObjectStore('meta');
+                        }
+                    };
+                    req.onsuccess = () => {
+                        try {
+                            const dbObj = req.result;
+                            const tx = dbObj.transaction('meta', 'readonly');
+                            const getReq = tx.objectStore('meta').get(key);
+                            getReq.onsuccess = () => resolve(getReq.result || '');
+                            getReq.onerror = () => resolve('');
+                        } catch (_) {
+                            resolve('');
+                        }
+                    };
+                    req.onerror = () => resolve('');
+                } catch (_) {
+                    resolve('');
+                }
+            });
+        }
+
+        function writeDeviceIndexedDb(key, value) {
+            return new Promise((resolve) => {
+                if (!window.indexedDB) return resolve();
+                try {
+                    const req = indexedDB.open('palette_device_lock_db', 1);
+                    req.onupgradeneeded = () => {
+                        const dbObj = req.result;
+                        if (!dbObj.objectStoreNames.contains('meta')) {
+                            dbObj.createObjectStore('meta');
+                        }
+                    };
+                    req.onsuccess = () => {
+                        try {
+                            const dbObj = req.result;
+                            const tx = dbObj.transaction('meta', 'readwrite');
+                            tx.objectStore('meta').put(value, key);
+                            tx.oncomplete = () => resolve();
+                            tx.onerror = () => resolve();
+                        } catch (_) {
+                            resolve();
+                        }
+                    };
+                    req.onerror = () => resolve();
+                } catch (_) {
+                    resolve();
+                }
+            });
+        }
+
+        async function getOrCreateDeviceUuid() {
+            const fromLs = localStorage.getItem('palette_device_reg_uuid') || '';
+            const fromCk = readDeviceCookie('palette_dev_uuid');
+            const fromIdb = await readDeviceIndexedDb('device_uuid');
+            let uuid = fromLs || fromCk || fromIdb;
+            if (!uuid) {
+                uuid = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+            }
+            try { localStorage.setItem('palette_device_reg_uuid', uuid); } catch (_) {}
+            writeDeviceCookie('palette_dev_uuid', uuid);
+            await writeDeviceIndexedDb('device_uuid', uuid);
+            return uuid;
+        }
+
+        async function getRegisteredOwnerOnThisDevice() {
+            const fromLs = localStorage.getItem('palette_device_reg_owner') || '';
+            const fromCk = readDeviceCookie('palette_dev_owner');
+            const fromIdb = await readDeviceIndexedDb('registered_owner');
+            let ownerName = fromLs || fromCk || fromIdb;
+
+            const deviceUuid = await getOrCreateDeviceUuid();
+            if (!ownerName) {
+                try {
+                    const snap = await db.collection("device_locks").doc(deviceUuid).get();
+                    if (snap.exists && snap.data()?.username) {
+                        ownerName = snap.data().username;
+                    }
+                } catch (_) {}
+            }
+
+            if (ownerName) {
+                try { localStorage.setItem('palette_device_reg_owner', ownerName); } catch (_) {}
+                writeDeviceCookie('palette_dev_owner', ownerName);
+                await writeDeviceIndexedDb('registered_owner', ownerName);
+            }
+            return { ownerName, deviceUuid };
+        }
+
+        async function lockDeviceToRegisteredUser(username, deviceUuid) {
+            if (!username || isOwnerUsername(username)) return;
+            try { localStorage.setItem('palette_device_reg_owner', username); } catch (_) {}
+            writeDeviceCookie('palette_dev_owner', username);
+            await writeDeviceIndexedDb('registered_owner', username);
+            try {
+                await db.collection("device_locks").doc(deviceUuid).set({
+                    username: username,
+                    lockedAt: Date.now()
+                }, { merge: true });
+            } catch (_) {}
+        }
+
+        function readDeviceCookie(name) {
+            try {
+                const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+                return match ? decodeURIComponent(match[1]) : '';
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function writeDeviceCookie(name, value) {
+            try {
+                document.cookie = `${name}=${encodeURIComponent(value)}; max-age=315360000; path=/; SameSite=Lax`;
+            } catch (_) {}
+        }
+
+        function readDeviceIndexedDb(key) {
+            return new Promise((resolve) => {
+                if (!window.indexedDB) return resolve('');
+                try {
+                    const req = indexedDB.open('palette_device_lock_db', 1);
+                    req.onupgradeneeded = () => {
+                        const dbObj = req.result;
+                        if (!dbObj.objectStoreNames.contains('meta')) {
+                            dbObj.createObjectStore('meta');
+                        }
+                    };
+                    req.onsuccess = () => {
+                        try {
+                            const dbObj = req.result;
+                            const tx = dbObj.transaction('meta', 'readonly');
+                            const getReq = tx.objectStore('meta').get(key);
+                            getReq.onsuccess = () => resolve(getReq.result || '');
+                            getReq.onerror = () => resolve('');
+                        } catch (_) {
+                            resolve('');
+                        }
+                    };
+                    req.onerror = () => resolve('');
+                } catch (_) {
+                    resolve('');
+                }
+            });
+        }
+
+        function writeDeviceIndexedDb(key, value) {
+            return new Promise((resolve) => {
+                if (!window.indexedDB) return resolve();
+                try {
+                    const req = indexedDB.open('palette_device_lock_db', 1);
+                    req.onupgradeneeded = () => {
+                        const dbObj = req.result;
+                        if (!dbObj.objectStoreNames.contains('meta')) {
+                            dbObj.createObjectStore('meta');
+                        }
+                    };
+                    req.onsuccess = () => {
+                        try {
+                            const dbObj = req.result;
+                            const tx = dbObj.transaction('meta', 'readwrite');
+                            tx.objectStore('meta').put(value, key);
+                            tx.oncomplete = () => resolve();
+                            tx.onerror = () => resolve();
+                        } catch (_) {
+                            resolve();
+                        }
+                    };
+                    req.onerror = () => resolve();
+                } catch (_) {
+                    resolve();
+                }
+            });
+        }
+
+        async function getOrCreateDeviceUuid() {
+            const fromLs = localStorage.getItem('palette_device_reg_uuid') || '';
+            const fromCk = readDeviceCookie('palette_dev_uuid');
+            const fromIdb = await readDeviceIndexedDb('device_uuid');
+            let uuid = fromLs || fromCk || fromIdb;
+            if (!uuid) {
+                uuid = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+            }
+            try { localStorage.setItem('palette_device_reg_uuid', uuid); } catch (_) {}
+            writeDeviceCookie('palette_dev_uuid', uuid);
+            await writeDeviceIndexedDb('device_uuid', uuid);
+            return uuid;
+        }
+
+        async function getRegisteredOwnerOnThisDevice() {
+            const fromLs = localStorage.getItem('palette_device_reg_owner') || '';
+            const fromCk = readDeviceCookie('palette_dev_owner');
+            const fromIdb = await readDeviceIndexedDb('registered_owner');
+            let ownerName = fromLs || fromCk || fromIdb;
+
+            const deviceUuid = await getOrCreateDeviceUuid();
+            if (!ownerName) {
+                try {
+                    const snap = await db.collection("device_locks").doc(deviceUuid).get();
+                    if (snap.exists && snap.data()?.username) {
+                        ownerName = snap.data().username;
+                    }
+                } catch (_) {}
+            }
+
+            if (ownerName) {
+                try { localStorage.setItem('palette_device_reg_owner', ownerName); } catch (_) {}
+                writeDeviceCookie('palette_dev_owner', ownerName);
+                await writeDeviceIndexedDb('registered_owner', ownerName);
+            }
+            return { ownerName, deviceUuid };
+        }
+
+        async function lockDeviceToRegisteredUser(username, deviceUuid) {
+            if (!username || isOwnerUsername(username)) return;
+            try { localStorage.setItem('palette_device_reg_owner', username); } catch (_) {}
+            writeDeviceCookie('palette_dev_owner', username);
+            await writeDeviceIndexedDb('registered_owner', username);
+            try {
+                await db.collection("device_locks").doc(deviceUuid).set({
+                    username: username,
+                    lockedAt: Date.now()
+                }, { merge: true });
+            } catch (_) {}
+        }
+
         async function handleAuthSubmit() {
             const usernameInput = document.getElementById('authUsername');
             const username = usernameInput ? usernameInput.value.trim() : "";
@@ -9615,6 +9861,14 @@
                     return;
                 }
 
+                // Kiểm tra khóa 1 thiết bị / 1 tài khoản đăng ký
+                const { ownerName: existingDeviceOwner, deviceUuid } = await getRegisteredOwnerOnThisDevice();
+                if (existingDeviceOwner && existingDeviceOwner.toLowerCase() !== userKey) {
+                    errEl.innerText = `Mỗi thiết bị chỉ được đăng ký tối đa 1 tài khoản! Thiết bị này đã đăng ký tài khoản "${existingDeviceOwner}". Vui lòng chuyển sang Đăng Nhập nhé!`;
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+
                 const checkExistSnap = await db.collection("users").doc(userKey).get();
                 if (checkExistSnap.exists || registeredUsers[userKey]) {
                     errEl.innerText = "Tên tài khoản này đã có người đăng ký rồi! Vui lòng chọn tên khác.";
@@ -9624,9 +9878,10 @@
 
                 const finalAvatar = isValidAvatarSrc(selectedAuthAvatar) ? selectedAuthAvatar : PALETTE_DEFAULT_AVATARS[0];
 
-                const newUser = { username: username, pass: pass, avatar: finalAvatar };
+                const newUser = { username: username, pass: pass, avatar: finalAvatar, deviceUuid: deviceUuid };
                 registeredUsers[userKey] = newUser;
                 await db.collection("users").doc(userKey).set(newUser);
+                await lockDeviceToRegisteredUser(username, deviceUuid);
 
                 updateRegisteredUsersCountUI();
 
@@ -15160,22 +15415,31 @@
         }
 
         function checkXoWinner(board) {
+            let hasAnyWinnableLine = false;
             for (const combo of XO_WIN_COMBOS) {
                 const first = board[combo[0]];
-                if (!first) continue;
-                let matched = true;
-                for (let k = 1; k < XO_WIN_LEN; k++) {
-                    if (board[combo[k]] !== first) {
-                        matched = false;
-                        break;
-                    }
+                let hasX = false;
+                let hasO = false;
+                let allSame = Boolean(first);
+
+                for (let k = 0; k < XO_WIN_LEN; k++) {
+                    const v = board[combo[k]];
+                    if (v === 'X') hasX = true;
+                    else if (v === 'O') hasO = true;
+                    if (allSame && v !== first) allSame = false;
                 }
-                if (matched) return { winner: first, line: combo };
+
+                if (allSame) return { winner: first, line: combo };
+                // Đường 5 ô chỉ còn khả năng thắng nếu CHƯA bị cả X và O cùng chặn
+                if (!(hasX && hasO)) {
+                    hasAnyWinnableLine = true;
+                }
             }
-            for (let i = 0; i < XO_TOTAL_CELLS; i++) {
-                if (board[i] === '') return null;
+
+            if (!hasAnyWinnableLine) {
+                return { winner: 'draw', line: [], deadBoard: true };
             }
-            return { winner: 'draw', line: [] };
+            return null;
         }
 
         function countWinningMovesFor(board, sym) {
@@ -15585,13 +15849,13 @@
                 const isDraw = (result.winner === 'draw');
 
                 if (isDraw) {
-                    setXoStatus(`🤝 Hòa với ${opponent}! Bàn 169 ô đã kín hết rồi!`, "text-sky-200");
+                    setXoStatus(`🤝 Hòa với ${opponent}! Cả hai đều đã hết đường thắng rồi!`, "text-sky-200");
                     if (outcomeCard && outcomeTitle && outcomeDesc) {
                         outcomeCard.className = "rounded-2xl p-2.5 border border-sky-300/40 bg-sky-500/15 text-xs space-y-1";
                         outcomeTitle.className = "text-sm font-black text-sky-200";
                         outcomeTitle.innerText = "🤝 Hòa Nhau Rồi! (0 Chì Màu)";
                         outcomeDesc.className = "text-[11px] text-sky-100/85 leading-relaxed";
-                        outcomeDesc.innerText = `Bạn và ${opponent} bất phân thắng bại, số Bút Chì Màu giữ nguyên nhé!`;
+                        outcomeDesc.innerText = `Cả bạn và ${opponent} đều đã hết đường nối 5 ô liên tiếp, số Bút Chì Màu giữ nguyên nhé!`;
                     }
                     playEmptyCardNeutralSound();
                 } else if (iWon) {
@@ -15655,7 +15919,7 @@
                 setXoStatus("😢 Chia buồn! Bot vừa nối 5 ô O trước rồi...", "text-rose-300");
                 if (!isOwnerAcc) {
                     const cur = getUserPencilCount(username);
-                    const next = cur - 3;
+                    const next = Math.max(0, cur - 3);
                     userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: next };
                     db.collection("pencils").doc(uKey).set({ count: next }, { merge: true }).catch(() => {});
                     updatePencilUI();
@@ -15677,13 +15941,13 @@
                 sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thua Bot (-3 Bút Chì Màu)", 3);
             } else {
                 window._xoLastPlayerWon = false;
-                setXoStatus("🤝 Hòa nhau! Bàn 169 ô đã kín hết rồi!", "text-sky-200");
+                setXoStatus("🤝 Hòa nhau! Cả bạn và Bot đều hết đường thắng rồi!", "text-sky-200");
                 if (outcomeCard && outcomeTitle && outcomeDesc) {
                     outcomeCard.className = "rounded-2xl p-2.5 border border-sky-300/40 bg-sky-500/15 text-xs space-y-1";
                     outcomeTitle.className = "text-sm font-black text-sky-200";
                     outcomeTitle.innerText = "🤝 Hòa Nhau Rồi! (0 Chì Màu)";
                     outcomeDesc.className = "text-[11px] text-sky-100/85 leading-relaxed";
-                    outcomeDesc.innerText = "Bàn cờ 13×13 đã kín chỗ mà bất phân thắng bại, số Bút Chì Màu của bạn vẫn giữ nguyên nhé!";
+                    outcomeDesc.innerText = "Mọi đường nối 5 trên bàn 13×13 đều đã bị chặn hết nên ván cờ kết thúc Hòa, số Bút Chì Màu của bạn vẫn giữ nguyên nhé!";
                 }
                 playEmptyCardNeutralSound();
                 logMemberActivity("Cùng vẽ X và O (13×13)", "Hòa Bot (0 Bút Chì Màu)", "wheel");
@@ -15834,7 +16098,11 @@
             if (totEl) totEl.innerText = `Đang cược: ${totalBet}/5 Chì`;
 
             if (rollBtn && !isViaRolling) {
-                if (!isOwner && !viaInfo.canPlay) {
+                if (!isOwner && bal <= 0) {
+                    rollBtn.disabled = true;
+                    rollBtn.innerText = "Hết Chì Màu rồi (0 Chì)";
+                    rollBtn.className = "flex-1 bg-white/10 text-pink-200/50 border border-white/15 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed";
+                } else if (!isOwner && !viaInfo.canPlay) {
                     rollBtn.disabled = true;
                     rollBtn.innerText = `⏳ Chờ ${viaInfo.daysLeft} ngày nữa (3 ngày/lần)`;
                     rollBtn.className = "flex-1 bg-white/10 text-pink-200/50 border border-white/15 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed";
@@ -15908,14 +16176,24 @@
             if (isViaRolling || !currentUser) return;
             const totalBet = viaBets.reduce((a, b) => a + b, 0);
             const activeFacesCount = viaBets.filter(b => b > 0).length;
+            const curPencils = getUserPencilCount(currentUser.username);
+            const maxAllowed = currentUser.isOwner ? 5 : Math.min(5, curPencils);
 
             if (delta > 0) {
                 if (viaBets[faceIdx] === 0 && activeFacesCount >= 1) {
                     alert("Mỗi ván chỉ được chọn cược 1 ô mặt duy nhất thôi nhé! (Bấm - về 0 hoặc 'Đặt lại' nếu muốn đổi ô khác)");
                     return;
                 }
+                if (!currentUser.isOwner && curPencils <= 0) {
+                    alert("Túi bạn hiện có 0 Bút Chì Màu nên chưa thể đặt cược!");
+                    return;
+                }
                 if (totalBet >= 5) {
                     alert("Mỗi ván chỉ được đặt cược tối đa 5 Bút Chì Màu thôi nhé!");
+                    return;
+                }
+                if (totalBet >= maxAllowed) {
+                    alert(`Bạn hiện chỉ có ${curPencils} Bút Chì Màu nên không thể cược vượt quá số chì đang có!`);
                     return;
                 }
                 viaBets[faceIdx]++;
@@ -15990,6 +16268,10 @@
                 alert(`Bạn đã chơi Cược Màu Lấy Vía rồi! Trò này 3 ngày mới được chơi 1 lần (còn ${viaInfo.daysLeft} ngày nữa mới mở lại nhé 💖).`);
                 return;
             }
+            if (!isOwnerAcc && curPencils <= 0) {
+                alert("Túi bạn hiện đang có 0 Bút Chì Màu nên chưa thể đặt cược!");
+                return;
+            }
             if (totalBet <= 0) {
                 alert("Bạn chưa đặt cược chì màu nào! Hãy chạm + vào ít nhất 1 mặt để cược trước nhé.");
                 return;
@@ -15999,8 +16281,8 @@
                 alert("Mỗi ván chỉ được đặt cược tối đa 1 ô mặt duy nhất thôi nhé!");
                 return;
             }
-            if (totalBet > 5) {
-                alert("Mỗi ván chỉ được đặt cược tối đa 5 Bút Chì Màu thôi nhé!");
+            if (totalBet > 5 || (!isOwnerAcc && totalBet > curPencils)) {
+                alert("Tổng cược không hợp lệ (tối đa 5 Chì và không vượt quá số chì hiện có)!");
                 return;
             }
 
@@ -16081,7 +16363,7 @@
 
                     if (!isOwnerAcc && netDelta !== 0) {
                         const latestCount = getUserPencilCount(username);
-                        const nextCount = latestCount + netDelta;
+                        const nextCount = Math.max(0, latestCount + netDelta);
                         await db.collection("pencils").doc(uKey).set({ count: nextCount }, { merge: true });
                         userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: nextCount };
                         updatePencilUI();
@@ -17378,7 +17660,7 @@
                 xdLoseScore++;
                 if (!isOwnerAcc) {
                     const cur = getUserPencilCount(username);
-                    const next = cur - 2;
+                    const next = Math.max(0, cur - 2);
                     userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: next };
                     db.collection("pencils").doc(uKey).set({ count: next }, { merge: true }).catch(() => {});
                     updatePencilUI();
@@ -18625,9 +18907,9 @@
                         sendPhonePushToOwner(`🎡 Vòng xoay: ${username}`, `Trúng +${addAmt} Bút Chì Màu`, 3);
                     } else if (winningSlice.type === "sub") {
                         const isOwnerAcc = isOwnerUsername(username);
-                        const deductAmount = isOwnerAcc ? 0 : winningSlice.value;
-                        const remainingPencils = isOwnerAcc ? 10 : (curPencils - deductAmount);
-                        if (!isOwnerAcc) {
+                        const deductAmount = isOwnerAcc ? 0 : Math.min(winningSlice.value, curPencils);
+                        const remainingPencils = isOwnerAcc ? 10 : Math.max(0, curPencils - deductAmount);
+                        if (!isOwnerAcc && deductAmount > 0) {
                             const pencilRef = db.collection("pencils").doc(uKey);
                             await pencilRef.set({ count: remainingPencils }, { merge: true });
                             userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: remainingPencils };
@@ -18637,12 +18919,14 @@
                         if (resultMsg) {
                             resultMsg.innerHTML = isOwnerAcc
                                 ? `<span class="text-rose-300 font-black">Trúng ô Xui xẻo (-${winningSlice.value}) nhưng Chủ Web vẫn giữ cố định 10 Chì!</span>`
-                                : `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ ${deductAmount} Bút Chì Màu! (Túi còn: ${remainingPencils} Chì)</span>`;
+                                : (deductAmount > 0
+                                    ? `<span class="text-rose-300 font-black">Xui xẻo rồi... Bạn bị trừ ${deductAmount} Bút Chì Màu! (Túi còn: ${remainingPencils} Chì)</span>`
+                                    : `<span class="text-rose-300 font-black">Trúng ô Xui xẻo (-${winningSlice.value}) nhưng túi đang có 0 Chì nên không bị trừ thêm!</span>`);
                         }
                         logMemberActivity("Vòng xoay may mắn", `Trúng ô Xui xẻo -${winningSlice.value} Bút Chì Màu`, "wheel");
                         sendPhonePushToOwner(`🎡 Vòng xoay: ${username}`, `Trúng ô Xui xẻo (-${winningSlice.value} Chì · Còn ${remainingPencils})`, 3);
                         if (!isOwnerAcc) {
-                            triggerNotification("Bị Trừ Bút Chì Màu!", `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.`);
+                            triggerNotification("Bị Trừ Bút Chì Màu!", deductAmount > 0 ? `Vòng xoay may mắn: Bạn vừa quay trúng ô Xui xẻo và bị trừ ${deductAmount} Bút Chì Màu! Hiện còn: ${remainingPencils} chì.` : "Vòng xoay may mắn: Bạn quay trúng ô Xui xẻo nhưng túi hiện có 0 chì.");
                         }
                     } else {
                         playSadDeflateSound();
@@ -19188,11 +19472,11 @@
                     logMemberActivity("Thẻ Màu May Mắn", `Lật trúng Thẻ rỗng (0 chì)`, "wheel");
                     sendPhonePushToOwner(`🃏 Bốc bài: ${username}`, `Lật trúng Thẻ rỗng (0 chì)`, 3);
                 } else {
-                    // Penalty (Trừ chì - Thẻ Meme, trừ thẳng xuống số âm)
+                    // Penalty (Trừ chì - Thẻ Meme, dừng ở mức tối thiểu 0)
                     const penAmt = Math.max(1, numAmt || 1);
-                    const actualDeduct = isOwnerAccCard ? 0 : penAmt;
-                    const remain = isOwnerAccCard ? 10 : (curPencils - actualDeduct);
-                    if (!isOwnerAccCard) {
+                    const actualDeduct = isOwnerAccCard ? 0 : Math.min(penAmt, curPencils);
+                    const remain = isOwnerAccCard ? 10 : Math.max(0, curPencils - actualDeduct);
+                    if (!isOwnerAccCard && actualDeduct > 0) {
                         await db.collection("pencils").doc(uKey).set({ count: remain }, { merge: true });
                         userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: remain };
                         updatePencilUI();
@@ -19202,12 +19486,14 @@
                     statusClass = "text-xs sm:text-sm font-black light-green-pastel-wave leading-relaxed";
                     deltaText = isOwnerAccCard
                         ? `Túi Chủ Web cố định 10 Chì (không bị trừ).`
-                        : `Đã bị trừ ${actualDeduct} Bút Chì Màu - Túi còn ${remain} Chì.`;
+                        : (actualDeduct > 0
+                            ? `Đã bị trừ ${actualDeduct} Bút Chì Màu - Túi còn ${remain} Chì.`
+                            : `Túi đang có 0 Bút Chì Màu - Không bị trừ thêm Chì.`);
                     deltaClass = "text-xs font-extrabold text-rose-300";
                     logMemberActivity("Thẻ Màu May Mắn", `Lật trúng thẻ trừ chì (-${penAmt} Chì · Còn ${remain})`, "wheel");
                     sendPhonePushToOwner(`🃏 Bốc bài: ${username}`, `Lật trúng Thẻ Meme (-${penAmt} Chì · Còn ${remain})`, 3);
                     if (!isOwnerAccCard) {
-                        triggerNotification("Bị Trừ Bút Chì Màu!", `Thẻ Màu May Mắn: Bạn lật trúng thẻ meme và bị trừ ${actualDeduct} Bút Chì Màu! Hiện còn: ${remain} chì.`, username);
+                        triggerNotification("Bị Trừ Bút Chì Màu!", actualDeduct > 0 ? `Thẻ Màu May Mắn: Bạn lật trúng thẻ meme và bị trừ ${actualDeduct} Bút Chì Màu! Hiện còn: ${remain} chì.` : "Thẻ Màu May Mắn: Bạn lật trúng thẻ meme nhưng túi hiện có 0 chì.", username);
                     }
                 }
             } catch (e) {
