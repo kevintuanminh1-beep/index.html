@@ -917,15 +917,15 @@
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-sky-300 font-bold">✏️</span>
-                        <span>Chơi <button type="button" onclick="closePencilModal(); openXoGameModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-sky-500/15 border border-sky-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Cùng vẽ X và O</span></button> (7×7 nối 4 đấu Bot, không giới hạn lượt): <b class="text-emerald-300">Thắng +2 chì</b> · <b class="text-rose-300">Thua -2 chì</b> (cần còn ít nhất 2 chì để chơi).</span>
+                        <span>Chơi <button type="button" onclick="closePencilModal(); openXoGameModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-sky-500/15 border border-sky-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Cùng vẽ X và O</span></button> (13×13 nối 5 đấu Bot): <b class="text-emerald-300">Thắng +1 chì</b> · <b class="text-rose-300">Thua -3 chì</b> (cần ít nhất 3 chì để đấu Bot; ghép đôi 2 người là ±2 chì).</span>
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-pink-300 font-bold">🎲</span>
-                        <span>Chơi <button type="button" onclick="closePencilModal(); openCuocMauModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-pink-500/15 border border-pink-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Cược Màu Lấy Vía</span></button> (tối đa 5 chì/ván, 5 lượt/ngày) để thử vận may ăn chì nhân theo số khối trùng khớp!</span>
+                        <span>Chơi <button type="button" onclick="closePencilModal(); openCuocMauModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-pink-500/15 border border-pink-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Cược Màu Lấy Vía</span></button> (tối đa 5 chì/ván, 3 ngày/1 lần) để thử vận may ăn chì nhân theo số khối trùng khớp!</span>
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-amber-300 font-bold">🃏</span>
-                        <span>Chơi <button type="button" onclick="closePencilModal(); openXiDachModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-purple-500/15 border border-purple-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Xì Dách Hên Xui</span></button> cùng Bot (không giới hạn lượt): <b class="text-emerald-300">Thắng +2 chì</b> · <b class="text-rose-300">Thua -2 chì</b> (cần còn ít nhất 2 chì để chơi).</span>
+                        <span>Chơi <button type="button" onclick="closePencilModal(); openXiDachModal();" class="inline-flex items-center px-1.5 py-0.5 rounded-lg bg-purple-500/15 border border-purple-300/45 active:scale-95 transition align-baseline"><span class="pastel-fast-wave font-black underline">Xì Dách Hên Xui</span></button> cùng Bot: <b class="text-emerald-300">Thắng +1 chì</b> · <b class="text-rose-300">Thua -2 chì</b> (cần ít nhất 2 chì để chơi).</span>
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-amber-300 font-bold">⚡</span>
@@ -2457,7 +2457,7 @@
 
             <div class="space-y-3">
                 <!-- Mục con 1: Vòng xoay may mắn -->
-                <button type="button" onclick="closeLuckyGamesHubModal(); openLuckyWheelModal();" class="jelly-btn w-full bg-gradient-to-r from-rose-500/25 via-pink-500/20 to-amber-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
+                <button type="button" onclick="returnToLuckyHubOnGameClose = true; closeLuckyGamesHubModal(); openLuckyWheelModal();" class="jelly-btn w-full bg-gradient-to-r from-rose-500/25 via-pink-500/20 to-amber-500/20 border-2 border-pink-300/50 hover:border-pink-300 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
                     <div id="iconBox-wheel" onclick="handleMenuIconClick(event, 'wheel')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-400/30 to-rose-400/20 border border-pink-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-wheel" class="w-full h-full flex items-center justify-center">
                             <img src="https://images.weserv.nl/?url=https://files.catbox.moe/51fpvw.gif&n=-1" referrerpolicy="no-referrer" class="w-full h-full object-contain">
@@ -2474,7 +2474,7 @@
                 </button>
 
                 <!-- Mục con 2: Thẻ Màu May Mắn -->
-                <button type="button" onclick="closeLuckyGamesHubModal(); openSailorCardModal();" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500/25 via-purple-500/20 to-amber-400/20 border-2 border-pink-300/50 hover:border-amber-200 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
+                <button type="button" onclick="returnToLuckyHubOnGameClose = true; closeLuckyGamesHubModal(); openSailorCardModal();" class="jelly-btn w-full bg-gradient-to-r from-fuchsia-500/25 via-purple-500/20 to-amber-400/20 border-2 border-pink-300/50 hover:border-amber-200 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
                     <div id="iconBox-sailor" onclick="handleMenuIconClick(event, 'sailor')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-fuchsia-400/30 to-amber-300/20 border border-pink-300/50 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-sailor" class="w-full h-full flex items-center justify-center">
                             <svg class="w-7 h-7 text-amber-300 filter drop-shadow-[0_0_8px_rgba(253,224,71,0.85)]" viewBox="0 0 24 24" fill="currentColor">
@@ -2493,7 +2493,7 @@
                 </button>
 
                 <!-- Mục con 3: Cùng vẽ X và O -->
-                <button type="button" onclick="closeLuckyGamesHubModal(); openXoGameModal();" class="jelly-btn w-full bg-gradient-to-r from-sky-400/20 via-pink-400/20 to-purple-400/20 border-2 border-sky-200/45 hover:border-pink-200 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
+                <button type="button" onclick="returnToLuckyHubOnGameClose = true; closeLuckyGamesHubModal(); openXoGameModal();" class="jelly-btn w-full bg-gradient-to-r from-sky-400/20 via-pink-400/20 to-purple-400/20 border-2 border-sky-200/45 hover:border-pink-200 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
                     <div id="iconBox-xo" onclick="handleMenuIconClick(event, 'xo')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-300/25 to-sky-300/25 border border-pink-200/50 p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-xo" class="w-full h-full flex items-center justify-center">
                             <svg class="w-8 h-8" viewBox="0 0 48 48" fill="none">
@@ -2514,7 +2514,7 @@
                 </button>
 
                 <!-- Mục con 4: Cược Màu Lấy Vía -->
-                <button type="button" onclick="closeLuckyGamesHubModal(); openCuocMauModal();" class="jelly-btn w-full bg-gradient-to-r from-pink-400/25 via-rose-400/20 to-amber-300/20 border-2 border-pink-200/50 hover:border-amber-200 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
+                <button type="button" onclick="returnToLuckyHubOnGameClose = true; closeLuckyGamesHubModal(); openCuocMauModal();" class="jelly-btn w-full bg-gradient-to-r from-pink-400/25 via-rose-400/20 to-amber-300/20 border-2 border-pink-200/50 hover:border-amber-200 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
                     <div id="iconBox-via" onclick="handleMenuIconClick(event, 'via')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-300/30 to-amber-200/25 border border-pink-200/50 p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-via" class="w-full h-full flex items-center justify-center">
                             <svg class="w-8 h-8" viewBox="0 0 48 48" fill="none">
@@ -2529,7 +2529,7 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <h4 class="text-sm font-extrabold pastel-fast-wave">Cược Màu Lấy Vía</h4>
-                            <span id="hubViaRemainBadge" class="text-[9px] bg-pink-400/25 text-pink-200 border border-pink-200/40 px-1.5 py-0.5 rounded-full font-bold">5/5 lượt</span>
+                            <span id="hubViaRemainBadge" class="text-[9px] bg-pink-400/25 text-pink-200 border border-pink-200/40 px-1.5 py-0.5 rounded-full font-bold">3 ngày/1 lần</span>
                         </div>
                         <p class="text-[11px] text-pink-100/75 mt-0.5">Cá cược xem vận may hôm nay.</p>
                     </div>
@@ -2537,7 +2537,7 @@
                 </button>
 
                 <!-- Mục con 5: Xì Dách Hên Xui -->
-                <button type="button" onclick="closeLuckyGamesHubModal(); openXiDachModal();" class="jelly-btn w-full bg-gradient-to-r from-purple-400/25 via-pink-400/20 to-sky-400/20 border-2 border-purple-200/50 hover:border-pink-200 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
+                <button type="button" onclick="returnToLuckyHubOnGameClose = true; closeLuckyGamesHubModal(); openXiDachModal();" class="jelly-btn w-full bg-gradient-to-r from-purple-400/25 via-pink-400/20 to-sky-400/20 border-2 border-purple-200/50 hover:border-pink-200 p-3.5 rounded-2xl flex items-center gap-3.5 transition shadow-lg text-left">
                     <div id="iconBox-xidach" onclick="handleMenuIconClick(event, 'xidach')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-300/30 to-pink-300/25 border border-purple-200/50 p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-inner cursor-pointer" title="Chính chủ nhấn để đổi ảnh/gif">
                         <div id="menuContent-xidach" class="w-full h-full flex items-center justify-center">
                             <svg class="w-8 h-8" viewBox="0 0 48 48" fill="none">
@@ -2553,7 +2553,7 @@
                             <h4 class="text-sm font-extrabold pastel-fast-wave">Xì Dách Hên Xui</h4>
                             <span class="text-[9px] bg-purple-400/25 text-purple-200 border border-purple-200/40 px-1.5 py-0.5 rounded-full font-bold">Không giới hạn</span>
                         </div>
-                        <p class="text-[11px] text-pink-100/75 mt-0.5">Bốc bài 21 điểm đấu Bot cute kawaii: Thắng +2 · Thua -2 Chì.</p>
+                        <p class="text-[11px] text-pink-100/75 mt-0.5">Bốc bài 21 điểm đấu Bot cute kawaii: Thắng +1 · Thua -2 Chì.</p>
                     </div>
                     <svg class="w-4 h-4 text-purple-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </button>
@@ -2563,9 +2563,9 @@
         </div>
     </div>
 
-    <!-- MODAL GAME: CÙNG VẼ X VÀ O (7x7 NỐI 4) -->
-    <div id="xoGameModal" class="fixed inset-0 bg-[#050814]/88 z-50 hidden flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
-        <div class="bg-[#131b3a] border-2 border-pink-200/55 p-3.5 sm:p-5 rounded-3xl max-w-sm sm:max-w-md w-full text-center shadow-[0_0_40px_rgba(244,114,182,0.35)] relative space-y-2.5 my-auto max-h-[92vh] overflow-y-auto custom-scroll">
+    <!-- MODAL GAME: CÙNG VẼ X VÀ O (13x13 NỐI 5) -->
+    <div id="xoGameModal" class="fixed inset-0 bg-[#050814]/88 z-50 hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-[#131b3a] border-2 border-pink-200/55 p-3 sm:p-5 rounded-3xl max-w-[96vw] sm:max-w-lg w-full text-center shadow-[0_0_40px_rgba(244,114,182,0.35)] relative space-y-2 my-auto max-h-[94vh] overflow-y-auto custom-scroll">
             <!-- Hàng nút Thỏ, Chuông, Ghép Đôi & Đóng (trôi tự nhiên theo trang khi lướt) -->
             <div class="relative z-20 flex items-center justify-between pb-1 -mt-1">
                 <button type="button" onclick="openXoRulesModal()" class="w-9 h-9 rounded-full bg-sky-400/20 hover:bg-sky-400/35 border border-sky-300/60 flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.45)] active:scale-90 transition" title="Bấm xem hướng dẫn cách chơi X và O">
@@ -2625,9 +2625,9 @@
             </div>
 
             <div class="px-9">
-                <span class="text-[10px] bg-pink-400/20 text-pink-200 border border-pink-200/40 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">7×7 Nối 4 · Đấu Bot</span>
+                <span class="text-[10px] bg-pink-400/20 text-pink-200 border border-pink-200/40 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">13×13 Nối 5 · Bot Đi Trước</span>
                 <h3 class="text-lg sm:text-xl font-black pastel-fast-wave mt-0.5">Cùng vẽ X và O</h3>
-                <p class="text-[10.5px] text-sky-100/80 font-medium">Thắng: <b class="text-emerald-300">+2 Chì</b> · Thua: <b class="text-rose-300">-2 Chì</b> · Hòa: <b class="text-sky-200">0 Chì</b></p>
+                <p class="text-[10.5px] text-sky-100/80 font-medium">Đấu Bot: Thắng <b class="text-emerald-300">+1 Chì</b> · Thua <b class="text-rose-300">-3 Chì</b> · Hòa <b class="text-sky-200">0 Chì</b></p>
             </div>
 
             <!-- Thanh hiển thị Túi Bút Chì & Tỉ số -->
@@ -2646,7 +2646,7 @@
 
             <!-- Trạng thái lượt chơi / Thông báo thắng thua -->
             <div id="xoStatusBanner" class="bg-black/35 border border-pink-200/25 rounded-2xl px-3 py-1.5 text-xs font-extrabold text-pink-100 min-h-[38px] flex items-center justify-center leading-snug">
-                Lượt của bạn: Nối 4 ô X để thắng Bot nhé! ✏️
+                🤖 Bot luôn đi trước ô O! Tới lượt bạn nối 5 ô X nhé! ✏️
             </div>
 
             <!-- Cảnh báo hết chì màu -->
@@ -2654,14 +2654,14 @@
                 <p class="text-rose-200 font-bold leading-relaxed">
                     😢 Túi bạn hiện còn <b>0 Bút Chì Màu</b> nên không thể chơi tiếp nữa! Hãy kiếm thêm Bút Chì Màu để quay lại đấu cùng Bot nhé.
                 </p>
-                <button type="button" onclick="closeXoGameModal(); openPencilModal();" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow">
+                <button type="button" onclick="closeXoGameModal(true); openPencilModal();" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow">
                     ✏️ Mở Túi Bút Chì Màu kiếm thêm
                 </button>
             </div>
 
-            <!-- Bàn cờ vở ô ly 7x7 (49 ô) -->
-            <div class="xo-notebook-bg border-2 border-pink-200/35 rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 shadow-inner">
-                <div id="xoBoardGrid" class="grid grid-cols-7 gap-1 sm:gap-1.5"></div>
+            <!-- Bàn cờ vở ô ly 13x13 (169 ô · Nối 5) -->
+            <div class="xo-notebook-bg border-2 border-pink-200/35 rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 shadow-inner">
+                <div id="xoBoardGrid" class="grid grid-cols-[repeat(13,minmax(0,1fr))] gap-[2px] sm:gap-1"></div>
             </div>
 
             <!-- Kết quả thắng thua chi tiết -->
@@ -2695,14 +2695,13 @@
                 </div>
             </div>
             <ul class="text-[11.5px] text-sky-100/90 space-y-2 leading-relaxed">
-                <li>• <b>Mục tiêu:</b> Trên bàn cờ <b>7×7 (49 ô)</b>, ai vẽ nối đủ <b>4 ký hiệu liên tiếp</b> theo hàng Ngang, Dọc hoặc Chéo trước sẽ thắng!</li>
-                <li>• <b>Đấu với Bot:</b> Bạn vẽ <b class="text-pink-300">X</b>, Bot vẽ <b class="text-sky-300">O</b>. Ai nối được 4 ô liên tiếp trước sẽ giành chiến thắng!</li>
+                <li>• <b>Mục tiêu:</b> Trên bàn cờ lớn <b>13×13 (169 ô)</b>, ai vẽ nối đủ <b>5 ký hiệu liên tiếp</b> theo hàng Ngang, Dọc hoặc Chéo trước sẽ thắng!</li>
+                <li>• <b>Đấu với Bot:</b> Bạn vẽ <b class="text-pink-300">X</b>, Bot vẽ <b class="text-sky-300">O</b>. Khi đấu Bot, <b>Bot luôn đi trước</b> ở vùng trung tâm!</li>
                 <li>• <b>Thưởng / Phạt Bút Chì Màu:</b><br>
-                    – Thắng: <b class="text-emerald-300">+2 Bút Chì Màu</b><br>
-                    – Thua: <b class="text-rose-300">-2 Bút Chì Màu</b><br>
-                    – Hòa: <b class="text-sky-200">Giữ nguyên số chì</b>
+                    – Đấu Bot: Thắng <b class="text-emerald-300">+1 Chì</b> · Thua <b class="text-rose-300">-3 Chì</b> · Hòa <b class="text-sky-200">0 Chì</b><br>
+                    – Ghép đôi 2 người: Thắng <b class="text-emerald-300">+2 Chì</b> từ người thua
                 </li>
-                <li>• <b>Lưu ý:</b> Chơi không giới hạn lượt mỗi ngày, cần còn ít nhất <b>2 Bút Chì Màu</b> trong túi để chơi nhé!</li>
+                <li>• <b>Lưu ý:</b> Cần còn ít nhất <b>3 Bút Chì Màu</b> trong túi để đấu Bot nhé.</li>
             </ul>
             <button type="button" onclick="closeXoRulesModal()" class="w-full bg-gradient-to-r from-sky-400 to-pink-400 text-[#0f172a] font-black py-2 rounded-xl text-xs active:scale-95 transition">
                 Đã hiểu, chiến thôi! ✏️
@@ -2739,7 +2738,7 @@
             <div class="px-9">
                 <span class="text-[10px] bg-pink-400/20 text-pink-200 border border-pink-200/40 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Bầu Cua 4 Mặt · Lấy Vía</span>
                 <h3 class="text-lg sm:text-xl font-black pastel-fast-wave mt-0.5">Cược Màu Lấy Vía</h3>
-                <p class="text-[10.5px] text-sky-100/80 font-medium">Cược tối đa <b class="text-pink-200">1 ô</b> &amp; <b class="text-amber-300">5 Chì/ván</b> · <b class="text-pink-200">5 lượt/ngày</b></p>
+                <p class="text-[10.5px] text-sky-100/80 font-medium">Cược tối đa <b class="text-pink-200">1 ô</b> &amp; <b class="text-amber-300">5 Chì/ván</b> · <b class="text-pink-200">3 ngày / 1 lần</b></p>
             </div>
 
             <!-- Thanh Túi Chì & Lượt hôm nay -->
@@ -2818,7 +2817,7 @@
                     – Mặt bạn đặt xuất hiện <b>K lần</b> trên 4 khối (1, 2, 3 hoặc 4 lần): Giữ nguyên vốn và <b class="text-emerald-300">ăn thêm K × số chì đã đặt</b> ở mặt đó!<br>
                     – Không xuất hiện: <b class="text-rose-300">Mất số chì</b> đặt ở mặt đó.
                 </li>
-                <li>• <b>Giới hạn:</b> Tối đa <b class="text-pink-200">5 lượt chơi / ngày</b> (vẫn chơi được khi còn 0 Chì — thua sẽ bị trừ xuống số âm).</li>
+                <li>• <b>Giới hạn:</b> <b class="text-pink-200">3 ngày được chơi 1 lần</b> (vẫn chơi được khi còn 0 Chì — thua sẽ bị trừ xuống số âm).</li>
             </ul>
             <button type="button" onclick="closeViaRulesModal()" class="w-full bg-gradient-to-r from-pink-400 to-amber-300 text-[#18102c] font-black py-2 rounded-xl text-xs active:scale-95 transition">
                 Đã hiểu, lấy vía ngay! 🎲
@@ -2925,7 +2924,7 @@
             <div class="px-9">
                 <span class="text-[10px] bg-purple-400/20 text-purple-200 border border-purple-200/40 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Bài Tây Pastel · Không giới hạn</span>
                 <h3 class="text-lg sm:text-xl font-black pastel-fast-wave mt-0.5">Xì Dách Hên Xui</h3>
-                <p class="text-[10.5px] text-sky-100/80 font-medium">Thắng: <b class="text-emerald-300">+2 Chì</b> · Thua: <b class="text-rose-300">-2 Chì</b> · Hòa: <b class="text-sky-200">0 Chì</b></p>
+                <p class="text-[10.5px] text-sky-100/80 font-medium">Đấu Bot: Thắng <b class="text-emerald-300">+1 Chì</b> · Thua <b class="text-rose-300">-2 Chì</b> · Hòa <b class="text-sky-200">0 Chì</b></p>
             </div>
 
             <!-- Túi chì & Tỉ số -->
@@ -2948,7 +2947,7 @@
                     <svg class="w-4 h-4 text-rose-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
                     <span>Túi bạn hiện còn <b>0 Bút Chì Màu</b> nên chưa thể chơi Xì Dách! Hãy kiếm thêm chì rồi quay lại nhé.</span>
                 </p>
-                <button type="button" onclick="closeXiDachModal(); openPencilModal();" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow flex items-center justify-center gap-1.5">
+                <button type="button" onclick="closeXiDachModal(true); openPencilModal();" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow flex items-center justify-center gap-1.5">
                     <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                     <span>Mở Túi Bút Chì Màu kiếm thêm</span>
                 </button>
@@ -3040,7 +3039,7 @@
                 </li>
                 <li>• <b>Bốc bài xen kẽ hồi hộp:</b> Ban đầu bàn trống (0 lá). Hai bên sẽ <b>chia xen kẽ 2 lá đầu</b>. Sau đó, mỗi vòng bạn và <b>Bot cute kawaii</b> sẽ lần lượt bốc thêm hoặc chọn Dằn (tối đa 5 lá).</li>
                 <li>• <b>Chơi công bằng:</b> Bot cute kawaii hoàn toàn <b>không biết trước bài của bạn</b>, tự bốc bài theo cảm tính riêng kèm suy nghĩ đắn đo sinh động!</li>
-                <li>• <b>Thưởng / Phạt:</b> Chơi <b>không giới hạn lượt</b>! Thắng <b class="text-emerald-300">+2 Chì</b> · Thua <b class="text-rose-300">-2 Chì</b> · Hòa <b class="text-sky-200">0 Chì</b> (cần còn ít nhất 2 Chì để tham gia).</li>
+                <li>• <b>Thưởng / Phạt:</b> Chơi <b>không giới hạn lượt</b>! Đấu Bot: Thắng <b class="text-emerald-300">+1 Chì</b> · Thua <b class="text-rose-300">-2 Chì</b> · Hòa <b class="text-sky-200">0 Chì</b> (ghép đôi: người thua đưa 2 Chì cho người thắng).</li>
             </ul>
             <button type="button" onclick="closeXiDachRulesModal()" class="w-full bg-gradient-to-r from-pink-400 to-purple-400 text-[#18102c] font-black py-2 rounded-xl text-xs active:scale-95 transition flex items-center justify-center gap-1.5">
                 <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="4" y="3" width="12" height="16" rx="2.5"/><path d="M16 7h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1"/></svg>
@@ -8671,7 +8670,19 @@
                     return userA.localeCompare(userB);
                 });
 
-                // Thanh nút chọn tiêu chí Xếp Hạng: Mở Nhiều Char Nhất vs Nhiều Chì Nhất
+                // Thanh công cụ Giảm Lạm Phát cho Chủ Web + Thanh Xếp Hạng
+                const inflationBar = document.createElement('div');
+                inflationBar.className = "mb-2.5 flex items-center justify-between gap-2 bg-rose-500/15 border border-rose-300/35 rounded-2xl px-3 py-2 text-xs";
+                inflationBar.innerHTML = `
+                    <div class="text-[10.5px] text-rose-200 font-bold leading-snug">
+                        ⚖️ <b>Kiểm soát lạm phát:</b> Thu hồi bớt chì của các acc tích trữ quá nhiều
+                    </div>
+                    <button type="button" onclick="ownerReduceInflationServerWide()" class="bg-gradient-to-r from-rose-500 to-amber-500 hover:brightness-110 text-white font-black text-[10.5px] px-2.5 py-1.5 rounded-xl shrink-0 active:scale-95 transition shadow">
+                        🧹 Giảm lạm phát
+                    </button>
+                `;
+                container.appendChild(inflationBar);
+
                 const rankBar = document.createElement('div');
                 rankBar.className = "flex items-center gap-1.5 p-1 bg-black/45 border border-white/10 rounded-2xl mb-2.5 shrink-0";
                 rankBar.innerHTML = `
@@ -8746,9 +8757,10 @@
                         ${isExpanded ? `
                             <div class="mt-2.5 pt-2.5 border-t border-white/10 text-xs space-y-2.5">
                                 <div class="grid grid-cols-2 gap-2">
-                                    <div class="bg-black/40 border border-amber-300/30 p-2 rounded-xl text-center">
+                                    <div class="bg-black/40 border border-amber-300/30 p-2 rounded-xl text-center space-y-1">
                                         <span class="text-[10px] text-amber-200/80 block">Túi chì màu:</span>
-                                        <span class="font-black text-amber-300 text-sm">✏️ ${pencils} chì</span>
+                                        <span class="font-black text-amber-300 text-sm block">✏️ ${pencils} chì</span>
+                                        ${!isOwnerAcc ? `<button type="button" onclick="ownerAdjustMemberPencils('${cmtEsc(u.username)}')" class="text-[10px] bg-rose-500/25 hover:bg-rose-500/45 border border-rose-300/50 text-rose-100 font-extrabold px-2 py-0.5 rounded-lg active:scale-95 transition">✏️ Chỉnh chì</button>` : ''}
                                     </div>
                                     <div class="bg-black/40 border border-emerald-300/30 p-2 rounded-xl text-center">
                                         <span class="text-[10px] text-emerald-200/80 block">Đã mở khóa:</span>
@@ -9006,7 +9018,84 @@
             }
         }
 
-        function sendOnlineHeartbeat() {}
+        async function ownerAdjustMemberPencils(targetUsername) {
+            if (!checkIsOwnerAccount() || !targetUsername || isOwnerUsername(targetUsername)) return;
+            const cur = getUserPencilCount(targetUsername);
+            const raw = prompt(`Chỉnh số Bút Chì Màu của "${targetUsername}" (hiện tại: ${cur} chì):\n• Nhập số âm để trừ (VD: -10)\n• Hoặc nhập trực tiếp "=10" để đặt thành 10 chì`);
+            if (!raw || !raw.trim()) return;
+            const txt = raw.trim();
+            let nextCount = cur;
+            if (txt.startsWith('=')) {
+                const parsed = parseInt(txt.slice(1), 10);
+                if (isNaN(parsed)) { alert("Số không hợp lệ!"); return; }
+                nextCount = parsed;
+            } else {
+                const delta = parseInt(txt, 10);
+                if (isNaN(delta)) { alert("Số không hợp lệ!"); return; }
+                nextCount = cur + delta;
+            }
+            const uKey = targetUsername.toLowerCase();
+            try {
+                await db.collection("pencils").doc(uKey).set({ count: nextCount }, { merge: true });
+                userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: nextCount };
+                renderUsersModalContent();
+                playPaletteTingSound();
+                alert(`✓ Đã cập nhật túi của "${targetUsername}": ${cur} ➔ ${nextCount} Chì Màu!`);
+            } catch (e) {
+                alert("Lỗi khi cập nhật chì: " + (e?.message || ""));
+            }
+        }
+
+        async function ownerReduceInflationServerWide() {
+            if (!checkIsOwnerAccount()) return;
+            const capStr = prompt(
+                "⚖️ THU HỒI CHÌ LẠM PHÁT TOÀN SERVER:\n" +
+                "Nhập mức trần tối đa cho các tài khoản đang có quá nhiều chì (VD: nhập 10 thì tất cả acc > 10 chì sẽ bị giảm một nửa phần dư, hoặc nhập 'cap:10' để đưa thẳng mọi acc > 10 chì về tối đa 10 chì).\n" +
+                "(Các acc dưới mức này và tài khoản Chủ Web sẽ không bị ảnh hưởng)",
+                "10"
+            );
+            if (!capStr || !capStr.trim()) return;
+            const txt = capStr.trim().toLowerCase();
+            const isHardCap = txt.startsWith('cap:');
+            const threshold = parseInt(isHardCap ? txt.slice(4) : txt, 10);
+            if (isNaN(threshold) || threshold < 0) {
+                alert("Mức trần không hợp lệ!");
+                return;
+            }
+
+            const affected = [];
+            Object.keys(registeredUsers).forEach(k => {
+                const name = registeredUsers[k]?.username || k;
+                if (isOwnerUsername(name)) return;
+                const cur = getUserPencilCount(name);
+                if (cur > threshold) {
+                    const nextVal = isHardCap ? threshold : (threshold + Math.floor((cur - threshold) / 2));
+                    if (nextVal < cur) affected.push({ uKey: name.toLowerCase(), name, cur, nextVal });
+                }
+            });
+
+            if (affected.length === 0) {
+                alert(`Không có thành viên nào đang có trên ${threshold} Chì Màu!`);
+                return;
+            }
+            if (!confirm(`Xác nhận giảm chì cho ${affected.length} thành viên đang có trên ${threshold} chì?\n(Ví dụ: ${affected[0].name}: ${affected[0].cur} ➔ ${affected[0].nextVal} chì)`)) return;
+
+            try {
+                for (let i = 0; i < affected.length; i += 400) {
+                    const batch = db.batch();
+                    affected.slice(i, i + 400).forEach(item => {
+                        batch.set(db.collection("pencils").doc(item.uKey), { count: item.nextVal }, { merge: true });
+                        userPencilsData[item.uKey] = { ...(userPencilsData[item.uKey] || {}), count: item.nextVal };
+                    });
+                    await batch.commit();
+                }
+                renderUsersModalContent();
+                playPaletteTingSound();
+                alert(`✓ Đã điều chỉnh giảm lạm phát thành công cho ${affected.length} tài khoản!`);
+            } catch (e) {
+                alert("Lỗi khi giảm lạm phát: " + (e?.message || ""));
+            }
+        }
 
         function openUsersListModal() {
             if (!currentUser?.isOwner) return;
@@ -14693,6 +14782,14 @@
             }
         }
 
+        let returnToLuckyHubOnGameClose = false;
+
+        function maybeReturnToLuckyHub() {
+            if (!returnToLuckyHubOnGameClose) return;
+            returnToLuckyHubOnGameClose = false;
+            openLuckyGamesHubModal();
+        }
+
         function openLuckyGamesHubModal() {
             if (!currentUser) {
                 alert("Vui lòng đăng nhập tài khoản để chơi Sắc Màu May Mắn nhé!");
@@ -14714,9 +14811,10 @@
                 sailorBadge.innerText = isOwner ? "Không giới hạn" : `${remS}/3 lượt`;
             }
             if (viaBadge) {
-                const usedV = getUserViaPlaysToday(currentUser.username);
-                const remV = Math.max(0, 5 - usedV);
-                viaBadge.innerText = isOwner ? "Không giới hạn" : `${remV}/5 lượt`;
+                const viaInfo = getUserViaCooldownInfo(currentUser.username);
+                viaBadge.innerText = isOwner
+                    ? "Không giới hạn"
+                    : (viaInfo.canPlay ? "Sẵn sàng (3 ngày/lần)" : `Chờ ${viaInfo.daysLeft} ngày`);
             }
 
             const modal = document.getElementById('luckyGamesHubModal');
@@ -14729,10 +14827,10 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        // ================= MINI GAME: CÙNG VẼ X VÀ O (7x7 NỐI 4 - BOT ALPHA-BETA 4 LỚP SIÊU KHÓ) =================
-        const XO_SIZE = 7;
-        const XO_TOTAL_CELLS = 49;
-        const XO_WIN_LEN = 4;
+        // ================= MINI GAME: CÙNG VẼ X VÀ O (13x13 · 169 Ô · NỐI 5 · BOT LUÔN ĐI TRƯỚC) =================
+        const XO_SIZE = 13;
+        const XO_TOTAL_CELLS = 169;
+        const XO_WIN_LEN = 5;
 
         let xoBoard = Array(XO_TOTAL_CELLS).fill('');
         let xoGameActive = false;
@@ -14762,6 +14860,28 @@
             }
             return combos;
         })();
+
+        // Bảng tra cứu siêu tốc: mỗi ô chỉ kiểm tra các đường đi qua chính ô đó (~4-10 đường thay vì 64 đường)
+        const XO_CELL_COMBOS = Array.from({ length: XO_TOTAL_CELLS }, (_, idx) =>
+            XO_WIN_COMBOS.filter(combo => combo.includes(idx))
+        );
+
+        function checkXoMoveWinsFast(board, idx, sym) {
+            const lines = XO_CELL_COMBOS[idx];
+            for (let i = 0; i < lines.length; i++) {
+                const c = lines[i];
+                let ok = true;
+                for (let k = 0; k < XO_WIN_LEN; k++) {
+                    const pos = c[k];
+                    if (pos !== idx && board[pos] !== sym) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok) return true;
+            }
+            return false;
+        }
 
         function playPencilPaperSound(isCross = true) {
             withAudioReady((ctx) => {
@@ -14816,16 +14936,16 @@
         function buildXoSymbolSvg(symbol, animate = false) {
             if (symbol === 'X') {
                 return `
-                    <svg class="w-6 h-6 sm:w-8 sm:h-8" viewBox="0 0 64 64" fill="none">
-                        <line x1="15" y1="15" x2="49" y2="49" stroke="#F472B6" stroke-width="7.5" stroke-linecap="round" class="${animate ? 'xo-stroke-1' : ''}"/>
-                        <line x1="49" y1="15" x2="15" y2="49" stroke="#FBCFE8" stroke-width="7.5" stroke-linecap="round" class="${animate ? 'xo-stroke-2' : ''}"/>
+                    <svg class="w-4 h-4 sm:w-6 sm:h-6" viewBox="0 0 64 64" fill="none">
+                        <line x1="15" y1="15" x2="49" y2="49" stroke="#F472B6" stroke-width="8" stroke-linecap="round" class="${animate ? 'xo-stroke-1' : ''}"/>
+                        <line x1="49" y1="15" x2="15" y2="49" stroke="#FBCFE8" stroke-width="8" stroke-linecap="round" class="${animate ? 'xo-stroke-2' : ''}"/>
                     </svg>
                 `;
             }
             if (symbol === 'O') {
                 return `
-                    <svg class="w-6 h-6 sm:w-8 sm:h-8" viewBox="0 0 64 64" fill="none">
-                        <circle cx="32" cy="32" r="19" stroke="#7DD3FC" stroke-width="7.5" stroke-linecap="round" transform="rotate(-90 32 32)" class="${animate ? 'xo-circle-stroke' : ''}"/>
+                    <svg class="w-4 h-4 sm:w-6 sm:h-6" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="19" stroke="#7DD3FC" stroke-width="8" stroke-linecap="round" transform="rotate(-90 32 32)" class="${animate ? 'xo-circle-stroke' : ''}"/>
                     </svg>
                 `;
             }
@@ -14852,17 +14972,18 @@
             if (loseEl) loseEl.innerText = xoSessionLosses;
 
             const isOwner = isOwnerUsername(currentUser.username);
-            const noPencil = (!isOwner && bal < 2);
+            const isMultiXo = Boolean(currentGameRoomId && currentGameRoomData?.gameType === 'xo');
+            const minReq = isMultiXo ? 2 : 3;
+            const noPencil = (!isOwner && bal < minReq);
             const noBox = document.getElementById('xoNoPencilBox');
             if (noBox) {
-                // CHỈ HIỆN KHI THỰC SỰ HẾT CHÌ / DƯỚI 2 CHÌ
                 if (noPencil) {
                     noBox.classList.remove('hidden');
                     noBox.innerHTML = `
                         <p class="text-rose-200 font-bold leading-relaxed">
-                            😢 Túi bạn hiện còn <b>${bal} Bút Chì Màu</b> (cần ít nhất <b>2 chì</b> để chơi ván này)! Hãy kiếm thêm Bút Chì Màu để quay lại nhé.
+                            😢 Túi bạn hiện còn <b>${bal} Bút Chì Màu</b> (cần ít nhất <b>${minReq} chì</b> để chơi ván này)! Hãy kiếm thêm Bút Chì Màu để quay lại nhé.
                         </p>
-                        <button type="button" onclick="closeXoGameModal(); openPencilModal();" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow">
+                        <button type="button" onclick="closeXoGameModal(true); openPencilModal();" class="w-full bg-gradient-to-r from-pink-400 to-purple-500 text-white font-black py-2 rounded-xl text-xs active:scale-95 transition shadow">
                             ✏️ Mở Túi Bút Chì Màu kiếm thêm
                         </button>
                     `;
@@ -14877,7 +14998,9 @@
         function renderXoBoard(animatedIdx = -1) {
             const grid = document.getElementById('xoBoardGrid');
             if (!grid) return;
-            const canPlay = currentUser ? (isOwnerUsername(currentUser.username) || getUserPencilCount(currentUser.username) > 0) : false;
+            const isMultiXo = Boolean(currentGameRoomId && currentGameRoomData?.gameType === 'xo');
+            const minReq = isMultiXo ? 2 : 3;
+            const canPlay = currentUser ? (isOwnerUsername(currentUser.username) || getUserPencilCount(currentUser.username) >= minReq) : false;
 
             if (grid.children.length !== XO_TOTAL_CELLS) {
                 grid.innerHTML = '';
@@ -14890,20 +15013,28 @@
                 }
             }
 
+            // Khóa tương tác toàn bàn bằng 1 class thay vì vẽ lại cả 49 ô khi Bot đang nghĩ
+            grid.classList.toggle('pointer-events-none', xoIsBotThinking || !xoGameActive || !canPlay);
+
             for (let i = 0; i < XO_TOTAL_CELLS; i++) {
                 const cell = document.getElementById(`xoCell-${i}`);
                 if (!cell) continue;
                 const val = xoBoard[i];
                 const isWin = xoWinLine.includes(i);
-                cell.className = `aspect-square rounded-lg sm:rounded-xl border flex items-center justify-center transition active:scale-90 ${
-                    isWin
-                        ? 'xo-win-cell'
-                        : (val
-                            ? 'bg-[#1d2856]/95 border-pink-200/40'
-                            : (xoGameActive && !xoIsBotThinking && canPlay
-                                ? 'bg-[#1a244c]/85 hover:bg-[#24336b] border-pink-200/20 hover:border-pink-200/65 cursor-pointer'
-                                : 'bg-[#161f42]/60 border-white/10 cursor-not-allowed opacity-75'))
-                }`;
+                const stateKey = isWin ? 'win' : (val ? 'filled' : (xoGameActive && canPlay ? 'open' : 'locked'));
+
+                if (cell.dataset.stateKey !== stateKey) {
+                    cell.dataset.stateKey = stateKey;
+                    cell.className = `aspect-square rounded-[5px] sm:rounded-lg border flex items-center justify-center transition active:scale-90 ${
+                        isWin
+                            ? 'xo-win-cell'
+                            : (val
+                                ? 'bg-[#1d2856]/95 border-pink-200/40'
+                                : (xoGameActive && canPlay
+                                    ? 'bg-[#1a244c]/85 hover:bg-[#24336b] border-pink-200/20 hover:border-pink-200/65 cursor-pointer'
+                                    : 'bg-[#161f42]/60 border-white/10 cursor-not-allowed opacity-75'))
+                    }`;
+                }
                 if (i === animatedIdx || cell.dataset.val !== val) {
                     cell.dataset.val = val;
                     cell.innerHTML = val ? buildXoSymbolSvg(val, i === animatedIdx) : '';
@@ -14938,6 +15069,7 @@
                 alert("Vui lòng đăng nhập để chơi Cùng vẽ X và O nhé!");
                 return;
             }
+            setBgVisualEffectsPaused(true);
             document.getElementById('xoGameModal')?.classList.remove('hidden');
 
             // Nếu ván trước đang đánh dở (chưa kết thúc), tiếp tục giữ nguyên bàn cờ hiện tại
@@ -14952,7 +15084,7 @@
             playPaletteTingSound();
         }
 
-        function closeXoGameModal() {
+        function closeXoGameModal(skipReturnHub = false) {
             if (xoBotTimer) {
                 clearTimeout(xoBotTimer);
                 xoBotTimer = null;
@@ -14965,8 +15097,11 @@
                 const afterBot = checkXoWinner(xoBoard);
                 if (afterBot) finishXoRound(afterBot);
             }
+            setBgVisualEffectsPaused(false);
             closeXoRulesModal();
             document.getElementById('xoGameModal')?.classList.add('hidden');
+            if (skipReturnHub) returnToLuckyHubOnGameClose = false;
+            else maybeReturnToLuckyHub();
         }
 
         async function startNewXoRound() {
@@ -15013,17 +15148,29 @@
             }
 
             xoGameActive = true;
-            setXoStatus("Lượt của bạn: Nối 4 ô X để thắng Bot nhé! ✏️", "text-pink-200");
-            renderXoBoard(-1);
+            // Bot LUÔN đi trước ở vùng trung tâm bàn 13x13 (tâm 84 = [6,6])
+            const cMid = Math.floor(XO_SIZE / 2);
+            const centerIdx = cMid * XO_SIZE + cMid;
+            const openingSpots = [centerIdx, centerIdx, centerIdx, centerIdx - 1, centerIdx + 1, centerIdx - XO_SIZE, centerIdx + XO_SIZE];
+            const botOpenIdx = openingSpots[Math.floor(Math.random() * openingSpots.length)];
+            xoBoard[botOpenIdx] = 'O';
+            setXoStatus("🤖 Bot luôn đi trước ô O! Tới lượt bạn nối 5 ô X nhé! ✏️", "text-pink-200");
+            renderXoBoard(botOpenIdx);
             updateXoNewRoundBtnUI();
         }
 
         function checkXoWinner(board) {
             for (const combo of XO_WIN_COMBOS) {
                 const first = board[combo[0]];
-                if (first && first === board[combo[1]] && first === board[combo[2]] && first === board[combo[3]]) {
-                    return { winner: first, line: combo };
+                if (!first) continue;
+                let matched = true;
+                for (let k = 1; k < XO_WIN_LEN; k++) {
+                    if (board[combo[k]] !== first) {
+                        matched = false;
+                        break;
+                    }
                 }
+                if (matched) return { winner: first, line: combo };
             }
             for (let i = 0; i < XO_TOTAL_CELLS; i++) {
                 if (board[i] === '') return null;
@@ -15038,13 +15185,13 @@
                 let sCnt = 0;
                 let eIdx = -1;
                 let blocked = false;
-                for (let k = 0; k < 4; k++) {
+                for (let k = 0; k < XO_WIN_LEN; k++) {
                     const v = board[combo[k]];
                     if (v === sym) sCnt++;
                     else if (v === '') eIdx = combo[k];
                     else { blocked = true; break; }
                 }
-                if (!blocked && sCnt === 3 && eIdx !== -1 && !checked.has(eIdx)) {
+                if (!blocked && sCnt === (XO_WIN_LEN - 1) && eIdx !== -1 && !checked.has(eIdx)) {
                     checked.add(eIdx);
                     winMoves++;
                 }
@@ -15052,21 +15199,51 @@
             return winMoves;
         }
 
+        // Cho bàn 5 ô thắng: Phát hiện nước 4 thoáng 2 đầu (.OOOO.) HOẶC 3 thoáng 2 đầu (.OOO..)
         function hasOpenThreePattern(board, sym) {
             const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
             for (let r = 0; r < XO_SIZE; r++) {
                 for (let c = 0; c < XO_SIZE; c++) {
                     for (const [dr, dc] of dirs) {
-                        const rEnd = r + 4 * dr;
-                        const cEnd = c + 4 * dc;
-                        if (rEnd < 0 || rEnd >= XO_SIZE || cEnd < 0 || cEnd >= XO_SIZE) continue;
-                        const i0 = r * XO_SIZE + c;
-                        const i4 = (r + 4 * dr) * XO_SIZE + (c + 4 * dc);
-                        if (board[i0] !== '' || board[i4] !== '') continue;
-                        const i1 = (r + dr) * XO_SIZE + (c + dc);
-                        const i2 = (r + 2 * dr) * XO_SIZE + (c + 2 * dc);
-                        const i3 = (r + 3 * dr) * XO_SIZE + (c + 3 * dc);
-                        if (board[i1] === sym && board[i2] === sym && board[i3] === sym) return true;
+                        // 1. Dạng 4 quân liền thoáng 2 đầu: .OOOO. (Chắc chắn thắng!)
+                        const rEnd6 = r + 5 * dr;
+                        const cEnd6 = c + 5 * dc;
+                        if (rEnd6 >= 0 && rEnd6 < XO_SIZE && cEnd6 >= 0 && cEnd6 < XO_SIZE) {
+                            const i0 = r * XO_SIZE + c;
+                            const i5 = rEnd6 * XO_SIZE + cEnd6;
+                            if (board[i0] === '' && board[i5] === '') {
+                                let sCnt = 0, emp = 0;
+                                for (let k = 1; k <= 4; k++) {
+                                    const v = board[(r + k * dr) * XO_SIZE + (c + k * dc)];
+                                    if (v === sym) sCnt++;
+                                    else if (v === '') emp++;
+                                }
+                                if (sCnt === 4 && emp === 0) return true;
+                                // Hoặc 3 quân thoáng cực nguy hiểm trong khung 6 ô có 2 đầu trống: .OOO.. / ..OOO. / .O.OO. / .OO.O.
+                                if (sCnt === 3 && emp === 1) return true;
+                            }
+                        }
+
+                        // 2. Dạng 3 quân liền thoáng 2 đầu (5 ô: .OOO.)
+                        const rEnd5 = r + 4 * dr;
+                        const cEnd5 = c + 4 * dc;
+                        if (rEnd5 >= 0 && rEnd5 < XO_SIZE && cEnd5 >= 0 && cEnd5 < XO_SIZE) {
+                            const j0 = r * XO_SIZE + c;
+                            const j4 = rEnd5 * XO_SIZE + cEnd5;
+                            if (board[j0] === '' && board[j4] === '') {
+                                const j1 = (r + dr) * XO_SIZE + (c + dc);
+                                const j2 = (r + 2 * dr) * XO_SIZE + (c + 2 * dc);
+                                const j3 = (r + 3 * dr) * XO_SIZE + (c + 3 * dc);
+                                if (board[j1] === sym && board[j2] === sym && board[j3] === sym) {
+                                    // Đảm bảo vẫn còn ô nối dài thành 5
+                                    const rBefore = r - dr, cBefore = c - dc;
+                                    const rAfter = rEnd5 + dr, cAfter = cEnd5 + dc;
+                                    const okBefore = (rBefore >= 0 && rBefore < XO_SIZE && cBefore >= 0 && cBefore < XO_SIZE && board[rBefore * XO_SIZE + cBefore] !== (sym === 'O' ? 'X' : 'O'));
+                                    const okAfter = (rAfter >= 0 && rAfter < XO_SIZE && cAfter >= 0 && cAfter < XO_SIZE && board[rAfter * XO_SIZE + cAfter] !== (sym === 'O' ? 'X' : 'O'));
+                                    if (okBefore || okAfter) return true;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -15077,29 +15254,31 @@
 
         function evaluateXoBoard(board) {
             let score = 0;
-            let oTwos = 0, xTwos = 0;
+            let oThrees = 0, xThrees = 0;
             for (const combo of XO_WIN_COMBOS) {
                 let oCnt = 0, xCnt = 0;
-                for (let k = 0; k < 4; k++) {
+                for (let k = 0; k < XO_WIN_LEN; k++) {
                     const v = board[combo[k]];
                     if (v === 'O') oCnt++;
                     else if (v === 'X') xCnt++;
                 }
                 if (oCnt > 0 && xCnt > 0) continue;
-                if (oCnt === 4) return 10000000;
-                if (xCnt === 4) return -10000000;
+                if (oCnt === 5) return 10000000;
+                if (xCnt === 5) return -10000000;
 
-                if (oCnt === 3) score += 4500;
-                else if (oCnt === 2) { score += 340; oTwos++; }
-                else if (oCnt === 1) score += 26;
+                if (oCnt === 4) score += 22000;
+                else if (oCnt === 3) { score += 2600; oThrees++; }
+                else if (oCnt === 2) score += 240;
+                else if (oCnt === 1) score += 20;
 
-                if (xCnt === 3) score -= 9500;
-                else if (xCnt === 2) { score -= 580; xTwos++; }
-                else if (xCnt === 1) score -= 34;
+                if (xCnt === 4) score -= 45000;
+                else if (xCnt === 3) { score -= 5400; xThrees++; }
+                else if (xCnt === 2) score -= 420;
+                else if (xCnt === 1) score -= 28;
             }
 
-            if (oTwos >= 3) score += 2500;
-            if (xTwos >= 3) score -= 4500;
+            if (oThrees >= 3) score += 3200;
+            if (xThrees >= 3) score -= 6000;
 
             const oWinThreats = countWinningMovesFor(board, 'O');
             const xWinThreats = countWinningMovesFor(board, 'X');
@@ -15109,18 +15288,19 @@
             if (hasOpenThreePattern(board, 'O')) score += 140000;
             if (hasOpenThreePattern(board, 'X')) score -= 280000;
 
+            const half = Math.floor(XO_SIZE / 2);
             for (let r = 0; r < XO_SIZE; r++) {
                 for (let c = 0; c < XO_SIZE; c++) {
                     const v = board[r * XO_SIZE + c];
                     if (!v) continue;
-                    const centerVal = 6 - (Math.abs(r - 3) + Math.abs(c - 3));
-                    score += (v === 'O' ? centerVal * 6 : -centerVal * 6);
+                    const centerVal = (XO_SIZE - 1) - (Math.abs(r - half) + Math.abs(c - half));
+                    score += (v === 'O' ? centerVal * 4 : -centerVal * 4);
                 }
             }
             return score;
         }
 
-        function getSmartXoCandidates(board) {
+        function getSmartXoCandidates(board, limit = 8, includeHeavyPatterns = false) {
             const nearSet = new Set();
             let pieceCount = 0;
             for (let idx = 0; idx < XO_TOTAL_CELLS; idx++) {
@@ -15128,10 +15308,9 @@
                 pieceCount++;
                 const r = Math.floor(idx / XO_SIZE);
                 const c = idx % XO_SIZE;
-                for (let dr = -2; dr <= 2; dr++) {
-                    for (let dc = -2; dc <= 2; dc++) {
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
                         if (dr === 0 && dc === 0) continue;
-                        if (Math.abs(dr) === 2 && Math.abs(dc) === 2 && Math.abs(dr) !== Math.abs(dc)) continue;
                         const nr = r + dr, nc = c + dc;
                         if (nr >= 0 && nr < XO_SIZE && nc >= 0 && nc < XO_SIZE) {
                             const nIdx = nr * XO_SIZE + nc;
@@ -15140,118 +15319,115 @@
                     }
                 }
             }
-            if (pieceCount === 0) return [24];
+            const half = Math.floor(XO_SIZE / 2);
+            if (pieceCount === 0) return [half * XO_SIZE + half];
 
             const scored = [];
             for (const idx of nearSet) {
                 const r = Math.floor(idx / XO_SIZE);
                 const c = idx % XO_SIZE;
-                let quick = 6 - (Math.abs(r - 3) + Math.abs(c - 3));
+                let quick = (XO_SIZE - 1) - (Math.abs(r - half) + Math.abs(c - half));
 
-                board[idx] = 'O';
-                if (checkXoWinner(board)?.winner === 'O') quick += 4000000;
-                else if (hasOpenThreePattern(board, 'O')) quick += 240000;
-                else if (countWinningMovesFor(board, 'O') >= 2) quick += 180000;
+                if (checkXoMoveWinsFast(board, idx, 'O')) quick += 4000000;
+                if (checkXoMoveWinsFast(board, idx, 'X')) quick += 3200000;
 
-                board[idx] = 'X';
-                if (checkXoWinner(board)?.winner === 'X') quick += 3200000;
-                else if (hasOpenThreePattern(board, 'X')) quick += 290000;
-                else if (countWinningMovesFor(board, 'X') >= 2) quick += 220000;
+                if (includeHeavyPatterns) {
+                    board[idx] = 'O';
+                    if (hasOpenThreePattern(board, 'O')) quick += 240000;
+                    else if (countWinningMovesFor(board, 'O') >= 2) quick += 180000;
+                    board[idx] = 'X';
+                    if (hasOpenThreePattern(board, 'X')) quick += 290000;
+                    else if (countWinningMovesFor(board, 'X') >= 2) quick += 220000;
+                    board[idx] = '';
+                }
 
-                // Phát hiện giao điểm tạo nhiều hàng 2 -> bẫy tương lai
-                let oFork2 = 0, xFork2 = 0;
-                for (const combo of XO_WIN_COMBOS) {
-                    if (!combo.includes(idx)) continue;
+                // Chấm điểm nhanh dựa trên các đường đi qua ô này (chuẩn 5 ô)
+                const lines = XO_CELL_COMBOS[idx];
+                let oFork = 0, xFork = 0;
+                for (let i = 0; i < lines.length; i++) {
+                    const combo = lines[i];
                     let oC = 0, xC = 0;
-                    for (let k = 0; k < 4; k++) {
-                        if (board[combo[k]] === 'O') oC++;
-                        else if (board[combo[k]] === 'X') xC++;
+                    for (let k = 0; k < XO_WIN_LEN; k++) {
+                        const v = board[combo[k]];
+                        if (v === 'O') oC++;
+                        else if (v === 'X') xC++;
                     }
                     if (xC === 0 && oC > 0) {
-                        quick += oC * 35;
-                        if (oC >= 2) oFork2++;
-                    }
-                    if (oC === 0 && xC > 0) {
-                        quick += xC * 45;
-                        if (xC >= 2) xFork2++;
+                        quick += oC === 3 ? 2800 : (oC === 2 ? 420 : (oC === 1 ? 45 : 0));
+                        if (oC >= 2) oFork++;
+                    } else if (oC === 0 && xC > 0) {
+                        quick += xC === 3 ? 3500 : (xC === 2 ? 520 : (xC === 1 ? 55 : 0));
+                        if (xC >= 2) xFork++;
                     }
                 }
-                if (oFork2 >= 2) quick += 8500;
-                if (xFork2 >= 2) quick += 12000;
-                board[idx] = '';
+                if (oFork >= 2) quick += 9000;
+                if (xFork >= 2) quick += 13000;
 
                 scored.push({ idx, quick });
             }
             scored.sort((a, b) => b.quick - a.quick);
-            return scored.slice(0, 12).map(item => item.idx);
+            return scored.slice(0, limit).map(item => item.idx);
         }
 
         function alphabetaXo(board, depth, alpha, beta, isMaximizing, deadlineMs = 0) {
-            if (deadlineMs && Date.now() > deadlineMs) return evaluateXoBoard(board);
+            if (deadlineMs && Date.now() > deadlineMs) return { score: evaluateXoBoard(board), timedOut: true };
             const win = checkXoWinner(board);
             if (win) {
-                if (win.winner === 'O') return 10000000 + depth * 1000;
-                if (win.winner === 'X') return -10000000 - depth * 1000;
-                return 0;
+                if (win.winner === 'O') return { score: 10000000 + depth * 1000, timedOut: false };
+                if (win.winner === 'X') return { score: -10000000 - depth * 1000, timedOut: false };
+                return { score: 0, timedOut: false };
             }
-            if (depth <= 0) return evaluateXoBoard(board);
+            if (depth <= 0) return { score: evaluateXoBoard(board), timedOut: false };
 
             const ttKey = board.join('') + '|' + depth + '|' + (isMaximizing ? '1' : '0');
             const cached = xoTransTable.get(ttKey);
-            if (cached !== undefined) return cached;
+            if (cached !== undefined) return { score: cached, timedOut: false };
 
-            const candidates = getSmartXoCandidates(board);
-            if (candidates.length === 0) return 0;
+            const branchLimit = depth >= 3 ? 8 : 6;
+            const candidates = getSmartXoCandidates(board, branchLimit, false);
+            if (candidates.length === 0) return { score: 0, timedOut: false };
 
-            let resultVal;
-            if (isMaximizing) {
-                let best = -Infinity;
-                for (const idx of candidates) {
-                    board[idx] = 'O';
-                    const val = alphabetaXo(board, depth - 1, alpha, beta, false, deadlineMs);
-                    board[idx] = '';
-                    if (val > best) best = val;
+            let timedOut = false;
+            let best = isMaximizing ? -Infinity : Infinity;
+
+            for (let i = 0; i < candidates.length; i++) {
+                const idx = candidates[i];
+                board[idx] = isMaximizing ? 'O' : 'X';
+                const res = alphabetaXo(board, depth - 1, alpha, beta, !isMaximizing, deadlineMs);
+                board[idx] = '';
+
+                if (res.timedOut) {
+                    timedOut = true;
+                    break;
+                }
+                if (isMaximizing) {
+                    if (res.score > best) best = res.score;
                     if (best > alpha) alpha = best;
-                    if (beta <= alpha) break;
-                    if (deadlineMs && Date.now() > deadlineMs) break;
+                } else {
+                    if (res.score < best) best = res.score;
+                    if (best < beta) beta = res.score;
                 }
-                resultVal = best;
-            } else {
-                let best = Infinity;
-                for (const idx of candidates) {
-                    board[idx] = 'X';
-                    const val = alphabetaXo(board, depth - 1, alpha, beta, true, deadlineMs);
-                    board[idx] = '';
-                    if (val < best) best = val;
-                    if (best < beta) beta = best;
-                    if (beta <= alpha) break;
-                    if (deadlineMs && Date.now() > deadlineMs) break;
-                }
-                resultVal = best;
+                if (beta <= alpha) break;
             }
 
-            if (xoTransTable.size < 18000) xoTransTable.set(ttKey, resultVal);
-            return resultVal;
+            if (!timedOut && xoTransTable.size < 8000) {
+                xoTransTable.set(ttKey, best);
+            }
+            return { score: best, timedOut };
         }
 
         function pickBotXoMove(board) {
-            const candidates = getSmartXoCandidates(board);
+            const candidates = getSmartXoCandidates(board, 12, true);
             if (candidates.length === 0) return -1;
 
             // 1. Thắng ngay lập tức nếu O đủ 4 ô (100%)
             for (const idx of candidates) {
-                board[idx] = 'O';
-                const won = checkXoWinner(board)?.winner === 'O';
-                board[idx] = '';
-                if (won) return idx;
+                if (checkXoMoveWinsFast(board, idx, 'O')) return idx;
             }
 
             // 2. Chặn bắt buộc nếu X sắp thắng ngay ở lượt sau (100%)
             for (const idx of candidates) {
-                board[idx] = 'X';
-                const xWins = checkXoWinner(board)?.winner === 'X';
-                board[idx] = '';
-                if (xWins) return idx;
+                if (checkXoMoveWinsFast(board, idx, 'X')) return idx;
             }
 
             // 3. Tạo thế thắng chắc chắn không thể đỡ (hàng 3 thoáng 2 đầu hoặc bẫy đôi)
@@ -15273,34 +15449,41 @@
                 if (xDanger) return idx;
             }
 
-            // 5. Iterative Deepening Alpha-Beta (Sâu dần 3 -> 5 -> 7 nước) kết hợp Transposition Table
+            // 5. Iterative Deepening Alpha-Beta siêu tốc (3 -> 5 -> 6 nước, ngân sách tối đa 150ms -> 0ms giật lag!)
             xoTransTable.clear();
             let bestMove = candidates[0];
-            const deadlineMs = Date.now() + 380;
+            const searchPool = candidates.slice(0, 8);
+            const deadlineMs = Date.now() + 150;
 
-            for (let depth = 3; depth <= 7; depth += 2) {
+            for (let depth = 3; depth <= 6; depth += 1) {
                 if (Date.now() > deadlineMs) break;
-                let iterBestMove = candidates[0];
+                let iterBestMove = searchPool[0];
                 let iterBestScore = -Infinity;
                 let completedFullDepth = true;
 
-                for (const idx of candidates) {
+                for (const idx of searchPool) {
                     if (Date.now() > deadlineMs) {
                         completedFullDepth = false;
                         break;
                     }
                     board[idx] = 'O';
-                    const score = alphabetaXo(board, depth, -Infinity, Infinity, false, deadlineMs);
+                    const res = alphabetaXo(board, depth, -Infinity, Infinity, false, deadlineMs);
                     board[idx] = '';
-                    if (score > iterBestScore) {
-                        iterBestScore = score;
+                    if (res.timedOut) {
+                        completedFullDepth = false;
+                        break;
+                    }
+                    if (res.score > iterBestScore) {
+                        iterBestScore = res.score;
                         iterBestMove = idx;
                     }
                 }
-                if (completedFullDepth || depth === 3) {
+                if (completedFullDepth) {
                     bestMove = iterBestMove;
+                    if (iterBestScore >= 9000000) break;
+                } else {
+                    break;
                 }
-                if (iterBestScore >= 9000000) break;
             }
             return bestMove;
         }
@@ -15338,7 +15521,7 @@
             }
 
             const isOwnerAcc = isOwnerUsername(currentUser.username);
-            if (!isOwnerAcc && getUserPencilCount(currentUser.username) < 2) {
+            if (!isOwnerAcc && getUserPencilCount(currentUser.username) < 3) {
                 xoGameActive = false;
                 updateXoHeaderUI();
                 renderXoBoard(-1);
@@ -15402,7 +15585,7 @@
                 const isDraw = (result.winner === 'draw');
 
                 if (isDraw) {
-                    setXoStatus(`🤝 Hòa với ${opponent}! Bàn 49 ô đã kín hết rồi!`, "text-sky-200");
+                    setXoStatus(`🤝 Hòa với ${opponent}! Bàn 169 ô đã kín hết rồi!`, "text-sky-200");
                     if (outcomeCard && outcomeTitle && outcomeDesc) {
                         outcomeCard.className = "rounded-2xl p-2.5 border border-sky-300/40 bg-sky-500/15 text-xs space-y-1";
                         outcomeTitle.className = "text-sm font-black text-sky-200";
@@ -15426,7 +15609,7 @@
                     logMemberActivity("X và O ghép đôi", `Thắng ${opponent} (+2 Bút Chì Màu)`, "wheel");
                 } else {
                     xoSessionLosses++;
-                    setXoStatus(`😢 Chia buồn! ${opponent} đã nối 4 ô trước rồi...`, "text-rose-300");
+                    setXoStatus(`😢 Chia buồn! ${opponent} đã nối 5 ô trước rồi...`, "text-rose-300");
                     if (!isOwnerAcc) {
                         const cur = getUserPencilCount(username);
                         const next = Math.max(0, cur - 2);
@@ -15451,26 +15634,28 @@
 
             if (result.winner === 'X') {
                 xoSessionWins++;
+                window._xoLastPlayerWon = true;
                 setXoStatus("🎉 Đỉnh quá! Bạn đã vẽ thắng Bot rồi!", "text-emerald-300");
                 if (outcomeCard && outcomeTitle && outcomeDesc) {
                     outcomeCard.className = "rounded-2xl p-2.5 border border-emerald-300/50 bg-emerald-500/15 text-xs space-y-1";
                     outcomeTitle.className = "text-sm font-black text-emerald-300";
-                    outcomeTitle.innerText = "🎉 Chúc Mừng Chiến Thắng! (+2 Bút Chì Màu)";
+                    outcomeTitle.innerText = "🎉 Chúc Mừng Chiến Thắng! (+1 Bút Chì Màu)";
                     outcomeDesc.className = "text-[11px] text-emerald-100/90 leading-relaxed";
                     outcomeDesc.innerText = isOwnerAcc
-                        ? "Bạn vừa hạ gục Bot 7×7 cực kỳ xuất sắc! (Túi Chủ Web giữ cố định 10 Chì Màu)."
-                        : "Tuyệt vời quá! Bạn vừa đánh bại Bot và nhận +2 Bút Chì Màu vào túi ✏️💖";
+                        ? "Bạn vừa hạ gục Bot 13×13 cực kỳ xuất sắc! (Túi Chủ Web giữ cố định 10 Chì Màu)."
+                        : "Tuyệt vời quá! Bạn vừa đánh bại Bot và nhận +1 Bút Chì Màu vào túi ✏️💖";
                 }
-                await addPencilToUser(username, 2, "", true);
+                await addPencilToUser(username, 1, "", true);
                 playJoyfulWinSound();
-                logMemberActivity("Cùng vẽ X và O (7×7)", "Thắng Bot (+2 Bút Chì Màu)", "wheel");
-                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thắng Bot (+2 Bút Chì Màu)", 3);
+                logMemberActivity("Cùng vẽ X và O (13×13)", "Thắng Bot (+1 Bút Chì Màu)", "wheel");
+                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thắng Bot (+1 Bút Chì Màu)", 3);
             } else if (result.winner === 'O') {
                 xoSessionLosses++;
-                setXoStatus("😢 Chia buồn! Bot vừa nối 4 ô O trước rồi...", "text-rose-300");
+                window._xoLastPlayerWon = false;
+                setXoStatus("😢 Chia buồn! Bot vừa nối 5 ô O trước rồi...", "text-rose-300");
                 if (!isOwnerAcc) {
                     const cur = getUserPencilCount(username);
-                    const next = Math.max(0, cur - 2);
+                    const next = cur - 3;
                     userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: next };
                     db.collection("pencils").doc(uKey).set({ count: next }, { merge: true }).catch(() => {});
                     updatePencilUI();
@@ -15479,28 +15664,29 @@
                 if (outcomeCard && outcomeTitle && outcomeDesc) {
                     outcomeCard.className = "rounded-2xl p-2.5 border border-rose-300/50 bg-rose-500/15 text-xs space-y-1";
                     outcomeTitle.className = "text-sm font-black text-rose-300";
-                    outcomeTitle.innerText = "😢 Xin Chia Buồn! (-2 Bút Chì Màu)";
+                    outcomeTitle.innerText = "😢 Xin Chia Buồn! (-3 Bút Chì Màu)";
                     outcomeDesc.className = "text-[11px] text-rose-100/90 leading-relaxed";
                     outcomeDesc.innerText = isOwnerAcc
-                        ? "Tiếc quá Bot đã nối 4 ô O trước! (Túi Chủ Web vẫn giữ cố định 10 Chì)."
-                        : (remainNow >= 2
-                            ? `Bot đã nối 4 ô O trước rồi! Bạn bị trừ 2 Bút Chì Màu (còn ${remainNow} Chì). Vẽ ván mới gỡ lại nha!`
-                            : `Tiếc quá, bạn bị trừ 2 Bút Chì Màu (hiện còn ${remainNow} Chì, cần ít nhất 2 chì để chơi tiếp)!`);
+                        ? "Tiếc quá Bot đã nối 5 ô O trước! (Túi Chủ Web vẫn giữ cố định 10 Chì)."
+                        : (remainNow >= 3
+                            ? `Bot đã nối 5 ô O trước rồi! Bạn bị trừ 3 Bút Chì Màu (còn ${remainNow} Chì). Vẽ ván mới gỡ lại nha!`
+                            : `Tiếc quá, bạn bị trừ 3 Bút Chì Màu (hiện còn ${remainNow} Chì, cần ít nhất 3 chì để chơi tiếp)!`);
                 }
                 playSadDeflateSound();
-                logMemberActivity("Cùng vẽ X và O (7×7)", "Thua Bot (-2 Bút Chì Màu)", "wheel");
-                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thua Bot (-2 Bút Chì Màu)", 3);
+                logMemberActivity("Cùng vẽ X và O (13×13)", "Thua Bot (-3 Bút Chì Màu)", "wheel");
+                sendPhonePushToOwner(`✏️ X và O: ${username}`, "Thua Bot (-3 Bút Chì Màu)", 3);
             } else {
-                setXoStatus("🤝 Hòa nhau! Bàn 49 ô đã kín hết rồi!", "text-sky-200");
+                window._xoLastPlayerWon = false;
+                setXoStatus("🤝 Hòa nhau! Bàn 169 ô đã kín hết rồi!", "text-sky-200");
                 if (outcomeCard && outcomeTitle && outcomeDesc) {
                     outcomeCard.className = "rounded-2xl p-2.5 border border-sky-300/40 bg-sky-500/15 text-xs space-y-1";
                     outcomeTitle.className = "text-sm font-black text-sky-200";
                     outcomeTitle.innerText = "🤝 Hòa Nhau Rồi! (0 Chì Màu)";
                     outcomeDesc.className = "text-[11px] text-sky-100/85 leading-relaxed";
-                    outcomeDesc.innerText = "Bàn cờ 7×7 đã kín chỗ mà bất phân thắng bại, số Bút Chì Màu của bạn vẫn giữ nguyên nhé!";
+                    outcomeDesc.innerText = "Bàn cờ 13×13 đã kín chỗ mà bất phân thắng bại, số Bút Chì Màu của bạn vẫn giữ nguyên nhé!";
                 }
                 playEmptyCardNeutralSound();
-                logMemberActivity("Cùng vẽ X và O (7×7)", "Hòa Bot (0 Bút Chì Màu)", "wheel");
+                logMemberActivity("Cùng vẽ X và O (13×13)", "Hòa Bot (0 Bút Chì Màu)", "wheel");
                 sendPhonePushToOwner(`✏️ X và O: ${username}`, "Hòa Bot (0 Bút Chì Màu)", 3);
             }
 
@@ -15535,18 +15721,26 @@
         let isViaRolling = false;
         let viaDiceInterval = null;
 
-        function getUserViaPlaysToday(username) {
-            if (!username) return 0;
+        function getUserViaCooldownInfo(username) {
+            if (!username) return { canPlay: false, daysLeft: 3, lastDate: '' };
+            if (isOwnerUsername(username)) return { canPlay: true, daysLeft: 0, lastDate: '' };
+
             const uKey = username.toLowerCase();
             const todayKey = getLocalDateKey();
             const pData = userPencilsData[uKey] || {};
-            let fbCount = (pData.viaDate === todayKey) ? (Number(pData.viaCount) || 0) : 0;
-            let localCount = 0;
+            let localRec = {};
             try {
-                const localRec = JSON.parse(localStorage.getItem(`palette_via_plays_${uKey}`) || '{}');
-                if (localRec.date === todayKey) localCount = Number(localRec.count) || 0;
+                localRec = JSON.parse(localStorage.getItem(`palette_via_plays_${uKey}`) || '{}') || {};
             } catch (_) {}
-            return Math.max(fbCount, localCount);
+
+            const candidates = [pData.viaLastDate, pData.viaDate, localRec.lastDate, localRec.date]
+                .filter(d => typeof d === 'string' && d.includes('-'));
+            const lastDate = candidates.length > 0 ? candidates.sort().pop() : '';
+
+            if (!lastDate) return { canPlay: true, daysLeft: 0, lastDate: '' };
+            const diffDays = getDateKeyDifference(lastDate, todayKey);
+            if (diffDays >= 3) return { canPlay: true, daysLeft: 0, lastDate };
+            return { canPlay: false, daysLeft: Math.max(1, 3 - diffDays), lastDate };
         }
 
         function renderViaFaceMediaHtml(faceIdx, sizeCls = "w-10 h-10") {
@@ -15623,8 +15817,7 @@
             if (!currentUser) return;
             const bal = getUserPencilCount(currentUser.username);
             const isOwner = currentUser.isOwner;
-            const used = getUserViaPlaysToday(currentUser.username);
-            const remain = Math.max(0, 5 - used);
+            const viaInfo = getUserViaCooldownInfo(currentUser.username);
             const totalBet = viaBets.reduce((a, b) => a + b, 0);
 
             const balEl = document.getElementById('viaPencilBalance');
@@ -15633,13 +15826,17 @@
             const rollBtn = document.getElementById('viaRollBtn');
 
             if (balEl) balEl.innerText = bal;
-            if (remEl) remEl.innerText = isOwner ? "∞ (Chủ Web)" : `${remain}/5`;
+            if (remEl) {
+                remEl.innerText = isOwner
+                    ? "∞ (Chủ Web)"
+                    : (viaInfo.canPlay ? "1/1 (Sẵn sàng)" : `Chờ ${viaInfo.daysLeft} ngày`);
+            }
             if (totEl) totEl.innerText = `Đang cược: ${totalBet}/5 Chì`;
 
             if (rollBtn && !isViaRolling) {
-                if (!isOwner && remain <= 0) {
+                if (!isOwner && !viaInfo.canPlay) {
                     rollBtn.disabled = true;
-                    rollBtn.innerText = "Đã hết 5 lượt hôm nay";
+                    rollBtn.innerText = `⏳ Chờ ${viaInfo.daysLeft} ngày nữa (3 ngày/lần)`;
                     rollBtn.className = "flex-1 bg-white/10 text-pink-200/50 border border-white/15 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed";
                 } else {
                     rollBtn.disabled = false;
@@ -15767,6 +15964,7 @@
             if (isViaRolling) return;
             closeViaRulesModal();
             document.getElementById('cuocMauModal')?.classList.add('hidden');
+            maybeReturnToLuckyHub();
         }
 
         function openViaRulesModal() {
@@ -15786,10 +15984,10 @@
             const isOwnerAcc = isOwnerUsername(username);
             const curPencils = getUserPencilCount(username);
             const totalBet = viaBets.reduce((a, b) => a + b, 0);
-            const usedPlays = getUserViaPlaysToday(username);
+            const viaInfo = getUserViaCooldownInfo(username);
 
-            if (!isOwnerAcc && usedPlays >= 5) {
-                alert("Hôm nay bạn đã hết 5 lượt chơi Cược Màu Lấy Vía rồi! Hẹn bạn ngày mai lấy vía tiếp nhé 💖");
+            if (!isOwnerAcc && !viaInfo.canPlay) {
+                alert(`Bạn đã chơi Cược Màu Lấy Vía rồi! Trò này 3 ngày mới được chơi 1 lần (còn ${viaInfo.daysLeft} ngày nữa mới mở lại nhé 💖).`);
                 return;
             }
             if (totalBet <= 0) {
@@ -15806,12 +16004,11 @@
                 return;
             }
 
-            // Ghi nhận lượt chơi hôm nay
+            // Ghi nhận ngày chơi mới nhất (chu kỳ 3 ngày / 1 lần)
             const todayKey = getLocalDateKey();
-            const newPlayCount = usedPlays + 1;
-            localStorage.setItem(`palette_via_plays_${uKey}`, JSON.stringify({ date: todayKey, count: newPlayCount }));
-            userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), viaDate: todayKey, viaCount: newPlayCount };
-            db.collection("pencils").doc(uKey).set({ viaDate: todayKey, viaCount: newPlayCount }, { merge: true }).catch(() => {});
+            localStorage.setItem(`palette_via_plays_${uKey}`, JSON.stringify({ lastDate: todayKey, date: todayKey, count: 1 }));
+            userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), viaLastDate: todayKey, viaDate: todayKey, viaCount: 1 };
+            db.collection("pencils").doc(uKey).set({ viaLastDate: todayKey, viaDate: todayKey, viaCount: 1 }, { merge: true }).catch(() => {});
 
             isViaRolling = true;
             viaDiceLocked = [false, false, false, false];
@@ -16604,10 +16801,12 @@
             playPaletteTingSound();
         }
 
-        function closeXiDachModal() {
+        function closeXiDachModal(skipReturnHub = false) {
             if (xdIsResolving || xdIsAnimatingCard) return;
             closeXiDachRulesModal();
             document.getElementById('xiDachModal')?.classList.add('hidden');
+            if (skipReturnHub) returnToLuckyHubOnGameClose = false;
+            else maybeReturnToLuckyHub();
         }
 
         function openXiDachRulesModal() {
@@ -16943,6 +17142,16 @@
             return pool[Math.floor(Math.random() * pool.length)];
         }
 
+        function getXdMinPossibleScore(hand) {
+            let minSum = 0;
+            for (const c of hand) {
+                if (c.rank === 'A') minSum += 1;
+                else if (['J', 'Q', 'K', '10'].includes(c.rank)) minSum += 10;
+                else minSum += parseInt(c.rank, 10);
+            }
+            return minSum;
+        }
+
         function decideBotMoveFairly(botHand) {
             const bEval = evaluateXiDachHand(botHand);
             if (botHand.length >= 5 || bEval.type === 'bust') return { draw: false, mood: 'done' };
@@ -16951,15 +17160,40 @@
             }
 
             const s = bEval.score;
+            const minScore = getXdMinPossibleScore(botHand);
+            const isZeroBustRisk = (minScore <= 11); // Có lá Át làm đệm hoặc bài nhỏ -> bốc thêm 100% không bao giờ Quắc!
+
+            // 1. Trường hợp an toàn tuyệt đối (0% nguy cơ Quắc)
+            if (isZeroBustRisk) {
+                if (s < 18) return { draw: true, mood: 'soft_safe' };
+                if (s === 18 && botHand.length === 4) return { draw: true, mood: 'ngulinh_tempt' };
+                if (s === 18 && botHand.length <= 3) return { draw: Math.random() < 0.65, mood: 'soft_safe' };
+                return { draw: false, mood: 'confident' };
+            }
+
+            // 2. Đang cầm 4 lá -> ưu tiên săn Ngũ Linh thông minh
+            if (botHand.length === 4) {
+                if (s < 15) return { draw: true, mood: 'low' };
+                if (s === 15) return { draw: Math.random() < 0.90, mood: 'ngulinh_tempt' };
+                if (s === 16) return { draw: Math.random() < 0.65, mood: 'ngulinh_tempt' };
+                if (s === 17) return { draw: Math.random() < 0.25, mood: 'ngulinh_tempt' };
+                return { draw: false, mood: 'confident' };
+            }
+
+            // 3. Bài cứng (2-3 lá) -> tính xác suất chuẩn xác, không bị non điểm
             if (s < 15) return { draw: true, mood: 'low' };
-            if (s === 15) return { draw: Math.random() < 0.80, mood: 'hesitate_15' };
-            if (s === 16) return { draw: Math.random() < 0.50, mood: 'hesitate_16' };
-            if (s === 17) return { draw: Math.random() < 0.18, mood: 'hesitate_17' };
-            if (s === 18 && botHand.length === 4) return { draw: Math.random() < 0.15, mood: 'ngulinh_tempt' };
+            if (s === 15) return { draw: Math.random() < 0.88, mood: 'hesitate_15' };
+            if (s === 16) return { draw: Math.random() < 0.42, mood: 'hesitate_16' };
+            if (s === 17) return { draw: Math.random() < 0.08, mood: 'hesitate_17' };
             return { draw: false, mood: 'confident' };
         }
 
         const XD_THOUGHTS_BY_MOOD = {
+            soft_safe: [
+                "Hihi có lá Át làm đệm an toàn rồi, bốc thêm chẳng sợ Quắc đâu nè!",
+                "Bài mềm quá xịn, rút thêm một lá ép lên điểm cao hơn luôn!",
+                "Không có cửa bị Quắc ở lượt này đâu, bốc tiếp cho đẹp bài nào!"
+            ],
             low: [
                 "Hmm... điểm bài mình còn hơi non, chắc phải rút thêm rồi!",
                 "Mới bấy nhiêu đây chưa đủ tuổi đâu, rút thêm một lá nào...",
@@ -17127,24 +17361,24 @@
 
             if (outcome === 'win') {
                 xdWinScore++;
-                await addPencilToUser(username, 2, "", true);
+                await addPencilToUser(username, 1, "", true);
                 playJoyfulWinSound();
                 createPencilSparkles();
                 setXiDachBanner(
                     isOwnerAcc
                         ? `Bạn Thắng (${summaryTxt})! (Túi Chủ Web giữ cố định 10 Chì).`
-                        : `Tuyệt vời! Bạn Thắng (${summaryTxt}) và nhận +2 Bút Chì Màu!`,
+                        : `Tuyệt vời! Bạn Thắng (${summaryTxt}) và nhận +1 Bút Chì Màu!`,
                     "text-emerald-200",
                     "bg-emerald-500/20 border-emerald-300/60",
                     XD_SVG.win
                 );
-                logMemberActivity("Xì Dách Hên Xui", `Thắng (+2 Bút Chì Màu) · ${summaryTxt}`, "wheel");
-                sendPhonePushToOwner(`🃏 Xì Dách: ${username}`, `Thắng (+2 Chì) · ${summaryTxt}`, 3);
+                logMemberActivity("Xì Dách Hên Xui", `Thắng (+1 Bút Chì Màu) · ${summaryTxt}`, "wheel");
+                sendPhonePushToOwner(`🃏 Xì Dách: ${username}`, `Thắng (+1 Chì) · ${summaryTxt}`, 3);
             } else if (outcome === 'lose') {
                 xdLoseScore++;
                 if (!isOwnerAcc) {
                     const cur = getUserPencilCount(username);
-                    const next = Math.max(0, cur - 2);
+                    const next = cur - 2;
                     userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: next };
                     db.collection("pencils").doc(uKey).set({ count: next }, { merge: true }).catch(() => {});
                     updatePencilUI();
@@ -17330,7 +17564,7 @@
                             <span class="text-[9.5px] bg-pink-500/25 text-pink-100 border border-pink-300/40 px-2 py-0.5 rounded-full font-black shrink-0">Tối đa 2 người</span>
                         </div>
                         <div class="space-y-1 text-[10.5px]">
-                            <div>• <b>Ghép đôi (2 người):</b> Mời người online hoặc bạn bè đấu 1-1 trên bàn 7×7. Người thắng nhận <b class="text-emerald-300">+2 Chì</b> từ người thua.</div>
+                            <div>• <b>Ghép đôi (2 người):</b> Mời người online hoặc bạn bè đấu 1-1 trên bàn 13×13 (nối 5). Người thắng nhận <b class="text-emerald-300">+2 Chì</b> từ người thua.</div>
                             <div>• <b>Chơi với Bot:</b> Chưa muốn ghép đôi thì bạn vẫn có thể tự vẽ ván 1-1 cùng Bot bất cứ lúc nào!</div>
                         </div>
                         <button type="button" onclick="closeMatchmakingModal()" class="w-full bg-white/10 hover:bg-white/20 border border-white/15 text-sky-100 font-extrabold py-1.5 px-3 rounded-xl text-[10.5px] active:scale-95 transition">
@@ -18290,6 +18524,7 @@
             stopWheelSpinningSound();
             const modal = document.getElementById('luckyWheelModal');
             if (modal) modal.classList.add('hidden');
+            maybeReturnToLuckyHub();
         }
 
         async function spinLuckyWheel() {
@@ -18547,6 +18782,7 @@
         function closeSailorCardModal() {
             if (isSailorCardFlipping) return;
             document.getElementById('sailorCardModal').classList.add('hidden');
+            maybeReturnToLuckyHub();
         }
 
         function getCombinedSailorPool() {
