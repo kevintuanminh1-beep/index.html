@@ -5415,6 +5415,35 @@
             return null;
         }
 
+        function verifyDrawnCanvasHasContent(ctx, w, h) {
+            try {
+                // Lấy mẫu lưới 10x10 trên canvas để chắc chắn ảnh không bị trắng tinh hay trong suốt toàn bộ
+                const stepX = Math.max(1, Math.floor(w / 10));
+                const stepY = Math.max(1, Math.floor(h / 10));
+                let hasOpaque = false;
+                let minLuma = 255;
+                let maxLuma = 0;
+
+                for (let y = Math.floor(stepY / 2); y < h; y += stepY) {
+                    const rowData = ctx.getImageData(0, y, w, 1).data;
+                    for (let x = Math.floor(stepX / 2); x < w; x += stepX) {
+                        const off = x * 4;
+                        const a = rowData[off + 3];
+                        if (a > 15) {
+                            hasOpaque = true;
+                            const luma = 0.299 * rowData[off] + 0.587 * rowData[off + 1] + 0.114 * rowData[off + 2];
+                            if (luma < minLuma) minLuma = luma;
+                            if (luma > maxLuma) maxLuma = luma;
+                        }
+                    }
+                }
+                // Ảnh thật luôn có sự chênh sáng tối (>= 4) hoặc không phải trắng bóc (minLuma < 248)
+                return hasOpaque && ((maxLuma - minLuma) >= 4 || minLuma < 248);
+            } catch (_) {
+                return true;
+            }
+        }
+
         function drawBitmapOrImgToJpeg(source, w, h, maxDim = 1280, quality = 0.85) {
             const rawW = Number(w) || (source ? (source.naturalWidth || source.width) : 0) || 0;
             const rawH = Number(h) || (source ? (source.naturalHeight || source.height) : 0) || 0;
@@ -5438,47 +5467,59 @@
             canvas.width = Math.max(1, width);
             canvas.height = Math.max(1, height);
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
             try {
+                // Vẽ lên nền trong suốt trước để kiểm tra xem drawImage có bị lỗi rỗng/trắng không
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+                if (!verifyDrawnCanvasHasContent(ctx, canvas.width, canvas.height)) {
+                    return "";
+                }
+
+                // Ghép nền trắng xuống phía dưới ảnh thật sau khi đã xác nhận có nội dung
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = 'source-over';
+
                 return canvas.toDataURL('image/jpeg', quality);
             } catch (_) {
                 return "";
             }
         }
 
-        async function decodeBlobNativelyToJpeg(blob, maxDim = 1280, quality = 0.85) {
-            if (typeof createImageBitmap === 'function') {
+        function loadBlobViaFileReaderDataUrl(blob) {
+            return new Promise((resolve) => {
                 try {
-                    const bitmap = await createImageBitmap(blob);
-                    const jpegUrl = drawBitmapOrImgToJpeg(bitmap, bitmap.width, bitmap.height, maxDim, quality);
-                    if (typeof bitmap.close === 'function') bitmap.close();
-                    if (jpegUrl && jpegUrl.startsWith('data:image/jpeg')) return jpegUrl;
-                } catch (_) {}
-            }
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target?.result || "");
+                    reader.onerror = () => resolve("");
+                    reader.readAsDataURL(blob);
+                } catch (_) {
+                    resolve("");
+                }
+            });
+        }
 
-            return await new Promise((resolve) => {
-                let objUrl = "";
+        function drawDataUrlOrBlobViaImage(srcUrl, maxDim = 1280, quality = 0.85) {
+            return new Promise((resolve) => {
+                if (!srcUrl) return resolve("");
                 let done = false;
                 const finish = (val) => {
                     if (done) return;
                     done = true;
-                    if (objUrl) { try { URL.revokeObjectURL(objUrl); } catch (_) {} }
                     resolve(val || "");
                 };
-                const t = setTimeout(() => finish(""), 10000);
-                try {
-                    objUrl = URL.createObjectURL(blob);
-                } catch (_) {
-                    clearTimeout(t);
-                    return resolve("");
-                }
+                const t = setTimeout(() => finish(""), 12000);
                 const img = new Image();
-                img.onload = () => {
+                img.onload = async () => {
                     clearTimeout(t);
                     try {
-                        finish(drawBitmapOrImgToJpeg(img, img.naturalWidth || img.width, img.naturalHeight || img.height, maxDim, quality));
+                        if (img.decode) await img.decode().catch(() => {});
+                        const nw = img.naturalWidth || img.width;
+                        const nh = img.naturalHeight || img.height;
+                        const out = drawBitmapOrImgToJpeg(img, nw, nh, maxDim, quality);
+                        finish(out);
                     } catch (_) {
                         finish("");
                     }
@@ -5487,11 +5528,49 @@
                     clearTimeout(t);
                     finish("");
                 };
-                img.src = objUrl;
+                img.src = srcUrl;
             });
         }
 
-        // BỘ NÉN & ĐỌC ẢNH ĐA NĂNG (ƯU TIÊN GIẢI MÃ GỐC NHANH, TỐI ĐA 1280PX CHỐNG TRÀN RAM)
+        async function decodeBlobNativelyToJpeg(blob, maxDim = 1280, quality = 0.85) {
+            // 1. Ưu tiên đọc DataURL qua FileReader + img.decode() (ổn định nhất trên mọi máy Android/Samsung/iOS)
+            const rawDataUrl = await loadBlobViaFileReaderDataUrl(blob);
+            if (rawDataUrl) {
+                const viaImg = await drawDataUrlOrBlobViaImage(rawDataUrl, maxDim, quality);
+                if (viaImg) return viaImg;
+            }
+
+            // 2. Thử qua ObjectURL + img.decode()
+            let objUrl = "";
+            try {
+                objUrl = URL.createObjectURL(blob);
+                const viaObj = await drawDataUrlOrBlobViaImage(objUrl, maxDim, quality);
+                if (viaObj) return viaObj;
+            } catch (_) {
+            } finally {
+                if (objUrl) { try { URL.revokeObjectURL(objUrl); } catch (_) {} }
+            }
+
+            // 3. Thử qua createImageBitmap (kèm fallback kích thước nhỏ hơn nếu GPU tràn bộ nhớ)
+            if (typeof createImageBitmap === 'function') {
+                for (const dim of [maxDim, 900]) {
+                    try {
+                        const bitmap = await createImageBitmap(blob);
+                        const jpegUrl = drawBitmapOrImgToJpeg(bitmap, bitmap.width, bitmap.height, dim, quality);
+                        if (typeof bitmap.close === 'function') bitmap.close();
+                        if (jpegUrl) return jpegUrl;
+                    } catch (_) {}
+                }
+            }
+
+            // 4. Phương án cuối: nếu canvas thiết bị chặn getImageData nhưng rawDataUrl là ảnh hợp lệ, dùng thẳng rawDataUrl
+            if (rawDataUrl && rawDataUrl.startsWith('data:image/') && rawDataUrl.length < 3500000) {
+                return rawDataUrl;
+            }
+            return "";
+        }
+
+        // BỘ NÉN & ĐỌC ẢNH ĐA NĂNG (ƯU TIÊN GIẢI MÃ GỐC NHANH, CHỐNG TRẮNG ẢNH 100%)
         async function processImageForFastOCR(file) {
             if (!file || file.size === 0) return "";
 
@@ -7398,32 +7477,21 @@
             });
         }
 
-        // Nén ảnh gọn nhẹ để lưu thẳng lên Firestore không bị vượt 1MB
+        // Nén ảnh gọn nhẹ để lưu thẳng lên Firestore không bị vượt 1MB (chờ decode & chống trắng ảnh)
         function shrinkDataUrlForFirestore(dataUrl, maxDim = 600, quality = 0.52) {
             return new Promise(resolve => {
                 if (!dataUrl || typeof dataUrl !== 'string') return resolve("");
                 const img = new Image();
-                img.onload = () => {
+                img.onload = async () => {
                     try {
-                        let w = img.naturalWidth || img.width || 500;
-                        let h = img.naturalHeight || img.height || 700;
-                        if (w > maxDim || h > maxDim) {
-                            if (w > h) {
-                                h = Math.round((h * maxDim) / w);
-                                w = maxDim;
-                            } else {
-                                w = Math.round((w * maxDim) / h);
-                                h = maxDim;
-                            }
-                        }
-                        const canvas = document.createElement('canvas');
-                        canvas.width = Math.max(1, w);
-                        canvas.height = Math.max(1, h);
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', quality));
+                        if (img.decode) await img.decode().catch(() => {});
+                        const nw = img.naturalWidth || img.width;
+                        const nh = img.naturalHeight || img.height;
+                        if (!nw || !nh) return resolve(dataUrl.length <= 220000 ? dataUrl : "");
+                        const shrunk = drawBitmapOrImgToJpeg(img, nw, nh, maxDim, quality);
+                        resolve(shrunk || (dataUrl.length <= 220000 ? dataUrl : ""));
                     } catch (_) {
-                        resolve(dataUrl.slice(0, 200000));
+                        resolve(dataUrl.length <= 220000 ? dataUrl : "");
                     }
                 };
                 img.onerror = () => resolve("");
@@ -9533,130 +9601,6 @@
                 if (switchBtn) switchBtn.innerText = "Đăng ký mới";
                 if (avatarPicker) avatarPicker.classList.add('hidden');
             }
-        }
-
-        function readDeviceCookie(name) {
-            try {
-                const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
-                return match ? decodeURIComponent(match[1]) : '';
-            } catch (_) {
-                return '';
-            }
-        }
-
-        function writeDeviceCookie(name, value) {
-            try {
-                document.cookie = `${name}=${encodeURIComponent(value)}; max-age=315360000; path=/; SameSite=Lax`;
-            } catch (_) {}
-        }
-
-        function readDeviceIndexedDb(key) {
-            return new Promise((resolve) => {
-                if (!window.indexedDB) return resolve('');
-                try {
-                    const req = indexedDB.open('palette_device_lock_db', 1);
-                    req.onupgradeneeded = () => {
-                        const dbObj = req.result;
-                        if (!dbObj.objectStoreNames.contains('meta')) {
-                            dbObj.createObjectStore('meta');
-                        }
-                    };
-                    req.onsuccess = () => {
-                        try {
-                            const dbObj = req.result;
-                            const tx = dbObj.transaction('meta', 'readonly');
-                            const getReq = tx.objectStore('meta').get(key);
-                            getReq.onsuccess = () => resolve(getReq.result || '');
-                            getReq.onerror = () => resolve('');
-                        } catch (_) {
-                            resolve('');
-                        }
-                    };
-                    req.onerror = () => resolve('');
-                } catch (_) {
-                    resolve('');
-                }
-            });
-        }
-
-        function writeDeviceIndexedDb(key, value) {
-            return new Promise((resolve) => {
-                if (!window.indexedDB) return resolve();
-                try {
-                    const req = indexedDB.open('palette_device_lock_db', 1);
-                    req.onupgradeneeded = () => {
-                        const dbObj = req.result;
-                        if (!dbObj.objectStoreNames.contains('meta')) {
-                            dbObj.createObjectStore('meta');
-                        }
-                    };
-                    req.onsuccess = () => {
-                        try {
-                            const dbObj = req.result;
-                            const tx = dbObj.transaction('meta', 'readwrite');
-                            tx.objectStore('meta').put(value, key);
-                            tx.oncomplete = () => resolve();
-                            tx.onerror = () => resolve();
-                        } catch (_) {
-                            resolve();
-                        }
-                    };
-                    req.onerror = () => resolve();
-                } catch (_) {
-                    resolve();
-                }
-            });
-        }
-
-        async function getOrCreateDeviceUuid() {
-            const fromLs = localStorage.getItem('palette_device_reg_uuid') || '';
-            const fromCk = readDeviceCookie('palette_dev_uuid');
-            const fromIdb = await readDeviceIndexedDb('device_uuid');
-            let uuid = fromLs || fromCk || fromIdb;
-            if (!uuid) {
-                uuid = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
-            }
-            try { localStorage.setItem('palette_device_reg_uuid', uuid); } catch (_) {}
-            writeDeviceCookie('palette_dev_uuid', uuid);
-            await writeDeviceIndexedDb('device_uuid', uuid);
-            return uuid;
-        }
-
-        async function getRegisteredOwnerOnThisDevice() {
-            const fromLs = localStorage.getItem('palette_device_reg_owner') || '';
-            const fromCk = readDeviceCookie('palette_dev_owner');
-            const fromIdb = await readDeviceIndexedDb('registered_owner');
-            let ownerName = fromLs || fromCk || fromIdb;
-
-            const deviceUuid = await getOrCreateDeviceUuid();
-            if (!ownerName) {
-                try {
-                    const snap = await db.collection("device_locks").doc(deviceUuid).get();
-                    if (snap.exists && snap.data()?.username) {
-                        ownerName = snap.data().username;
-                    }
-                } catch (_) {}
-            }
-
-            if (ownerName) {
-                try { localStorage.setItem('palette_device_reg_owner', ownerName); } catch (_) {}
-                writeDeviceCookie('palette_dev_owner', ownerName);
-                await writeDeviceIndexedDb('registered_owner', ownerName);
-            }
-            return { ownerName, deviceUuid };
-        }
-
-        async function lockDeviceToRegisteredUser(username, deviceUuid) {
-            if (!username || isOwnerUsername(username)) return;
-            try { localStorage.setItem('palette_device_reg_owner', username); } catch (_) {}
-            writeDeviceCookie('palette_dev_owner', username);
-            await writeDeviceIndexedDb('registered_owner', username);
-            try {
-                await db.collection("device_locks").doc(deviceUuid).set({
-                    username: username,
-                    lockedAt: Date.now()
-                }, { merge: true });
-            } catch (_) {}
         }
 
         function readDeviceCookie(name) {
