@@ -6321,9 +6321,7 @@
                 if (selectedMiniRedeemChar && selectedMiniRedeemChar.id === targetChar.id) {
                     openMiniRedeemModal(targetChar);
                 }
-                if (!userUnlockTimestamps[currentUser.username]) userUnlockTimestamps[currentUser.username] = {};
-                userUnlockTimestamps[currentUser.username][targetChar.id] = Date.now();
-                localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+                recordUserUnlockTimestamp(currentUser.username, targetChar.id);
 
                 logMemberActivity("Đổi 10 Chì Màu mở link 🔓", `Nhân vật: ${targetChar.name}`, "link", {
                     charId: targetChar.id,
@@ -6995,18 +6993,67 @@
 
             window._unlockedExactMap = {};
             window._unlockedLowerMap = {};
-            const applyMergedUnlockedForUser = () => {
-                const merged = { ...(window._unlockedLowerMap || {}), ...(window._unlockedExactMap || {}) };
-                userUnlockedState[username] = merged;
-                userUnlockedState[uKey] = merged;
-                updateAIStudioButton();
-                renderUnlockedCharListInModal();
-                renderFastColorCenter();
-                const detailBox = document.getElementById('detailCmtRewardBox');
-                if (detailBox && activeChar && isFastCharActive(activeChar)) {
-                    detailBox.innerHTML = getCmtRewardSectionHtml(activeChar);
+            // Tự động đối soát và trả lại đúng char thực user đã từng lấy (CHỈ trả nếu đã bấm tim hoặc mới mở < 24h)
+        async function autoHealUserUnlockedOnLogin(username) {
+            if (!username || !currentUser || currentUser.username !== username) return;
+            const sessionKey = `palette_healed_unlocked_v1_${username.toLowerCase()}`;
+            if (sessionStorage.getItem(sessionKey) === 'done') return;
+            sessionStorage.setItem(sessionKey, 'done');
+
+            try {
+                const uKey = username.toLowerCase();
+                const restoredIds = new Set();
+
+                // 1. Kiểm tra bản ghi proof_submissions thật của user
+                try {
+                    const pSnap = await db.collection("proof_submissions").where("username", "==", username).get();
+                    pSnap.forEach(d => {
+                        const cId = d.data()?.charId;
+                        if (cId) restoredIds.add(cId);
+                    });
+                } catch (_) {}
+
+                // 2. Kiểm tra lịch sử thông báo đã nhận (chứa tên nhân vật được duyệt/đổi chì)
+                const logs = userNotificationLogs[uKey] || [];
+                const stripStr = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+                logs.forEach(item => {
+                    const titleLow = stripStr(item.title);
+                    if (titleLow.includes('mo khoa link') || titleLow.includes('duyet mo link') || titleLow.includes('link da mo khoa')) {
+                        const bodyNorm = stripStr(item.body);
+                        characters.forEach(c => {
+                            const cNorm = stripStr(c.name);
+                            if (cNorm && bodyNorm.includes(`"${cNorm}"`)) {
+                                restoredIds.add(c.id);
+                            }
+                        });
+                    }
+                });
+
+                // 3. Chỉ trả lại các char user ĐÃ MỞ KHÓA THẬT và ĐÃ BẤM TIM (hoặc mới mở chưa quá 24h)
+                const curUnlocked = userUnlockedState[username] || {};
+                const tsMap = userUnlockTimestamps[username] || {};
+                const now = Date.now();
+                const missingIds = Array.from(restoredIds).filter(id => {
+                    if (curUnlocked[id] === true) return false;
+                    if (isCharHeartedByUser(id, username)) return true;
+                    const ts = Number(tsMap[id]) || 0;
+                    return ts > 0 && (now - ts) < 86400000;
+                });
+
+                if (missingIds.length > 0) {
+                    const patchChars = {};
+                    missingIds.forEach(id => {
+                        patchChars[id] = true;
+                        curUnlocked[id] = true;
+                    });
+                    userUnlockedState[username] = curUnlocked;
+                    await db.collection("unlocked").doc(username).set({ chars: patchChars }, { merge: true });
+                    updateAIStudioButton();
+                    renderUnlockedCharListInModal();
+                    renderFastColorCenter();
                 }
-            };
+            } catch (_) {}
+        }
 
             unlockedUnsub = db.collection("unlocked").doc(username).onSnapshot(doc => {
                 window._unlockedExactMap = doc.exists ? (doc.data().chars || {}) : {};
@@ -7020,8 +7067,8 @@
                 }, () => {});
             }
 
-            // Tự động đối soát & trả lại đúng các char thực user đã từng mở (chống mất dữ liệu cũ)
-            setTimeout(() => { autoHealUserUnlockedOnLogin(username); }, 1800);
+            // Tự động đối soát & trả lại đúng các char thực user đã mở & bấm tim (chỉ chốt khi dữ liệu đã tải đủ)
+            setTimeout(() => { autoHealUserUnlockedOnLogin(username); }, 1500);
 
             // Tự động tải và đồng bộ bộ đếm ngược từ Firebase (xóa sạch khi đã mở xong)
             db.collection("unlock_timers").doc(uKey).onSnapshot(doc => {
@@ -7031,6 +7078,24 @@
                 renderFastColorCenter();
                 updateAIStudioButton();
             });
+
+            // Đồng bộ mốc giờ mở khóa để kiểm tra hạn 1 ngày nếu user quên bấm tim
+            db.collection("unlock_timestamps").doc(uKey).onSnapshot(doc => {
+                const remoteTs = doc.exists ? (doc.data() || {}) : {};
+                if (!userUnlockTimestamps[username]) userUnlockTimestamps[username] = {};
+                userUnlockTimestamps[username] = { ...userUnlockTimestamps[username], ...remoteTs };
+                localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+                checkAndLockExpiredUnheartedLinks(username);
+            }, () => {});
+
+            // Đồng bộ mốc giờ mở khóa để kiểm tra hạn 1 ngày nếu user quên bấm tim
+            db.collection("unlock_timestamps").doc(uKey).onSnapshot(doc => {
+                const remoteTs = doc.exists ? (doc.data() || {}) : {};
+                if (!userUnlockTimestamps[username]) userUnlockTimestamps[username] = {};
+                userUnlockTimestamps[username] = { ...userUnlockTimestamps[username], ...remoteTs };
+                localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+                checkAndLockExpiredUnheartedLinks(username);
+            }, () => {});
 
             isFirstNotificationSnapshot = true;
             window.knownUserNotificationKeys = new Set();
@@ -8818,23 +8883,56 @@
                     return userA.localeCompare(userB);
                 });
 
-                // Thanh công cụ Giảm Lạm Phát cho Chủ Web + Thanh Xếp Hạng
-                const inflationBar = document.createElement('div');
-                inflationBar.className = "mb-2.5 flex items-center justify-between gap-2 bg-rose-500/15 border border-rose-300/35 rounded-2xl px-3 py-2 text-xs";
-                inflationBar.innerHTML = `
-                    <div class="text-[10.5px] text-rose-200 font-bold leading-snug flex-1">
-                        ⚖️ <b>Quản trị nhanh:</b> Giảm lạm phát chì hoặc trả lại link thực cho toàn bộ thành viên
-                    </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button type="button" onclick="ownerRestoreAllTrueUnlockedChars()" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-black text-[10px] px-2.5 py-1.5 rounded-xl active:scale-95 transition shadow" title="Quét lịch sử & trả lại đúng char user đã lấy">
-                            🔄 Trả link thực
-                        </button>
-                        <button type="button" onclick="ownerReduceInflationServerWide()" class="bg-gradient-to-r from-rose-500 to-amber-500 hover:brightness-110 text-white font-black text-[10px] px-2.5 py-1.5 rounded-xl active:scale-95 transition shadow">
-                            🧹 Giảm lạm phát
-                        </button>
-                    </div>
-                `;
-                container.appendChild(inflationBar);
+                async function ownerReduceInflationServerWide() {
+            if (!checkIsOwnerAccount()) return;
+            const capStr = prompt(
+                "⚖️ THU HỒI CHÌ LẠM PHÁT TOÀN SERVER:\n" +
+                "Nhập mức trần tối đa cho các tài khoản đang có quá nhiều chì (VD: nhập 10 thì tất cả acc > 10 chì sẽ bị giảm một nửa phần dư, hoặc nhập 'cap:10' để đưa thẳng mọi acc > 10 chì về tối đa 10 chì).\n" +
+                "(Các acc dưới mức này và tài khoản Chủ Web sẽ không bị ảnh hưởng)",
+                "10"
+            );
+            if (!capStr || !capStr.trim()) return;
+            const txt = capStr.trim().toLowerCase();
+            const isHardCap = txt.startsWith('cap:');
+            const threshold = parseInt(isHardCap ? txt.slice(4) : txt, 10);
+            if (isNaN(threshold) || threshold < 0) {
+                alert("Mức trần không hợp lệ!");
+                return;
+            }
+
+            const affected = [];
+            Object.keys(registeredUsers).forEach(k => {
+                const name = registeredUsers[k]?.username || k;
+                if (isOwnerUsername(name)) return;
+                const cur = getUserPencilCount(name);
+                if (cur > threshold) {
+                    const nextVal = isHardCap ? threshold : (threshold + Math.floor((cur - threshold) / 2));
+                    if (nextVal < cur) affected.push({ uKey: name.toLowerCase(), name, cur, nextVal });
+                }
+            });
+
+            if (affected.length === 0) {
+                alert(`Không có thành viên nào đang có trên ${threshold} Chì Màu!`);
+                return;
+            }
+            if (!confirm(`Xác nhận giảm chì cho ${affected.length} thành viên đang có trên ${threshold} chì?\n(Ví dụ: ${affected[0].name}: ${affected[0].cur} ➔ ${affected[0].nextVal} chì)`)) return;
+
+            try {
+                for (let i = 0; i < affected.length; i += 400) {
+                    const batch = db.batch();
+                    affected.slice(i, i + 400).forEach(item => {
+                        batch.set(db.collection("pencils").doc(item.uKey), { count: item.nextVal }, { merge: true });
+                        userPencilsData[item.uKey] = { ...(userPencilsData[item.uKey] || {}), count: item.nextVal };
+                    });
+                    await batch.commit();
+                }
+                renderUsersModalContent();
+                playPaletteTingSound();
+                alert(`✓ Đã điều chỉnh giảm lạm phát thành công cho ${affected.length} tài khoản!`);
+            } catch (e) {
+                alert("Lỗi khi giảm lạm phát: " + (e?.message || ""));
+            }
+        }
 
                 const rankBar = document.createElement('div');
                 rankBar.className = "flex items-center gap-1.5 p-1 bg-black/45 border border-white/10 rounded-2xl mb-2.5 shrink-0";
@@ -10683,9 +10781,13 @@
 
             const adminEditBtn = document.getElementById('adminEditCharBtn');
             const adminRestoreLikesBtn = document.getElementById('adminRestoreLikesBtn');
-            if (currentUser?.isOwner) {
+            const isOwnerUser = checkIsOwnerAccount();
+            if (isOwnerUser) {
                 adminEditBtn?.classList.remove('hidden');
                 adminRestoreLikesBtn?.classList.remove('hidden');
+                if (adminRestoreLikesBtn) {
+                    adminRestoreLikesBtn.className = "bg-rose-500/25 hover:bg-rose-500/40 border border-rose-300/50 text-rose-200 px-2.5 py-1 rounded-full text-xs font-bold active:scale-95 transition flex items-center gap-1 cursor-pointer";
+                }
             } else {
                 adminEditBtn?.classList.add('hidden');
                 adminRestoreLikesBtn?.classList.add('hidden');
@@ -10742,6 +10844,18 @@
                 likeRef.set({
                     users: firebase.firestore.FieldValue.arrayUnion(currentUser.username)
                 }, { merge: true });
+
+                // Nếu nhân vật đã mở khóa -> khóa chặt vĩnh viễn vào cả savedLinks trong pencils & unlocked
+                const uName = currentUser.username;
+                const uKey = uName.toLowerCase();
+                if (userUnlockedState[uName]?.[activeChar.id] === true || userUnlockedState[uKey]?.[activeChar.id] === true) {
+                    if (!userPencilsData[uKey]) userPencilsData[uKey] = {};
+                    if (!userPencilsData[uKey].savedLinks) userPencilsData[uKey].savedLinks = {};
+                    userPencilsData[uKey].savedLinks[activeChar.id] = true;
+                    db.collection("pencils").doc(uKey).set({ savedLinks: { [activeChar.id]: true } }, { merge: true }).catch(() => {});
+                    db.collection("unlocked").doc(uName).set({ chars: { [activeChar.id]: true } }, { merge: true }).catch(() => {});
+                }
+
                 logMemberActivity("Đã thả tim lưu giữ người thương ❤️", `Nhân vật: ${activeChar.name}`, "general", {
                     charId: activeChar.id,
                     charName: activeChar.name
@@ -10753,16 +10867,88 @@
             updateRegisteredUsersCountUI();
         }
 
-        // Tự động đối soát và trả lại đúng char thực user đã từng lấy (dựa trên proof, unlocked & thông báo mở link)
-        async function autoHealUserUnlockedOnLogin(username) {
+        function recordUserUnlockTimestamp(username, charId) {
+            if (!username || !charId || isOwnerUsername(username)) return;
+            const nowTs = Date.now();
+            const uKey = username.toLowerCase();
+            if (!userUnlockTimestamps[username]) userUnlockTimestamps[username] = {};
+            userUnlockTimestamps[username][charId] = nowTs;
+            try { localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps)); } catch (_) {}
+            db.collection("unlock_timestamps").doc(uKey).set({ [charId]: nowTs }, { merge: true }).catch(() => {});
+        }
+
+        function isCharHeartedByUser(charId, username) {
+            if (!charId || !username) return false;
+            const likes = charLikesData[charId] || [];
+            const uLow = username.toLowerCase();
+            return likes.some(u => String(u || '').toLowerCase() === uLow);
+        }
+
+        // Khóa lại link sau 1 ngày (24h) nếu user không bấm tim lưu giữ
+        async function checkAndLockExpiredUnheartedLinks(username) {
+            if (!username || isOwnerUsername(username) || !window.hasLikesSynced) return;
+            const uKey = username.toLowerCase();
+            const unlockedMap = userUnlockedState[username] || {};
+            const tsMap = userUnlockTimestamps[username] || {};
+            const now = Date.now();
+            const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+            const expiredIds = [];
+
+            Object.keys(unlockedMap).forEach(charId => {
+                if (unlockedMap[charId] !== true) return;
+                if (isCharHeartedByUser(charId, username)) return; // Đã bấm tim -> giữ vĩnh viễn!
+                const unlockedAt = Number(tsMap[charId]) || 0;
+                if (unlockedAt > 0 && (now - unlockedAt) >= ONE_DAY_MS) {
+                    expiredIds.push(charId);
+                }
+            });
+
+            if (expiredIds.length === 0) return;
+
+            const patchUnlocked = {};
+            const patchTs = {};
+            expiredIds.forEach(cid => {
+                delete unlockedMap[cid];
+                delete tsMap[cid];
+                patchUnlocked[cid] = firebase.firestore.FieldValue.delete();
+                patchTs[cid] = firebase.firestore.FieldValue.delete();
+            });
+            localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+
+            try {
+                await db.collection("unlocked").doc(username).set({ chars: patchUnlocked }, { merge: true });
+                if (username !== uKey) {
+                    await db.collection("unlocked").doc(uKey).set({ chars: patchUnlocked }, { merge: true }).catch(() => {});
+                }
+                await db.collection("unlock_timestamps").doc(uKey).set(patchTs, { merge: true }).catch(() => {});
+            } catch (_) {}
+
+            updateAIStudioButton();
+            renderUnlockedCharListInModal();
+            renderFastColorCenter();
+        }
+
+        // Tự động đối soát và trả lại đúng char thực user đã từng lấy (CHỈ trả nếu đã bấm tim hoặc mới mở < 24h)
+        async function autoHealUserUnlockedOnLogin(username, retryCount = 0) {
             if (!username || !currentUser || currentUser.username !== username) return;
-            const sessionKey = `palette_healed_unlocked_v1_${username.toLowerCase()}`;
+
+            // Đợi tải xong danh sách nhân vật & danh sách tim mới bắt đầu đối soát (không bị hụt do mạng chậm)
+            if ((characters.length === 0 || !window.hasLikesSynced) && retryCount < 6) {
+                setTimeout(() => autoHealUserUnlockedOnLogin(username, retryCount + 1), 1200);
+                return;
+            }
+
+            const sessionKey = `palette_healed_unlocked_v2_${username.toLowerCase()}`;
             if (sessionStorage.getItem(sessionKey) === 'done') return;
             sessionStorage.setItem(sessionKey, 'done');
 
             try {
                 const uKey = username.toLowerCase();
                 const restoredIds = new Set();
+
+                // 0. Từ kho savedLinks bền vững trong pencils
+                const savedMap = userPencilsData[uKey]?.savedLinks || {};
+                Object.keys(savedMap).forEach(cid => { if (savedMap[cid] === true) restoredIds.add(cid); });
 
                 // 1. Kiểm tra bản ghi proof_submissions thật của user
                 try {
@@ -10773,37 +10959,80 @@
                     });
                 } catch (_) {}
 
-                // 2. Kiểm tra lịch sử thông báo đã nhận (chứa tên nhân vật được duyệt/đổi chì)
+                // 2. Kiểm tra lịch sử activities của chính user (gồm đổi 10 chì, 6 chì, duyệt mở link)
+                const stripStr = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9\s]/g, '');
+                const charByStrip = {};
+                characters.forEach(c => { charByStrip[stripStr(c.name).replace(/\s+/g, '')] = c.id; });
+                try {
+                    const actSnap = await db.collection("activities").where("username", "==", username).get();
+                    actSnap.forEach(d => {
+                        const data = d.data() || {};
+                        const t = (data.title || '').toLowerCase();
+                        if (t.includes('mở khóa link') || t.includes('đổi 10 chì') || t.includes('6 chì') || t.includes('duyệt mở link')) {
+                            if (data.charId) restoredIds.add(data.charId);
+                            else if (data.charName) {
+                                const cid = charByStrip[stripStr(data.charName).replace(/\s+/g, '')];
+                                if (cid) restoredIds.add(cid);
+                            }
+                        }
+                    });
+                } catch (_) {}
+
+                // 3. Kiểm tra lịch sử thông báo đã nhận
                 const logs = userNotificationLogs[uKey] || [];
-                const stripStr = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
                 logs.forEach(item => {
                     const titleLow = stripStr(item.title);
                     if (titleLow.includes('mo khoa link') || titleLow.includes('duyet mo link') || titleLow.includes('link da mo khoa')) {
                         const bodyNorm = stripStr(item.body);
                         characters.forEach(c => {
                             const cNorm = stripStr(c.name);
-                            if (cNorm && bodyNorm.includes(`"${cNorm}"`)) {
+                            if (cNorm && bodyNorm.includes(cNorm)) {
                                 restoredIds.add(c.id);
                             }
                         });
                     }
                 });
 
-                // 3. Nếu user đã từng thả tim VÀ có lịch sử mở/duyệt nhưng bị mất khỏi `unlocked`
+                // 4. Chỉ giữ/trả lại các char user ĐÃ BẤM TIM hoặc mới mở chưa quá 24h
                 const curUnlocked = userUnlockedState[username] || {};
-                const missingIds = Array.from(restoredIds).filter(id => curUnlocked[id] !== true);
+                const tsMap = userUnlockTimestamps[username] || {};
+                const now = Date.now();
+                const patchChars = {};
+                const patchSavedLinks = {};
 
-                if (missingIds.length > 0) {
-                    const patchChars = {};
-                    missingIds.forEach(id => {
-                        patchChars[id] = true;
-                        curUnlocked[id] = true;
-                    });
+                Object.keys(curUnlocked).forEach(cid => {
+                    if (curUnlocked[cid] === true && isCharHeartedByUser(cid, username) && !savedMap[cid]) {
+                        patchSavedLinks[cid] = true;
+                    }
+                });
+
+                restoredIds.forEach(id => {
+                    const hearted = isCharHeartedByUser(id, username);
+                    const ts = Number(tsMap[id]) || 0;
+                    const within24h = ts > 0 && (now - ts) < 86400000;
+                    if (hearted || within24h) {
+                        if (curUnlocked[id] !== true) {
+                            patchChars[id] = true;
+                            curUnlocked[id] = true;
+                        }
+                        if (hearted && !savedMap[id]) {
+                            patchSavedLinks[id] = true;
+                        }
+                    }
+                });
+
+                if (Object.keys(patchChars).length > 0) {
                     userUnlockedState[username] = curUnlocked;
+                    userUnlockedState[uKey] = curUnlocked;
                     await db.collection("unlocked").doc(username).set({ chars: patchChars }, { merge: true });
                     updateAIStudioButton();
                     renderUnlockedCharListInModal();
                     renderFastColorCenter();
+                }
+                if (Object.keys(patchSavedLinks).length > 0) {
+                    if (!userPencilsData[uKey]) userPencilsData[uKey] = {};
+                    userPencilsData[uKey].savedLinks = { ...(userPencilsData[uKey].savedLinks || {}), ...patchSavedLinks };
+                    await db.collection("pencils").doc(uKey).set({ savedLinks: patchSavedLinks }, { merge: true }).catch(() => {});
                 }
             } catch (_) {}
         }
@@ -10863,14 +11092,35 @@
                     }
                 });
 
+                // Kiểm tra lịch sử tim trong activities (phòng trường hợp tim cũng từng bị mất)
+                const likedPairs = new Set();
+                Object.keys(charLikesData).forEach(cid => {
+                    (charLikesData[cid] || []).forEach(u => likedPairs.add(`${String(u).toLowerCase()}__${cid}`));
+                });
+                actSnap.forEach(doc => {
+                    const d = doc.data() || {};
+                    const t = (d.title || '');
+                    const uLow = String(d.username || '').trim().toLowerCase();
+                    if (!uLow) return;
+                    const cid = d.charId || charByNameStrip[stripVn(d.charName)];
+                    if (!cid) return;
+                    if (t.includes('thả tim lưu giữ')) likedPairs.add(`${uLow}__${cid}`);
+                    else if (t.includes('Bỏ tim')) likedPairs.delete(`${uLow}__${cid}`);
+                });
+
                 let updatedUsersCount = 0;
                 let totalCharsRestored = 0;
 
                 for (const uKey of Object.keys(userTrueChars)) {
                     const entry = userTrueChars[uKey];
-                    if (entry.chars.size === 0) continue;
                     const patch = {};
-                    entry.chars.forEach(cid => { patch[cid] = true; });
+                    // Chỉ khôi phục các char user ĐÃ BẤM TIM lưu giữ (quên không bấm tim sẽ không được trả vĩnh viễn)
+                    entry.chars.forEach(cid => {
+                        if (likedPairs.has(`${uKey}__${cid}`)) {
+                            patch[cid] = true;
+                        }
+                    });
+                    if (Object.keys(patch).length === 0) continue;
 
                     await db.collection("unlocked").doc(entry.displayName).set({ chars: patch }, { merge: true });
                     userUnlockedState[entry.displayName] = { ...(userUnlockedState[entry.displayName] || {}), ...patch };
@@ -11317,9 +11567,7 @@
                 userPencilsData[uKey] = { ...(userPencilsData[uKey] || {}), count: nextCount };
                 userUnlockedState[uName] = nextUnlocked;
 
-                if (!userUnlockTimestamps[uName]) userUnlockTimestamps[uName] = {};
-                userUnlockTimestamps[uName][targetChar.id] = Date.now();
-                localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+                recordUserUnlockTimestamp(uName, targetChar.id);
 
                 updatePencilUI();
                 renderRedeemSelectOptions();
@@ -11384,9 +11632,7 @@
                         renderFastColorCenter();
                         addPencilToUser(currentUser.username, 2, "Mở khóa Link mở trong ngày thành công");
 
-                        if (!userUnlockTimestamps[currentUser.username]) userUnlockTimestamps[currentUser.username] = {};
-                        userUnlockTimestamps[currentUser.username][charId] = Date.now();
-                        localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+                        recordUserUnlockTimestamp(currentUser.username, charId);
 
                         const targetC = characters.find(c => c.id === charId);
                         logMemberActivity("Mở khóa link thành công 🔓", `Nhân vật: ${targetC?.name || 'Nhân vật'} (Hết giờ đếm ngược)`, "link", {
@@ -12256,9 +12502,7 @@
                     if (!userUnlockedState[currentUser.username]) userUnlockedState[currentUser.username] = {};
                     userUnlockedState[currentUser.username][activeChar.id] = true;
 
-                    if (!userUnlockTimestamps[currentUser.username]) userUnlockTimestamps[currentUser.username] = {};
-                    userUnlockTimestamps[currentUser.username][activeChar.id] = Date.now();
-                    localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+                    recordUserUnlockTimestamp(currentUser.username, activeChar.id);
 
                     db.collection("unlocked").doc(currentUser.username).set({
                         chars: { [activeChar.id]: true }
@@ -12463,10 +12707,8 @@
                     if (!userUnlockedState[uName]) userUnlockedState[uName] = {};
                     userUnlockedState[uName][fastTargetChar.id] = true;
 
-                    // Lưu mốc giờ mở khóa để tự khóa lại sau 1 ngày nếu quên bấm tim
-                    if (!userUnlockTimestamps[uName]) userUnlockTimestamps[uName] = {};
-                    userUnlockTimestamps[uName][fastTargetChar.id] = Date.now();
-                    localStorage.setItem('palette_user_unlock_timestamps', JSON.stringify(userUnlockTimestamps));
+                    // Lưu mốc giờ mở khóa lên máy chủ để tự khóa lại sau 1 ngày nếu quên bấm tim
+                    recordUserUnlockTimestamp(uName, fastTargetChar.id);
 
                     // Lưu mở khóa lên Firebase
                     await db.collection("unlocked").doc(uName).set({
