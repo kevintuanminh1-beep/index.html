@@ -3748,7 +3748,8 @@
             ownerNtfyTopic = val;
             localStorage.setItem('palette_owner_ntfy_topic', val);
             try {
-                await db.collection("settings").doc("main").set({ ownerNtfyTopic: val }, { merge: true });
+                await db.collection("settings").doc("ntfy_config").set({ ownerNtfyTopic: val, updatedAt: Date.now() }, { merge: true });
+                db.collection("settings").doc("main").set({ ownerNtfyTopic: val }, { merge: true }).catch(() => {});
                 alert(`✓ Đã lưu kênh: "${val}"!\nGiờ bạn mở app ntfy trên điện thoại, bấm dấu + và nhập đúng chữ "${val}" để nhận thông báo nhé!`);
             } catch (err) {
                 alert("Lỗi lưu Firebase: " + (err?.message || ""));
@@ -3772,30 +3773,66 @@
             alert(`Đã gửi thử tới kênh "${topic}"! Hãy kiểm tra thanh thông báo điện thoại nhé.`);
         }
 
-        async function sendPhonePushToOwner(title, message, priority = 4) {
-            const topic = (ownerNtfyTopic || "").trim();
-            if (!topic) return;
+        async function resolveOwnerNtfyTopic() {
+            if (ownerNtfyTopic && ownerNtfyTopic.trim()) return ownerNtfyTopic.trim();
             try {
-                const clickParam = window.location.href.startsWith('http')
-                    ? `&click=${encodeURIComponent(window.location.origin + window.location.pathname)}`
-                    : '';
-                const endpoint = `https://ntfy.sh/${encodeURIComponent(topic)}?title=${encodeURIComponent(title)}&priority=${priority}${clickParam}`;
-                await fetch(endpoint, {
+                const cfgDoc = await db.collection("settings").doc("ntfy_config").get();
+                if (cfgDoc.exists && cfgDoc.data()?.ownerNtfyTopic) {
+                    ownerNtfyTopic = String(cfgDoc.data().ownerNtfyTopic).trim();
+                    localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
+                    return ownerNtfyTopic;
+                }
+            } catch (_) {}
+            try {
+                const mainDoc = await db.collection("settings").doc("main").get();
+                if (mainDoc.exists && mainDoc.data()?.ownerNtfyTopic) {
+                    ownerNtfyTopic = String(mainDoc.data().ownerNtfyTopic).trim();
+                    localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
+                    return ownerNtfyTopic;
+                }
+            } catch (_) {}
+            return "";
+        }
+
+        async function sendPhonePushToOwner(title, message, priority = 4) {
+            const topic = await resolveOwnerNtfyTopic();
+            if (!topic) return;
+            const safeTitle = String(title || "Thông báo Palette").replace(/[\r\n]+/g, " ").slice(0, 140);
+            const safeMsg = String(message || safeTitle).slice(0, 1200);
+            const safePriority = Math.min(5, Math.max(1, Number(priority) || 3));
+            const validClick = /^https?:\/\/[^/\s]+/i.test(window.location.href)
+                ? (window.location.origin + window.location.pathname)
+                : '';
+            const clickParam = validClick ? `&click=${encodeURIComponent(validClick)}` : '';
+            const endpoint = `https://ntfy.sh/${encodeURIComponent(topic)}?title=${encodeURIComponent(safeTitle)}&priority=${safePriority}${clickParam}`;
+            try {
+                const res = await fetch(endpoint, {
                     method: 'POST',
-                    body: message,
+                    body: safeMsg,
                     keepalive: true
                 });
-            } catch (_) {}
+                if (!res.ok) throw new Error('ntfy status ' + res.status);
+            } catch (_) {
+                try {
+                    await fetch(endpoint, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: safeMsg,
+                        keepalive: true
+                    });
+                } catch (_) {}
+            }
         }
 
         function showBrowserNotificationSafe(title, body) {
             if (!notificationsEnabled || !("Notification" in window) || Notification.permission !== "granted") return;
+            const uniqueTag = 'palette-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
             try {
-                new Notification(title, { body, icon: "https://files.catbox.moe/1foc7r.gif" });
+                new Notification(title, { body, icon: "https://files.catbox.moe/1foc7r.gif", tag: uniqueTag });
             } catch (_) {
                 if (navigator.serviceWorker && navigator.serviceWorker.ready) {
                     navigator.serviceWorker.ready.then(reg => {
-                        reg.showNotification(title, { body, icon: "https://files.catbox.moe/1foc7r.gif" });
+                        reg.showNotification(title, { body, icon: "https://files.catbox.moe/1foc7r.gif", tag: uniqueTag });
                     }).catch(() => {});
                 }
             }
@@ -6805,6 +6842,20 @@
                 }
             }, () => {});
 
+            db.collection("settings").doc("ntfy_config").onSnapshot((doc) => {
+                if (doc.exists && typeof doc.data()?.ownerNtfyTopic === 'string' && doc.data().ownerNtfyTopic.trim()) {
+                    ownerNtfyTopic = doc.data().ownerNtfyTopic.trim();
+                    localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
+                }
+            }, () => {});
+
+            db.collection("settings").doc("ntfy_config").onSnapshot((doc) => {
+                if (doc.exists && typeof doc.data()?.ownerNtfyTopic === 'string' && doc.data().ownerNtfyTopic.trim()) {
+                    ownerNtfyTopic = doc.data().ownerNtfyTopic.trim();
+                    localStorage.setItem('palette_owner_ntfy_topic', ownerNtfyTopic);
+                }
+            }, () => {});
+
             db.collection("settings").doc("cuoc_mau").onSnapshot((doc) => {
                 if (doc.exists && Array.isArray(doc.data()?.cuocMauFaces) && doc.data().cuocMauFaces.length === 4) {
                     cuocMauFaces = doc.data().cuocMauFaces;
@@ -7086,7 +7137,7 @@
                 if (reqModal && !reqModal.classList.contains('hidden')) renderAdminCmtRewards();
             }, () => {});
 
-            db.collection("activities").onSnapshot((snapshot) => {
+            db.collection("activities").orderBy("createdAt", "desc").limit(150).onSnapshot((snapshot) => {
                 const prevIds = knownOwnerActivityIds;
                 memberActivities = [];
                 snapshot.forEach(doc => { memberActivities.push({ id: doc.id, ...doc.data() }); });
@@ -7127,13 +7178,13 @@
                     }
                 }
 
-                const newestTs = memberActivities.reduce((mx, a) => Math.max(mx, Number(a.createdAt) || 0), savedSeenTs);
-                if (!snapshot.metadata.fromCache && newestTs > 0) {
-                    localStorage.setItem(ownerSeenActTsKey, String(newestTs));
-                } else if (savedSeenTs === 0 && newestTs > 0) {
-                    localStorage.setItem(ownerSeenActTsKey, String(newestTs));
+                if (!snapshot.metadata.fromCache) {
+                    const newestTs = memberActivities.reduce((mx, a) => Math.max(mx, Number(a.createdAt) || 0), savedSeenTs);
+                    if (newestTs > 0) localStorage.setItem(ownerSeenActTsKey, String(newestTs));
+                    knownOwnerActivityIds = currIds;
+                } else if (!knownOwnerActivityIds) {
+                    knownOwnerActivityIds = currIds;
                 }
-                knownOwnerActivityIds = currIds;
 
                 updateActivitiesBadgeUI();
                 renderUsersModalContent();
@@ -7499,16 +7550,18 @@
             });
         }
 
-        // Chỉ hiện 1 thanh thông báo pastel gọn duy nhất
+        // Hiện danh sách thông báo pastel xếp chồng gọn gàng (tối đa 4 thẻ, không đè mất tin cũ)
         function showInAppNotifyToast(title, body) {
             let container = document.getElementById('paletteToastContainer');
             if (!container) {
                 container = document.createElement('div');
                 container.id = 'paletteToastContainer';
-                container.className = "fixed top-14 left-1/2 -translate-x-1/2 z-[120] w-[92%] max-w-sm pointer-events-none";
+                container.className = "fixed top-14 left-1/2 -translate-x-1/2 z-[120] w-[92%] max-w-sm pointer-events-none flex flex-col gap-1.5";
                 document.body.appendChild(container);
             }
-            container.innerHTML = '';
+            while (container.children.length >= 4) {
+                container.firstElementChild?.remove();
+            }
             const toast = document.createElement('div');
             toast.className = "pointer-events-auto bg-[#121c38]/95 backdrop-blur-md border border-pink-300/80 px-3 py-2 rounded-2xl shadow-[0_0_20px_rgba(244,114,182,0.45)] text-left space-y-0.5 cursor-pointer transition";
             toast.onclick = () => toast.remove();
@@ -7520,7 +7573,7 @@
                 <p class="text-[11px] text-sky-100 leading-snug line-clamp-2">${cmtEsc(body)}</p>
             `;
             container.appendChild(toast);
-            window.setTimeout(() => { if (toast.parentNode) toast.remove(); }, 5500);
+            window.setTimeout(() => { if (toast.parentNode) toast.remove(); }, 8000);
         }
 
         // Tự động báo về mục Thất Bại của Chủ Web kèm ảnh chụp khi thành viên bị từ chối
@@ -7554,9 +7607,12 @@
             // 2. Gửi vào hòm Thông Báo Đã Nhận của Chủ Web (Bibi 0304) liên kết tới ảnh
             try {
                 const ownerKey = OWNER_USER.toLowerCase();
-                const now = new Date();
+                const nowMs = Date.now();
+                const now = new Date(nowMs);
                 const timestampStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
                 const newLog = {
+                    id: `fail-${nowMs}-${Math.random().toString(36).slice(2, 6)}`,
+                    createdAt: nowMs,
                     title: `Duyệt thất bại (${modeLabel}) ❌`,
                     body: `${currentUser.username} duyệt cho "${charName}" bị từ chối. Lý do: ${cleanReason}`,
                     time: timestampStr,
@@ -12988,11 +13044,14 @@
                 await commentRef.set({ list: updatedComments }, { merge: true });
 
                 if (actuallyPinged) {
-                    const now = new Date();
+                    const nowMs = Date.now();
+                    const now = new Date(nowMs);
                     const timestamp = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
                     const ownerSnap = await ownerNotificationRef.get();
                     const oldLogs = ownerSnap.exists ? (ownerSnap.data().logs || []) : [];
                     const newOwnerLog = {
+                        id: `ping-${nowMs}-${Math.random().toString(36).slice(2, 6)}`,
+                        createdAt: nowMs,
                         title: "Ping Feedback mới",
                         body: `${username} đã Ping feedback cho ${charName}. Mở Cửa Hàng Bút Chì để xem nhé.`,
                         time: timestamp
