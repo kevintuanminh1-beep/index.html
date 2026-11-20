@@ -2026,7 +2026,7 @@
                 <div class="flex items-center gap-2">
                     <label class="bg-fuchsia-500/30 hover:bg-fuchsia-500/50 border border-fuchsia-300/50 text-fuchsia-200 font-bold px-3 py-1.5 rounded-xl text-xs active:scale-95 transition cursor-pointer shrink-0 inline-flex items-center gap-1">
                         📁 Chọn ảnh Facebook
-                        <input id="fastProofFbImg" type="file" accept="image/*" class="sr-only" onchange="handleFileSelected(this, 'fastProofFbImgName')">
+                        <input id="fastProofFbImg" type="file" accept="image/*" class="sr-only" onchange="handleFastFbFileSelected(this)">
                     </label>
                     <span id="fastProofFbImgName" class="text-[11px] text-sky-200/70 truncate flex-1">Chưa chọn ảnh</span>
                 </div>
@@ -5454,28 +5454,26 @@
 
         function verifyDrawnCanvasHasContent(ctx, w, h) {
             try {
-                // Lấy mẫu lưới 10x10 trên canvas để chắc chắn ảnh không bị trắng tinh hay trong suốt toàn bộ
-                const stepX = Math.max(1, Math.floor(w / 10));
-                const stepY = Math.max(1, Math.floor(h / 10));
+                // Thu nhỏ toàn bộ canvas xuống 48x48 để quét đủ 100% diện tích (không bao giờ sót chữ mảnh trên nền trắng)
+                const probe = document.createElement('canvas');
+                probe.width = 48;
+                probe.height = 48;
+                const pCtx = probe.getContext('2d');
+                pCtx.drawImage(ctx.canvas, 0, 0, w, h, 0, 0, 48, 48);
+                const data = pCtx.getImageData(0, 0, 48, 48).data;
+
                 let hasOpaque = false;
                 let minLuma = 255;
                 let maxLuma = 0;
-
-                for (let y = Math.floor(stepY / 2); y < h; y += stepY) {
-                    const rowData = ctx.getImageData(0, y, w, 1).data;
-                    for (let x = Math.floor(stepX / 2); x < w; x += stepX) {
-                        const off = x * 4;
-                        const a = rowData[off + 3];
-                        if (a > 15) {
-                            hasOpaque = true;
-                            const luma = 0.299 * rowData[off] + 0.587 * rowData[off + 1] + 0.114 * rowData[off + 2];
-                            if (luma < minLuma) minLuma = luma;
-                            if (luma > maxLuma) maxLuma = luma;
-                        }
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i + 3] > 15) {
+                        hasOpaque = true;
+                        const luma = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                        if (luma < minLuma) minLuma = luma;
+                        if (luma > maxLuma) maxLuma = luma;
                     }
                 }
-                // Ảnh thật luôn có sự chênh sáng tối (>= 4) hoặc không phải trắng bóc (minLuma < 248)
-                return hasOpaque && ((maxLuma - minLuma) >= 4 || minLuma < 248);
+                return hasOpaque && ((maxLuma - minLuma) >= 2 || minLuma < 252);
             } catch (_) {
                 return true;
             }
@@ -5600,8 +5598,14 @@
                 }
             }
 
-            // 4. Phương án cuối: nếu canvas thiết bị chặn getImageData nhưng rawDataUrl là ảnh hợp lệ, dùng thẳng rawDataUrl
-            if (rawDataUrl && rawDataUrl.startsWith('data:image/') && rawDataUrl.length < 3500000) {
+            // 4. Thử lại với kích thước nhẹ hơn (720px) nếu ảnh quá lớn khiến canvas 1280px bị tràn bộ nhớ GPU trên Android
+            if (rawDataUrl) {
+                const viaSmallImg = await drawDataUrlOrBlobViaImage(rawDataUrl, 720, 0.78);
+                if (viaSmallImg) return viaSmallImg;
+            }
+
+            // 5. Phương án cuối: trả về thẳng ảnh gốc (hỗ trợ ảnh lớn tới 8MB) để AI vẫn đọc bình thường
+            if (rawDataUrl && rawDataUrl.startsWith('data:image/') && rawDataUrl.length < 11000000) {
                 return rawDataUrl;
             }
             return "";
@@ -7750,12 +7754,15 @@
             try {
                 let imagesList = [];
                 if (mode === 'fast') {
+                    if (pendingFastFbPromise) await pendingFastFbPromise;
                     const fbFile = document.getElementById('fastProofFbImg')?.files?.[0];
-                    if (!fbFile) {
+                    if (!cachedFastFbDataUrl && !fbFile) {
                         alert("Vui lòng chọn ảnh chụp bài viết Facebook trước khi bấm gửi SOS nhé!");
                         return;
                     }
-                    const fbThumb = await readFileAsSmallThumb(fbFile);
+                    const fbThumb = cachedFastFbDataUrl
+                        ? await shrinkDataUrlForFirestore(cachedFastFbDataUrl, 600, 0.52)
+                        : await readFileAsSmallThumb(fbFile);
                     if (!fbThumb) {
                         alert("Không đọc được tệp ảnh bạn vừa chọn (ảnh lỗi hoặc chưa tải từ iCloud). Bạn hãy chụp lại ảnh màn hình rồi chọn lại nhé!");
                         return;
@@ -12034,7 +12041,8 @@
             const submitText = document.getElementById('fastSubmitBtnText');
             const feedbackBox = document.getElementById('fastAiFeedbackBox');
 
-            if (!fileInput.files || fileInput.files.length === 0) {
+            if (pendingFastFbPromise) await pendingFastFbPromise;
+            if (!cachedFastFbDataUrl && (!fileInput.files || fileInput.files.length === 0)) {
                 feedbackBox.className = "text-xs p-3 rounded-2xl mb-3 border bg-red-500/20 text-red-200 border-red-400/40";
                 feedbackBox.innerHTML = "❌ <b>Lỗi:</b> Vui lòng chọn ảnh chụp bài viết Facebook!";
                 feedbackBox.classList.remove('hidden');
@@ -12087,9 +12095,13 @@
                 let combinedFastText = "";
                 let fastFbOcrData = null;
 
-                for (let i = 0; i < fastFiles.length; i++) {
-                    setFastProgressUI(22, `Đang tối ưu ảnh (${i + 1}/${fastFiles.length})...`);
-                    const processedData = await processImageForFastOCR(fastFiles[i]);
+                const fastLoopCount = fastFiles.length > 0 ? fastFiles.length : (cachedFastFbDataUrl ? 1 : 0);
+                for (let i = 0; i < fastLoopCount; i++) {
+                    setFastProgressUI(22, `Đang tối ưu ảnh (${i + 1}/${fastLoopCount})...`);
+                    let processedData = (i === 0 && cachedFastFbDataUrl) ? cachedFastFbDataUrl : "";
+                    if (!processedData && fastFiles[i]) {
+                        processedData = await processImageForFastOCR(fastFiles[i]);
+                    }
                     if (!processedData) {
                         throw new Error("Không đọc được tệp ảnh này (có thể ảnh chưa tải về từ đám mây hoặc định dạng lỗi). Bạn hãy chụp lại ảnh màn hình rồi chọn lại nhé!");
                     }
@@ -14070,8 +14082,30 @@
 
         // ================= XỬ LÝ MỞ & ĐÓNG POPUP SẮC MÀU NHANH NHẸN =================
         let fastTargetChar = null;
+        let cachedFastFbDataUrl = "";
+        let pendingFastFbPromise = null;
+
+        async function handleFastFbFileSelected(input) {
+            handleFileSelected(input, 'fastProofFbImgName');
+            const file = input?.files?.[0];
+            if (!file) {
+                cachedFastFbDataUrl = "";
+                pendingFastFbPromise = null;
+                return;
+            }
+            pendingFastFbPromise = processImageForFastOCR(file).then(res => {
+                cachedFastFbDataUrl = res || "";
+                return cachedFastFbDataUrl;
+            }).catch(() => {
+                cachedFastFbDataUrl = "";
+                return "";
+            });
+            await pendingFastFbPromise;
+        }
 
         function openFastProofModal(charId) {
+            cachedFastFbDataUrl = "";
+            pendingFastFbPromise = null;
             if (!currentUser) {
                 alert("Vui lòng đăng nhập để gửi ảnh xác nhận nhé!");
                 return;
@@ -14115,6 +14149,8 @@
 
         function closeFastProofModal() {
             clearSosWaitBox('fast');
+            cachedFastFbDataUrl = "";
+            pendingFastFbPromise = null;
             const modal = document.getElementById('fastProofPopup');
             if (modal) modal.classList.add('hidden');
             const fileInput = document.getElementById('fastProofFbImg');
